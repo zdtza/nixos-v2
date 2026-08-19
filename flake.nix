@@ -1,28 +1,33 @@
 {
+  description = "NixOS configuration";
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    import-tree.url = "github:vic/import-tree";
+
     impermanence.url = "github:nix-community/impermanence";
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-  };
 
-  outputs = inputs@{ self, nixpkgs, home-manager, disko, ... }: {
-    nixosConfigurations.legion = nixpkgs.lib.nixosSystem {
-      modules = [
-      	inputs.impermanence.nixosModules.impermanence
-      	home-manager.nixosModules.home-manager
-      	disko.nixosModules.disko
-      	./configuration.nix
-	      ./impermanence.nix
-	      ./disko.nix
-      ];
+    stylix = {
+      url = "github:nix-community/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-}
 
+  outputs =
+    inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" ];
+      imports = [ (inputs.import-tree ./modules) ];
+    };
+}

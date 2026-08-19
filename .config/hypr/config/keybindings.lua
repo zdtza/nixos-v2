@@ -60,9 +60,6 @@ end
 
 local screenshot_command = 'mkdir -p ~/Screenshots && file="$HOME/Screenshots/screenshot-$(date +%Y%m%d-%H%M%S).png" && grim -g "$(slurp)" "$file" && wl-copy --type image/png < "$file"'
 
-local scroll_next = function() monitors.scroll_workspace(1) end
-local scroll_prev = function() monitors.scroll_workspace(-1) end
-
 bind("XF86PowerOff", "Suspend system", hl.dsp.exec_cmd("systemctl suspend"), { locked = true })
 bind("switch:on:Lid Switch", "Suspend when lid closes", hl.dsp.exec_cmd("systemctl suspend"), { locked = true })
 
@@ -74,8 +71,8 @@ bind("SUPER + J", "Toggle split direction", hl.dsp.layout("togglesplit"))
 bind("SUPER + T", "Toggle floating window", hl.dsp.window.float({ action = "toggle" }))
 bind("SUPER + F", "Toggle fullscreen window", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 bind("SUPER + Tab", "Focus previous workspace", hl.dsp.focus({ workspace = "previous" }))
-bind("SUPER + mouse_up", "Focus next workspace", scroll_next)
-bind("SUPER + mouse_down", "Focus previous workspace", scroll_prev)
+bind("SUPER + mouse_up", "Focus next workspace", function() monitors.scroll_workspace(1) end)
+bind("SUPER + mouse_down", "Focus previous workspace", function() monitors.scroll_workspace(-1) end)
 
 bind("SUPER + left", "Focus window left", hl.dsp.focus({ direction = "left" }))
 bind("SUPER + right", "Focus window right", hl.dsp.focus({ direction = "right" }))

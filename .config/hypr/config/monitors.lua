@@ -55,13 +55,6 @@ function M.scroll_workspace(offset)
 	local generation = (workspace_scroll and workspace_scroll.generation or 0) + 1
 	workspace_scroll = { index = target_index, generation = generation }
 	hl.dispatch(hl.dsp.focus({ workspace = target }))
-
-	-- Continue fast wheel events from queued target, then resync with Hyprland.
-	hl.timer(function()
-		if workspace_scroll and workspace_scroll.generation == generation then
-			workspace_scroll = nil
-		end
-	end, { timeout = 180, type = "oneshot" })
 end
 
 function M.toggle_aspect_ratio()

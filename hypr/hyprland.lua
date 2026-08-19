@@ -1,0 +1,5 @@
+require("config.settings")
+require("config.animations")
+require("config.window_rules")
+require("config.monitors")
+require("config.keybindings")

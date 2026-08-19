@@ -16,12 +16,14 @@
         variant = "";
       };
 
-      # Don't forget to set a password with `passwd`.
+      # Declarative so login works right after install with no manual
+      # passwd step. Change it after first login with `passwd`.
       users.users."cdt" = {
         isNormalUser = true;
         description = "Connor du Toit";
         extraGroups = [ "networkmanager" "wheel" ];
         packages = with pkgs; [ ];
+        initialPassword = "changeme";
       };
 
       nixpkgs.config.allowUnfree = true;

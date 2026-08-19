@@ -2,9 +2,9 @@
 {
   programs.git = {
     enable = true;
-    userName = "Connor du Toit";
-    userEmail = "connordutoit@gmail.com";
     settings = {
+      user.name = "Connor du Toit";
+      user.email = "connordutoit@gmail.com";
       init.defaultBranch = "main";
     };
   };

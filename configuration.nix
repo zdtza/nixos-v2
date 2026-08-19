@@ -1,10 +1,20 @@
 { config, pkgs, ... }:
 
+let
+  localHosts = [
+    "management-local.pmis.servicesseta.org.za"
+    "partner-local.pmis.servicesseta.org.za"
+    "learner-local.pmis.servicesseta.org.za"
+  ];
+in
 {
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];
+
+  # needed for web-app install and nix search
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   boot = {  
     consoleLogLevel = 0;
@@ -29,8 +39,6 @@
 
   networking.hostName = "nixos"; # Define your hostname.
 
-  # Enable networking
-  
 
   # Set your time zone.
   time.timeZone = "Africa/Johannesburg";
@@ -41,6 +49,7 @@
   users.users."cdt" = {
     isNormalUser = true;
     description = "Connor du Toit";
+    shell = pkgs.fish;
     extraGroups = [
       "wheel"
       "networkmanager"
@@ -52,6 +61,9 @@
     ];
     packages = with pkgs; [];
   };
+
+  # registers fish in /etc/shells and sets up system-wide completions
+  programs.fish.enable = true;
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -113,6 +125,9 @@
     btop
     impala
     chromium
+    fuzzel
+    python3
+    file
 
     # lazyvim runtime deps
     ripgrep
@@ -152,8 +167,24 @@
     moduleParams.nvidia.NVreg_TemporaryFilePath = "/var/tmp";
   };
 
-  hardware.bluetooth.enable = true;
-  hardware.bluetooth.powerOnBoot = true;
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+  };
+
+  # systemd-rfkill can persist a previous soft-blocked Bluetooth state.
+  # Force-unblock the controller before bluetoothd starts so powerOnBoot can
+  # reliably turn it on after rebuilds/reboots.
+  systemd.services.bluetooth-unblock = {
+    description = "Unblock Bluetooth rfkill before bluetoothd starts";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "bluetooth.service" ];
+    after = [ "systemd-rfkill.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.util-linux}/bin/rfkill unblock bluetooth";
+    };
+  };
 
   security.rtkit.enable = true;
   services.pipewire = {
@@ -163,9 +194,43 @@
     pulse.enable = true;
   };
 
-  networking.firewall.enable = false;
-  networking.wireless.iwd.enable = true; # backend for impala
-  # networking.networkmanager.enable = true; # backend for nmtui
+  
+
+  networking = {
+    firewall = {
+      # opening for local send
+      allowedTCPPorts = [ 53317 ];
+      allowedUDPPorts = [ 53317 ];
+    };
+    # any local hosts you want to point to
+    hosts = {
+      "127.0.0.1" = localHosts;
+      "::1" = localHosts;
+    };
+    networkmanager = {
+      enable = true;
+      dns = "systemd-resolved";
+      wifi = {
+        backend = "wpa_supplicant";
+        powersave = false;
+      };
+    };
+  };
+
+  services.resolved = {
+    enable = true;
+    settings.Resolve = {
+      DNS = [
+        "1.1.1.1"
+        "8.8.8.8"
+      ];
+      Domains = [ "~." ];
+      FallbackDNS = [
+        "1.0.0.1"
+        "8.8.4.4"
+      ];
+    };
+  };
 
   stylix = {
     enable = true;

@@ -170,7 +170,7 @@ bind("F9", "Stop dictation", hl.dsp.exec_cmd("voxtype record stop"), { release =
 
 -- PLACEHOLDER: no app launcher installed yet. Swap exec_cmd for the real
 -- launcher binary once one is chosen (e.g. wofi/rofi/fuzzel).
-bind("SUPER + space", "Open app launcher", hl.dsp.exec_cmd("true"))
+bind("SUPER + space", "Open app launcher", hl.dsp.exec_cmd("fuzzel"))
 
 -- PLACEHOLDER: status bar (e.g. waybar/DMS) not installed yet. Swap for the
 -- bar's hide/toggle command once one is set up.

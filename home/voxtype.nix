@@ -63,7 +63,7 @@ in
     };
 
     Service = {
-      ExecStart = "voxtype daemon";
+      ExecStart = "${package}/bin/voxtype daemon";
       Restart = "on-failure";
       RestartSec = 5;
     };

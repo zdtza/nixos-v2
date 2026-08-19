@@ -11,7 +11,7 @@ apps_file="$repo_dir/home/apps.nix"
 
 read -r -p 'Web App Name: ' app_name
 read -r -p 'Web App URL: ' app_url
-read -r -p 'Private session? [y/N]: ' private_answer
+read -r -p 'Isolated session? [y/N]: ' private_answer
 [[ "$private_answer" =~ ^[Yy] ]] && app_private=true || app_private=false
 
 [[ -n "$app_name" && -n "$app_url" ]] || {
@@ -100,7 +100,7 @@ import sys
 from pathlib import Path
 
 path = Path(sys.argv[1])
-app_id, name, url, private, icon_url, icon_hash = sys.argv[2:]
+app_id, name, url, isolated, icon_url, icon_hash = sys.argv[2:]
 marker = "    # WEBAPPS"
 text = path.read_text()
 if marker not in text:
@@ -111,7 +111,7 @@ entry = (
     f"      id = {q(app_id)};\n"
     f"      name = {q(name)};\n"
     f"      url = {q(url)};\n"
-    f"      private = {private};\n"
+    f"      isolated = {isolated};\n"
     f"      iconUrl = {q(icon_url)};\n"
     f"      iconHash = {q(icon_hash)};\n"
     "    }\n"
@@ -120,4 +120,4 @@ path.write_text(text.replace(marker, entry + marker, 1))
 PY
 
 nixfmt "$apps_file"
-printf '\nAdded %s (%s). Run: sudo nixos-rebuild switch --flake %s\n' "$app_name" "$app_id" "$repo_dir"
+printf 'Added %s (%s). Run: sudo nixos-rebuild switch --flake %s\n' "$app_name" "$app_id" "$repo_dir"

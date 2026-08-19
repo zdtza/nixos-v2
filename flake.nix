@@ -29,12 +29,12 @@
 
           home-manager.users.cdt = {
             imports = [
+              ./home/defaults.nix
               ./home/kitty.nix
               ./home/shell.nix
               ./home/hyprland.nix
               ./home/pi.nix
               ./home/screen-share.nix
-              ./home/npm.nix
               ./home/voxtype.nix
               ./home/btop.nix
               ./home/nvim.nix
@@ -42,6 +42,7 @@
               ./home/apps.nix
               ./home/fzf.nix
               ./home/yazi.nix
+              ./home/npm.nix
             ];
             home.stateVersion = "26.05";
           };

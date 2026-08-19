@@ -43,6 +43,17 @@ in
 {
   home.packages = [ terminalCwd launchTerminal ];
 
+  # Desktop entries with Terminal=true (nvim, btop, yazi, ...) rely on the
+  # app launcher to know how to open a terminal for them. fuzzel's default
+  # is `$TERMINAL -e`, and $TERMINAL is unset here, so those entries just
+  # exec with no tty and silently do nothing. Point fuzzel at kitty
+  # directly (matches launch-terminal-cwd above; no terminal-choice
+  # abstraction elsewhere in this config either).
+  xdg.configFile."fuzzel/fuzzel.ini".text = ''
+    [main]
+    terminal=kitty -e {cmd}
+  '';
+
   programs.kitty = {
     enable = true;
     settings = {

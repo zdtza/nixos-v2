@@ -1,15 +1,24 @@
-{ ... }:
+{ config, ... }:
 
 {
-  programs.bash = {
+  stylix.targets.fish.colors.override = {
+    # Swap the standard completion/comment colors 
+    base03 = config.lib.stylix.colors.base05; # swapping muted -> foreground
+    base0B = config.lib.stylix.colors.base0E; # swapping green -> magenta
+  };
+
+  programs.fish = {
     enable = true;
 
-    initExtra = ''
-      if [ -f "$HOME/.config/Nixodus/.env" ]; then
-        set -a
-        source "$HOME/.config/Nixodus/.env"
-        set +a
-      fi
+    interactiveShellInit = ''
+      set -g fish_greeting
+
+      if test -f "$HOME/.config/Nixodus/.env"
+        for line in (grep -Ev '^\s*(#|$)' "$HOME/.config/Nixodus/.env")
+          set -l parts (string split -m1 "=" $line)
+          set -gx $parts[1] $parts[2]
+        end
+      end
     '';
 
     # aliases for the shell

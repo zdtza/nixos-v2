@@ -13,7 +13,7 @@
       stylix = {
         enable = true;
         polarity = "dark";
-        image = ../../theme/wallpaper.jpg;
+        image = ../../.config/theme/wallpapers/winding-road.jpg;
 
         base16Scheme = {
           base00 = "#1a1b26"; # background

@@ -34,6 +34,7 @@
         zoxide
         yazi
         nautilus
+        claude-code
         # hyprland.lua keybindings/settings dependencies
         hyprpicker
         grim

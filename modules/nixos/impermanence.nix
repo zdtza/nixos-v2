@@ -19,6 +19,7 @@
 
         files = [
           "/etc/machine-id"
+          "/home/cdt/.claude.json"
         ];
 
         directories = [
@@ -30,6 +31,7 @@
           "/home/cdt/Downloads"
           "/home/cdt/Documents"
           "/home/cdt/Dev"
+          "/home/cdt/.claude"
         ];
       };
     };

@@ -158,6 +158,11 @@ in
     withUWSM = true;
   };
 
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+  };
+
   xdg.portal.enable = true;
   xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
 
@@ -166,8 +171,14 @@ in
     enable32Bit = true;
   };
 
-  services.xserver.videoDrivers = [ "nvidia" ];
+  # graphics section (only one of these should be uncommented, depending on your GPU)
 
+  # --- amd configuration section ---
+  # services.xserver.videoDrivers = [ "amdgpu" ];
+  # boot.initrd.kernelModules = [ "amdgpu" ];
+
+  # --- nvidia configuration section ---
+  services.xserver.videoDrivers = [ "nvidia" ];
   hardware.nvidia = {
     modesetting.enable = true;
     nvidiaSettings = true;
@@ -175,11 +186,6 @@ in
     package = config.boot.kernelPackages.nvidiaPackages.stable;
     powerManagement.enable = true;
     moduleParams.nvidia.NVreg_TemporaryFilePath = "/var/tmp";
-  };
-
-  hardware.bluetooth = {
-    enable = true;
-    powerOnBoot = true;
   };
 
   # systemd-rfkill can persist a previous soft-blocked Bluetooth state.

@@ -51,6 +51,7 @@ in
 
   xdg.configFile."voxtype/config.toml".source = configFile;
 
+  # starting voxtype on boot with systemd
   systemd.user.services.voxtype = {
     Unit = {
       Description = "Voxtype voice-to-text daemon";

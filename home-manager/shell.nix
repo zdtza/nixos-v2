@@ -2,19 +2,19 @@
 
 {
   stylix.targets.fish.colors.override = {
-    # Swap the standard completion/comment colors 
-    base03 = config.lib.stylix.colors.base05; # swapping muted -> foreground
-    base0B = config.lib.stylix.colors.base0E; # swapping green -> magenta
+    base03 = config.lib.stylix.colors.base05; # muted -> foreground
+    base0B = config.lib.stylix.colors.base0E; # green -> magenta
   };
 
   programs.fish = {
     enable = true;
 
+    # disabling fish greeting and loading env vars from .env
     interactiveShellInit = ''
       set -g fish_greeting
 
-      if test -f "$HOME/nixos/.env"
-        for line in (grep -Ev '^\s*(#|$)' "$HOME/nixos/.env")
+      if test -f "$XDG_CONFIG_HOME/nixos/.env"
+        for line in (grep -Ev '^\s*(#|$)' "$XDG_CONFIG_HOME/nixos/.env")
           set -l parts (string split -m1 "=" $line)
           set -gx $parts[1] $parts[2]
         end
@@ -29,7 +29,7 @@
       lta = "lt -a";
 
       startw = "uwsm start hyprland-uwsm.desktop";
-      rb = "sudo nixos-rebuild switch --flake ~/nixos";
+      rb = "sudo nixos-rebuild switch --flake (git rev-parse --show-toplevel)#nixos";
       ff = "fastfetch";
     };
   };
@@ -37,7 +37,10 @@
   # better cd
   programs.zoxide = {
     enable = true;
-    options = [ "--cmd" "cd" ];
+    options = [
+      "--cmd"
+      "cd"
+    ];
   };
 
   # custom pointer

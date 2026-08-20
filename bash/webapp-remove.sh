@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Remove a Chromium web app entry from home/apps.nix.
+# Remove a Chromium web app entry from home-manager/apps.nix.
 set -euo pipefail
 
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-apps_file="$repo_dir/home/apps.nix"
+apps_file="$repo_dir/home-manager/apps.nix"
 [[ -f "$apps_file" ]] || {
   printf 'Missing %s\n' "$apps_file" >&2
   exit 1

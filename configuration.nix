@@ -243,7 +243,7 @@ in
   stylix = {
     enable = true;
     polarity = "dark";
-    image = ./assets/winding-road.jpg;
+    image = ./wallpapers/winding-road.jpg;
 
     cursor = {
       package = pkgs.adwaita-icon-theme;

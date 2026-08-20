@@ -41,7 +41,10 @@ let
   '';
 in
 {
-  home.packages = [ terminalCwd launchTerminal ];
+  home.packages = [
+    terminalCwd
+    launchTerminal
+  ];
 
   programs.kitty = {
     enable = true;
@@ -61,6 +64,7 @@ in
       listen_on = "unix:\${XDG_RUNTIME_DIR}/kitty-{kitty_pid}";
     };
 
+    # universal copy / paste keybindings
     keybindings = {
       "ctrl+insert" = "copy_to_clipboard";
       "shift+insert" = "paste_from_clipboard";

@@ -2,11 +2,8 @@
 
 let
   colors = config.lib.stylix.colors.withHashtag;
-  accent = colors.base0D;
 in
 {
-  # custom colors below use a single accent color instead of stylix's
-  # default per-slot base16 mapping
   stylix.targets.fzf.enable = false;
 
   programs.fzf = {
@@ -17,14 +14,14 @@ in
       "bg+" = colors.base01;
       "fg" = colors.base05;
       "fg+" = colors.base07;
-      "header" = accent;
-      "hl" = accent;
-      "hl+" = accent;
-      "info" = accent;
-      "marker" = accent;
-      "pointer" = accent;
-      "prompt" = accent;
-      "spinner" = accent;
+      "header" = colors.base0D;
+      "hl" = colors.base0D;
+      "hl+" = colors.base0D;
+      "info" = colors.base0D;
+      "marker" = colors.base0D;
+      "pointer" = colors.base0D;
+      "prompt" = colors.base0D;
+      "spinner" = colors.base0D;
     };
   };
 

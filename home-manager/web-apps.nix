@@ -67,12 +67,19 @@ let
     # WEBAPPS
   ];
 
-  webappInstall = pkgs.writeShellScriptBin "webapp-install" ''
-    exec "${config.home.homeDirectory}/nixos/scripts/webapp-install.sh" "$@"
-  '';
-  webappRemove = pkgs.writeShellScriptBin "webapp-remove" ''
-    exec "${config.home.homeDirectory}/nixos/scripts/webapp-remove.sh" "$@"
-  '';
+  mkWebappCommand =
+    command:
+    pkgs.writeShellScriptBin command ''
+      repo_dir=$(git rev-parse --show-toplevel 2>/dev/null)
+      script="$repo_dir/bash/${command}.sh"
+      [[ -x "$script" ]] || {
+        echo "Run ${command} from this repository or one of its subdirectories." >&2
+        exit 1
+      }
+      exec "$script" "$@"
+    '';
+  webappInstall = mkWebappCommand "webapp-install";
+  webappRemove = mkWebappCommand "webapp-remove";
 
   mkEntry =
     app:
@@ -84,7 +91,7 @@ let
     lib.nameValuePair app.id {
       name = app.name;
       comment = "${app.name} web app";
-    
+
       exec = ''${pkgs.chromium}/bin/chromium ${profileFlag}"--app=${url}"'';
       icon = pkgs.fetchurl {
         url = app.iconUrl;

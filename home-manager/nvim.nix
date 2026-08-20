@@ -1,10 +1,8 @@
-{ config, ... }:
+{ self, ... }:
 
 {
-  home.file.".config/nvim".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nixos/symlink/nvim";
-  home.file.".config/lazygit/config.yml".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nixos/symlink/nvim/lazygit/config.yml";
+  home.file.".config/nvim".source = self + "/dotfiles/nvim";
+  home.file.".config/lazygit/config.yml".source = self + "/dotfiles/nvim/lazygit/config.yml";
 
   # LazyVim ships its own Tokyo Night colorscheme - skip Stylix repainting it.
   stylix.targets.neovim.enable = false;

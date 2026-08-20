@@ -1,9 +1,3 @@
--- Ported from the old flake's hyprland.lua. Dropped: DankMaterialShell IPC
--- bindings (launcher, process list - no shell/launcher is installed here),
--- the `nos rebuild/update/switch/install/remove` bindings (that CLI doesn't
--- exist in this config), and the `uwsm app --` exec wrapper (no UWSM here,
--- commands run directly). Volume/mic bindings now call wpctl directly
--- instead of going through DMS.
 local monitors = require("config.monitors")
 
 local gaps_enabled = true
@@ -72,20 +66,6 @@ local function toggle_window_opacity()
 	}))
 end
 
-local function open_workspace_terminal()
-	if active_window_is_terminal() then
-		send_shortcut_once("CTRL SHIFT", "F12")()
-	else
-		hl.dispatch(hl.dsp.exec_cmd("kitty"))
-	end
-end
-
--- Opens a new terminal in the focused terminal's cwd, via
--- launch-terminal-cwd / terminal-cwd (home/kitty.nix): reads the focused
--- kitty tab's cwd over its remote-control socket, falling back to a /proc
--- walk validated against /etc/shells. Safe to call unconditionally - if the
--- active window isn't a terminal, the script finds no matching socket/shell
--- and falls back to $HOME.
 local function open_terminal()
 	hl.dispatch(hl.dsp.exec_cmd("launch-terminal-cwd"))
 end

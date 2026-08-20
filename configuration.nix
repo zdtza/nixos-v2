@@ -71,7 +71,7 @@ in
 
   # trust locally-issued mkcert dev certs (e.g. pmis management-portal) system-wide
   # so Chromium-based webapps (WhatsApp, etc.) and Firefox accept them without warnings.
-  security.pki.certificateFiles = [ ~/.local/share/mkcert/rootCA.pem ];
+  security.pki.certificateFiles = [ ./rootCA.pem ];
 
   programs.neovim = {
     enable = true;
@@ -171,12 +171,6 @@ in
     enable32Bit = true;
   };
 
-  # graphics section (only one of these should be uncommented, depending on your GPU)
-
-  # --- amd configuration section ---
-  # services.xserver.videoDrivers = [ "amdgpu" ];
-  # boot.initrd.kernelModules = [ "amdgpu" ];
-
   # --- nvidia configuration section ---
   services.xserver.videoDrivers = [ "nvidia" ];
   hardware.nvidia = {
@@ -208,31 +202,6 @@ in
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-
-    # Chromium's built-in AEC loses its output reference on Linux once a
-    # desktop-capture stream (screen share) is also active, so speaker
-    # output leaks back into the mic and remote participants hear an echo.
-    # Run AEC as its own PipeWire module instead, independent of whatever
-    # Chromium is doing, and pick "Echo-Cancelled Microphone" as the mic in
-    # Teams/any webapp instead of the default mic.
-    extraConfig.pipewire."99-echo-cancel" = {
-      "context.modules" = [
-        {
-          name = "libpipewire-module-echo-cancel";
-          args = {
-            "aec.method" = "webrtc";
-            "source.props" = {
-              "node.name" = "echo-cancel-source";
-              "node.description" = "Echo-Cancelled Microphone";
-            };
-            "sink.props" = {
-              "node.name" = "echo-cancel-sink";
-              "node.description" = "Echo-Cancel Sink";
-            };
-          };
-        }
-      ];
-    };
   };
 
   networking = {

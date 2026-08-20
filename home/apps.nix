@@ -68,10 +68,10 @@ let
   ];
 
   webappInstall = pkgs.writeShellScriptBin "webapp-install" ''
-    exec "${config.home.homeDirectory}/.config/Nixodus/scripts/webapp-install.sh" "$@"
+    exec "${config.home.homeDirectory}/nixos/scripts/webapp-install.sh" "$@"
   '';
   webappRemove = pkgs.writeShellScriptBin "webapp-remove" ''
-    exec "${config.home.homeDirectory}/.config/Nixodus/scripts/webapp-remove.sh" "$@"
+    exec "${config.home.homeDirectory}/nixos/scripts/webapp-remove.sh" "$@"
   '';
 
   mkEntry =

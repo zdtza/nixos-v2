@@ -48,7 +48,7 @@ in
   # Select internationalisation properties.
   i18n.defaultLocale = "en_ZA.UTF-8";
 
-  users.users."cdt" = {
+  users.users."zdtza" = {
     isNormalUser = true;
     description = "Connor du Toit";
     shell = pkgs.fish;
@@ -61,7 +61,6 @@ in
       "onepassword"
       "onepassword-cli"
     ];
-    packages = with pkgs; [ ];
   };
 
   # registers fish in /etc/shells and sets up system-wide completions
@@ -72,7 +71,7 @@ in
 
   # trust locally-issued mkcert dev certs (e.g. pmis management-portal) system-wide
   # so Chromium-based webapps (WhatsApp, etc.) and Firefox accept them without warnings.
-  security.pki.certificateFiles = [ ./assets/certs/mkcert-rootCA.pem ];
+  security.pki.certificateFiles = [ ~/.local/share/mkcert/rootCA.pem ];
 
   programs.neovim = {
     enable = true;
@@ -86,7 +85,7 @@ in
   programs._1password.enable = true;
   programs._1password-gui = {
     enable = true;
-    polkitPolicyOwners = [ "cdt" ];
+    polkitPolicyOwners = [ "zdtza" ];
   };
 
   # power-saver on battery, performance when plugged in
@@ -138,6 +137,7 @@ in
     fastfetch
     audacity
     dotnet-sdk_10
+    mkcert
 
     # lazyvim runtime deps
     ripgrep

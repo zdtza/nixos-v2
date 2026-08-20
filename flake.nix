@@ -27,7 +27,7 @@
           home-manager.useUserPackages = true;
           home-manager.extraSpecialArgs = { inherit inputs; };
 
-          home-manager.users.cdt = {
+          home-manager.users.zdtza = {
             imports = [
               ./home/defaults.nix
               ./home/appearance.nix

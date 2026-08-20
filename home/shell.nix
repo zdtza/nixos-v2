@@ -13,8 +13,8 @@
     interactiveShellInit = ''
       set -g fish_greeting
 
-      if test -f "$HOME/.config/Nixodus/.env"
-        for line in (grep -Ev '^\s*(#|$)' "$HOME/.config/Nixodus/.env")
+      if test -f "$HOME/nixos/.env"
+        for line in (grep -Ev '^\s*(#|$)' "$HOME/nixos/.env")
           set -l parts (string split -m1 "=" $line)
           set -gx $parts[1] $parts[2]
         end
@@ -29,7 +29,7 @@
       lta = "lt -a";
 
       startw = "uwsm start hyprland-uwsm.desktop";
-      rb = "sudo nixos-rebuild switch --flake ~/.config/Nixodus";
+      rb = "sudo nixos-rebuild switch --flake ~/nixos";
       ff = "fastfetch";
     };
   };

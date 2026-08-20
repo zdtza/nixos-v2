@@ -29,7 +29,7 @@ in
   # config.yaml has no theme dependency, so it stays a plain file symlinked
   # straight from the repo.
   home.file.".config/hyprland-preview-share-picker/config.yaml".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.config/Nixodus/symlink/screensharepicker/config.yaml";
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nixos/symlink/screensharepicker/config.yaml";
 
   # style.css has to be generated so it follows the system-wide stylix theme
   # instead of hardcoding colors.

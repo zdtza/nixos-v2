@@ -8,15 +8,18 @@ let
   ];
 in
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
 
   # needed for web-app install and nix search
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
-  boot = {  
+  boot = {
     consoleLogLevel = 0;
     initrd = {
       verbose = false;
@@ -39,7 +42,6 @@ in
 
   networking.hostName = "nixos"; # Define your hostname.
 
-
   # Set your time zone.
   time.timeZone = "Africa/Johannesburg";
 
@@ -59,7 +61,7 @@ in
       "onepassword"
       "onepassword-cli"
     ];
-    packages = with pkgs; [];
+    packages = with pkgs; [ ];
   };
 
   # registers fish in /etc/shells and sets up system-wide completions
@@ -135,7 +137,8 @@ in
     font-awesome
     fastfetch
     audacity
-    
+    dotnet-sdk_10
+
     # lazyvim runtime deps
     ripgrep
     fd
@@ -144,7 +147,7 @@ in
     lazygit
     nodejs
 
-    # formatting tools
+    # nix dev stuff
     nixfmt
     nixd
   ];
@@ -226,8 +229,6 @@ in
     };
   };
 
-  
-
   networking = {
     firewall = {
       # opening for local send
@@ -303,7 +304,7 @@ in
       };
 
       serif = {
-        package = pkgs.dejavu_fonts; 
+        package = pkgs.dejavu_fonts;
         name = "DejaVu Serif";
       };
 

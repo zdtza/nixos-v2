@@ -44,6 +44,7 @@
               ./home/fzf.nix
               ./home/yazi.nix
               ./home/npm.nix
+              ./home/fuzzel.nix
             ];
             home.stateVersion = "26.05";
           };

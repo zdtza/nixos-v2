@@ -56,12 +56,17 @@ let
       iconUrl = "https://static.whatsapp.net/rsrc.php/yI/r/EoOh62-jiPS.webp";
       iconHash = "sha256-zwMr79bB+CS+6pls2+77lK4WBlBDgjXiUCK4rnRRREw=";
     }
+    {
+      id = "gmail";
+      name = "Gmail";
+      url = "https://mail.google.com/mail/u/0/#inbox";
+      isolated = false;
+      iconUrl = "https://www.google.com/s2/favicons?domain=https://mail.google.com/mail/u/0/&sz=256";
+      iconHash = "sha256-uvp1erTkKXGuCXxFS5ZWm8fg4Sa0g7bdiT34YaClscM=";
+    }
     # WEBAPPS
   ];
 
-  # Expose scripts/webapp-{install,remove}.sh on PATH. They locate the repo
-  # via BASH_SOURCE, so keep them as thin execs into the real files rather
-  # than copying script contents into the store.
   webappInstall = pkgs.writeShellScriptBin "webapp-install" ''
     exec "${config.home.homeDirectory}/.config/Nixodus/scripts/webapp-install.sh" "$@"
   '';
@@ -79,12 +84,7 @@ let
     lib.nameValuePair app.id {
       name = app.name;
       comment = "${app.name} web app";
-      # extra flags to make the chromium screen sharing experience seemless (may break!)
-      # Desktop Entry Spec requires quotes to wrap a whole argument, not
-      # just the value inside it (fuzzel enforces this and silently refuses
-      # to launch entries that violate it).
-      # exec = ''${pkgs.chromium}/bin/chromium ${profileFlag}"--app=${url}" "--auto-select-desktop-capture-source=Entire screen" --hide-scrollbars --use-fake-ui-for-media-stream --test-type'';
-
+    
       exec = ''${pkgs.chromium}/bin/chromium ${profileFlag}"--app=${url}"'';
       icon = pkgs.fetchurl {
         url = app.iconUrl;
@@ -99,7 +99,6 @@ in
 {
   xdg.desktopEntries = builtins.listToAttrs (map mkEntry webApps);
 
-  # making the scripts visible in bin
   home.packages = [
     webappInstall
     webappRemove

@@ -11,6 +11,6 @@ for _, window in ipairs(windows) do
 		match = window.title and { title = window.title } or { class = window.class },
 		float = true,
 		center = true,
-		size = window.size or { 1000, 650 },
+		size = window.size or { 1200, 750 },
 	})
 end

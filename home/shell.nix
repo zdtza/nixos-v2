@@ -25,11 +25,12 @@
     shellAliases = {
       ls = "eza -l --group-directories-first --icons=auto";
       lsa = "ls -a";
-      lt = "eza --tree --level=2 --long --icons --git";
+      lt = "eza --tree --level=4 --long --icons --git";
       lta = "lt -a";
 
       startw = "uwsm start hyprland-uwsm.desktop";
       rb = "sudo nixos-rebuild switch --flake ~/.config/Nixodus";
+      ff = "fastfetch";
     };
   };
 

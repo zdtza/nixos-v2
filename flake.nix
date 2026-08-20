@@ -30,6 +30,7 @@
           home-manager.users.cdt = {
             imports = [
               ./home/defaults.nix
+              ./home/appearance.nix
               ./home/kitty.nix
               ./home/shell.nix
               ./home/hyprland.nix

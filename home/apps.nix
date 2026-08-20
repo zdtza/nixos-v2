@@ -32,6 +32,30 @@ let
       iconUrl = "https://www.google.com/s2/favicons?domain=https://app.slack.com/client/TNZGA82FQ&sz=256";
       iconHash = "sha256-3vONfw6TIFUEiBaCgZTV6voOvziOTzYs/wnJ1+6cmos=";
     }
+    {
+      id = "yt-music";
+      name = "YT Music";
+      url = "https://music.youtube.com/";
+      isolated = false;
+      iconUrl = "https://www.google.com/s2/favicons?domain=https://music.youtube.com/&sz=256";
+      iconHash = "sha256-f5M74vVmAmIrigDa0PWVPvZr88RJXLqKrTcqt8T9/Fs=";
+    }
+    {
+      id = "teams";
+      name = "Teams";
+      url = "https://teams.cloud.microsoft/";
+      isolated = true;
+      iconUrl = "https://www.google.com/s2/favicons?domain=https://teams.cloud.microsoft/&sz=256";
+      iconHash = "sha256-uFtVcoGXHvPhaO1ngV3fYQMd/UPItRmnRDrwUuhlyWY=";
+    }
+    {
+      id = "whatsapp";
+      name = "WhatsApp";
+      url = "https://web.whatsapp.com/";
+      isolated = false;
+      iconUrl = "https://static.whatsapp.net/rsrc.php/yI/r/EoOh62-jiPS.webp";
+      iconHash = "sha256-zwMr79bB+CS+6pls2+77lK4WBlBDgjXiUCK4rnRRREw=";
+    }
     # WEBAPPS
   ];
 
@@ -59,8 +83,9 @@ let
       # Desktop Entry Spec requires quotes to wrap a whole argument, not
       # just the value inside it (fuzzel enforces this and silently refuses
       # to launch entries that violate it).
-      # exec = ''${pkgs.chromium}/bin/chromium ${profileFlag}"--app=${url}"'';
-      exec = ''${pkgs.chromium}/bin/chromium ${profileFlag}"--app=${url}" "--auto-select-desktop-capture-source=Entire screen" --hide-scrollbars --use-fake-ui-for-media-stream --test-type'';
+      # exec = ''${pkgs.chromium}/bin/chromium ${profileFlag}"--app=${url}" "--auto-select-desktop-capture-source=Entire screen" --hide-scrollbars --use-fake-ui-for-media-stream --test-type'';
+
+      exec = ''${pkgs.chromium}/bin/chromium ${profileFlag}"--app=${url}"'';
       icon = pkgs.fetchurl {
         url = app.iconUrl;
         hash = app.iconHash;

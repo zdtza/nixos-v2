@@ -246,6 +246,9 @@ in
     polarity = "dark";
     image = ./wallpapers/winding-road.jpg;
 
+    # Keep boot and virtual consoles on their default palette.
+    targets.console.enable = false;
+
     cursor = {
       package = pkgs.adwaita-icon-theme;
       name = "Adwaita";

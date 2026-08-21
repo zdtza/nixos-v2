@@ -68,6 +68,21 @@ for _, animation in ipairs(animations) do
 end
 
 -- =============================================================================
+-- LAYER RULES
+-- =============================================================================
+
+-- Quickshell surfaces must appear instantly: the launcher maps and unmaps its
+-- layer surface on every toggle, which would otherwise get the global fade.
+local quickshell_layers = { "quickshell:bar", "quickshell:launcher" }
+
+for _, namespace in ipairs(quickshell_layers) do
+	hl.layer_rule({
+		match = { namespace = "^" .. namespace .. "$" },
+		no_anim = true,
+	})
+end
+
+-- =============================================================================
 -- WINDOW RULES
 -- =============================================================================
 
@@ -357,6 +372,4 @@ bind("SUPER + SHIFT + V", "Toggle dictation", hl.dsp.exec_cmd("voxtype record to
 bind("F9", "Start dictation", hl.dsp.exec_cmd("voxtype record start"))
 bind("F9", "Stop dictation", hl.dsp.exec_cmd("voxtype record stop"), { release = true })
 
--- PLACEHOLDER: replace commands when launcher and status bar choices change.
-bind("SUPER + space", "Open app launcher", hl.dsp.exec_cmd("fuzzel"))
-bind("SUPER + SHIFT + space", "Hide status bar", hl.dsp.exec_cmd("true"))
+bind("SUPER + space", "Open app launcher", hl.dsp.exec_cmd("qs ipc call launcher toggle"))

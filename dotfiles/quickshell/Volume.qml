@@ -10,9 +10,6 @@ Item {
     readonly property bool muted: sink && sink.audio ? sink.audio.muted : false
     readonly property int percent: sink && sink.audio ? Math.round(sink.audio.volume * 100) : 0
 
-    implicitWidth: label.implicitWidth
-    implicitHeight: label.implicitHeight
-
     // Binds the sink so its volume properties stay live.
     PwObjectTracker {
         objects: root.sink ? [root.sink] : []
@@ -23,18 +20,18 @@ Item {
         anchors.centerIn: parent
         text: {
             if (!root.sink)
-                return "󰖁  n/a";
+                return "󰖁 ";
             if (root.muted)
-                return "󰝟  muted";
+                return "󰝟 ";
             if (root.percent >= 60)
-                return `󰕾  ${root.percent}%`;
+                return `󰕾`;
             if (root.percent >= 20)
-                return `󰖀  ${root.percent}%`;
-            return `󰕿  ${root.percent}%`;
+                return `󰖀`;
+            return `󰕿`;
         }
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSize
-        color: root.muted ? Theme.muted : Theme.foreground
+        color: Theme.foreground
     }
 
     MouseArea {

@@ -7,6 +7,7 @@
 
 let
   colors = config.lib.stylix.colors.withHashtag;
+  rawColors = config.lib.stylix.colors;
   fonts = config.stylix.fonts;
 
   # Stylix-derived values can't live in the editable dotfiles dir, so they are
@@ -23,6 +24,9 @@ let
 
       QtObject {
           readonly property color background: "${colors.base00}"
+          readonly property color dark_background: "${colors.base01}"
+          // Dim wash painted over the screen behind popups (#AARRGGBB).
+          readonly property color overlay: "#b3${rawColors.base00}"
           readonly property color surface: "${colors.base02}"
           readonly property color border: "${colors.base03}"
           readonly property color muted: "${colors.base04}"
@@ -33,13 +37,7 @@ let
           readonly property color success: "${colors.base0B}"
 
           readonly property string fontFamily: "${fonts.monospace.name}"
-          readonly property int fontSize: 12
-          readonly property int fontSizeSmall: 10
-
-          readonly property int barHeight: 32
-          readonly property int paddingH: 10
-          readonly property int spacing: 12
-          readonly property int iconSize: 16
+          readonly property int fontSize: 13
       }
     '';
   };
@@ -52,15 +50,24 @@ let
     singleton Theme 1.0 Theme.qml
     EOF
   '';
+
+  # Wrapped so `qs` / `quickshell` always resolve the Stylix module, whether run
+  # by the service or by hand in a terminal. Avoids depending on session env.
+  quickshell = pkgs.symlinkJoin {
+    name = "quickshell-stylix";
+    paths = [ pkgs.quickshell ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      for bin in qs quickshell; do
+        wrapProgram $out/bin/$bin --prefix QML2_IMPORT_PATH : ${stylixQmlModule}
+      done
+    '';
+  };
 in
 {
-  home.packages = [ pkgs.quickshell ];
+  home.packages = [ quickshell ];
 
   home.file.".config/quickshell".source = repoFile "dotfiles/quickshell";
-
-  # Exported for the session too, so `quickshell` run by hand from a terminal
-  # resolves the Stylix module the same way the service does.
-  home.sessionVariables.QML2_IMPORT_PATH = "${stylixQmlModule}\${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}";
 
   systemd.user.services.quickshell = {
     Unit = {
@@ -70,8 +77,7 @@ in
     };
 
     Service = {
-      Environment = [ "QML2_IMPORT_PATH=${stylixQmlModule}" ];
-      ExecStart = "${pkgs.quickshell}/bin/quickshell";
+      ExecStart = "${quickshell}/bin/quickshell";
       Restart = "on-failure";
       RestartSec = 2;
     };

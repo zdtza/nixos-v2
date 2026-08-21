@@ -13,7 +13,6 @@ Item {
     readonly property bool low: !charging && percent <= 20
 
     visible: available
-    implicitWidth: available ? label.implicitWidth : 0
     implicitHeight: label.implicitHeight
 
     Text {
@@ -21,17 +20,17 @@ Item {
         anchors.centerIn: parent
         text: {
             if (root.charging)
-                return `󰂄  ${root.percent}%`;
+                return `󰂄`;
             if (root.percent >= 80)
-                return `󰁹  ${root.percent}%`;
+                return `󰁹`;
             if (root.percent >= 50)
-                return `󰁿  ${root.percent}%`;
+                return `󰁿`;
             if (root.percent >= 20)
-                return `󰁻  ${root.percent}%`;
-            return `󰁺  ${root.percent}%`;
+                return `󰁻`;
+            return `󰁺`;
         }
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSize
-        color: root.low ? Theme.urgent : (root.charging ? Theme.success : Theme.foreground)
+        color: root.low ? Theme.urgent : Theme.foreground
     }
 }

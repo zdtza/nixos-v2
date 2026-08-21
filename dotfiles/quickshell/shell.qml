@@ -9,4 +9,7 @@ ShellRoot {
 
         Bar {}
     }
+
+    // Single instance, toggled over IPC: `qs ipc call launcher toggle`
+    Launcher {}
 }

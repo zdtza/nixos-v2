@@ -1,5 +1,5 @@
-// Top bar layer-shell panel: workspaces + title on the left, clock centered,
-// status widgets on the right.
+// Top bar layer-shell panel. Three anchored groups: left, right, and a clock
+// pinned to the true center of the bar (independent of the side widths).
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -12,8 +12,8 @@ PanelWindow {
     required property var modelData
 
     screen: modelData
-    color: "transparent"
-    implicitHeight: Theme.barHeight
+    color: Theme.dark_background
+    implicitHeight: 30
     WlrLayershell.namespace: "quickshell:bar"
 
     anchors {
@@ -22,63 +22,43 @@ PanelWindow {
         right: true
     }
 
-    Rectangle {
-        anchors.fill: parent
-        color: Theme.background
-
-        // Bottom hairline separates the bar from windows below it.
-        Rectangle {
-            anchors {
-                left: parent.left
-                right: parent.right
-                bottom: parent.bottom
-            }
-            height: 1
-            color: Theme.border
+    // --- left ---
+    RowLayout {
+        anchors {
+            leftMargin: 6
+            left: parent.left
+            verticalCenter: parent.verticalCenter
         }
 
-        RowLayout {
-            anchors {
-                fill: parent
-                leftMargin: Theme.paddingH
-                rightMargin: Theme.paddingH
-            }
-            spacing: Theme.spacing
-
-            // --- left ---
-            RowLayout {
-                Layout.alignment: Qt.AlignVCenter
-                spacing: Theme.spacing
-
-                Workspaces {
-                    screen: bar.screen
-                }
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            // --- center ---
-            Clock {
-                Layout.alignment: Qt.AlignVCenter
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            // --- right ---
-            RowLayout {
-                Layout.alignment: Qt.AlignVCenter
-                spacing: Theme.spacing
-
-                Tray {}
-
-                Volume {}
-
-                Battery {}
-            }
+        Workspaces {
+            screen: bar.screen
         }
+    }
+
+    // --- center ---
+    Clock {
+        anchors.centerIn: parent
+    }
+
+    // --- right ---
+    RowLayout {
+        anchors {
+            right: parent.right
+            rightMargin: 12
+            verticalCenter: parent.verticalCenter
+        }
+        spacing: 24
+
+        Tray {}
+
+        Network {}
+
+        Bluetooth {}
+        
+        Volume {}
+
+        Display {}
+
+        Battery {}
     }
 }

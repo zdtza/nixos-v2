@@ -1,60 +1,91 @@
-// Hyprland workspace pills for one monitor. Click to switch.
+pragma ComponentBehavior: Bound
+
+// Hyprland workspace indicators for one monitor. Click to switch.
+//
+// Shows the first `minVisible` workspaces of the monitor at all times, plus any
+// higher one that is active, occupied or urgent - so the bar stays compact
+// until the extra workspaces get used.
+//
+// Styling: only the active workspace gets a border; text is foreground when
+// active or occupied, muted otherwise.
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import Stylix
 import Quickshell.Hyprland
 
-RowLayout {
+Item {
     id: root
 
-    // Screen this widget belongs to; used to filter workspaces per monitor.
+    // Screen this widget belongs to; workspaces are filtered to it.
     property var screen: null
 
+    // How many workspaces are always shown, even when empty.
+    property int minVisible: 3
+
     readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
-    readonly property var workspaces: Hyprland.workspaces.values
-        .filter(ws => ws.id > 0 && (!root.monitor || ws.monitor === root.monitor))
+    readonly property string monitorName: monitor ? monitor.name : (screen ? screen.name : "")
+
+    // Active workspace of *this* monitor, not the globally focused one.
+    readonly property int activeWorkspaceId: root.monitor?.activeWorkspace?.id ?? 0
+
+    // All workspaces assigned to this monitor, lowest id first.
+    readonly property var monitorWorkspaces: Hyprland.workspaces.values
+        .filter(ws => ws.id > 0 && (root.monitorName === "" || ws.monitor?.name === root.monitorName))
         .sort((a, b) => a.id - b.id)
 
-    spacing: 4
+    readonly property var workspaces: root.monitorWorkspaces.filter((ws, index) => index < root.minVisible || ws.id === root.activeWorkspaceId || ws.urgent || ws.toplevels.values.length > 0)
 
-    Repeater {
-        model: root.workspaces
+    implicitWidth: workspaceRow.implicitWidth
+    implicitHeight: workspaceRow.implicitHeight
 
-        Rectangle {
-            id: pill
+    Row {
+        id: workspaceRow
 
-            required property var modelData
+        anchors.centerIn: parent
+        spacing: 4
 
-            readonly property bool focused: modelData.focused
-            readonly property bool occupied: modelData.toplevels.values.length > 0
+        Repeater {
+            model: root.workspaces
 
-            implicitWidth: pill.focused ? 26 : 18
-            implicitHeight: 18
-            radius: height / 2
-            color: pill.focused ? Theme.accent : (pill.occupied ? Theme.surface : "transparent")
-            border.width: pill.occupied || pill.focused ? 0 : 1
-            border.color: Theme.border
+            Rectangle {
+                id: workspaceItem
 
-            Behavior on implicitWidth {
-                NumberAnimation {
-                    duration: 120
-                    easing.type: Easing.OutCubic
+                required property var modelData
+
+                readonly property int workspaceId: modelData.id
+                readonly property bool isActive: root.activeWorkspaceId === workspaceId
+                readonly property bool isOccupied: modelData.toplevels.values.length > 0
+
+                width: workspaceNumber.implicitWidth + 12
+                height: workspaceNumber.implicitHeight + 2
+
+                color: "transparent"
+                radius: 4
+
+                border.width: workspaceItem.isActive ? 1 : 0
+                border.color: Theme.foreground
+
+                Text {
+                    id: workspaceNumber
+
+                    anchors.centerIn: parent
+                    text: workspaceItem.workspaceId
+                    color: workspaceItem.isActive || workspaceItem.isOccupied ? Theme.foreground : Theme.muted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize
                 }
-            }
 
-            Text {
-                anchors.centerIn: parent
-                text: pill.modelData.id
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeSmall
-                color: pill.focused ? Theme.background : (pill.occupied ? Theme.foreground : Theme.muted)
-            }
+                MouseArea {
+                    id: mouseArea
 
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: Hyprland.dispatch(`workspace ${pill.modelData.id}`)
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+
+                    // The lua config backend takes lua expressions, not the
+                    // classic `workspace N` dispatcher string.
+                    onClicked: Hyprland.dispatch(Hyprland.usingLua ? `hl.dsp.focus({ workspace = ${workspaceItem.workspaceId} })` : `workspace ${workspaceItem.workspaceId}`)
+                }
             }
         }
     }

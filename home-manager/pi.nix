@@ -1,5 +1,5 @@
-{ self, ... }:
+{ repoFile, ... }:
 
 {
-  home.file.".pi/agent/APPEND_SYSTEM.md".source = self + "/dotfiles/pi/agent/APPEND_SYSTEM.md";
+  home.file.".pi/agent/APPEND_SYSTEM.md".source = repoFile "dotfiles/pi/agent/APPEND_SYSTEM.md";
 }

@@ -40,6 +40,7 @@
 
             home-manager.users.zdtza = {
               imports = [
+                ./home-manager/repo.nix
                 ./home-manager/defaults.nix
                 ./home-manager/appearance.nix
                 ./home-manager/kitty.nix
@@ -56,6 +57,7 @@
                 ./home-manager/yazi.nix
                 ./home-manager/npm.nix
                 ./home-manager/fuzzel.nix
+                ./home-manager/quickshell.nix
               ];
               home.stateVersion = "26.05";
             };

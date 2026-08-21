@@ -20,7 +20,7 @@ hl.config({
 		rounding = 0,
 		active_opacity = 0.98,
 		inactive_opacity = 0.96,
-		blur = { enabled = true, special = true, passes = 2, size = 3, xray = true },
+		blur = { enabled = true, special = true, passes = 2, size = 3 },
 		shadow = {
 			enabled = true,
 			range = 20,

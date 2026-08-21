@@ -1,6 +1,9 @@
 { pkgs, ... }:
 
 {
+  # disable the tty styling colours
+  stylix.targets.tty.enable = false
+
   # setting the icon theme
   gtk.iconTheme = {
     name = "Adwaita";

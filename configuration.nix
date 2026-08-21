@@ -138,6 +138,7 @@ in
     audacity
     dotnet-sdk_10
     mkcert
+    steam
 
     # lazyvim runtime deps
     ripgrep
@@ -251,6 +252,7 @@ in
       size = 24;
     };
 
+    # default tokyo night theme
     base16Scheme = {
       base00 = "#1a1b26"; # background
       base01 = "#13141c"; # dark_background

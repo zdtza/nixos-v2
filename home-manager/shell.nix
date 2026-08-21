@@ -9,12 +9,13 @@
   programs.fish = {
     enable = true;
 
-    # disabling fish greeting and loading env vars from .env
+    # Load secrets from stable per-user path, independent of flake checkout/cwd.
     interactiveShellInit = ''
       set -g fish_greeting
+      set -l env_file "$XDG_CONFIG_HOME/environment/secrets.env"
 
-      if test -f "$XDG_CONFIG_HOME/nixos/.env"
-        for line in (grep -Ev '^\s*(#|$)' "$XDG_CONFIG_HOME/nixos/.env")
+      if test -f "$env_file"
+        for line in (grep -Ev '^\s*(#|$)' "$env_file")
           set -l parts (string split -m1 "=" $line)
           set -gx $parts[1] $parts[2]
         end
@@ -29,7 +30,7 @@
       lta = "lt -a";
 
       startw = "uwsm start hyprland-uwsm.desktop";
-      rb = "sudo nixos-rebuild switch --flake (git rev-parse --show-toplevel)#nixos";
+      rb = "sudo nixos-rebuild switch --flake ~/.src/nixos";
       ff = "fastfetch";
     };
   };

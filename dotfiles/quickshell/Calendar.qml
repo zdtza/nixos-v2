@@ -1,0 +1,332 @@
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import Quickshell
+import Stylix
+
+// Current-year calendar shown from clock in bar.
+PanelPopup {
+    id: root
+
+    property int shownMonth: clock.date.getMonth()
+    property string selectedDay: ""
+
+    readonly property real weekColumnWidth: 44
+    readonly property real dayColumnWidth: (panelContent.width - weekColumnWidth) / 7
+    readonly property var monthNames: [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ]
+    readonly property var weekdayNames: ["W", "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+    readonly property int currentYear: clock.date.getFullYear()
+    readonly property int yearCompletePercent: {
+        const start = new Date(root.currentYear, 0, 1);
+        const end = new Date(root.currentYear + 1, 0, 1);
+        const fraction = (clock.date.getTime() - start.getTime()) / (end.getTime() - start.getTime());
+        return Math.round(Math.max(0, Math.min(1, fraction)) * 100);
+    }
+    readonly property var cells: {
+        // Touch clock.date so model rolls over automatically at midnight.
+        const today = clock.date;
+        const first = new Date(root.currentYear, root.shownMonth, 1, 12);
+        const mondayOffset = (first.getDay() + 6) % 7;
+        const firstVisible = new Date(root.currentYear, root.shownMonth, 1 - mondayOffset, 12);
+        const values = [];
+
+        for (let week = 0; week < 6; ++week) {
+            const weekStart = new Date(firstVisible);
+            weekStart.setDate(firstVisible.getDate() + week * 7);
+            values.push({ weekNumber: true, label: root.isoWeek(weekStart) });
+
+            for (let day = 0; day < 7; ++day) {
+                const date = new Date(weekStart);
+                date.setDate(weekStart.getDate() + day);
+                values.push({
+                    weekNumber: false,
+                    label: date.getDate(),
+                    key: root.dateKey(date.getFullYear(), date.getMonth(), date.getDate()),
+                    inYear: date.getFullYear() === root.currentYear,
+                    inMonth: date.getMonth() === root.shownMonth,
+                    today: date.getFullYear() === today.getFullYear()
+                        && date.getMonth() === today.getMonth()
+                        && date.getDate() === today.getDate()
+                });
+            }
+        }
+
+        return values;
+    }
+
+    function dateKey(year: int, month: int, day: int): string {
+        return year + "-" + String(month + 1).padStart(2, "0")
+            + "-" + String(day).padStart(2, "0");
+    }
+
+    function selectDay(key: string): void {
+        root.selectedDay = root.selectedDay === key ? "" : key;
+    }
+
+    function isoWeek(date: var): int {
+        const utc = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        const day = utc.getUTCDay() || 7;
+        utc.setUTCDate(utc.getUTCDate() + 4 - day);
+        const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+        return Math.ceil((((utc - yearStart) / 86400000) + 1) / 7);
+    }
+
+    function changeMonth(offset: int): void {
+        root.shownMonth = (root.shownMonth + offset + 12) % 12;
+    }
+
+    onVisibleChanged: if (visible)
+        shownMonth = clock.date.getMonth()
+
+    contentHorizontalMargins: 80
+    contentVerticalMargins: 18
+    contentSpacing: 16
+    implicitWidth: 650
+    implicitHeight: panelContent.implicitHeight + contentVerticalMargins * 2
+
+    SystemClock {
+        id: clock
+        precision: SystemClock.Minutes
+    }
+
+    Item {
+        width: root.panelContent.width
+        implicitHeight: 50
+
+        Row {
+            anchors.centerIn: parent
+            spacing: 24
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: "󰃭"
+                color: Theme.foreground
+                font.family: Theme.fontFamily
+                font.pixelSize: 50
+                font.bold: true
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.monthNames[clock.date.getMonth()] + " " + clock.date.getDate()
+                color: Theme.foreground
+                font.family: Theme.fontFamily
+                font.pixelSize: 48
+                font.weight: Font.Bold
+            }
+        }
+    }
+
+    Row {
+        x: 17
+        width: root.panelContent.width - 38
+        height: 40
+        spacing: 8
+
+        Text {
+            width: 44
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.currentYear
+            color: Theme.muted
+            font.family: Theme.fontFamily
+            font.pixelSize: 12
+            font.letterSpacing: 1
+        }
+
+        Item {
+            width: parent.width - 44 - 42 - parent.spacing * 2
+            height: 8
+            anchors.verticalCenter: parent.verticalCenter
+
+            Rectangle {
+                anchors.fill: parent
+                color: Theme.surface
+            }
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: parent.width * root.yearCompletePercent / 100
+                color: Theme.foreground
+            }
+        }
+
+        Text {
+            width: 42
+            anchors.verticalCenter: parent.verticalCenter
+            horizontalAlignment: Text.AlignRight
+            text: root.yearCompletePercent + "%"
+            color: Theme.foreground
+            font.family: Theme.fontFamily
+            font.pixelSize: 12
+            font.letterSpacing: 1
+        }
+    }
+
+    Row {
+        width: root.panelContent.width
+        height: 18
+
+        Repeater {
+            model: root.weekdayNames
+
+            Text {
+                required property string modelData
+                required property int index
+
+                width: index === 0 ? root.weekColumnWidth : root.dayColumnWidth
+                horizontalAlignment: Text.AlignHCenter
+                text: modelData
+                color: Theme.muted
+                font.family: Theme.fontFamily
+                font.pixelSize: 11
+                font.weight: Font.Medium
+                font.letterSpacing: 1
+            }
+        }
+    }
+
+    Item {
+        width: root.panelContent.width
+        implicitHeight: calendarGrid.implicitHeight
+
+        Grid {
+            id: calendarGrid
+
+            width: parent.width
+            columns: 8
+            rowSpacing: 3
+
+            Repeater {
+                model: root.cells
+
+                Item {
+                    id: dayCell
+
+                    required property var modelData
+                    required property int index
+
+                    readonly property bool marked: !modelData.weekNumber
+                        && root.selectedDay === modelData.key
+
+                    width: index % 8 === 0 ? root.weekColumnWidth : root.dayColumnWidth
+                    height: 42
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: dayCell.modelData.weekNumber ? 0 : root.dayColumnWidth - 8
+                        height: 36
+                        visible: !dayCell.modelData.weekNumber
+                            && (dayCell.marked || dayCell.modelData.today || dayMouse.containsMouse)
+                        color: dayCell.marked ? Theme.surface
+                            : (dayMouse.containsMouse ? Theme.surface : "transparent")
+                        border.width: dayCell.marked || dayCell.modelData.today ? 1 : 0
+                        border.color: dayCell.marked ? Theme.muted : Theme.border
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: dayCell.modelData.label
+                        color: dayCell.modelData.weekNumber || !dayCell.modelData.inMonth
+                            ? Theme.border : Theme.foreground
+                        font.family: Theme.fontFamily
+                        font.pixelSize: dayCell.modelData.weekNumber ? 10 : 13
+                        font.weight: dayCell.marked ? Font.Medium : Font.Normal
+                    }
+
+                    MouseArea {
+                        id: dayMouse
+
+                        anchors.fill: parent
+                        enabled: !dayCell.modelData.weekNumber && dayCell.modelData.inYear
+                        hoverEnabled: true
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: root.selectDay(dayCell.modelData.key)
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.leftMargin: root.weekColumnWidth - 1
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: 1
+            color: Theme.border
+            opacity: 0.45
+        }
+    }
+
+    Item {
+        width: root.panelContent.width
+        implicitHeight: 34
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            width: 32
+            height: 28
+            color: "transparent"
+
+            Text {
+                anchors.fill: parent
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: "‹"
+                color: Theme.foreground
+                font.family: Theme.fontFamily
+                font.pixelSize: 18
+            }
+
+            MouseArea {
+                id: previousMouse
+
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.changeMonth(-1)
+            }
+        }
+
+        Text {
+            anchors.centerIn: parent
+            anchors.verticalCenterOffset: 2
+            text: (root.monthNames[root.shownMonth] + " " + root.currentYear).toUpperCase()
+            color: Theme.muted
+            font.family: Theme.fontFamily
+            font.pixelSize: 11
+            font.weight: Font.Medium
+            font.letterSpacing: 1.4
+        }
+
+        Rectangle {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            width: 32
+            height: 28
+            color: "transparent"
+
+            Text {
+                anchors.fill: parent
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: "›"
+                color: Theme.foreground
+                font.family: Theme.fontFamily
+                font.pixelSize: 18
+            }
+
+            MouseArea {
+                id: nextMouse
+
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.changeMonth(1)
+            }
+        }
+    }
+}

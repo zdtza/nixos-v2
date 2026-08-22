@@ -14,12 +14,22 @@ PanelWindow {
     screen: modelData
     color: Theme.dark_background
     implicitHeight: 30
+
     WlrLayershell.namespace: "quickshell:bar"
+    WlrLayershell.keyboardFocus: PanelService.activePanel?.requiresKeyboardFocus
+        ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
     anchors {
         top: true
         left: true
         right: true
+    }
+
+    // Popup focus grabs include bar so controls remain directly clickable.
+    // This background target dismisses active popup when unused bar area is hit.
+    MouseArea {
+        anchors.fill: parent
+        onClicked: PanelService.closeActive()
     }
 
     // --- left ---
@@ -37,7 +47,15 @@ PanelWindow {
 
     // --- center ---
     Clock {
+        id: clock
         anchors.centerIn: parent
+    }
+
+    QuickToggles {
+        anchors {
+            right: clock.left
+            verticalCenter: clock.verticalCenter
+        }
     }
 
     // --- right ---
@@ -47,17 +65,16 @@ PanelWindow {
             rightMargin: 12
             verticalCenter: parent.verticalCenter
         }
-        spacing: 24
 
         Tray {}
 
-        Network {}
-
-        Bluetooth {}
-        
         Volume {}
 
+        Bluetooth {}
+
         Display {}
+
+        Network {}
 
         Battery {}
     }

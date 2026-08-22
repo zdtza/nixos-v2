@@ -357,12 +357,12 @@ bind("SUPER + V", "Universal paste", universal_clipboard_shortcut("CTRL", "V", "
 -- KEYBINDS: AUDIO AND BRIGHTNESS
 -- =============================================================================
 
-bind("XF86AudioRaiseVolume", "Raise audio volume", hl.dsp.exec_cmd("wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
-bind("XF86AudioLowerVolume", "Lower audio volume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), { locked = true, repeating = true })
-bind("XF86AudioMute", "Toggle audio mute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true, repeating = true })
-bind("XF86AudioMicMute", "Toggle microphone mute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true, repeating = true })
-bind("XF86MonBrightnessUp", "Raise display brightness", hl.dsp.exec_cmd("brightnessctl --quiet --class=backlight set +5%"), { locked = true, repeating = true })
-bind("XF86MonBrightnessDown", "Lower display brightness", hl.dsp.exec_cmd("brightnessctl --quiet --class=backlight set 5%-"), { locked = true, repeating = true })
+bind("XF86AudioRaiseVolume", "Raise audio volume", hl.dsp.exec_cmd("qs ipc call audio outputUp"), { locked = true, repeating = true })
+bind("XF86AudioLowerVolume", "Lower audio volume", hl.dsp.exec_cmd("qs ipc call audio outputDown"), { locked = true, repeating = true })
+bind("XF86AudioMute", "Toggle audio mute", hl.dsp.exec_cmd("qs ipc call audio toggleOutputMute"), { locked = true, repeating = true })
+bind("XF86AudioMicMute", "Toggle microphone mute", hl.dsp.exec_cmd("qs ipc call audio toggleInputMute"), { locked = true, repeating = true })
+bind("XF86MonBrightnessUp", "Raise display brightness", hl.dsp.exec_cmd("qs ipc call display brightnessUp"), { locked = true, repeating = true })
+bind("XF86MonBrightnessDown", "Lower display brightness", hl.dsp.exec_cmd("qs ipc call display brightnessDown"), { locked = true, repeating = true })
 
 -- =============================================================================
 -- KEYBINDS: DICTATION AND UI
@@ -373,3 +373,4 @@ bind("F9", "Start dictation", hl.dsp.exec_cmd("voxtype record start"))
 bind("F9", "Stop dictation", hl.dsp.exec_cmd("voxtype record stop"), { release = true })
 
 bind("SUPER + space", "Open app launcher", hl.dsp.exec_cmd("qs ipc call launcher toggle"))
+bind("SUPER + SHIFT + space", "Toggle status bar", hl.dsp.exec_cmd("qs ipc call bar toggle"))

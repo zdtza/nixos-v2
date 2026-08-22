@@ -12,10 +12,14 @@ PopupWindow {
 
     // QsMenuHandle to display, usually SystemTrayItem.menu
     required property var handle
-    // Item this menu is positioned against.
+    // Item and bar window this menu is positioned against.
     required property Item anchorItem
+    required property var anchorWindow
 
     property int menuWidth: 220
+    property string menuTitle: ""
+    property string menuStatus: ""
+    property bool contentReady: false
 
     // Submenus grow sideways out of their parent row instead of downwards.
     property bool submenu: false
@@ -32,15 +36,45 @@ PopupWindow {
 
     signal closeRequested
 
+    Shortcut {
+        enabled: menu.visible && !menu.submenu
+        sequence: "Escape"
+        context: Qt.ApplicationShortcut
+        onActivated: menu.closeRequested()
+    }
+
     anchor {
-        item: menu.anchorItem
-        edges: menu.submenu ? Edges.Right | Edges.Top : Edges.Bottom
-        gravity: menu.submenu ? Edges.Right | Edges.Bottom : Edges.Bottom | Edges.Left
+        id: popupAnchor
+
+        item: menu.submenu ? menu.anchorItem : null
+        window: menu.submenu ? null : menu.anchorWindow
+        edges: menu.submenu ? Edges.Right | Edges.Top : Edges.Top | Edges.Left
+        gravity: menu.submenu ? Edges.Right | Edges.Bottom : Edges.Bottom | Edges.Right
         adjustment: PopupAdjustment.Slide
+        rect.width: 1
+        rect.height: 1
+
+        // Match PanelPopup positioning: center under bar item, then leave same
+        // compositor-gap-sized offset below bar.
+        onAnchoring: {
+            if (menu.submenu || !menu.anchorWindow)
+                return;
+
+            let point = menu.anchorWindow.contentItem.mapFromItem(
+                menu.anchorItem,
+                menu.anchorItem.width / 2 - menu.implicitWidth / 2,
+                menu.anchorItem.height + PanelService.barGap
+            );
+            point.x = Math.max(5, Math.min(point.x,
+                menu.anchorWindow.width - menu.implicitWidth - 7));
+            popupAnchor.rect.x = Math.round(point.x);
+            popupAnchor.rect.y = Math.round(point.y);
+        }
     }
 
     implicitWidth: menu.menuWidth
-    implicitHeight: Math.max(1, column.implicitHeight + 2)
+    implicitHeight: Math.max(1, column.implicitHeight + 12)
+    visible: contentReady
     color: "transparent"
 
     onVisibleChanged: {
@@ -51,14 +85,33 @@ PopupWindow {
     QsMenuOpener {
         id: opener
         menu: menu.handle
+
+        onMenuChanged: {
+            menu.contentReady = false;
+            revealTimer.restart();
+        }
+        onChildrenChanged: {
+            menu.contentReady = false;
+            revealTimer.restart();
+        }
     }
+
+    // QsMenuOpener populates its model asynchronously. Keep popup unmapped
+    // until model geometry has settled, avoiding empty one-frame menu flashes.
+    Timer {
+        id: revealTimer
+        interval: 20
+        onTriggered: menu.contentReady = true
+    }
+
+    Component.onCompleted: revealTimer.restart()
 
     Rectangle {
         anchors.fill: parent
 
         color: Theme.background
         radius: 0
-        border.width: 1
+        border.width: 2
         border.color: Theme.border
 
         Column {
@@ -66,7 +119,56 @@ PopupWindow {
 
             anchors {
                 fill: parent
-                margins: 1
+                leftMargin: 2
+                rightMargin: 2
+                topMargin: 6
+                bottomMargin: 6
+            }
+
+            Item {
+                width: column.width
+                implicitHeight: menu.menuTitle === "" ? 0 : (menu.menuStatus === "" ? 44 : 58)
+                visible: implicitHeight > 0
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 14
+                    anchors.right: parent.right
+                    anchors.rightMargin: 14
+                    anchors.top: parent.top
+                    anchors.topMargin: 12
+                    text: menu.menuTitle
+                    color: Theme.foreground
+                    elide: Text.ElideRight
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 14
+                    font.weight: Font.Medium
+                    font.letterSpacing: 0.1
+                }
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 14
+                    anchors.right: parent.right
+                    anchors.rightMargin: 14
+                    anchors.top: parent.top
+                    anchors.topMargin: 32
+                    visible: menu.menuStatus !== ""
+                    text: menu.menuStatus.toUpperCase()
+                    color: Theme.muted
+                    elide: Text.ElideRight
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 9
+                    font.weight: Font.Medium
+                    font.letterSpacing: 1.8
+                }
+            }
+
+            Rectangle {
+                width: column.width
+                implicitHeight: menu.menuTitle === "" ? 0 : 1
+                visible: implicitHeight > 0
+                color: Theme.border
             }
 
             Repeater {
@@ -80,9 +182,10 @@ PopupWindow {
 
                     readonly property var entry: modelData
                     readonly property bool interactive: !entry.isSeparator && entry.enabled
+                    readonly property bool sectionLabel: !entry.isSeparator && !entry.enabled
 
                     width: column.width
-                    implicitHeight: entry.isSeparator ? 5 : 26
+                    implicitHeight: entry.isSeparator ? 13 : (row.sectionLabel ? 26 : 30)
 
                     // --- separator ---
                     Rectangle {
@@ -93,26 +196,32 @@ PopupWindow {
                         color: Theme.border
                     }
 
-                    // --- entry ---
+                    // --- entry or section heading ---
                     Rectangle {
                         visible: !row.entry.isSeparator
-                        anchors.fill: parent
+                        anchors {
+                            fill: parent
+                            leftMargin: 6
+                            rightMargin: 6
+                        }
                         color: mouseArea.containsMouse && row.interactive ? Theme.surface : "transparent"
 
                         Text {
                             anchors {
                                 left: parent.left
-                                leftMargin: 10
+                                leftMargin: 14
                                 right: indicator.left
-                                rightMargin: 6
+                                rightMargin: 8
                                 verticalCenter: parent.verticalCenter
                             }
 
-                            text: row.entry.text
+                            text: row.sectionLabel ? row.entry.text.toUpperCase() : row.entry.text
                             elide: Text.ElideRight
-                            color: row.interactive ? Theme.foreground : Theme.muted
+                            color: row.sectionLabel ? Theme.border : (row.interactive ? Theme.foreground : Theme.muted)
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize - 1
+                            font.pixelSize: row.sectionLabel ? 9 : 12
+                            font.weight: row.sectionLabel ? Font.Medium : Font.Normal
+                            font.letterSpacing: row.sectionLabel ? 1.8 : 0.1
                         }
 
                         // Checkmark for toggles, chevron for submenus.
@@ -121,7 +230,7 @@ PopupWindow {
 
                             anchors {
                                 right: parent.right
-                                rightMargin: 10
+                                rightMargin: 14
                                 verticalCenter: parent.verticalCenter
                             }
 
@@ -134,7 +243,7 @@ PopupWindow {
                             }
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize - 1
+                            font.pixelSize: Theme.fontSize
                         }
 
                         MouseArea {
@@ -182,9 +291,10 @@ PopupWindow {
                             setSource("TrayMenu.qml", {
                                 handle: row.entry,
                                 anchorItem: row,
+                                anchorWindow: menu.anchorWindow,
                                 menuWidth: menu.menuWidth,
-                                submenu: true,
-                                visible: true
+                                menuTitle: row.entry.text,
+                                submenu: true
                             });
                         }
 

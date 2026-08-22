@@ -20,7 +20,8 @@ Item {
     property var screen: null
 
     // How many workspaces are always shown, even when empty.
-    property int minVisible: 3
+    // five gives a nice balanace for both sides of the bar
+    property int minVisible: 5
 
     readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
     readonly property string monitorName: monitor ? monitor.name : (screen ? screen.name : "")
@@ -84,7 +85,10 @@ Item {
 
                     // The lua config backend takes lua expressions, not the
                     // classic `workspace N` dispatcher string.
-                    onClicked: Hyprland.dispatch(Hyprland.usingLua ? `hl.dsp.focus({ workspace = ${workspaceItem.workspaceId} })` : `workspace ${workspaceItem.workspaceId}`)
+                    onClicked: {
+                        PanelService.closeActive();
+                        Hyprland.dispatch(Hyprland.usingLua ? `hl.dsp.focus({ workspace = ${workspaceItem.workspaceId} })` : `workspace ${workspaceItem.workspaceId}`);
+                    }
                 }
             }
         }

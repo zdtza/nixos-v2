@@ -17,11 +17,24 @@ Item {
     id: root
 
     readonly property var items: SystemTray.items.values
-    readonly property bool expanded: hover.hovered || menuLoader.active
+    readonly property bool opened: PanelService.activePanel === root
+    property bool pinned: false
+    readonly property bool expanded: root.pinned || hover.hovered || root.opened
+
+    function menuStatus(item: SystemTrayItem): string {
+        const description = item?.tooltipDescription?.trim() ?? "";
+        if (description !== "")
+            return description;
+        if (item?.status === Status.NeedsAttention)
+            return "Needs attention";
+        if (item?.status === Status.Passive)
+            return "Passive";
+        return "Active";
+    }
 
     visible: items.length > 0
     implicitWidth: row.implicitWidth
-    implicitHeight: Math.max(chevron.implicitHeight, 16)
+    implicitHeight: 25
 
     HoverHandler {
         id: hover
@@ -31,17 +44,19 @@ Item {
         id: row
 
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 8
+        spacing: 0
 
-        Text {
+        BarButton {
             id: chevron
 
-            anchors.verticalCenter: parent.verticalCenter
+            panel: root
+            showPanelIndicator: false
             text: ""
-            color: Theme.foreground
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize
-
+            onClicked: {
+                root.pinned = !root.pinned;
+                if (!root.pinned)
+                    PanelService.close(root);
+            }
         }
 
         // Clipped viewport: its width animates, the icon row inside is pinned
@@ -53,7 +68,7 @@ Item {
             clip: true
 
             implicitWidth: root.expanded ? icons.implicitWidth : 0
-            implicitHeight: 16
+            implicitHeight: 25
             opacity: root.expanded ? 1 : 0
 
             Behavior on implicitWidth {
@@ -74,7 +89,7 @@ Item {
                 id: icons
 
                 anchors.right: parent.right
-                spacing: 8
+                spacing: 0
 
                 Repeater {
                     model: root.items
@@ -84,11 +99,14 @@ Item {
 
                         required property SystemTrayItem modelData
 
-                        implicitWidth: 16
-                        implicitHeight: 16
+                        implicitWidth: 30
+                        implicitHeight: 25
 
                         Image {
-                            anchors.fill: parent
+                            anchors.centerIn: parent
+                            anchors.verticalCenterOffset: -2
+                            width: 16
+                            height: 16
                             source: entry.modelData.icon
                             sourceSize.width: 16 * 2
                             sourceSize.height: 16 * 2
@@ -96,30 +114,44 @@ Item {
                             smooth: true
                         }
 
+                        Rectangle {
+                            anchors.bottom: parent.bottom
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: 16
+                            height: 2
+                            visible: itemMouse.containsMouse
+                                || (root.opened && menuLoader.trayItem === entry.modelData)
+                            color: Theme.accent
+                        }
+
                         MouseArea {
+                            id: itemMouse
+
                             anchors.fill: parent
                             enabled: root.expanded
+                            hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                             onClicked: mouse => {
+                                if (entry.modelData.hasMenu) {
+                                    // Same item toggles; another item transfers menu ownership.
+                                    if (root.opened && menuLoader.trayItem === entry.modelData) {
+                                        PanelService.close(root);
+                                        return;
+                                    }
+
+                                    menuLoader.trayItem = entry.modelData;
+                                    menuLoader.anchorItem = entry;
+                                    PanelService.open(root);
+                                    return;
+                                }
+
+                                // Fall back to activation only when no menu exists.
                                 if (mouse.button === Qt.LeftButton && !entry.modelData.onlyMenu) {
                                     entry.modelData.activate();
-                                    return;
+                                    PanelService.close(root);
                                 }
-
-                                if (!entry.modelData.hasMenu)
-                                    return;
-
-                                // Toggle: clicking the same item again closes the menu.
-                                if (menuLoader.active && menuLoader.trayItem === entry.modelData) {
-                                    menuLoader.active = false;
-                                    return;
-                                }
-
-                                menuLoader.trayItem = entry.modelData;
-                                menuLoader.anchorItem = entry;
-                                menuLoader.active = true;
                             }
                         }
                     }
@@ -131,10 +163,12 @@ Item {
     // Grabs input while a menu is open: a click anywhere outside the menu (and
     // its submenus) clears the grab and dismisses it.
     HyprlandFocusGrab {
-        active: menuLoader.active
-        windows: menuLoader.item?.openWindows ?? []
+        active: root.opened
+        // Keep bar in grab scope so clicks can transfer directly to another
+        // tray menu or panel without an intermediate dismissing click.
+        windows: [root.QsWindow.window].concat(menuLoader.item?.openWindows ?? [])
 
-        onCleared: menuLoader.active = false
+        onCleared: PanelService.close(root)
     }
 
     Loader {
@@ -143,14 +177,16 @@ Item {
         property SystemTrayItem trayItem: null
         property Item anchorItem: null
 
-        active: false
+        active: root.opened && !!trayItem
 
         sourceComponent: TrayMenu {
             handle: menuLoader.trayItem?.menu ?? null
             anchorItem: menuLoader.anchorItem
-            visible: true
+            anchorWindow: root.QsWindow.window
+            menuTitle: menuLoader.trayItem?.title ?? ""
+            menuStatus: root.menuStatus(menuLoader.trayItem)
 
-            onCloseRequested: menuLoader.active = false
+            onCloseRequested: PanelService.close(root)
         }
     }
 }

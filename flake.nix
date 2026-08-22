@@ -46,6 +46,8 @@
                 ./home-manager/kitty.nix
                 ./home-manager/shell.nix
                 ./home-manager/hyprland.nix
+                ./home-manager/hypridle.nix
+                ./home-manager/hyprsunset.nix
                 ./home-manager/pi.nix
                 ./home-manager/screen-share.nix
                 ./home-manager/voxtype.nix
@@ -56,7 +58,6 @@
                 ./home-manager/fzf.nix
                 ./home-manager/yazi.nix
                 ./home-manager/npm.nix
-                ./home-manager/fuzzel.nix
                 ./home-manager/quickshell.nix
               ];
               home.stateVersion = "26.05";

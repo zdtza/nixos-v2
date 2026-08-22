@@ -93,6 +93,10 @@ in
 
   services.tlp = {
     enable = true;
+    # Expose TLP through the power-profiles D-Bus API. This keeps TLP as the
+    # single power manager while allowing Quickshell's native PowerProfiles
+    # service to select performance, balanced, and power-saver profiles.
+    pd.enable = true;
     settings = {
       CPU_SCALING_GOVERNOR_ON_AC = "performance";
       CPU_SCALING_GOVERNOR_ON_BAT = "powersave";

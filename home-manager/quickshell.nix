@@ -63,9 +63,79 @@ let
       done
     '';
   };
+
+  networkStatus = pkgs.writeShellApplication {
+    name = "qs-network-status";
+    runtimeInputs = with pkgs; [
+      coreutils
+      gawk
+      iproute2
+      iputils
+      iw
+      jq
+    ];
+    text = ''
+      probe=1.1.1.1
+      route_json="$(ip -j route get "$probe" 2>/dev/null || true)"
+      [[ -n "$route_json" ]] || exit 0
+
+      iface="$(jq -r '.[0].dev // ""' <<<"$route_json")"
+      gateway="$(jq -r '.[0].gateway // ""' <<<"$route_json")"
+      address="$(jq -r '.[0].prefsrc // ""' <<<"$route_json")"
+      [[ -n "$iface" ]] || exit 0
+
+      prefix="$(ip -j addr show "$iface" | jq -r '.[0].addr_info[]? | select(.family == "inet") | .prefixlen // ""' | head -n1)"
+      printf 'iface\t%s\n' "$iface"
+      printf 'ip\t%s\n' "$address"
+      printf 'prefix\t%s\n' "$prefix"
+      printf 'gateway\t%s\n' "$gateway"
+
+      [[ -r "/sys/class/net/$iface/statistics/rx_bytes" ]] && printf 'rx_bytes\t%s\n' "$(<"/sys/class/net/$iface/statistics/rx_bytes")"
+      [[ -r "/sys/class/net/$iface/statistics/tx_bytes" ]] && printf 'tx_bytes\t%s\n' "$(<"/sys/class/net/$iface/statistics/tx_bytes")"
+
+      if [[ -d "/sys/class/net/$iface/wireless" ]]; then
+        printf 'type\twifi\n'
+        link="$(iw dev "$iface" link 2>/dev/null || true)"
+        [[ -n "$link" ]] && {
+          printf 'ssid\t%s\n' "$(awk '/SSID:/ { sub(/.*SSID: /, ""); print; exit }' <<<"$link")"
+          printf 'freq\t%s\n' "$(awk '/freq:/ { print $2; exit }' <<<"$link")"
+          printf 'bitrate\t%s %s\n' "$(awk '/tx bitrate:/ { print $3; exit }' <<<"$link")" "$(awk '/tx bitrate:/ { print $4; exit }' <<<"$link")"
+        }
+      else
+        printf 'type\tethernet\n'
+        [[ -r "/sys/class/net/$iface/speed" ]] && printf 'speed\t%s\n' "$(<"/sys/class/net/$iface/speed")"
+      fi
+
+      ping_ms() {
+        LC_ALL=C ping -n -c 1 -W 1 "$1" 2>/dev/null | awk -F'time[=<]' '/time[=<]/ { split($2, p, " "); print p[1]; exit }'
+      }
+      [[ -n "$gateway" ]] && printf 'router_ping_ms\t%s\n' "$(ping_ms "$gateway")"
+      printf 'internet_ping_ms\t%s\n' "$(ping_ms "$probe")"
+    '';
+  };
+
+  timerAlert = pkgs.writeShellApplication {
+    name = "qs-timer-alert";
+    text = ''
+      ${pkgs.libnotify}/bin/notify-send \
+        --app-name="Quickshell Timer" \
+        --urgency=critical \
+        --icon=alarm-symbolic \
+        --expire-time=10000 \
+        "Timer complete" \
+        "Countdown has elapsed." || true
+
+      exec ${pkgs.pipewire}/bin/pw-play \
+        ${pkgs.sound-theme-freedesktop}/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
+    '';
+  };
 in
 {
-  home.packages = [ quickshell ];
+  home.packages = [
+    quickshell
+    networkStatus
+    timerAlert
+  ];
 
   home.file.".config/quickshell".source = repoFile "dotfiles/quickshell";
 

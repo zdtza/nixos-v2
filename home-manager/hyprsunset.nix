@@ -16,7 +16,7 @@ in
     };
 
     Service = {
-      ExecStart = "${package}/bin/hyprsunset --temperature 4500 --identity";
+      ExecStart = "${package}/bin/hyprsunset --temperature 4200 --identity";
       Restart = "on-failure";
       RestartSec = 2;
     };

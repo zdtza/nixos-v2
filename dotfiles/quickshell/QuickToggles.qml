@@ -2,7 +2,6 @@
 // clock edge and slide out when the hidden area is hovered. Active controls
 // remain visible on the right, with inactive controls ordered to their left.
 import QtQuick
-import Quickshell.Io
 import Quickshell.Services.Pipewire
 import Stylix
 
@@ -13,7 +12,9 @@ Item {
     // XDPH creates one of these PipeWire sources per active portal capture.
     readonly property var recordingNodes: Pipewire.nodes
         ? Pipewire.nodes.values.filter(node => node && node.ready
-            && node.name.startsWith("xdph-streaming-")) : []
+            && (node.name.startsWith("xdph-streaming-")
+                || String(node.properties["media.name"] || "")
+                    .startsWith("xdph-streaming-"))) : []
     readonly property bool recordingActive: recordingNodes.length > 0
     property var activeOrder: []
     property var inactiveOrder: []
@@ -25,7 +26,7 @@ Item {
         if (active)
             nextActive.unshift(index);
         else
-            nextInactive.unshift(index);
+            nextInactive.push(index);
 
         activeOrder = nextActive;
         inactiveOrder = nextInactive;
@@ -61,13 +62,6 @@ Item {
 
     Component.onCompleted: initializeToggleOrder()
     onRecordingActiveChanged: moveToggle(3, recordingActive)
-
-    // Restarting portal backend closes every active screen-capture stream.
-    Process {
-        id: stopRecordingProcess
-        command: ["systemctl", "--user", "restart",
-            "xdg-desktop-portal-hyprland.service"]
-    }
 
     Connections {
         target: NightLightService
@@ -237,18 +231,10 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         anchors.verticalCenterOffset: -1
-                        text: "●"
-                        color: Theme.urgent
+                        text: ""
+                        color: Theme.foreground
                         font.family: Theme.fontFamily
                         font.pixelSize: 14
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: if (!stopRecordingProcess.running)
-                            stopRecordingProcess.running = true
                     }
                 }
             }

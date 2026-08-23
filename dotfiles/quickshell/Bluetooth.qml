@@ -12,6 +12,7 @@ Item {
 
     readonly property bool available: BluetoothService.available
     readonly property bool opened: PanelService.activePanel === root
+    readonly property bool requiresKeyboardFocus: false
     readonly property var devices: BluetoothService.devices
     readonly property var connectedDevices: BluetoothService.enabled
         ? devices.filter(device => BluetoothService.isConnected(device)) : []
@@ -39,23 +40,105 @@ Item {
     }
 
     property int phraseIndex: 0
+    property var selectedDevice: null
+    readonly property var keyboardDevices: connectedDevices.concat(availableDevices)
 
     visible: available
     implicitWidth: available ? indicator.implicitWidth : 0
     implicitHeight: indicator.implicitHeight
 
+    function selectDevice(offset: int): void {
+        if (keyboardDevices.length === 0) {
+            selectedDevice = null;
+            return;
+        }
+        let index = keyboardDevices.indexOf(selectedDevice);
+        if (index < 0)
+            index = offset > 0 ? 0 : keyboardDevices.length - 1;
+        else
+            index = Math.max(0, Math.min(keyboardDevices.length - 1, index + offset));
+        selectedDevice = keyboardDevices[index];
+        let headerCount = connectedDevices.length > 0 ? 1 : 0;
+        if (index >= connectedDevices.length)
+            headerCount++;
+        const rowTop = index * (deviceRowHeight + deviceRowSpacing)
+            + headerCount * (connectedHeader.implicitHeight + deviceRowSpacing);
+        if (rowTop < deviceList.contentY)
+            deviceList.contentY = rowTop;
+        else if (rowTop + deviceRowHeight > deviceList.contentY + deviceList.height)
+            deviceList.contentY = Math.max(0, rowTop + deviceRowHeight - deviceList.height);
+    }
+
+    function activateSelectedDevice(): void {
+        if (!selectedDevice)
+            return;
+        if (BluetoothService.isConnected(selectedDevice))
+            BluetoothService.disconnect(selectedDevice);
+        else
+            BluetoothService.activate(selectedDevice);
+    }
+
+    function forgetSelectedDevice(): void {
+        if (selectedDevice && selectedDevice.paired)
+            BluetoothService.forget(selectedDevice);
+    }
+
     onOpenedChanged: {
         if (opened) {
             phraseIndex = 0;
+            selectedDevice = keyboardDevices.length > 0 ? keyboardDevices[0] : null;
             BluetoothService.acquireScanner();
         } else {
             BluetoothService.releaseScanner();
         }
     }
+    onKeyboardDevicesChanged: {
+        if (keyboardDevices.length === 0)
+            selectedDevice = null;
+        else if (!keyboardDevices.includes(selectedDevice))
+            selectedDevice = keyboardDevices[0];
+    }
     onAvailableChanged: if (!available)
         PanelService.close(root)
     Component.onDestruction: if (opened)
         BluetoothService.releaseScanner()
+
+    Shortcut {
+        enabled: root.opened
+        sequence: "Up"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectDevice(-1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Down"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectDevice(1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Return"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateSelectedDevice()
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Enter"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateSelectedDevice()
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Space"
+        context: Qt.ApplicationShortcut
+        onActivated: BluetoothService.toggle()
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Delete"
+        context: Qt.ApplicationShortcut
+        onActivated: root.forgetSelectedDevice()
+    }
 
     PanelStatusRotator {
         target: bluetoothHero.statusLabel
@@ -70,12 +153,6 @@ Item {
         panel: root
         text: BluetoothService.icon
         onClicked: PanelService.toggle(root)
-    }
-
-    HyprlandFocusGrab {
-        active: root.opened
-        windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
     }
 
     PanelPopup {
@@ -186,6 +263,7 @@ Item {
                                 actionIcon: "󰅖"
                                 actionVisible: true
                                 actionLabel: "Disconnect"
+                                keyboardSelected: root.selectedDevice === modelData
                                 secondaryActionIcon: "󰆴"
                                 secondaryActionVisible: true
                                 secondaryActionLabel: "Forget"
@@ -229,6 +307,7 @@ Item {
                                 actionIcon: "󰆴"
                                 actionVisible: modelData.paired
                                 actionLabel: "Forget"
+                                keyboardSelected: root.selectedDevice === modelData
                                 onActivated: BluetoothService.activate(modelData)
                                 onActionTriggered: BluetoothService.forget(modelData)
                             }
@@ -244,6 +323,7 @@ Item {
 
         required property var device
         property bool clickable: false
+        property bool keyboardSelected: false
         property bool actionVisible: false
         property string actionIcon: ""
         property string actionLabel: ""
@@ -257,10 +337,10 @@ Item {
 
         width: parent.width
         height: root.deviceRowHeight
-        color: rowHover.hovered
+        color: keyboardSelected || rowHover.hovered
             ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.08)
             : "transparent"
-        border.width: rowHover.hovered ? 1 : 0
+        border.width: keyboardSelected || rowHover.hovered ? 1 : 0
         border.color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.25)
         Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -319,7 +399,7 @@ Item {
         Row {
             id: actionRow
             z: 2
-            visible: rowHover.hovered
+            visible: (deviceRow.keyboardSelected || rowHover.hovered)
                 && (deviceRow.actionVisible || deviceRow.secondaryActionVisible)
             anchors.right: stateIcon.left
             anchors.rightMargin: 16
@@ -403,7 +483,10 @@ Item {
             enabled: deviceRow.clickable
             hoverEnabled: true
             cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: deviceRow.activated()
+            onClicked: {
+                root.selectedDevice = deviceRow.device;
+                deviceRow.activated();
+            }
         }
     }
 }

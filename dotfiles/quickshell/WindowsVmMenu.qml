@@ -19,19 +19,59 @@ PopupWindow {
     property int menuWidth: 220
     property string menuTitle: ""
     property string menuStatus: ""
+    property int selectedActionIndex: 0
 
     // Matches TrayMenu's interface so Tray.qml can treat both the same way when
     // building the focus grab's window list.
     readonly property var openWindows: [menu]
 
     signal closeRequested
+    signal dismissRequested
     signal actionTriggered(command: var)
+
+    function moveSelection(offset: int): void {
+        selectedActionIndex = Math.max(0,
+            Math.min(actions.length - 1, selectedActionIndex + offset));
+    }
+
+    function activateSelection(): void {
+        const action = actions[selectedActionIndex];
+        if (!action)
+            return;
+        actionTriggered(action.command);
+        closeRequested();
+    }
+
+    Shortcut {
+        enabled: menu.visible
+        sequence: "Up"
+        context: Qt.ApplicationShortcut
+        onActivated: menu.moveSelection(-1)
+    }
+    Shortcut {
+        enabled: menu.visible
+        sequence: "Down"
+        context: Qt.ApplicationShortcut
+        onActivated: menu.moveSelection(1)
+    }
+    Shortcut {
+        enabled: menu.visible
+        sequence: "Return"
+        context: Qt.ApplicationShortcut
+        onActivated: menu.activateSelection()
+    }
+    Shortcut {
+        enabled: menu.visible
+        sequence: "Enter"
+        context: Qt.ApplicationShortcut
+        onActivated: menu.activateSelection()
+    }
 
     Shortcut {
         enabled: menu.visible
         sequence: "Escape"
         context: Qt.ApplicationShortcut
-        onActivated: menu.closeRequested()
+        onActivated: menu.dismissRequested()
     }
 
     anchor {
@@ -141,6 +181,7 @@ PopupWindow {
                     id: row
 
                     required property var modelData
+                    required property int index
 
                     width: column.width
                     implicitHeight: 30
@@ -151,7 +192,8 @@ PopupWindow {
                             leftMargin: 6
                             rightMargin: 6
                         }
-                        color: rowMouse.containsMouse ? Theme.surface : "transparent"
+                        color: row.index === menu.selectedActionIndex
+                            || rowMouse.containsMouse ? Theme.surface : "transparent"
 
                         Text {
                             anchors {
@@ -175,6 +217,7 @@ PopupWindow {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
+                                menu.selectedActionIndex = row.index;
                                 menu.actionTriggered(row.modelData.command);
                                 menu.closeRequested();
                             }

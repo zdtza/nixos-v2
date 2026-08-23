@@ -18,6 +18,14 @@ ShellRoot {
     }
 
     IpcHandler {
+        target: "panels"
+
+        function toggle(name: string): bool {
+            return PanelService.toggleNamed(name);
+        }
+    }
+
+    IpcHandler {
         target: "bar"
 
         function toggle(): void {

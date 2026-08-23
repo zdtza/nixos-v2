@@ -20,12 +20,15 @@ PopupWindow {
     property string menuTitle: ""
     property string menuStatus: ""
     property bool contentReady: false
+    property var selectedEntry: null
+    readonly property var keyboardEntries: opener.children.values.filter(entry =>
+        entry && !entry.isSeparator && entry.enabled)
 
     // Submenus grow sideways out of their parent row instead of downwards.
     property bool submenu: false
 
-    // Index of the row whose submenu is currently open, -1 for none.
-    property int submenuIndex: -1
+    // Stable menu entry whose submenu is currently open, null for none.
+    property var submenuEntry: null
 
     // Currently open child menu, if any.
     property var activeSubmenu: null
@@ -35,12 +38,69 @@ PopupWindow {
     readonly property var openWindows: [menu].concat(activeSubmenu ? activeSubmenu.openWindows : [])
 
     signal closeRequested
+    signal dismissRequested
+
+    function moveSelection(offset: int): void {
+        if (keyboardEntries.length === 0) {
+            selectedEntry = null;
+            return;
+        }
+        let index = keyboardEntries.indexOf(selectedEntry);
+        if (index < 0)
+            index = offset > 0 ? 0 : keyboardEntries.length - 1;
+        else
+            index = Math.max(0, Math.min(keyboardEntries.length - 1, index + offset));
+        selectedEntry = keyboardEntries[index];
+        submenuEntry = null;
+    }
+
+    function activateSelection(): void {
+        if (!selectedEntry)
+            return;
+        if (selectedEntry.hasChildren) {
+            submenuEntry = selectedEntry;
+            return;
+        }
+        selectedEntry.triggered();
+        closeRequested();
+    }
+
+    Shortcut {
+        enabled: menu.visible && !menu.activeSubmenu
+        sequence: "Up"
+        context: Qt.ApplicationShortcut
+        onActivated: menu.moveSelection(-1)
+    }
+    Shortcut {
+        enabled: menu.visible && !menu.activeSubmenu
+        sequence: "Down"
+        context: Qt.ApplicationShortcut
+        onActivated: menu.moveSelection(1)
+    }
+    Shortcut {
+        enabled: menu.visible && !menu.activeSubmenu
+        sequence: "Return"
+        context: Qt.ApplicationShortcut
+        onActivated: menu.activateSelection()
+    }
+    Shortcut {
+        enabled: menu.visible && !menu.activeSubmenu
+        sequence: "Enter"
+        context: Qt.ApplicationShortcut
+        onActivated: menu.activateSelection()
+    }
+    Shortcut {
+        enabled: menu.visible && !menu.activeSubmenu
+        sequence: "Right"
+        context: Qt.ApplicationShortcut
+        onActivated: menu.activateSelection()
+    }
 
     Shortcut {
         enabled: menu.visible && !menu.submenu
         sequence: "Escape"
         context: Qt.ApplicationShortcut
-        onActivated: menu.closeRequested()
+        onActivated: menu.dismissRequested()
     }
 
     anchor {
@@ -79,7 +139,7 @@ PopupWindow {
 
     onVisibleChanged: {
         if (!visible)
-            menu.submenuIndex = -1;
+            menu.submenuEntry = null;
     }
 
     QsMenuOpener {
@@ -87,21 +147,32 @@ PopupWindow {
         menu: menu.handle
 
         onMenuChanged: {
+            menu.selectedEntry = null;
+            menu.submenuEntry = null;
             menu.contentReady = false;
             revealTimer.restart();
         }
         onChildrenChanged: {
-            menu.contentReady = false;
-            revealTimer.restart();
+            menu.selectedEntry = null;
+            menu.submenuEntry = null;
+            if (!menu.contentReady)
+                revealTimer.restart();
         }
     }
 
     // QsMenuOpener populates its model asynchronously. Keep popup unmapped
-    // until model geometry has settled, avoiding empty one-frame menu flashes.
+    // until initial nonempty model geometry has settled, then leave it mapped
+    // while later menu updates hydrate to avoid empty-frame and hide/show flicker.
     Timer {
         id: revealTimer
         interval: 20
-        onTriggered: menu.contentReady = true
+        onTriggered: {
+            if (opener.children.values.length > 0) {
+                menu.contentReady = true;
+                if (!menu.selectedEntry && menu.keyboardEntries.length > 0)
+                    menu.selectedEntry = menu.keyboardEntries[0];
+            }
+        }
     }
 
     Component.onCompleted: revealTimer.restart()
@@ -178,7 +249,6 @@ PopupWindow {
                     id: row
 
                     required property var modelData
-                    required property int index
 
                     readonly property var entry: modelData
                     readonly property bool interactive: !entry.isSeparator && entry.enabled
@@ -204,7 +274,8 @@ PopupWindow {
                             leftMargin: 6
                             rightMargin: 6
                         }
-                        color: mouseArea.containsMouse && row.interactive ? Theme.surface : "transparent"
+                        color: (mouseArea.containsMouse || menu.selectedEntry === row.entry)
+                            && row.interactive ? Theme.surface : "transparent"
 
                         Text {
                             anchors {
@@ -265,8 +336,10 @@ PopupWindow {
                             // other row closes whatever was open. Leaving the
                             // popup entirely (into the submenu) changes nothing.
                             onContainsMouseChanged: {
-                                if (containsMouse)
-                                    menu.submenuIndex = row.entry.hasChildren ? row.index : -1;
+                                if (containsMouse) {
+                                    menu.selectedEntry = row.interactive ? row.entry : null;
+                                    menu.submenuEntry = row.entry.hasChildren ? row.entry : null;
+                                }
                             }
                         }
                     }
@@ -277,13 +350,16 @@ PopupWindow {
                     Loader {
                         id: submenuLoader
 
-                        active: menu.submenuIndex === row.index
+                        property var loadedSubmenu: null
+
+                        active: menu.submenuEntry === row.entry
 
                         onActiveChanged: {
                             if (!active) {
-                                if (menu.activeSubmenu === item)
+                                if (menu.activeSubmenu === loadedSubmenu)
                                     menu.activeSubmenu = null;
 
+                                loadedSubmenu = null;
                                 source = "";
                                 return;
                             }
@@ -298,9 +374,18 @@ PopupWindow {
                             });
                         }
 
+                        onItemChanged: {
+                            if (!item && menu.activeSubmenu === loadedSubmenu)
+                                menu.activeSubmenu = null;
+                            if (!item)
+                                loadedSubmenu = null;
+                        }
+
                         onLoaded: {
+                            loadedSubmenu = item;
                             menu.activeSubmenu = item;
                             item.closeRequested.connect(menu.closeRequested);
+                            item.dismissRequested.connect(menu.dismissRequested);
                         }
                     }
                 }

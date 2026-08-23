@@ -8,11 +8,17 @@ Item {
     id: root
 
     readonly property bool opened: PanelService.activePanel === root
-    readonly property bool requiresKeyboardFocus: true
+    readonly property bool requiresKeyboardFocus: false
     readonly property var presets: [2500, 3500, 4500, 5500]
+    property int selectedPresetIndex: 0
 
     implicitWidth: 28
     implicitHeight: 26
+
+    onOpenedChanged: if (opened) {
+        const index = presets.indexOf(NightLightService.temperature);
+        selectedPresetIndex = Math.max(0, index);
+    }
 
     function temperatureStatus(): string {
         if (!NightLightService.available)
@@ -52,20 +58,49 @@ Item {
         enabled: root.opened
         sequence: "Return"
         context: Qt.ApplicationShortcut
-        onActivated: NightLightService.toggle()
+        onActivated: NightLightService.setTemperature(root.presets[root.selectedPresetIndex])
     }
-
     Shortcut {
         enabled: root.opened
         sequence: "Enter"
         context: Qt.ApplicationShortcut
+        onActivated: NightLightService.setTemperature(root.presets[root.selectedPresetIndex])
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Left"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectedPresetIndex = Math.max(0, root.selectedPresetIndex - 1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Up"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectedPresetIndex = Math.max(0, root.selectedPresetIndex - 1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Right"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectedPresetIndex = Math.min(root.presets.length - 1, root.selectedPresetIndex + 1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Down"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectedPresetIndex = Math.min(root.presets.length - 1, root.selectedPresetIndex + 1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Space"
+        context: Qt.ApplicationShortcut
         onActivated: NightLightService.toggle()
     }
-
-    HyprlandFocusGrab {
-        active: root.opened
-        windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
+    Shortcut {
+        enabled: root.opened
+        sequence: "Delete"
+        context: Qt.ApplicationShortcut
+        onActivated: NightLightService.disable()
     }
 
     PanelPopup {
@@ -149,11 +184,12 @@ Item {
                 Rectangle {
                     id: presetButton
                     required property var modelData
+                    required property int index
                     readonly property bool selected: NightLightService.temperature === modelData
 
                     width: presetRow.cellWidth
                     height: 32
-                    color: selected
+                    color: selected || presetButton.index === root.selectedPresetIndex
                         ? Qt.rgba(Theme.foreground.r, Theme.foreground.g,
                             Theme.foreground.b, 0.18)
                         : presetMouse.containsMouse
@@ -162,7 +198,7 @@ Item {
                             : Qt.rgba(Theme.foreground.r, Theme.foreground.g,
                                 Theme.foreground.b, 0.04)
                     border.width: 1
-                    border.color: selected ? Theme.muted
+                    border.color: selected || presetButton.index === root.selectedPresetIndex ? Theme.muted
                         : Qt.rgba(Theme.foreground.r, Theme.foreground.g,
                             Theme.foreground.b, 0.3)
                     Behavior on color { ColorAnimation { duration: 120 } }
@@ -182,7 +218,10 @@ Item {
                         enabled: NightLightService.available
                         hoverEnabled: true
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onClicked: NightLightService.setTemperature(presetButton.modelData)
+                        onClicked: {
+                            root.selectedPresetIndex = presetButton.index;
+                            NightLightService.setTemperature(presetButton.modelData);
+                        }
                     }
                 }
             }

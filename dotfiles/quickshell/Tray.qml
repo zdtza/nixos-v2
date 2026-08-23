@@ -21,15 +21,110 @@ Item {
 
     readonly property var items: SystemTray.items.values
     readonly property bool opened: PanelService.activePanel === root
+    readonly property bool requiresKeyboardFocus: true
     property bool pinned: false
+    property int selectedItemIndex: 0
+    readonly property int keyboardItemCount: items.length + (WindowsVmService.running ? 1 : 0)
     readonly property bool expanded: root.pinned || hover.hovered || root.opened
 
     // Which of the two menu loaders the open panel belongs to.
     property bool vmMenuOpen: false
 
     onOpenedChanged: {
-        if (!opened)
+        if (!opened) {
             vmMenuOpen = false;
+            menuLoader.trayItem = null;
+            menuLoader.anchorItem = null;
+            vmMenuLoader.anchorItem = null;
+        } else {
+            selectedItemIndex = Math.max(0,
+                Math.min(keyboardItemCount - 1, selectedItemIndex));
+        }
+    }
+
+    function dismissMenu(): void {
+        vmMenuOpen = false;
+        menuLoader.trayItem = null;
+        menuLoader.anchorItem = null;
+        vmMenuLoader.anchorItem = null;
+    }
+
+    function collapseTray(): void {
+        pinned = false;
+        dismissMenu();
+        PanelService.close(root);
+    }
+
+    function moveSelection(offset: int): void {
+        if (keyboardItemCount === 0)
+            return;
+        selectedItemIndex = Math.max(0,
+            Math.min(keyboardItemCount - 1, selectedItemIndex + offset));
+    }
+
+    function activateSelection(): void {
+        if (selectedItemIndex < items.length) {
+            const item = items[selectedItemIndex];
+            const entry = trayRepeater.itemAt(selectedItemIndex);
+            if (item.hasMenu) {
+                vmMenuOpen = false;
+                menuLoader.trayItem = item;
+                menuLoader.anchorItem = entry;
+                PanelService.open(root);
+            } else if (!item.onlyMenu) {
+                item.activate();
+                PanelService.close(root);
+            }
+            return;
+        }
+        if (WindowsVmService.running) {
+            vmMenuOpen = true;
+            vmMenuLoader.anchorItem = vmEntry;
+            PanelService.open(root);
+        }
+    }
+
+    Shortcut {
+        enabled: root.opened && !menuLoader.item && !vmMenuLoader.item
+        sequence: "Escape"
+        context: Qt.ApplicationShortcut
+        onActivated: root.collapseTray()
+    }
+    Shortcut {
+        enabled: root.opened && !menuLoader.item && !vmMenuLoader.item
+        sequence: "Left"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveSelection(-1)
+    }
+    Shortcut {
+        enabled: root.opened && !menuLoader.item && !vmMenuLoader.item
+        sequence: "Up"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveSelection(-1)
+    }
+    Shortcut {
+        enabled: root.opened && !menuLoader.item && !vmMenuLoader.item
+        sequence: "Right"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveSelection(1)
+    }
+    Shortcut {
+        enabled: root.opened && !menuLoader.item && !vmMenuLoader.item
+        sequence: "Down"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveSelection(1)
+    }
+    Shortcut {
+        enabled: root.opened && !menuLoader.item && !vmMenuLoader.item
+        sequence: "Return"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateSelection()
+    }
+    Shortcut {
+        enabled: root.opened && !menuLoader.item && !vmMenuLoader.item
+        sequence: "Enter"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateSelection()
     }
 
     function menuStatus(item: SystemTrayItem): string {
@@ -103,12 +198,14 @@ Item {
                 spacing: 0
 
                 Repeater {
+                    id: trayRepeater
                     model: root.items
 
                     Item {
                         id: entry
 
                         required property SystemTrayItem modelData
+                        required property int index
 
                         implicitWidth: 30
                         implicitHeight: 25
@@ -134,6 +231,7 @@ Item {
                             // clicked, so the VM menu has to be excluded here or
                             // that item lights up alongside it.
                             visible: itemMouse.containsMouse
+                                || (root.opened && root.selectedItemIndex === entry.index)
                                 || (root.opened && !root.vmMenuOpen && menuLoader.trayItem === entry.modelData)
                             color: Theme.accent
                         }
@@ -148,6 +246,7 @@ Item {
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                             onClicked: mouse => {
+                                root.selectedItemIndex = entry.index;
                                 if (entry.modelData.hasMenu) {
                                     // Same item toggles; another item transfers menu ownership.
                                     if (root.opened && !root.vmMenuOpen && menuLoader.trayItem === entry.modelData) {
@@ -198,7 +297,9 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: 16
                         height: 2
-                        visible: vmMouse.containsMouse || (root.opened && root.vmMenuOpen)
+                        visible: vmMouse.containsMouse
+                            || (root.opened && root.selectedItemIndex === root.items.length)
+                            || (root.opened && root.vmMenuOpen)
                         color: Theme.accent
                     }
 
@@ -212,6 +313,7 @@ Item {
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                         onClicked: {
+                            root.selectedItemIndex = root.items.length;
                             if (root.opened && root.vmMenuOpen) {
                                 PanelService.close(root);
                                 return;
@@ -255,6 +357,7 @@ Item {
             menuTitle: menuLoader.trayItem?.title ?? ""
             menuStatus: root.menuStatus(menuLoader.trayItem)
 
+            onDismissRequested: root.dismissMenu()
             onCloseRequested: PanelService.close(root)
         }
     }
@@ -274,6 +377,7 @@ Item {
             menuStatus: WindowsVmService.running ? "Running" : "Stopped"
 
             onActionTriggered: command => WindowsVmService.run(command)
+            onDismissRequested: root.dismissMenu()
             onCloseRequested: PanelService.close(root)
         }
     }

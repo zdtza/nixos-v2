@@ -17,6 +17,31 @@ Scope {
     property var terminal: ["kitty"]
     property var targetScreen: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
     property string openedMonitorName: ""
+    property string pendingLaunchName: ""
+    property string pendingLaunchIcon: "application-x-executable"
+    property string launchBaselineActiveAddress: ""
+    property var launchBaselineAddresses: ({})
+
+    function normalizedAddress(address: var): string {
+        return String(address ?? "").replace(/^0x/, "");
+    }
+
+    function beginLaunchTracking(entry: DesktopEntry): void {
+        const addresses = {};
+        for (const toplevel of Hyprland.toplevels.values)
+            addresses[root.normalizedAddress(toplevel.address)] = true;
+
+        root.pendingLaunchName = entry.name;
+        root.pendingLaunchIcon = String(entry.icon || "application-x-executable");
+        root.launchBaselineAddresses = addresses;
+        root.launchBaselineActiveAddress = root.normalizedAddress(Hyprland.activeToplevel?.address);
+        slowLaunchTimer.restart();
+    }
+
+    function finishLaunchTracking(): void {
+        slowLaunchTimer.stop();
+        root.pendingLaunchName = "";
+    }
 
     function screenForMonitor(name: string): var {
         for (const screen of Quickshell.screens) {
@@ -60,6 +85,40 @@ Scope {
             if (monitorName !== root.openedMonitorName)
                 root.open = false;
         }
+
+        function onRawEvent(event: var): void {
+            if (root.pendingLaunchName === "")
+                return;
+
+            if (event.name === "openwindow") {
+                const address = root.normalizedAddress(event.data.split(",")[0]);
+                if (!root.launchBaselineAddresses[address])
+                    root.finishLaunchTracking();
+            } else if (event.name === "activewindowv2") {
+                const address = root.normalizedAddress(event.data);
+                if (address !== "" && address !== root.launchBaselineActiveAddress)
+                    root.finishLaunchTracking();
+            }
+        }
+    }
+
+    Timer {
+        id: slowLaunchTimer
+        interval: 1000
+
+        onTriggered: {
+            if (root.pendingLaunchName === "")
+                return;
+            Quickshell.execDetached([
+                "notify-send",
+                "--app-name=Application Launcher",
+                `--icon=${root.pendingLaunchIcon}`,
+                "--expire-time=5000",
+                `${root.pendingLaunchName}`,
+                "Application is launching..."
+            ]);
+            root.pendingLaunchName = "";
+        }
     }
 
     PanelWindow {
@@ -75,7 +134,7 @@ Scope {
         }
 
         exclusionMode: ExclusionMode.Ignore
-        color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.45)
+        color: Qt.rgba(Theme.dark_background.r, Theme.dark_background.g, Theme.dark_background.b, 0.45)
         WlrLayershell.namespace: "quickshell:launcher"
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: root.open
@@ -141,6 +200,7 @@ Scope {
         property var menuEntry: null
         property real menuX: 0
         property real menuY: 0
+        property int menuActionIndex: 0
         readonly property bool menuOpen: menuEntry !== null
         readonly property var menuActions: menuEntry?.actions ?? []
 
@@ -150,17 +210,49 @@ Scope {
             const point = item.mapToItem(null, localX, localY);
             window.menuX = point.x;
             window.menuY = point.y;
+            window.menuActionIndex = 0;
             window.menuEntry = entry;
         }
 
         function closeContextMenu(): void {
             window.menuEntry = null;
+            window.menuActionIndex = 0;
+        }
+
+        function moveContextSelection(offset: int): void {
+            menuActionIndex = Math.max(0,
+                Math.min(menuActions.length, menuActionIndex + offset));
+        }
+
+        function activateContextSelection(): void {
+            const entry = menuEntry;
+            if (!entry)
+                return;
+            if (menuActionIndex === 0) {
+                closeContextMenu();
+                launch(entry);
+                return;
+            }
+            const action = menuActions[menuActionIndex - 1];
+            if (!action)
+                return;
+            action.execute();
+            closeContextMenu();
+            root.open = false;
+        }
+
+        function openSelectedContextMenu(): void {
+            const item = appList.currentItem;
+            if (!item?.entry)
+                return;
+            openContextMenu(item.entry, item, item.width - 10, item.height / 2);
         }
 
         function launch(entry: DesktopEntry): void {
             if (!entry)
                 return;
 
+            root.beginLaunchTracking(entry);
             if (entry.runInTerminal) {
                 Quickshell.execDetached({
                     command: [...root.terminal, "--", ...entry.command],
@@ -191,10 +283,8 @@ Scope {
 
             anchors.centerIn: parent
             width: 520
-            height: 680
-            color: Theme.background
-            border.width: 2
-            border.color: Theme.border
+            height: 630
+            color: Theme.dark_background
 
             MouseArea {
                 anchors.fill: parent
@@ -211,50 +301,38 @@ Scope {
                 }
                 spacing: 14
 
-                PanelHero {
-                    Layout.fillWidth: true
-                    icon: "󰀻"
-                    title: "Applications"
-                    status: search.text.length > 0
-                        ? `${window.results.length} MATCHES`
-                        : `${window.entries.length} INSTALLED`
-                    trailingWidth: 46
-                    trailingHeight: 22
+                // PanelHero {
+                //     Layout.fillWidth: true
+                //     icon: "󰀻"
+                //     title: "Applications"
+                //     status: search.text.length > 0
+                //         ? `${window.results.length} MATCHES`
+                //         : `${window.entries.length} INSTALLED`
+                //     trailingWidth: 46
+                //     trailingHeight: 22
 
-                    Rectangle {
-                        anchors.fill: parent
-                        color: Theme.dark_background
-                        border.width: 1
-                        border.color: Theme.surface
+                //     Rectangle {
+                //         anchors.fill: parent
+                //         color: Theme.dark_background
+                //         border.width: 1
+                //         border.color: Theme.surface
 
-                        Text {
-                            anchors.centerIn: parent
-                            text: "ESC"
-                            color: Theme.muted
-                            font.family: Theme.fontFamily
-                            font.pixelSize: 10
-                            font.bold: true
-                            font.letterSpacing: 1
-                        }
-                    }
-                }
+                //         Text {
+                //             anchors.centerIn: parent
+                //             text: "ESC"
+                //             color: Theme.muted
+                //             font.family: Theme.fontFamily
+                //             font.pixelSize: 10
+                //             font.bold: true
+                //             font.letterSpacing: 1
+                //         }
+                //     }
+                // }
 
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 42
                     color: Theme.dark_background
-                    border.width: 1
-                    border.color: search.activeFocus ? Theme.muted : Theme.surface
-
-                    Text {
-                        anchors.left: parent.left
-                        anchors.leftMargin: 13
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "󰍉"
-                        color: search.activeFocus ? Theme.foreground : Theme.muted
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 16
-                    }
 
                     TextInput {
                         id: search
@@ -262,7 +340,7 @@ Scope {
                         anchors {
                             left: parent.left
                             right: parent.right
-                            leftMargin: 40
+                            leftMargin: 14
                             rightMargin: 14
                             verticalCenter: parent.verticalCenter
                         }
@@ -300,10 +378,34 @@ Scope {
                             else
                                 root.open = false;
                         }
-                        Keys.onDownPressed: appList.incrementCurrentIndex()
-                        Keys.onUpPressed: appList.decrementCurrentIndex()
-                        Keys.onReturnPressed: window.launch(appList.currentItem?.entry ?? null)
-                        Keys.onEnterPressed: window.launch(appList.currentItem?.entry ?? null)
+                        Keys.onDownPressed: {
+                            if (window.menuOpen)
+                                window.moveContextSelection(1);
+                            else
+                                appList.incrementCurrentIndex();
+                        }
+                        Keys.onUpPressed: {
+                            if (window.menuOpen)
+                                window.moveContextSelection(-1);
+                            else
+                                appList.decrementCurrentIndex();
+                        }
+                        Keys.onLeftPressed: if (window.menuOpen)
+                            window.closeContextMenu()
+                        Keys.onRightPressed: if (!window.menuOpen)
+                            window.openSelectedContextMenu()
+                        Keys.onReturnPressed: {
+                            if (window.menuOpen)
+                                window.activateContextSelection();
+                            else
+                                window.launch(appList.currentItem?.entry ?? null);
+                        }
+                        Keys.onEnterPressed: {
+                            if (window.menuOpen)
+                                window.activateContextSelection();
+                            else
+                                window.launch(appList.currentItem?.entry ?? null);
+                        }
                     }
                 }
 
@@ -491,9 +593,7 @@ Scope {
             height: contextColumn.implicitHeight + 24
             x: Math.max(8, Math.min(window.menuX, window.width - width - 8))
             y: Math.max(8, Math.min(window.menuY, window.height - height - 8))
-            color: Theme.background
-            border.width: 2
-            border.color: Theme.border
+            color: Theme.dark_background
 
             MouseArea {
                 anchors.fill: parent
@@ -521,7 +621,8 @@ Scope {
                 Rectangle {
                     width: contextColumn.width
                     height: 34
-                    color: launchMouse.containsMouse ? Theme.surface : "transparent"
+                    color: window.menuActionIndex === 0 || launchMouse.containsMouse
+                        ? Theme.surface : "transparent"
 
                     Text {
                         anchors {
@@ -567,9 +668,11 @@ Scope {
                     Rectangle {
                         id: actionRow
                         required property var modelData
+                        required property int index
                         width: contextColumn.width
                         height: 34
-                        color: actionMouse.containsMouse ? Theme.surface : "transparent"
+                        color: window.menuActionIndex === actionRow.index + 1
+                            || actionMouse.containsMouse ? Theme.surface : "transparent"
 
                         Text {
                             anchors {
@@ -592,6 +695,7 @@ Scope {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
+                                window.menuActionIndex = actionRow.index + 1;
                                 actionRow.modelData.execute();
                                 window.closeContextMenu();
                                 root.open = false;

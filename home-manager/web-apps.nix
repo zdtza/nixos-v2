@@ -65,6 +65,14 @@ let
       iconUrl = "https://static.whatsapp.net/rsrc.php/yd/r/PfkSLByWV8O.webp";
       iconHash = "sha256-SOlK/v+ynGb16E3I307iR/g4wof4fLiWDL9n9OjT3Tc=";
     }
+    {
+      id = "chatgpt";
+      name = "ChatGPT";
+      url = "https://chatgpt.com/";
+      isolated = false;
+      iconUrl = "https://www.google.com/s2/favicons?domain=https://chatgpt.com/&sz=256";
+      iconHash = "sha256-kma57MEuQyyD54Pd8NPplY4T7E6s20exD2F6zfXXAUY=";
+    }
     # WEBAPPS
   ];
 

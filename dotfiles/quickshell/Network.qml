@@ -13,6 +13,7 @@ Item {
     id: root
 
     readonly property bool opened: PanelService.activePanel === root
+    readonly property bool requiresKeyboardFocus: false
 
     property string passwordSsid: ""
     property string passwordText: ""
@@ -31,10 +32,16 @@ Item {
     property int packetLoss: 0
 
     readonly property bool available: NetworkService.backendAvailable
-    readonly property var networks: NetworkService.wifiNetworks
+    readonly property var connectedNetworks: NetworkService.wifiNetworks.filter(network => network.connected)
+    readonly property var availableNetworks: NetworkService.wifiNetworks.filter(network => !network.connected)
+    readonly property var networks: connectedNetworks.concat(availableNetworks)
     readonly property int networkRowHeight: 48
     readonly property int passwordRowHeight: 96
-    readonly property int networkRowSpacing: 4
+    readonly property int networkRowSpacing: 8
+    readonly property int networkSectionSpacing: 14
+    readonly property int emptyStateHeight: 52
+    readonly property int sectionHeaderHeight: 14
+    readonly property int networkBottomPadding: 4
     readonly property var phrases: ["Wiring bits", "Handling packets", "Sorting frames", "Hauling bytes", "Routing crumbs", "Counting collisions", "Bending light"]
     readonly property string statusText: NetworkService.kind === "disconnected" ? "NOT CONNECTED" : phrases[phraseIndex % phrases.length].toUpperCase()
 
@@ -164,7 +171,11 @@ Item {
         else
             index = Math.max(0, Math.min(networks.length - 1, index + delta));
         selectedSsid = networks[index].ssid;
-        const rowTop = index * (networkRowHeight + networkRowSpacing);
+        let headerCount = connectedNetworks.length > 0 ? 1 : 0;
+        if (index >= connectedNetworks.length)
+            headerCount++;
+        const rowTop = index * (networkRowHeight + networkRowSpacing)
+            + headerCount * (sectionHeaderHeight + networkRowSpacing);
         if (rowTop < networkList.contentY)
             networkList.contentY = rowTop;
         else if (rowTop + networkRowHeight > networkList.contentY + networkList.height)
@@ -173,8 +184,23 @@ Item {
 
     function activateSelectedNetwork(): void {
         const network = networks.find(candidate => candidate.ssid === selectedSsid);
-        if (network)
+        if (!network)
+            return;
+        if (network.connected)
+            NetworkService.disconnect(String(network.ssid));
+        else
             activateNetwork(network);
+    }
+
+    function forgetSelectedNetwork(): void {
+        const network = networks.find(candidate => candidate.ssid === selectedSsid);
+        if (network && (network.known || network.connected))
+            NetworkService.forget(String(network.ssid));
+    }
+
+    function restoreNetworkListFocus(): void {
+        if (opened && passwordSsid === "")
+            Qt.callLater(() => networkList.forceActiveFocus());
     }
 
     function submitPassword(): void {
@@ -183,6 +209,7 @@ Item {
         if (NetworkService.connect(passwordSsid, passwordText)) {
             passwordSsid = "";
             passwordText = "";
+            restoreNetworkListFocus();
         } else {
             failureText = "Network is no longer available";
         }
@@ -198,6 +225,7 @@ Item {
             NetworkService.acquireScanner();
             if (networks.length > 0)
                 selectedSsid = networks[0].ssid;
+            Qt.callLater(() => networkList.forceActiveFocus());
             if (!detailsProcess.running)
                 detailsProcess.running = true;
         } else {
@@ -213,7 +241,12 @@ Item {
         }
         if (passwordSsid !== "")
             passwordFocusTimer.restart();
+        else
+            restoreNetworkListFocus();
     }
+
+    onPasswordSsidChanged: if (passwordSsid === "")
+        restoreNetworkListFocus()
 
     Component.onDestruction: if (opened)
         NetworkService.releaseScanner()
@@ -248,20 +281,19 @@ Item {
         onAdvance: root.phraseIndex = (root.phraseIndex + 1) % root.phrases.length
     }
 
+    Shortcut {
+        enabled: root.opened && root.passwordSsid === ""
+        sequence: "Space"
+        context: Qt.ApplicationShortcut
+        onActivated: NetworkService.toggleWifi()
+    }
+
     BarButton {
         id: label
         anchors.centerIn: parent
         panel: root
         text: NetworkService.icon
         onClicked: root.toggle()
-    }
-
-    HyprlandFocusGrab {
-        active: root.opened
-        // Keep bar clickable while grab is active so another indicator can
-        // transfer ownership directly instead of losing its first click.
-        windows: [panel, root.QsWindow.window]
-        onCleared: root.close()
     }
 
     PanelPopup {
@@ -273,17 +305,25 @@ Item {
         borderColor: Theme.border
         contentSpacing: 14
         readonly property real maximumHeight: Math.max(320, (root.QsWindow.window && root.QsWindow.window.screen ? root.QsWindow.window.screen.height : 800) - 45)
-        readonly property real panelChromeHeight: 220
+        readonly property real panelChromeHeight: 194
         // Calculate from stable row counts rather than animated delegate size.
         // Password space exists only while editor is open, removing idle blank
         // space without reintroducing transient intermediate popup heights.
-        readonly property real collapsedNetworkHeight: root.networks.length * root.networkRowHeight
-            + Math.max(0, root.networks.length - 1) * root.networkRowSpacing
+        readonly property real connectedSectionHeight: root.connectedNetworks.length > 0
+            ? root.sectionHeaderHeight
+                + root.connectedNetworks.length * (root.networkRowHeight + root.networkRowSpacing)
+            : 0
+        readonly property real availableSectionHeight: root.sectionHeaderHeight
+            + (root.availableNetworks.length > 0
+                ? root.availableNetworks.length * (root.networkRowHeight + root.networkRowSpacing)
+                : root.networkRowSpacing + root.emptyStateHeight)
         readonly property real passwordEditorHeight: root.passwordSsid !== ""
             ? root.passwordRowHeight - root.networkRowHeight : 0
-        readonly property real desiredNetworkHeight: NetworkService.wifiEnabled && root.networks.length > 0
-            ? collapsedNetworkHeight + passwordEditorHeight : 80
-        readonly property real networkViewportHeight: Math.min(360, Math.max(80, maximumHeight - panelChromeHeight), desiredNetworkHeight)
+        readonly property real desiredNetworkHeight: connectedSectionHeight
+            + availableSectionHeight + passwordEditorHeight + root.networkBottomPadding
+            + (root.connectedNetworks.length > 0 ? root.networkSectionSpacing : 0)
+        readonly property real networkViewportHeight: Math.min(420,
+            Math.max(80, maximumHeight - panelChromeHeight), desiredNetworkHeight)
 
         implicitWidth: 460
         implicitHeight: Math.min(maximumHeight, panelChromeHeight + networkViewportHeight)
@@ -399,29 +439,14 @@ Item {
 
         PanelSeparator {}
 
-        PanelSectionHeader {
-            title: "NETWORKS"
-            detail: NetworkService.wifiEnabled ? "SCANNING" : "WI-FI OFF"
-        }
-
         Item {
             width: parent.width
             height: panel.networkViewportHeight
             clip: true
 
-            Text {
-                anchors.centerIn: parent
-                visible: !NetworkService.wifiEnabled || root.networks.length === 0
-                text: NetworkService.wifiEnabled ? "No networks found" : "Wi-Fi is turned off"
-                color: Theme.muted
-                font.family: Theme.fontFamily
-                font.pixelSize: 12
-            }
-
             Flickable {
                 id: networkList
                 anchors.fill: parent
-                visible: NetworkService.wifiEnabled && root.networks.length > 0
                 contentHeight: networkColumn.implicitHeight
                 clip: true
                 interactive: contentHeight > height
@@ -433,6 +458,7 @@ Item {
                 Keys.onDownPressed: root.selectNetwork(1)
                 Keys.onReturnPressed: root.activateSelectedNetwork()
                 Keys.onEnterPressed: root.activateSelectedNetwork()
+                Keys.onDeletePressed: root.forgetSelectedNetwork()
                 Keys.onEscapePressed: root.close()
 
                 HoverHandler {
@@ -443,28 +469,28 @@ Item {
                 Column {
                     id: networkColumn
                     width: networkList.width
-                    spacing: root.networkRowSpacing
+                    spacing: root.networkSectionSpacing
 
-                    Repeater {
-                        model: root.networks
+                    Component {
+                        id: networkRowComponent
 
                         Rectangle {
                             id: networkRow
                             required property var modelData
                             readonly property bool passwordOpen: root.passwordSsid === String(modelData.ssid)
+                            readonly property bool keyboardSelected: root.selectedSsid === String(modelData.ssid)
 
-                            width: networkColumn.width
+                            width: parent.width
                             height: passwordOpen ? root.passwordRowHeight : root.networkRowHeight
-                            color: modelData.connected
-                                ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.18)
-                                : rowMouse.pressed && !passwordOpen
-                                    ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.22)
-                                    : networkHover.hovered && !passwordOpen
-                                        ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.08)
-                                        : "transparent"
-                            border.width: modelData.connected || (networkHover.hovered && !passwordOpen) ? 1 : 0
-                            border.color: modelData.connected ? Theme.muted
-                                : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.25)
+                            color: rowMouse.pressed && !passwordOpen
+                                ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.22)
+                                : (networkRow.keyboardSelected || networkHover.hovered) && !passwordOpen
+                                    ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.08)
+                                    : "transparent"
+                            border.width: (networkRow.keyboardSelected || networkHover.hovered)
+                                && !passwordOpen ? 1 : 0
+                            border.color: Qt.rgba(Theme.foreground.r,
+                                Theme.foreground.g, Theme.foreground.b, 0.25)
                             radius: 0
                             Behavior on color {
                                 ColorAnimation {
@@ -527,7 +553,6 @@ Item {
                                         color: Theme.foreground
                                         font.family: Theme.fontFamily
                                         font.pixelSize: 12
-                                        font.bold: networkRow.modelData.connected
                                         elide: Text.ElideRight
                                     }
                                     Text {
@@ -543,7 +568,7 @@ Item {
                                 Row {
                                     id: actionRow
                                     z: 2
-                                    visible: networkHover.hovered
+                                    visible: (networkRow.keyboardSelected || networkHover.hovered)
                                         && (networkRow.modelData.connected || networkRow.modelData.known)
                                     anchors.right: lockIcon.left
                                     anchors.rightMargin: 16
@@ -744,6 +769,60 @@ Item {
                                 }
                             }
                         }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: root.networkRowSpacing
+                        visible: root.connectedNetworks.length > 0
+
+                        PanelSectionHeader {
+                            id: connectedHeader
+                            width: parent.width
+                            title: "CONNECTED"
+                            detail: root.connectedNetworks.length > 1
+                                ? root.connectedNetworks.length + " NETWORKS" : ""
+                        }
+
+                        Repeater {
+                            model: root.connectedNetworks
+                            delegate: networkRowComponent
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: root.networkRowSpacing
+
+                        PanelSectionHeader {
+                            id: availableHeader
+                            width: parent.width
+                            title: "AVAILABLE"
+                            detail: NetworkService.wifiEnabled ? "SCANNING" : "WI-FI OFF"
+                        }
+
+                        Text {
+                            width: parent.width
+                            height: root.emptyStateHeight
+                            visible: root.availableNetworks.length === 0
+                            text: NetworkService.wifiEnabled
+                                ? "No available networks" : "Wi-Fi is turned off"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            color: Theme.muted
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 12
+                        }
+
+                        Repeater {
+                            model: root.availableNetworks
+                            delegate: networkRowComponent
+                        }
+                    }
+
+                    Item {
+                        width: 1
+                        height: root.networkBottomPadding
                     }
                 }
             }

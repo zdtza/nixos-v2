@@ -13,12 +13,39 @@ Item {
     required property var screen
     readonly property bool available: !!AudioService.output
     readonly property bool opened: PanelService.activePanel === root
+    readonly property bool requiresKeyboardFocus: false
     readonly property int outputPercent: Math.round(AudioService.outputVolume * 100)
     readonly property int inputPercent: Math.round(AudioService.inputVolume * 100)
+    readonly property var keyboardDevices: AudioService.outputs.concat(AudioService.inputs)
+    property int selectedDeviceIndex: 0
 
     visible: available
     implicitWidth: available ? indicator.implicitWidth : 0
     implicitHeight: indicator.implicitHeight
+
+    function moveDeviceSelection(offset: int): void {
+        if (keyboardDevices.length === 0)
+            return;
+        selectedDeviceIndex = Math.max(0,
+            Math.min(keyboardDevices.length - 1, selectedDeviceIndex + offset));
+    }
+
+    function activateSelectedDevice(): void {
+        const device = keyboardDevices[selectedDeviceIndex];
+        if (!device)
+            return;
+        if (selectedDeviceIndex < AudioService.outputs.length)
+            AudioService.selectOutput(device);
+        else
+            AudioService.selectInput(device);
+    }
+
+    function adjustSelectedVolume(offset: real): void {
+        if (selectedDeviceIndex < AudioService.outputs.length)
+            AudioService.adjustOutputVolume(offset * AudioService.outputStep);
+        else
+            AudioService.adjustInputVolume(offset * AudioService.inputStep);
+    }
 
     function outputIcon(): string {
         if (AudioService.outputMuted)
@@ -56,6 +83,8 @@ Item {
         const focused = Hyprland.focusedMonitor;
         if (focused && String(screen.name) !== String(focused.name))
             return;
+        if (focused?.activeWorkspace?.hasFullscreen)
+            return;
         if (!opened) {
             feedbackOpened = true;
             PanelService.open(root);
@@ -64,18 +93,79 @@ Item {
             feedbackClose.restart();
     }
 
+    function closeIpcFeedback(): void {
+        if (!feedbackOpened)
+            return;
+        feedbackClose.stop();
+        PanelService.close(root);
+        feedbackOpened = false;
+    }
+
     property bool feedbackOpened: false
 
     onOpenedChanged: {
+        if (opened)
+            selectedDeviceIndex = Math.max(0,
+                AudioService.outputs.indexOf(AudioService.output));
         if (!opened && feedbackOpened) {
             feedbackClose.stop();
             feedbackOpened = false;
         }
     }
 
+    Shortcut {
+        enabled: root.opened
+        sequence: "Up"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveDeviceSelection(-1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Down"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveDeviceSelection(1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Left"
+        context: Qt.ApplicationShortcut
+        onActivated: root.adjustSelectedVolume(-1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Right"
+        context: Qt.ApplicationShortcut
+        onActivated: root.adjustSelectedVolume(1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Return"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateSelectedDevice()
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Enter"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateSelectedDevice()
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Space"
+        context: Qt.ApplicationShortcut
+        onActivated: AudioService.toggleOutputMute()
+    }
     Connections {
         target: AudioService
         function onVolumeIpcInvoked(): void { root.showIpcFeedback(); }
+    }
+
+    Connections {
+        target: Hyprland.focusedWorkspace
+        function onHasFullscreenChanged(): void {
+            if (Hyprland.focusedWorkspace?.hasFullscreen)
+                root.closeIpcFeedback();
+        }
     }
 
     Timer {
@@ -107,12 +197,6 @@ Item {
         }
         onWheeled: wheel => AudioService.adjustOutputVolume(
             wheel.angleDelta.y > 0 ? AudioService.outputStep : -AudioService.outputStep)
-    }
-
-    HyprlandFocusGrab {
-        active: root.opened
-        windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
     }
 
     PanelPopup {
@@ -191,11 +275,17 @@ Item {
                 model: AudioService.outputs
 
                 DeviceRow {
+                    id: outputDeviceRow
                     required property var modelData
+                    required property int index
                     node: modelData
                     icon: "󰓃"
                     selected: AudioService.output === modelData
-                    onActivated: AudioService.selectOutput(modelData)
+                    keyboardSelected: outputDeviceRow.index === root.selectedDeviceIndex
+                    onActivated: {
+                        root.selectedDeviceIndex = outputDeviceRow.index;
+                        AudioService.selectOutput(modelData);
+                    }
                 }
             }
         }
@@ -241,11 +331,19 @@ Item {
                 model: AudioService.inputs
 
                 DeviceRow {
+                    id: inputDeviceRow
                     required property var modelData
+                    required property int index
                     node: modelData
                     icon: "󰍬"
                     selected: AudioService.input === modelData
-                    onActivated: AudioService.selectInput(modelData)
+                    keyboardSelected: AudioService.outputs.length + inputDeviceRow.index
+                        === root.selectedDeviceIndex
+                    onActivated: {
+                        root.selectedDeviceIndex = AudioService.outputs.length
+                            + inputDeviceRow.index;
+                        AudioService.selectInput(modelData);
+                    }
                 }
             }
         }
@@ -257,19 +355,18 @@ Item {
         required property var node
         property string icon: ""
         property bool selected: false
+        property bool keyboardSelected: false
 
         signal activated()
 
         width: parent.width
         height: 36
-        color: selected
-            ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.18)
-            : deviceMouse.containsMouse
-                ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.08)
-                : "transparent"
-        border.width: selected || deviceMouse.containsMouse ? 1 : 0
-        border.color: selected ? Theme.muted
-            : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.25)
+        color: keyboardSelected || deviceMouse.containsMouse
+            ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.08)
+            : "transparent"
+        border.width: keyboardSelected || deviceMouse.containsMouse ? 1 : 0
+        border.color: Qt.rgba(Theme.foreground.r, Theme.foreground.g,
+            Theme.foreground.b, 0.25)
         Behavior on color { ColorAnimation { duration: 120 } }
 
         Text {
@@ -286,15 +383,26 @@ Item {
         Text {
             anchors.left: deviceIcon.right
             anchors.leftMargin: 10
-            anchors.right: parent.right
+            anchors.right: defaultIcon.left
             anchors.rightMargin: 10
             anchors.verticalCenter: parent.verticalCenter
             text: root.nodeLabel(deviceRow.node)
             color: Theme.foreground
             font.family: Theme.fontFamily
             font.pixelSize: 12
-            font.bold: deviceRow.selected
             elide: Text.ElideRight
+        }
+
+        Text {
+            id: defaultIcon
+            anchors.right: parent.right
+            anchors.rightMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            visible: deviceRow.selected
+            text: "󰄬"
+            color: Theme.foreground
+            font.family: Theme.fontFamily
+            font.pixelSize: 12
         }
 
         MouseArea {

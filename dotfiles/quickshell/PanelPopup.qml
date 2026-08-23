@@ -15,6 +15,7 @@ PopupWindow {
     property real contentSpacing: 14
     // Moving/reordered bar controls can otherwise drag an open popup with them.
     property bool freezePositionWhileVisible: false
+    property bool useNativeFocus: true
     property bool positionFrozen: false
     property point frozenPosition: Qt.point(0, 0)
     default property alias panelChildren: contentColumn.data
@@ -24,10 +25,13 @@ PopupWindow {
     signal backgroundClicked()
 
     color: "transparent"
+    grabFocus: useNativeFocus
 
     onVisibleChanged: {
-        if (!visible)
-            positionFrozen = false;
+        if (visible)
+            return;
+        positionFrozen = false;
+        closeRequested();
     }
 
     Shortcut {

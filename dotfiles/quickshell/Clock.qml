@@ -8,6 +8,7 @@ Item {
     id: root
 
     readonly property bool opened: PanelService.activePanel === root
+    readonly property bool requiresKeyboardFocus: false
 
     implicitWidth: label.implicitWidth + 16
     implicitHeight: 26
@@ -44,12 +45,6 @@ Item {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: PanelService.toggle(root)
-    }
-
-    HyprlandFocusGrab {
-        active: root.opened
-        windows: [calendar, root.QsWindow.window]
-        onCleared: PanelService.close(root)
     }
 
     Calendar {

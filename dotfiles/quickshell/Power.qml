@@ -8,7 +8,9 @@ Item {
     id: root
 
     readonly property bool opened: PanelService.activePanel === root
+    readonly property bool requiresKeyboardFocus: false
     property int phraseIndex: 0
+    property int selectedActionIndex: 0
     readonly property var phrases: [
         "Don't forget to save your work.",
         "Make sure to close all applications.",
@@ -29,8 +31,58 @@ Item {
     implicitWidth: 28
     implicitHeight: 26
 
-    onOpenedChanged: if (opened)
-        phraseIndex = 0
+    onOpenedChanged: if (opened) {
+        phraseIndex = 0;
+        selectedActionIndex = 0;
+    }
+
+    function moveSelection(offset: int): void {
+        selectedActionIndex = Math.max(0,
+            Math.min(actions.length - 1, selectedActionIndex + offset));
+    }
+
+    function activateSelection(): void {
+        const action = actions[selectedActionIndex];
+        if (action?.available)
+            runAction(action.action);
+    }
+
+    Shortcut {
+        enabled: root.opened
+        sequence: "Left"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveSelection(-1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Up"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveSelection(-1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Right"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveSelection(1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Down"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveSelection(1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Return"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateSelection()
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Enter"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateSelection()
+    }
 
     function runAction(action: string): void {
         if (!action)
@@ -53,12 +105,6 @@ Item {
         panel: root
         text: ""
         onClicked: PanelService.toggle(root)
-    }
-
-    HyprlandFocusGrab {
-        active: root.opened
-        windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
     }
 
     PanelPopup {
@@ -97,10 +143,12 @@ Item {
                 Rectangle {
                     id: actionButton
                     required property var modelData
+                    required property int index
 
                     width: actionGrid.cellWidth
                     height: 50
-                    color: modelData.available && actionMouse.containsMouse
+                    color: modelData.available
+                        && (actionButton.index === root.selectedActionIndex || actionMouse.containsMouse)
                         ? Qt.rgba(Theme.foreground.r, Theme.foreground.g,
                             Theme.foreground.b, 0.12)
                         : "transparent"
@@ -112,7 +160,8 @@ Item {
                         color: actionButton.modelData.available
                             ? Theme.foreground : Theme.muted
                         opacity: actionButton.modelData.available ? 1 : 0.45
-                        scale: actionMouse.containsMouse ? 1.1 : 1
+                        scale: actionButton.index === root.selectedActionIndex
+                            || actionMouse.containsMouse ? 1.1 : 1
                         font.family: Theme.fontFamily
                         font.pixelSize: actionButton.modelData.iconSize
                         Behavior on scale {
@@ -126,7 +175,10 @@ Item {
                         enabled: actionButton.modelData.available
                         hoverEnabled: true
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onClicked: root.runAction(actionButton.modelData.action)
+                        onClicked: {
+                            root.selectedActionIndex = actionButton.index;
+                            root.runAction(actionButton.modelData.action);
+                        }
                     }
                 }
             }

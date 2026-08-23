@@ -21,7 +21,9 @@ Item {
     readonly property string activeProfile: BatteryService.powerProfile
 
     readonly property bool opened: PanelService.activePanel === root
+    readonly property bool requiresKeyboardFocus: false
     property int phraseIndex: 0
+    property int selectedProfileIndex: 0
 
     readonly property var chargingPhrases: ["Pumping power", "Injecting electrons", "Pouring juice", "Amassing watts", "Hoarding joules", "Sucking volts", "Topping reserves", "Soaking amps", "Inhaling kilowatts"]
     readonly property var batteryPhrases: ["Slurping power", "Spending joules", "Draining watts", "Burning electrons", "Sipping juice", "Spending coulombs", "Bleeding amps", "Guzzling volts", "Munching reserves"]
@@ -50,10 +52,52 @@ Item {
         BatteryService.setPowerProfile(profile);
     }
 
-    onOpenedChanged: if (opened)
-        phraseIndex = 0
+    onOpenedChanged: if (opened) {
+        phraseIndex = 0;
+        selectedProfileIndex = Math.max(0,
+            profiles.findIndex(profile => String(profile) === activeProfile));
+    }
     onAvailableChanged: if (!available)
         PanelService.close(root)
+
+    Shortcut {
+        enabled: root.opened
+        sequence: "Left"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectedProfileIndex = Math.max(0, root.selectedProfileIndex - 1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Up"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectedProfileIndex = Math.max(0, root.selectedProfileIndex - 1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Right"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectedProfileIndex = Math.min(root.profiles.length - 1,
+            root.selectedProfileIndex + 1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Down"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectedProfileIndex = Math.min(root.profiles.length - 1,
+            root.selectedProfileIndex + 1)
+    }
+    Shortcut {
+        enabled: root.opened && root.profiles.length > 0
+        sequence: "Return"
+        context: Qt.ApplicationShortcut
+        onActivated: root.setProfile(String(root.profiles[root.selectedProfileIndex]))
+    }
+    Shortcut {
+        enabled: root.opened && root.profiles.length > 0
+        sequence: "Enter"
+        context: Qt.ApplicationShortcut
+        onActivated: root.setProfile(String(root.profiles[root.selectedProfileIndex]))
+    }
 
     PanelStatusRotator {
         target: batteryHero.statusLabel
@@ -77,13 +121,6 @@ Item {
             else
                 PanelService.toggle(root);
         }
-    }
-
-    HyprlandFocusGrab {
-        active: root.opened
-        // Bar remains in focus scope so clicks can switch panels directly.
-        windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
     }
 
     PanelPopup {
@@ -213,11 +250,12 @@ Item {
                     Rectangle {
                         id: profileButton
                         required property var modelData
+                        required property int index
                         width: profileRow.cellWidth
                         height: 36
-                        color: profileMouse.pressed ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.22) : root.activeProfile === String(modelData) ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.18) : profileMouse.containsMouse ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.08) : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.04)
+                        color: profileMouse.pressed ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.22) : root.activeProfile === String(modelData) ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.18) : profileButton.index === root.selectedProfileIndex || profileMouse.containsMouse ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.08) : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.04)
                         border.width: 1
-                        border.color: profileMouse.containsMouse ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.25) : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.4)
+                        border.color: profileButton.index === root.selectedProfileIndex || profileMouse.containsMouse ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.25) : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.4)
                         radius: 0
                         Behavior on color {
                             ColorAnimation {
@@ -250,7 +288,10 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.setProfile(String(profileButton.modelData))
+                            onClicked: {
+                                root.selectedProfileIndex = profileButton.index;
+                                root.setProfile(String(profileButton.modelData));
+                            }
                         }
                     }
                 }

@@ -10,11 +10,12 @@ Item {
     id: root
 
     readonly property bool opened: PanelService.activePanel === root
-    readonly property bool requiresKeyboardFocus: true
+    readonly property bool requiresKeyboardFocus: false
     readonly property int timerRowHeight: 48
     readonly property int timerRowSpacing: 8
     property bool inputReady: false
     property bool updatingInput: false
+    property int selectedTimerIndex: -1
 
     implicitWidth: 28
     implicitHeight: 26
@@ -59,6 +60,52 @@ Item {
         TimerService.start(TimerService.lastDurationSeconds);
     }
 
+    function selectTimer(offset: int): void {
+        if (TimerService.timers.length === 0) {
+            selectedTimerIndex = -1;
+            return;
+        }
+        if (selectedTimerIndex < 0) {
+            selectedTimerIndex = offset > 0 ? 0 : TimerService.timers.length - 1;
+        } else if (selectedTimerIndex === 0 && offset < 0) {
+            selectedTimerIndex = -1;
+            durationInput.forceActiveFocus();
+            durationInput.selectAll();
+        } else {
+            selectedTimerIndex = Math.max(0,
+                Math.min(TimerService.timers.length - 1, selectedTimerIndex + offset));
+        }
+    }
+
+    function removeSelectedTimer(): void {
+        const timer = TimerService.timers[selectedTimerIndex];
+        if (timer)
+            TimerService.removeTimer(timer.id);
+    }
+
+    function focusTimerList(): void {
+        selectTimer(1);
+        if (selectedTimerIndex >= 0)
+            timerList.forceActiveFocus();
+    }
+
+    onOpenedChanged: if (!opened)
+        selectedTimerIndex = -1
+    onSelectedTimerIndexChanged: if (selectedTimerIndex >= TimerService.timers.length)
+        selectedTimerIndex = TimerService.timers.length - 1
+
+    Connections {
+        target: TimerService
+        function onTimersChanged(): void {
+            if (root.selectedTimerIndex >= TimerService.timers.length)
+                root.selectedTimerIndex = TimerService.timers.length - 1;
+            if (root.opened && root.selectedTimerIndex < 0) {
+                durationInput.forceActiveFocus();
+                durationInput.selectAll();
+            }
+        }
+    }
+
     Component.onCompleted: inputReady = true
 
     Text {
@@ -83,18 +130,13 @@ Item {
         }
     }
 
-    HyprlandFocusGrab {
-        active: root.opened
-        windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
-    }
-
     PanelPopup {
         id: panel
 
         anchorItem: root
         anchorWindow: root.QsWindow.window
         visible: root.opened
+        useNativeFocus: true
         freezePositionWhileVisible: true
         onCloseRequested: PanelService.close(root)
         onVisibleChanged: {
@@ -213,6 +255,7 @@ Item {
 
                 Keys.onReturnPressed: root.startTimer()
                 Keys.onEnterPressed: root.startTimer()
+                Keys.onDownPressed: root.focusTimerList()
                 Keys.onEscapePressed: PanelService.close(root)
             }
         }
@@ -251,6 +294,12 @@ Item {
                 interactive: contentHeight > height
                 boundsBehavior: Flickable.StopAtBounds
                 flickableDirection: Flickable.VerticalFlick
+                activeFocusOnTab: true
+
+                Keys.onUpPressed: root.selectTimer(-1)
+                Keys.onDownPressed: root.selectTimer(1)
+                Keys.onDeletePressed: root.removeSelectedTimer()
+                Keys.onEscapePressed: PanelService.close(root)
 
                 Column {
                     id: timerColumn
@@ -263,14 +312,16 @@ Item {
                         Rectangle {
                             id: timerRow
                             required property var modelData
+                            required property int index
 
                             width: timerColumn.width
                             height: root.timerRowHeight
-                            color: rowHover.hovered
+                            color: timerRow.index === root.selectedTimerIndex || rowHover.hovered
                                 ? Qt.rgba(Theme.foreground.r, Theme.foreground.g,
                                     Theme.foreground.b, 0.08)
                                 : "transparent"
-                            border.width: rowHover.hovered ? 1 : 0
+                            border.width: timerRow.index === root.selectedTimerIndex
+                                || rowHover.hovered ? 1 : 0
                             border.color: Qt.rgba(Theme.foreground.r,
                                 Theme.foreground.g, Theme.foreground.b, 0.25)
                             Behavior on color { ColorAnimation { duration: 120 } }
@@ -307,7 +358,7 @@ Item {
                             Rectangle {
                                 id: deleteButton
                                 z: 2
-                                visible: rowHover.hovered
+                                visible: timerRow.index === root.selectedTimerIndex || rowHover.hovered
                                 width: 28
                                 height: 28
                                 anchors.right: parent.right
@@ -334,7 +385,10 @@ Item {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: TimerService.removeTimer(timerRow.modelData.id)
+                                    onClicked: {
+                                        root.selectedTimerIndex = timerRow.index;
+                                        TimerService.removeTimer(timerRow.modelData.id);
+                                    }
                                 }
                             }
                         }

@@ -10,6 +10,9 @@ Item {
 
     readonly property bool expanded: hover.hovered || nightLightToggle.opened
         || timerToggle.opened
+    readonly property real fullTrayWidth: 28 * 4 + (recordingActive ? 28 : 0)
+    readonly property var nightLightPanel: nightLightToggle
+    readonly property var timerPanel: timerToggle
     // XDPH creates one of these PipeWire sources per active portal capture.
     readonly property var recordingNodes: Pipewire.nodes
         ? Pipewire.nodes.values.filter(node => node && node.ready
@@ -93,9 +96,9 @@ Item {
         }
     }
 
-    // Keep one icon-width of empty hover space left of visible toggles so
-    // inactive controls can be revealed without hovering an active icon.
-    implicitWidth: Math.max(28, viewport.implicitWidth + 28)
+    // Reserve hover space for every toggle, including collapsed controls, so
+    // entering anywhere the expanded tray occupies reveals the full tray.
+    implicitWidth: root.fullTrayWidth
     implicitHeight: 26
 
     HoverHandler {

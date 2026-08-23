@@ -11,6 +11,43 @@ PanelWindow {
 
     required property var modelData
 
+    function registerPanels(): void {
+        const panels = [
+            ["power", power],
+            ["calendar", clock],
+            ["nightlight", quickToggles.nightLightPanel],
+            ["timer", quickToggles.timerPanel],
+            ["tray", tray],
+            ["volume", volume],
+            ["bluetooth", bluetooth],
+            ["display", display],
+            ["network", network],
+            ["battery", battery]
+        ];
+        for (const entry of panels)
+            PanelService.registerPanel(entry[0], entry[1], bar.screen);
+    }
+
+    function unregisterPanels(): void {
+        const panels = [
+            ["power", power],
+            ["calendar", clock],
+            ["nightlight", quickToggles.nightLightPanel],
+            ["timer", quickToggles.timerPanel],
+            ["tray", tray],
+            ["volume", volume],
+            ["bluetooth", bluetooth],
+            ["display", display],
+            ["network", network],
+            ["battery", battery]
+        ];
+        for (const entry of panels)
+            PanelService.unregisterPanel(entry[0], entry[1]);
+    }
+
+    Component.onCompleted: registerPanels()
+    Component.onDestruction: unregisterPanels()
+
     screen: modelData
     color: Theme.dark_background
     implicitHeight: PanelService.barHeight
@@ -40,7 +77,7 @@ PanelWindow {
             verticalCenter: parent.verticalCenter
         }
 
-        Power {}
+        Power { id: power }
 
         Workspaces {
             screen: bar.screen
@@ -54,6 +91,8 @@ PanelWindow {
     }
 
     QuickToggles {
+        id: quickToggles
+
         anchors {
             right: clock.left
             verticalCenter: clock.verticalCenter
@@ -69,20 +108,22 @@ PanelWindow {
             verticalCenter: parent.verticalCenter
         }
 
-        Tray {}
+        Tray { id: tray }
 
         Volume {
+            id: volume
             screen: bar.screen
         }
 
-        Bluetooth {}
+        Bluetooth { id: bluetooth }
 
         Display {
+            id: display
             screen: bar.screen
         }
 
-        Network {}
+        Network { id: network }
 
-        Battery {}
+        Battery { id: battery }
     }
 }

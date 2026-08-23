@@ -12,7 +12,9 @@ Item {
     required property var screen
     readonly property bool available: DisplayService.available || DisplayService.monitors.length > 0
     readonly property bool opened: PanelService.activePanel === root
+    readonly property bool requiresKeyboardFocus: false
     readonly property var scales: [1, 1.33, 1.6, 2, 3.13, 4]
+    property int selectedScaleIndex: 0
 
     visible: available
     implicitWidth: available ? indicator.implicitWidth : 0
@@ -38,6 +40,8 @@ Item {
         const focused = Hyprland.focusedMonitor;
         if (focused && String(screen.name) !== String(focused.name))
             return;
+        if (focused?.activeWorkspace?.hasFullscreen)
+            return;
         if (!opened) {
             feedbackOpened = true;
             PanelService.open(root);
@@ -46,18 +50,77 @@ Item {
             feedbackClose.restart();
     }
 
+    function closeIpcFeedback(): void {
+        if (!feedbackOpened)
+            return;
+        feedbackClose.stop();
+        PanelService.close(root);
+        feedbackOpened = false;
+    }
+
     property bool feedbackOpened: false
 
     onOpenedChanged: {
+        if (opened && DisplayService.focusedMonitor) {
+            const currentScale = Number(DisplayService.focusedMonitor.scale);
+            const index = scales.findIndex(scale => Math.abs(Number(scale) - currentScale) < 0.01);
+            selectedScaleIndex = Math.max(0, index);
+        }
         if (!opened && feedbackOpened) {
             feedbackClose.stop();
             feedbackOpened = false;
         }
     }
 
+    Shortcut {
+        enabled: root.opened
+        sequence: "Up"
+        context: Qt.ApplicationShortcut
+        onActivated: DisplayService.adjustBrightness(DisplayService.brightnessStep)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Down"
+        context: Qt.ApplicationShortcut
+        onActivated: DisplayService.adjustBrightness(-DisplayService.brightnessStep)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Left"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectedScaleIndex = Math.max(0, root.selectedScaleIndex - 1)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Right"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectedScaleIndex = Math.min(root.scales.length - 1,
+            root.selectedScaleIndex + 1)
+    }
+    Shortcut {
+        enabled: root.opened && !!DisplayService.focusedMonitor
+        sequence: "Return"
+        context: Qt.ApplicationShortcut
+        onActivated: DisplayService.setScale(Number(root.scales[root.selectedScaleIndex]))
+    }
+    Shortcut {
+        enabled: root.opened && !!DisplayService.focusedMonitor
+        sequence: "Enter"
+        context: Qt.ApplicationShortcut
+        onActivated: DisplayService.setScale(Number(root.scales[root.selectedScaleIndex]))
+    }
+
     Connections {
         target: DisplayService
         function onBrightnessIpcInvoked(): void { root.showIpcFeedback(); }
+    }
+
+    Connections {
+        target: Hyprland.focusedWorkspace
+        function onHasFullscreenChanged(): void {
+            if (Hyprland.focusedWorkspace?.hasFullscreen)
+                root.closeIpcFeedback();
+        }
     }
 
     Timer {
@@ -77,12 +140,6 @@ Item {
         onClicked: PanelService.toggle(root)
         onWheeled: wheel => DisplayService.adjustBrightness(
             wheel.angleDelta.y > 0 ? DisplayService.brightnessStep : -DisplayService.brightnessStep)
-    }
-
-    HyprlandFocusGrab {
-        active: root.opened
-        windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
     }
 
     PanelPopup {
@@ -139,6 +196,7 @@ Item {
                 Rectangle {
                     id: scaleButton
                     required property var modelData
+                    required property int index
                     readonly property bool selected: DisplayService.focusedMonitor
                         && Math.abs(Number(DisplayService.focusedMonitor.scale)
                             - Number(modelData)) < 0.01
@@ -147,11 +205,12 @@ Item {
                     height: 32
                     color: selected
                         ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.18)
-                        : scaleMouse.containsMouse
+                        : scaleButton.index === root.selectedScaleIndex || scaleMouse.containsMouse
                             ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.08)
                             : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.04)
                     border.width: 1
-                    border.color: selected ? Theme.muted
+                    border.color: selected || scaleButton.index === root.selectedScaleIndex
+                        ? Theme.muted
                         : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.3)
                     Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -170,7 +229,10 @@ Item {
                         hoverEnabled: true
                         enabled: !!DisplayService.focusedMonitor
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onClicked: DisplayService.setScale(Number(scaleButton.modelData))
+                        onClicked: {
+                            root.selectedScaleIndex = scaleButton.index;
+                            DisplayService.setScale(Number(scaleButton.modelData));
+                        }
                     }
                 }
             }

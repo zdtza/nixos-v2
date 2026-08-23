@@ -29,7 +29,11 @@ let
 
   helpers = ''
     notify() {
-      notify-send --app-name='Windows VM' --icon=windows-vm "$@" || true
+      notify-send \
+        --app-name='Windows VM' \
+        --icon=windows-vm \
+        --expire-time=3000 \
+        "$@" || true
     }
 
     vm_running() {
@@ -70,8 +74,6 @@ let
     text = ''
       ${helpers}
 
-      notify 'Windows' 'Connecting to virtual machine...'
-
       if ! vm_running; then
         systemctl start ${unit}
       fi
@@ -111,7 +113,7 @@ let
       ${helpers}
 
       if [[ -f ${marker} ]]; then
-        notify 'Windows' 'Windows is already installed, erase it first to reinstall.'
+        notify 'Windows' 'Already installed, erase it first to reinstall.'
         exit 0
       fi
 
@@ -144,7 +146,7 @@ let
         exit 1
       fi
 
-      notify 'Windows' 'Shutting down virtual machine...'
+      notify 'Windows' 'Shutting down...'
       systemctl stop ${unit}
     '';
   };

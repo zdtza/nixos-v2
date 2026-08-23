@@ -11,6 +11,7 @@ PanelPopup {
     property int shownMonth: clock.date.getMonth()
     property string selectedDay: ""
     property string selectedRangeEnd: ""
+    property int keyboardDayIndex: 0
 
     readonly property real weekColumnWidth: 44
     readonly property real dayColumnWidth: (panelContent.width - weekColumnWidth) / 7
@@ -20,6 +21,7 @@ PanelPopup {
     ]
     readonly property var weekdayNames: ["W", "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
     readonly property int currentYear: clock.date.getFullYear()
+    readonly property var keyboardDays: cells.filter(cell => !cell.weekNumber && cell.inYear)
     readonly property int selectedDayCount: {
         if (!selectedDay || !selectedRangeEnd) return 0;
         const start = selectedDay.split("-").map(Number);
@@ -118,11 +120,48 @@ PanelPopup {
     }
 
     function changeMonth(offset: int): void {
-        root.shownMonth = (root.shownMonth + offset + 12) % 12;
+        const current = keyboardDays[keyboardDayIndex];
+        const currentParts = current ? current.key.split("-").map(Number) : [];
+        const preferredDay = currentParts.length === 3
+            && currentParts[1] - 1 === shownMonth ? currentParts[2] : 1;
+        shownMonth = (shownMonth + offset + 12) % 12;
+        const lastDay = new Date(currentYear, shownMonth + 1, 0).getDate();
+        const targetKey = dateKey(currentYear, shownMonth,
+            Math.min(preferredDay, lastDay));
+        const targetIndex = keyboardDays.findIndex(day => day.key === targetKey);
+        if (targetIndex >= 0)
+            keyboardDayIndex = targetIndex;
     }
 
-    onVisibleChanged: if (!visible)
-        clearSelection()
+    function moveKeyboardDay(offset: int): void {
+        const monthIndexes = [];
+        for (let index = 0; index < keyboardDays.length; ++index) {
+            const month = Number(keyboardDays[index].key.split("-")[1]) - 1;
+            if (month === shownMonth)
+                monthIndexes.push(index);
+        }
+        if (monthIndexes.length === 0)
+            return;
+        const first = monthIndexes[0];
+        const last = monthIndexes[monthIndexes.length - 1];
+        keyboardDayIndex = Math.max(first,
+            Math.min(last, keyboardDayIndex + offset));
+    }
+
+    function activateKeyboardDay(): void {
+        if (keyboardDays[keyboardDayIndex])
+            selectDay(keyboardDays[keyboardDayIndex].key, false);
+    }
+
+    onVisibleChanged: {
+        if (!visible) {
+            clearSelection();
+            return;
+        }
+        const todayKey = dateKey(clock.date.getFullYear(), clock.date.getMonth(), clock.date.getDate());
+        keyboardDayIndex = Math.max(0,
+            keyboardDays.findIndex(day => day.key === todayKey));
+    }
     onBackgroundClicked: clearSelection()
 
     function clearSelection(): void {
@@ -139,6 +178,61 @@ PanelPopup {
     SystemClock {
         id: clock
         precision: SystemClock.Minutes
+    }
+
+    Shortcut {
+        enabled: root.visible
+        sequence: "Shift+Left"
+        context: Qt.ApplicationShortcut
+        onActivated: root.changeMonth(-1)
+    }
+    Shortcut {
+        enabled: root.visible
+        sequence: "Shift+Right"
+        context: Qt.ApplicationShortcut
+        onActivated: root.changeMonth(1)
+    }
+    Shortcut {
+        enabled: root.visible
+        sequence: "Left"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveKeyboardDay(-1)
+    }
+    Shortcut {
+        enabled: root.visible
+        sequence: "Right"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveKeyboardDay(1)
+    }
+    Shortcut {
+        enabled: root.visible
+        sequence: "Up"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveKeyboardDay(-7)
+    }
+    Shortcut {
+        enabled: root.visible
+        sequence: "Down"
+        context: Qt.ApplicationShortcut
+        onActivated: root.moveKeyboardDay(7)
+    }
+    Shortcut {
+        enabled: root.visible
+        sequence: "Return"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateKeyboardDay()
+    }
+    Shortcut {
+        enabled: root.visible
+        sequence: "Enter"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateKeyboardDay()
+    }
+    Shortcut {
+        enabled: root.visible
+        sequence: "Delete"
+        context: Qt.ApplicationShortcut
+        onActivated: root.clearSelection()
     }
 
     Item {
@@ -263,6 +357,8 @@ PanelPopup {
                         && root.daySelected(modelData.key)
                     readonly property bool rangeEndpoint: !modelData.weekNumber
                         && root.rangeEndpoint(modelData.key)
+                    readonly property bool keyboardSelected: !modelData.weekNumber
+                        && root.keyboardDays[root.keyboardDayIndex]?.key === modelData.key
 
                     width: index % 8 === 0 ? root.weekColumnWidth : root.dayColumnWidth
                     height: 42
@@ -272,10 +368,12 @@ PanelPopup {
                         width: dayCell.modelData.weekNumber ? 0 : root.dayColumnWidth - 8
                         height: 36
                         visible: !dayCell.modelData.weekNumber
-                            && (dayCell.marked || dayCell.modelData.today || dayMouse.containsMouse)
-                        color: dayCell.marked ? Theme.surface
+                            && (dayCell.marked || dayCell.modelData.today
+                                || dayCell.keyboardSelected || dayMouse.containsMouse)
+                        color: dayCell.marked || dayCell.keyboardSelected ? Theme.surface
                             : (dayMouse.containsMouse ? Theme.surface : "transparent")
-                        border.width: dayCell.rangeEndpoint || dayCell.modelData.today ? 1 : 0
+                        border.width: dayCell.rangeEndpoint || dayCell.modelData.today
+                            || dayCell.keyboardSelected ? 1 : 0
                         border.color: dayCell.rangeEndpoint ? Theme.muted : Theme.border
                     }
 

@@ -201,9 +201,9 @@ PopupWindow {
     Rectangle {
         anchors.fill: parent
 
-        color: Theme.background
+        color: Theme.dark_background
         radius: ServicePanel.rounding
-        border.width: 2
+        border.width: 1
         border.color: Theme.border
 
         Column {

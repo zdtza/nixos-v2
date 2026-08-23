@@ -12,7 +12,7 @@ Item {
 
     readonly property bool available: BluetoothService.available
     readonly property bool opened: PanelService.activePanel === root
-    readonly property bool requiresKeyboardFocus: false
+    readonly property bool requiresKeyboardFocus: true
     readonly property var devices: BluetoothService.devices
     readonly property var connectedDevices: BluetoothService.enabled
         ? devices.filter(device => BluetoothService.isConnected(device)) : []
@@ -153,6 +153,12 @@ Item {
         panel: root
         text: BluetoothService.icon
         onClicked: PanelService.toggle(root)
+    }
+
+    HyprlandFocusGrab {
+        active: root.opened
+        windows: [panel, root.QsWindow.window]
+        onCleared: PanelService.close(root)
     }
 
     PanelPopup {

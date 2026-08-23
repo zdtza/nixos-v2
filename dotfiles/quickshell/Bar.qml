@@ -69,6 +69,65 @@ PanelWindow {
         onClicked: PanelService.closeActive()
     }
 
+    // Keep keyboard focus on bar without intercepting pointer input. Popup
+    // shortcuts remain application-wide; timer text is mirrored through the
+    // hidden bar input because popup windows do not own compositor focus.
+    Item {
+        width: 1
+        height: 1
+        opacity: 0
+        focus: !!PanelService.activePanel
+            && PanelService.activePanel !== quickToggles.timerPanel
+            && !(PanelService.activePanel === network && network.passwordSsid !== "")
+            && !!PanelService.activePanel.requiresKeyboardFocus
+    }
+
+    TextInput {
+        id: timerKeyboardInput
+
+        x: -10
+        width: 1
+        height: 1
+        opacity: 0
+        enabled: PanelService.activePanel === quickToggles.timerPanel
+        focus: enabled
+        inputMask: "00:00"
+        text: quickToggles.timerPanel?.keyboardInputText ?? "00:00"
+
+        onTextEdited: quickToggles.timerPanel.setInputText(text)
+        onActiveFocusChanged: if (activeFocus)
+            selectAll()
+
+        Keys.onReturnPressed: quickToggles.timerPanel.startTimer()
+        Keys.onEnterPressed: quickToggles.timerPanel.startTimer()
+        Keys.onDownPressed: quickToggles.timerPanel.selectTimer(1)
+        Keys.onUpPressed: quickToggles.timerPanel.selectTimer(-1)
+        Keys.onDeletePressed: if (quickToggles.timerPanel.selectedTimerIndex >= 0)
+            quickToggles.timerPanel.removeSelectedTimer()
+        Keys.onEscapePressed: PanelService.close(quickToggles.timerPanel)
+    }
+
+    TextInput {
+        id: networkPasswordKeyboardInput
+
+        x: -10
+        width: 1
+        height: 1
+        opacity: 0
+        enabled: PanelService.activePanel === network && network.passwordSsid !== ""
+        focus: enabled
+        echoMode: TextInput.Password
+        text: network.passwordText
+
+        onTextEdited: network.passwordText = text
+        onActiveFocusChanged: if (activeFocus)
+            cursorPosition = length
+
+        Keys.onReturnPressed: network.submitPassword()
+        Keys.onEnterPressed: network.submitPassword()
+        Keys.onEscapePressed: network.close()
+    }
+
     // --- left ---
     RowLayout {
         anchors {

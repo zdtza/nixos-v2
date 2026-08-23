@@ -476,4 +476,6 @@ bind("SUPER + CTRL + D", "Toggle Bluetooth panel", hl.dsp.exec_cmd("qs ipc call 
 bind("SUPER + CTRL + M", "Toggle display panel", hl.dsp.exec_cmd("qs ipc call panels toggle display"))
 bind("SUPER + CTRL + N", "Toggle network panel", hl.dsp.exec_cmd("qs ipc call panels toggle network"))
 bind("SUPER + CTRL + B", "Toggle battery panel", hl.dsp.exec_cmd("qs ipc call panels toggle battery"))
+bind("SUPER + CTRL + S", "Toggle stay-awake mode", hl.dsp.exec_cmd("qs ipc call stayawake toggle"))
+bind("SUPER + CTRL + SHIFT + D", "Toggle do-not-disturb mode", hl.dsp.exec_cmd("qs ipc call dnd toggle"))
 bind("SUPER + SHIFT + space", "Toggle status bar", hl.dsp.exec_cmd("qs ipc call bar toggle"))

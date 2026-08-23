@@ -12,7 +12,7 @@ Item {
     required property var screen
     readonly property bool available: DisplayService.available || DisplayService.monitors.length > 0
     readonly property bool opened: PanelService.activePanel === root
-    readonly property bool requiresKeyboardFocus: false
+    readonly property bool requiresKeyboardFocus: true
     readonly property var scales: [1, 1.33, 1.6, 2, 3.13, 4]
     property int selectedScaleIndex: 0
 
@@ -140,6 +140,12 @@ Item {
         onClicked: PanelService.toggle(root)
         onWheeled: wheel => DisplayService.adjustBrightness(
             wheel.angleDelta.y > 0 ? DisplayService.brightnessStep : -DisplayService.brightnessStep)
+    }
+
+    HyprlandFocusGrab {
+        active: root.opened
+        windows: [panel, root.QsWindow.window]
+        onCleared: PanelService.close(root)
     }
 
     PanelPopup {

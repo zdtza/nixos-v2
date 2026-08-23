@@ -8,14 +8,14 @@ Item {
     id: root
 
     readonly property bool opened: PanelService.activePanel === root
-    readonly property bool requiresKeyboardFocus: false
+    readonly property bool requiresKeyboardFocus: true
     property int phraseIndex: 0
     property int selectedActionIndex: 0
     readonly property var phrases: [
-        "Don't forget to save your work.",
-        "Make sure to close all applications.",
-        "Remember to backup important files.",
-        "Check for any unsaved documents.",
+        "De-ionising the reactors",
+        "Cooling the fuel rods",
+        "Flushing reaction chamber",
+        "Monitoring the meltdown",
     ]
     readonly property var actions: [
         { title: "LOCK", icon: "󰌾", iconSize: 24,
@@ -105,6 +105,12 @@ Item {
         panel: root
         text: ""
         onClicked: PanelService.toggle(root)
+    }
+
+    HyprlandFocusGrab {
+        active: root.opened
+        windows: [panel, root.QsWindow.window]
+        onCleared: PanelService.close(root)
     }
 
     PanelPopup {

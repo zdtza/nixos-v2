@@ -13,7 +13,7 @@ Item {
     id: root
 
     readonly property bool opened: PanelService.activePanel === root
-    readonly property bool requiresKeyboardFocus: false
+    readonly property bool requiresKeyboardFocus: true
 
     property string passwordSsid: ""
     property string passwordText: ""
@@ -245,8 +245,12 @@ Item {
             restoreNetworkListFocus();
     }
 
-    onPasswordSsidChanged: if (passwordSsid === "")
-        restoreNetworkListFocus()
+    onPasswordSsidChanged: {
+        if (passwordSsid === "")
+            restoreNetworkListFocus();
+        else
+            passwordFocusTimer.restart();
+    }
 
     Component.onDestruction: if (opened)
         NetworkService.releaseScanner()
@@ -283,6 +287,36 @@ Item {
 
     Shortcut {
         enabled: root.opened && root.passwordSsid === ""
+        sequence: "Up"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectNetwork(-1)
+    }
+    Shortcut {
+        enabled: root.opened && root.passwordSsid === ""
+        sequence: "Down"
+        context: Qt.ApplicationShortcut
+        onActivated: root.selectNetwork(1)
+    }
+    Shortcut {
+        enabled: root.opened && root.passwordSsid === ""
+        sequence: "Return"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateSelectedNetwork()
+    }
+    Shortcut {
+        enabled: root.opened && root.passwordSsid === ""
+        sequence: "Enter"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateSelectedNetwork()
+    }
+    Shortcut {
+        enabled: root.opened && root.passwordSsid === ""
+        sequence: "Delete"
+        context: Qt.ApplicationShortcut
+        onActivated: root.forgetSelectedNetwork()
+    }
+    Shortcut {
+        enabled: root.opened && root.passwordSsid === ""
         sequence: "Space"
         context: Qt.ApplicationShortcut
         onActivated: NetworkService.toggleWifi()
@@ -294,6 +328,12 @@ Item {
         panel: root
         text: NetworkService.icon
         onClicked: root.toggle()
+    }
+
+    HyprlandFocusGrab {
+        active: root.opened
+        windows: [panel, root.QsWindow.window]
+        onCleared: root.close()
     }
 
     PanelPopup {
@@ -453,13 +493,6 @@ Item {
                 boundsBehavior: Flickable.StopAtBounds
                 flickableDirection: Flickable.VerticalFlick
                 activeFocusOnTab: true
-
-                Keys.onUpPressed: root.selectNetwork(-1)
-                Keys.onDownPressed: root.selectNetwork(1)
-                Keys.onReturnPressed: root.activateSelectedNetwork()
-                Keys.onEnterPressed: root.activateSelectedNetwork()
-                Keys.onDeletePressed: root.forgetSelectedNetwork()
-                Keys.onEscapePressed: root.close()
 
                 HoverHandler {
                     onHoveredChanged: if (hovered && root.passwordSsid === "")
@@ -708,6 +741,7 @@ Item {
                                         selectedTextColor: Theme.background
                                         font.family: Theme.fontFamily
                                         font.pixelSize: 12
+                                        font.letterSpacing: 2
                                         clip: true
                                         Component.onCompleted: {
                                             if (root.passwordSsid === String(networkRow.modelData.ssid))

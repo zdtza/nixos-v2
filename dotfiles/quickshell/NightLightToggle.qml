@@ -8,7 +8,7 @@ Item {
     id: root
 
     readonly property bool opened: PanelService.activePanel === root
-    readonly property bool requiresKeyboardFocus: false
+    readonly property bool requiresKeyboardFocus: true
     readonly property var presets: [2500, 3500, 4500, 5500]
     property int selectedPresetIndex: 0
 
@@ -101,6 +101,12 @@ Item {
         sequence: "Delete"
         context: Qt.ApplicationShortcut
         onActivated: NightLightService.disable()
+    }
+
+    HyprlandFocusGrab {
+        active: root.opened
+        windows: [panel, root.QsWindow.window]
+        onCleared: PanelService.close(root)
     }
 
     PanelPopup {

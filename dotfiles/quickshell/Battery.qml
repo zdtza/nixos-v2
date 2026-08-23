@@ -21,7 +21,7 @@ Item {
     readonly property string activeProfile: BatteryService.powerProfile
 
     readonly property bool opened: PanelService.activePanel === root
-    readonly property bool requiresKeyboardFocus: false
+    readonly property bool requiresKeyboardFocus: true
     property int phraseIndex: 0
     property int selectedProfileIndex: 0
 
@@ -121,6 +121,12 @@ Item {
             else
                 PanelService.toggle(root);
         }
+    }
+
+    HyprlandFocusGrab {
+        active: root.opened
+        windows: [panel, root.QsWindow.window]
+        onCleared: PanelService.close(root)
     }
 
     PanelPopup {

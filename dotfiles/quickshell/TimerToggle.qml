@@ -10,11 +10,12 @@ Item {
     id: root
 
     readonly property bool opened: PanelService.activePanel === root
-    readonly property bool requiresKeyboardFocus: false
+    readonly property bool requiresKeyboardFocus: true
     readonly property int timerRowHeight: 48
     readonly property int timerRowSpacing: 8
     property bool inputReady: false
     property bool updatingInput: false
+    property alias keyboardInputText: durationInput.text
     property int selectedTimerIndex: -1
 
     implicitWidth: 28
@@ -130,13 +131,18 @@ Item {
         }
     }
 
+    HyprlandFocusGrab {
+        active: root.opened
+        windows: [panel, root.QsWindow.window]
+        onCleared: PanelService.close(root)
+    }
+
     PanelPopup {
         id: panel
 
         anchorItem: root
         anchorWindow: root.QsWindow.window
         visible: root.opened
-        useNativeFocus: true
         freezePositionWhileVisible: true
         onCloseRequested: PanelService.close(root)
         onVisibleChanged: {

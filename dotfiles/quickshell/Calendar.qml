@@ -21,7 +21,7 @@ PanelPopup {
     ]
     readonly property var weekdayNames: ["W", "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
     readonly property int currentYear: clock.date.getFullYear()
-    readonly property var keyboardDays: cells.filter(cell => !cell.weekNumber && cell.inYear)
+    readonly property var keyboardDays: cells.filter(cell => !cell.weekNumber)
     readonly property int selectedDayCount: {
         if (!selectedDay || !selectedRangeEnd) return 0;
         const start = selectedDay.split("-").map(Number);
@@ -134,23 +134,15 @@ PanelPopup {
     }
 
     function moveKeyboardDay(offset: int): void {
-        const monthIndexes = [];
-        for (let index = 0; index < keyboardDays.length; ++index) {
-            const month = Number(keyboardDays[index].key.split("-")[1]) - 1;
-            if (month === shownMonth)
-                monthIndexes.push(index);
-        }
-        if (monthIndexes.length === 0)
+        if (keyboardDays.length === 0)
             return;
-        const first = monthIndexes[0];
-        const last = monthIndexes[monthIndexes.length - 1];
-        keyboardDayIndex = Math.max(first,
-            Math.min(last, keyboardDayIndex + offset));
+        keyboardDayIndex = Math.max(0,
+            Math.min(keyboardDays.length - 1, keyboardDayIndex + offset));
     }
 
-    function activateKeyboardDay(): void {
+    function activateKeyboardDay(extendSelection: bool): void {
         if (keyboardDays[keyboardDayIndex])
-            selectDay(keyboardDays[keyboardDayIndex].key, false);
+            selectDay(keyboardDays[keyboardDayIndex].key, extendSelection);
     }
 
     onVisibleChanged: {
@@ -220,13 +212,25 @@ PanelPopup {
         enabled: root.visible
         sequence: "Return"
         context: Qt.ApplicationShortcut
-        onActivated: root.activateKeyboardDay()
+        onActivated: root.activateKeyboardDay(false)
     }
     Shortcut {
         enabled: root.visible
         sequence: "Enter"
         context: Qt.ApplicationShortcut
-        onActivated: root.activateKeyboardDay()
+        onActivated: root.activateKeyboardDay(false)
+    }
+    Shortcut {
+        enabled: root.visible
+        sequence: "Shift+Return"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateKeyboardDay(true)
+    }
+    Shortcut {
+        enabled: root.visible
+        sequence: "Shift+Enter"
+        context: Qt.ApplicationShortcut
+        onActivated: root.activateKeyboardDay(true)
     }
     Shortcut {
         enabled: root.visible
@@ -391,7 +395,7 @@ PanelPopup {
                         id: dayMouse
 
                         anchors.fill: parent
-                        enabled: !dayCell.modelData.weekNumber && dayCell.modelData.inYear
+                        enabled: !dayCell.modelData.weekNumber
                         hoverEnabled: true
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                         onClicked: mouse => root.selectDay(dayCell.modelData.key,

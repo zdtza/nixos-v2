@@ -13,7 +13,7 @@ Item {
     required property var screen
     readonly property bool available: !!AudioService.output
     readonly property bool opened: PanelService.activePanel === root
-    readonly property bool requiresKeyboardFocus: false
+    readonly property bool requiresKeyboardFocus: true
     readonly property int outputPercent: Math.round(AudioService.outputVolume * 100)
     readonly property int inputPercent: Math.round(AudioService.inputVolume * 100)
     readonly property var keyboardDevices: AudioService.outputs.concat(AudioService.inputs)
@@ -197,6 +197,12 @@ Item {
         }
         onWheeled: wheel => AudioService.adjustOutputVolume(
             wheel.angleDelta.y > 0 ? AudioService.outputStep : -AudioService.outputStep)
+    }
+
+    HyprlandFocusGrab {
+        active: root.opened
+        windows: [panel, root.QsWindow.window]
+        onCleared: PanelService.close(root)
     }
 
     PanelPopup {

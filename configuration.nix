@@ -251,7 +251,6 @@ in
     dotnet-sdk_10
     mkcert
     steam
-    terminaltexteffects
     gnome-calculator
     libnotify
 

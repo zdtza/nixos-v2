@@ -26,20 +26,12 @@ Item {
         return "SOFT DAYLIGHT";
     }
 
-    Text {
+    BarButton {
         anchors.centerIn: parent
-        anchors.verticalCenterOffset: -1
+        panel: root
         text: "󰖔"
-        color: ServiceNightLight.enabled ? Theme.foreground : Theme.muted
-        font.family: Theme.fontFamily
-        font.pixelSize: 14
-    }
-
-    MouseArea {
-        anchors.fill: parent
+        textColor: ServiceNightLight.enabled ? Theme.foreground : Theme.muted
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton)
                 ServiceNightLight.toggle();

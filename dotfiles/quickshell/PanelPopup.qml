@@ -60,9 +60,10 @@ PopupWindow {
             } else {
                 point = window.contentItem.mapFromItem(root.anchorItem,
                     root.anchorItem.width / 2 - root.implicitWidth / 2,
-                    root.anchorItem.height + ServicePanel.barGap);
-                point.x = Math.max(ServicePanel.barGap, Math.min(point.x,
-                    window.width - root.implicitWidth - ServicePanel.barGap));
+                    root.anchorItem.height + ServicePanel.barGap + ServicePanel.gapTopOffset);
+                point.x = Math.max(ServicePanel.barGap + ServicePanel.gapLeftOffset,
+                    Math.min(point.x, window.width - root.implicitWidth
+                        - ServicePanel.barGap - ServicePanel.gapRightOffset));
                 point.x = Math.round(point.x);
                 point.y = Math.round(point.y);
                 if (root.freezePositionWhileVisible) {

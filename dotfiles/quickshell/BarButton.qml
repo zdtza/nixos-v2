@@ -16,7 +16,7 @@ Item {
     signal clicked(var mouse)
     signal wheeled(var wheel)
 
-    implicitWidth: 26
+    implicitWidth: 22
     implicitHeight: 26
     clip: true
 

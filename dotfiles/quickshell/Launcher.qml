@@ -104,7 +104,7 @@ Scope {
 
     Timer {
         id: slowLaunchTimer
-        interval: 1000
+        interval: 1500
 
         onTriggered: {
             if (root.pendingLaunchName === "")

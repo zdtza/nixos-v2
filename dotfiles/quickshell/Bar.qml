@@ -121,13 +121,12 @@ PanelWindow {
 
     // --- left ---
     RowLayout {
+        spacing: ServicePanel.barSpacing
         anchors {
             leftMargin: 6
             left: parent.left
             verticalCenter: parent.verticalCenter
         }
-
-        PanelPower { id: power }
 
         BarWorkspaces {
             screen: bar.screen
@@ -145,13 +144,23 @@ PanelWindow {
 
         anchors {
             right: clock.left
+            rightMargin: ServicePanel.barSpacing
             verticalCenter: clock.verticalCenter
         }
     }
 
+    PanelPower {
+        id: power
+        anchors {
+            left: clock.right
+            leftMargin: ServicePanel.barSpacing
+            verticalCenter: clock.verticalCenter
+        }
+    }
 
     // --- right ---
     RowLayout {
+        spacing: ServicePanel.barSpacing
         anchors {
             right: parent.right
             rightMargin: 12

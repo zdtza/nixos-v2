@@ -15,12 +15,29 @@ Item {
 
     // Shared top-bar geometry keeps standalone panels aligned with popups.
     property real barHeight: 30
+    // Height of every panel-backed bar icon (BarButton, and the few
+    // fixed-size items that match it). Bar icons are vertically centered in
+    // the bar, so their real bottom edge sits (barHeight - barIconHeight) / 2
+    // above the bar's bottom edge. PanelPopup/PanelTrayMenu anchor directly
+    // to their bar icon and don't need this, but Notifications has no icon
+    // to anchor to, so it approximates the same edge from these two.
+    property real barIconHeight: 26
+    // Single source for the gap between every bar button/toggle and the
+    // clock, so the bar's groups all read as evenly spaced.
+    property real barSpacing: 6
     // Gap below the bar for popups/notifications. Mirrors Hyprland's
     // general:gaps_out (top value) so panels line up with window edges
     // regardless of gap configuration; refreshed on startup and whenever
     // Hyprland reloads its config. Falls back to this default until the
     // first query resolves, or if hyprctl is ever unavailable.
     property real barGap: 9
+    // Manual per-edge nudges layered on top of barGap, for whatever few
+    // pixels compositor rounding/borders leave popups and notifications off
+    // by. Positive pushes the panel further from that edge. This is the only
+    // place panel-edge spacing should be adjusted.
+    property real gapTopOffset: 2
+    property real gapLeftOffset: 0
+    property real gapRightOffset: 0
     // Corner rounding applied everywhere in the UI (panels, buttons, inputs,
     // highlights, ...) except the workspace indicator. Mirrors Hyprland's
     // decoration:rounding so the shell's corners match window corners;

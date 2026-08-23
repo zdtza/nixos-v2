@@ -143,10 +143,11 @@ PopupWindow {
             let point = menu.anchorWindow.contentItem.mapFromItem(
                 menu.anchorItem,
                 menu.anchorItem.width / 2 - menu.implicitWidth / 2,
-                menu.anchorItem.height + ServicePanel.barGap
+                menu.anchorItem.height + ServicePanel.barGap + ServicePanel.gapTopOffset
             );
-            point.x = Math.max(ServicePanel.barGap, Math.min(point.x,
-                menu.anchorWindow.width - menu.implicitWidth - ServicePanel.barGap));
+            point.x = Math.max(ServicePanel.barGap + ServicePanel.gapLeftOffset,
+                Math.min(point.x, menu.anchorWindow.width - menu.implicitWidth
+                    - ServicePanel.barGap - ServicePanel.gapRightOffset));
             popupAnchor.rect.x = Math.round(point.x);
             popupAnchor.rect.y = Math.round(point.y);
         }

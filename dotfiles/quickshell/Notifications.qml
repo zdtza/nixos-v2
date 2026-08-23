@@ -88,8 +88,9 @@ Scope {
         }
 
         margins {
-            top: ServicePanel.barHeight + ServicePanel.barGap
-            right: ServicePanel.barGap
+            top: (ServicePanel.barHeight + ServicePanel.barIconHeight) / 2
+                + ServicePanel.barGap + ServicePanel.gapTopOffset
+            right: ServicePanel.barGap + ServicePanel.gapRightOffset
         }
 
         Column {
@@ -197,50 +198,26 @@ Scope {
             onTriggered: card.close(true)
         }
 
+        // Accent bar is this full-card rounded rect showing through down
+        // the left edge; the actual background is a second rounded rect of
+        // the same radius layered on top, inset 4px from the left. Sharing
+        // one radius lets their corners nest without computing per-corner
+        // insets, and both are solid fills (no Rectangle.border), which is
+        // what actually caused the old top/right/bottom strips to visibly
+        // smear for a frame when the layer-surface mask resizes on close.
         Rectangle {
+            id: accentBase
             anchors.fill: parent
             radius: ServicePanel.rounding
-            color: notificationMouse.containsMouse ? Theme.dark_background : Theme.background
-
-            Rectangle {
-                id: urgencyBar
-                anchors {
-                    left: parent.left
-                    top: parent.top
-                    bottom: parent.bottom
-                }
-                width: 4
-                color: card.urgencyColor()
-            }
+            color: card.urgencyColor()
 
             Rectangle {
                 anchors {
-                    left: urgencyBar.right
-                    right: parent.right
-                    top: parent.top
+                    fill: parent
+                    leftMargin: 4
                 }
-                height: 2
-                color: Theme.border
-            }
-
-            Rectangle {
-                anchors {
-                    right: parent.right
-                    top: parent.top
-                    bottom: parent.bottom
-                }
-                width: 2
-                color: Theme.border
-            }
-
-            Rectangle {
-                anchors {
-                    left: urgencyBar.right
-                    right: parent.right
-                    bottom: parent.bottom
-                }
-                height: 2
-                color: Theme.border
+                radius: ServicePanel.rounding
+                color: notificationMouse.containsMouse ? Theme.background : Theme.dark_background
             }
 
             Column {

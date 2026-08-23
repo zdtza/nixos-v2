@@ -28,28 +28,27 @@ let
     }
   '';
 
+  showCursor = pkgs.writeShellScript "tte-screensaver-show-cursor" ''
+    ${pkgs.hyprland}/bin/hyprctl dispatch \
+      '(function() hl.config({ cursor = { invisible = false } }); return hl.dsp.no_op() end)()' \
+      >/dev/null
+  '';
+
   screensaver = pkgs.writeShellScriptBin "tte-screensaver" ''
     monitor_data="$(${pkgs.hyprland}/bin/hyprctl monitors -j)"
     monitors="$(printf '%s' "$monitor_data" | ${pkgs.jq}/bin/jq -r '.[].name')"
-    focused_monitor="$(printf '%s' "$monitor_data" | ${pkgs.jq}/bin/jq -r '.[] | select(.focused).name')"
+    monitor_count="$(printf '%s' "$monitor_data" | ${pkgs.jq}/bin/jq 'length')"
     [ -n "$monitors" ] || exit 0
 
-    restore_focus() {
-      [ -n "$focused_monitor" ] || return
-      focused_monitor_lua="$(printf '%s' "$focused_monitor" | ${pkgs.jq}/bin/jq -Rs .)"
+    set_cursor_invisible() {
       ${pkgs.hyprland}/bin/hyprctl dispatch \
-        "hl.dsp.focus({ monitor = $focused_monitor_lua })" >/dev/null
+        "(function() hl.config({ cursor = { invisible = $1 } }); return hl.dsp.no_op() end)()" \
+        >/dev/null
     }
-    trap restore_focus EXIT
+    trap '${showCursor}' EXIT
 
     kitty_pids=""
     for monitor in $monitors; do
-      # Windows initially map on focused output. Focus each output before
-      # launching its instance; this also works with Hyprland's Lua dispatchers.
-      monitor_lua="$(printf '%s' "$monitor" | ${pkgs.jq}/bin/jq -Rs .)"
-      ${pkgs.hyprland}/bin/hyprctl dispatch \
-        "hl.dsp.focus({ monitor = $monitor_lua })" >/dev/null
-
       window_title="tte-screensaver-$monitor"
       ${pkgs.kitty}/bin/kitty \
         --class tte-screensaver \
@@ -75,20 +74,19 @@ let
           --color-swap-chance 0.001 &
       kitty_pid=$!
       kitty_pids="$kitty_pids $kitty_pid"
-
-      # Keep output focused until its window maps, then continue to next one.
-      for _ in $(${pkgs.coreutils}/bin/seq 1 50); do
-        if ${pkgs.hyprland}/bin/hyprctl clients -j \
-          | ${pkgs.jq}/bin/jq -e --arg title "$window_title" \
-            'any(.[]; .title == $title)' >/dev/null; then
-          break
-        fi
-        ${pkgs.coreutils}/bin/sleep 0.1
-      done
     done
 
-    restore_focus
-    trap - EXIT
+    # Hide cursor only after every output's window has mapped. This readiness
+    # poll does not gate launches or compositor-side monitor assignment.
+    for _ in $(${pkgs.coreutils}/bin/seq 1 100); do
+      mapped_count="$(${pkgs.hyprland}/bin/hyprctl clients -j \
+        | ${pkgs.jq}/bin/jq '[.[] | select(.class == "tte-screensaver")] | length')"
+      if [ "$mapped_count" -ge "$monitor_count" ]; then
+        set_cursor_invisible true
+        break
+      fi
+      ${pkgs.coreutils}/bin/sleep 0.02
+    done
 
     # Let Kitty's synthetic resume events pass before arming dismissal.
     ${pkgs.coreutils}/bin/sleep 1
@@ -137,8 +135,8 @@ in
 
     Service = {
       ExecStart = "${screensaver}/bin/tte-screensaver";
+      ExecStopPost = "${showCursor}";
       KillMode = "control-group";
-      CPUQuota = "25%";
     };
   };
 

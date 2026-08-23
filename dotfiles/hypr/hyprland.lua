@@ -187,6 +187,18 @@ end
 
 for _, monitor in ipairs(configured_monitors) do
 	assign_workspaces(monitor.output, monitor.workspaces)
+
+	-- Route each screensaver instance before it maps. Its title contains output
+	-- name, allowing all instances to launch concurrently without focus changes.
+	hl.window_rule({
+		name = "tte-screensaver-" .. monitor.output,
+		match = {
+			class = "^tte-screensaver$",
+			title = "^tte-screensaver-" .. monitor.output .. "$",
+		},
+		monitor = monitor.output,
+	})
+
 	hl.monitor({
 		output = monitor.output,
 		mode = monitor.mode,

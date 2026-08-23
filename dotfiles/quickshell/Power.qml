@@ -8,25 +8,37 @@ Item {
     id: root
 
     readonly property bool opened: PanelService.activePanel === root
+    property int phraseIndex: 0
+    readonly property var phrases: [
+        "Machines need naps too",
+        "Reboot. Deny everything",
+    ]
     readonly property var actions: [
         { title: "SHUTDOWN", icon: "", iconSize: 22,
             action: "poweroff", available: true },
         { title: "REBOOT", icon: "󰜉", iconSize: 28,
             action: "reboot", available: true },
         { title: "SLEEP", icon: "󰒲", iconSize: 28,
-            action: "suspend", available: true },
-        { title: "LOCK", icon: "", iconSize: 21,
-            action: "", available: false }
+            action: "suspend", available: true }
     ]
 
     implicitWidth: 28
     implicitHeight: 26
+
+    onOpenedChanged: if (opened)
+        phraseIndex = 0
 
     function runAction(action: string): void {
         if (!action)
             return;
         PanelService.close(root);
         Quickshell.execDetached(["systemctl", action]);
+    }
+
+    PanelStatusRotator {
+        target: powerHero.statusLabel
+        running: root.opened
+        onAdvance: root.phraseIndex = (root.phraseIndex + 1) % root.phrases.length
     }
 
     BarButton {
@@ -51,14 +63,15 @@ Item {
         onCloseRequested: PanelService.close(root)
         borderColor: Theme.border
         contentSpacing: 14
-        implicitWidth: 240
+        implicitWidth: 280
         implicitHeight: panelContent.implicitHeight + contentMargins * 2
 
         PanelHero {
+            id: powerHero
             width: parent.width
             icon: ""
             title: "Power"
-            status: "SYSTEM OPTIONS"
+            status: root.phrases[root.phraseIndex % root.phrases.length].toUpperCase()
         }
 
         PanelSeparator {}
@@ -67,9 +80,9 @@ Item {
             id: actionGrid
 
             width: parent.width
-            columns: 2
+            columns: 3
             spacing: 10
-            readonly property real cellWidth: (width - spacing) / 2
+            readonly property real cellWidth: (width - spacing * (columns - 1)) / columns
 
             Repeater {
                 model: root.actions

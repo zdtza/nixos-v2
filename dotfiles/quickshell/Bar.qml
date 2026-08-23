@@ -13,7 +13,7 @@ PanelWindow {
 
     screen: modelData
     color: Theme.dark_background
-    implicitHeight: 30
+    implicitHeight: PanelService.barHeight
 
     WlrLayershell.namespace: "quickshell:bar"
     WlrLayershell.keyboardFocus: PanelService.activePanel?.requiresKeyboardFocus

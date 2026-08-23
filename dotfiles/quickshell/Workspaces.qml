@@ -21,7 +21,7 @@ Item {
 
     // How many workspaces are always shown, even when empty.
     // five gives a nice balanace for both sides of the bar
-    property int minVisible: 4
+    property int minVisible: 3
 
     readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
     readonly property string monitorName: monitor ? monitor.name : (screen ? screen.name : "")

@@ -102,6 +102,13 @@ for _, window in ipairs(picker_windows) do
 end
 
 hl.window_rule({
+	name = "gnome-calculator",
+	match = { class = "^org.gnome.Calculator$" },
+	float = true,
+	size = { 360, 616 },
+})
+
+hl.window_rule({
 	name = "tte-screensaver",
 	match = { class = "^tte-screensaver$" },
 	float = true,

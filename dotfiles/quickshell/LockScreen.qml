@@ -103,17 +103,12 @@ Scope {
                 asynchronous: true
                 cache: true
                 layer.enabled: true
-                layer.effect: MultiEffect {
-                    blurEnabled: true
-                    blur: 0.3
-                    blurMax: 32
-                }
             }
 
             Rectangle {
                 anchors.fill: parent
                 color: Qt.rgba(Theme.background.r, Theme.background.g,
-                    Theme.background.b, 0.58)
+                    Theme.background.b, 0.45)
             }
 
             Column {

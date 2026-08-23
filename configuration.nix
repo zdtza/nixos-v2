@@ -242,7 +242,6 @@ in
     btop
     impala
     chromium
-    fuzzel
     python3
     file
     font-awesome

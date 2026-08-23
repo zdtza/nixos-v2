@@ -6,8 +6,8 @@ import QtQuick
 QtObject {
     property var activePanel: null
 
-    // Shared distance between bar edge and every anchored popup. Future
-    // compositor integration can update this from Hyprland's gaps_out value.
+    // Shared top-bar geometry keeps standalone panels aligned with popups.
+    property real barHeight: 30
     property real barGap: 9
 
     function open(panel: var): void {

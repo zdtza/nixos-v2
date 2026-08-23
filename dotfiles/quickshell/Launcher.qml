@@ -1,12 +1,11 @@
 pragma ComponentBehavior: Bound
 
-// Minimal application launcher: search field followed by application names and
-// their desktop-entry icons. Right clicking a row opens its desktop-entry
-// actions (Firefox's private window, this VM's shutdown/erase, ...), which are
-// otherwise unreachable.
+// Centered application browser matching the shell's compact panel language.
+// Right clicking an entry exposes desktop-entry actions that have no other shell UI.
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import Stylix
@@ -16,36 +15,58 @@ Scope {
 
     property bool open: false
     property var terminal: ["kitty"]
+    property var targetScreen: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
+    property string openedMonitorName: ""
+
+    function screenForMonitor(name: string): var {
+        for (const screen of Quickshell.screens) {
+            if (String(screen.name) === name)
+                return screen;
+        }
+        return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
+    }
+
+    function show(): void {
+        const monitorName = String(Hyprland.focusedMonitor?.name ?? "");
+        root.openedMonitorName = monitorName;
+        root.targetScreen = root.screenForMonitor(monitorName);
+        PanelService.closeActive();
+        root.open = true;
+    }
 
     function toggle(): void {
-        root.open = !root.open;
+        if (root.open)
+            root.open = false;
+        else
+            root.show();
     }
 
     IpcHandler {
         target: "launcher"
 
-        function toggle(): void {
-            root.toggle();
-        }
+        function toggle(): void { root.toggle(); }
+        function open(): void { root.show(); }
+        function close(): void { root.open = false; }
+        function isOpen(): bool { return root.open; }
+    }
 
-        function open(): void {
-            root.open = true;
-        }
+    Connections {
+        target: Hyprland
 
-        function close(): void {
-            root.open = false;
-        }
-
-        function isOpen(): bool {
-            return root.open;
+        function onFocusedMonitorChanged(): void {
+            if (!root.open)
+                return;
+            const monitorName = String(Hyprland.focusedMonitor?.name ?? "");
+            if (monitorName !== root.openedMonitorName)
+                root.open = false;
         }
     }
 
     PanelWindow {
         id: window
 
+        screen: root.targetScreen
         visible: root.open
-
         anchors {
             top: true
             bottom: true
@@ -57,47 +78,41 @@ Scope {
         color: Qt.rgba(Theme.background.r, Theme.background.g, Theme.background.b, 0.45)
         WlrLayershell.namespace: "quickshell:launcher"
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: root.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: root.open
+            ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
         readonly property var entries: {
-            const list = [];
-
+            const entries = [];
             for (const entry of DesktopEntries.applications.values) {
                 if (entry.noDisplay)
                     continue;
 
-                list.push({
+                const subtitle = entry.comment || entry.genericName || "Application";
+                entries.push({
                     entry,
                     name: entry.name.toLowerCase(),
-                    description: `${entry.comment ?? ""} ${entry.genericName ?? ""}`.toLowerCase()
+                    description: `${entry.comment ?? ""} ${entry.genericName ?? ""}`.toLowerCase(),
+                    subtitle
                 });
             }
-
-            return list.sort((a, b) => a.entry.name.localeCompare(b.entry.name));
+            return entries.sort((a, b) => a.entry.name.localeCompare(b.entry.name));
         }
 
         function fuzzyMatches(haystack: string, token: string): bool {
             let index = -1;
-
             for (const character of token) {
                 index = haystack.indexOf(character, index + 1);
                 if (index === -1)
                     return false;
             }
-
             return true;
         }
 
         function matchTier(item: var, token: string): int {
-            if (item.name.startsWith(token))
-                return 0;
-            if (item.name.includes(token))
-                return 1;
-            if (window.fuzzyMatches(item.name, token))
-                return 2;
-            if (item.description.includes(token))
-                return 3;
-
+            if (item.name.startsWith(token)) return 0;
+            if (item.name.includes(token)) return 1;
+            if (window.fuzzyMatches(item.name, token)) return 2;
+            if (item.description.includes(token)) return 3;
             return -1;
         }
 
@@ -106,44 +121,32 @@ Scope {
             if (tokens.length === 0)
                 return window.entries;
 
-            const matched = [];
-
+            const matches = [];
             for (const item of window.entries) {
                 let tier = 0;
-
                 for (const token of tokens) {
                     const tokenTier = window.matchTier(item, token);
                     if (tokenTier === -1) {
                         tier = -1;
                         break;
                     }
-
                     tier = Math.max(tier, tokenTier);
                 }
-
                 if (tier !== -1)
-                    matched.push({ item, tier });
+                    matches.push({ item, tier });
             }
-
-            return matched.sort((a, b) => a.tier - b.tier).map(match => match.item);
+            return matches.sort((a, b) => a.tier - b.tier).map(match => match.item);
         }
 
-        // Right-click menu state. Rendered inline rather than as a PopupWindow:
-        // the launcher already covers the screen and holds keyboard focus, so a
-        // second layer-shell surface would only fight it for input.
         property var menuEntry: null
         property real menuX: 0
         property real menuY: 0
-
         readonly property bool menuOpen: menuEntry !== null
         readonly property var menuActions: menuEntry?.actions ?? []
 
         function openContextMenu(entry: DesktopEntry, item: Item, localX: real, localY: real): void {
             if (!entry)
                 return;
-
-            // Row-local to scene coordinates, which is what the menu is
-            // positioned in since it shares the window's content item.
             const point = item.mapToItem(null, localX, localY);
             window.menuX = point.x;
             window.menuY = point.y;
@@ -158,14 +161,14 @@ Scope {
             if (!entry)
                 return;
 
-            if (entry.runInTerminal)
+            if (entry.runInTerminal) {
                 Quickshell.execDetached({
                     command: [...root.terminal, "--", ...entry.command],
                     workingDirectory: entry.workingDirectory || Quickshell.env("HOME")
                 });
-            else
+            } else {
                 entry.execute();
-
+            }
             root.open = false;
         }
 
@@ -175,7 +178,7 @@ Scope {
                 return;
             search.text = "";
             search.forceActiveFocus();
-            list.currentIndex = 0;
+            appList.currentIndex = 0;
         }
 
         MouseArea {
@@ -187,226 +190,287 @@ Scope {
             id: launcherFrame
 
             anchors.centerIn: parent
-            width: 500
-            height: 484
-            color: Theme.border
+            width: 520
+            height: 680
+            color: Theme.background
+            border.width: 2
+            border.color: Theme.border
 
-            // Swallow clicks so they do not reach dismiss area.
             MouseArea {
                 anchors.fill: parent
                 onPressed: mouse => mouse.accepted = true
             }
 
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: 2
-                color: Theme.background
+            ColumnLayout {
+                anchors {
+                    fill: parent
+                    leftMargin: 20
+                    rightMargin: 20
+                    topMargin: 18
+                    bottomMargin: 14
+                }
+                spacing: 14
 
-                ColumnLayout {
-                    anchors.fill: parent
-                    spacing: 0
+                PanelHero {
+                    Layout.fillWidth: true
+                    icon: "󰀻"
+                    title: "Applications"
+                    status: search.text.length > 0
+                        ? `${window.results.length} MATCHES`
+                        : `${window.entries.length} INSTALLED`
+                    trailingWidth: 46
+                    trailingHeight: 22
 
-                    Item {
-                        Layout.fillWidth: true
-                        implicitHeight: 78
+                    Rectangle {
+                        anchors.fill: parent
+                        color: Theme.dark_background
+                        border.width: 1
+                        border.color: Theme.surface
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "ESC"
+                            color: Theme.muted
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 10
+                            font.bold: true
+                            font.letterSpacing: 1
+                        }
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 42
+                    color: Theme.dark_background
+                    border.width: 1
+                    border.color: search.activeFocus ? Theme.muted : Theme.surface
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 13
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "󰍉"
+                        color: search.activeFocus ? Theme.foreground : Theme.muted
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 16
+                    }
+
+                    TextInput {
+                        id: search
+
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            leftMargin: 40
+                            rightMargin: 14
+                            verticalCenter: parent.verticalCenter
+                        }
+                        height: 28
+                        verticalAlignment: TextInput.AlignVCenter
+                        focus: true
+                        selectByMouse: true
+                        clip: true
+                        color: Theme.foreground
+                        selectionColor: Theme.surface
+                        selectedTextColor: Theme.foreground
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 14
+
+                        cursorDelegate: Rectangle {
+                            width: 1
+                            color: Theme.accent
+                        }
+
+                        onTextChanged: appList.currentIndex = 0
+
+                        Text {
+                            anchors.fill: parent
+                            verticalAlignment: Text.AlignVCenter
+                            visible: search.text === ""
+                            text: "Type to search applications…"
+                            color: Theme.muted
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 14
+                        }
+
+                        Keys.onEscapePressed: {
+                            if (window.menuOpen)
+                                window.closeContextMenu();
+                            else
+                                root.open = false;
+                        }
+                        Keys.onDownPressed: appList.incrementCurrentIndex()
+                        Keys.onUpPressed: appList.decrementCurrentIndex()
+                        Keys.onReturnPressed: window.launch(appList.currentItem?.entry ?? null)
+                        Keys.onEnterPressed: window.launch(appList.currentItem?.entry ?? null)
+                    }
+                }
+
+                ListView {
+                    id: appList
+
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    model: window.results
+                    currentIndex: window.results.length > 0 ? 0 : -1
+                    highlightMoveDuration: 0
+                    keyNavigationEnabled: false
+                    reuseItems: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    spacing: 2
+
+                    delegate: Rectangle {
+                        id: appRow
+
+                        required property var modelData
+                        required property int index
+                        readonly property var entry: modelData.entry
+                        readonly property bool selected: ListView.isCurrentItem
+
+                        width: appList.width
+                        height: 52
+                        color: selected ? Theme.surface
+                            : (rowMouse.containsMouse ? Theme.dark_background : "transparent")
 
                         Rectangle {
                             anchors {
                                 left: parent.left
-                                right: parent.right
                                 top: parent.top
-                                margins: 14
+                                bottom: parent.bottom
                             }
-                            height: 50
-                            color: Theme.dark_background
-                            border.width: 1
-                            border.color: Theme.surface
+                            width: 2
+                            visible: appRow.selected
+                            color: Theme.accent
+                        }
 
-                            Text {
-                                anchors.left: parent.left
-                                anchors.leftMargin: 12
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: "󰍉"
-                                color: Theme.muted
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 18
+                        Item {
+                            id: iconFrame
+                            anchors.left: parent.left
+                            anchors.leftMargin: 13
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 28
+                            height: 28
+
+                            Grid {
+                                anchors.centerIn: parent
+                                columns: 2
+                                spacing: 3
+                                visible: applicationIcon.status !== Image.Ready
+
+                                Repeater {
+                                    model: 4
+                                    Rectangle {
+                                        required property int index
+                                        width: 8
+                                        height: 8
+                                        color: appRow.selected ? Theme.foreground : Theme.muted
+                                        opacity: index === 0 || index === 3 ? 1 : 0.55
+                                    }
+                                }
                             }
 
-                            TextInput {
-                                id: search
-
-                                anchors {
-                                    left: parent.left
-                                    right: parent.right
-                                    leftMargin: 34
-                                    rightMargin: 12
-                                    verticalCenter: parent.verticalCenter
-                                }
-                                height: 30
-                                verticalAlignment: TextInput.AlignVCenter
-                                focus: true
-                                selectByMouse: true
-                                clip: true
-
-                                color: Theme.foreground
-                                selectionColor: Theme.surface
-                                selectedTextColor: Theme.foreground
-                                font.family: Theme.fontFamily
-                                font.pixelSize: 18
-
-                                cursorDelegate: Rectangle {
-                                    width: 1
-                                    color: Theme.accent
-                                }
-
-                                onTextChanged: list.currentIndex = 0
-
-                                Text {
-                                    anchors.fill: parent
-                                    verticalAlignment: Text.AlignVCenter
-                                    visible: search.text === ""
-                                    text: "Search applications"
-                                    color: Theme.muted
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: 18
-                                }
-
-                                // Escape backs out of the menu first, so it does
-                                // not close the whole launcher in one press.
-                                Keys.onEscapePressed: {
-                                    if (window.menuOpen)
-                                        window.closeContextMenu();
-                                    else
-                                        root.open = false;
-                                }
-                                Keys.onDownPressed: list.incrementCurrentIndex()
-                                Keys.onUpPressed: list.decrementCurrentIndex()
-                                Keys.onReturnPressed: window.launch(list.currentItem?.entry ?? null)
-                                Keys.onEnterPressed: window.launch(list.currentItem?.entry ?? null)
+                            Image {
+                                id: applicationIcon
+                                anchors.fill: parent
+                                source: appRow.entry.icon
+                                    ? Quickshell.iconPath(appRow.entry.icon, true) : ""
+                                sourceSize.width: 56
+                                sourceSize.height: 56
+                                cache: true
+                                asynchronous: true
+                                smooth: true
+                                visible: status === Image.Ready
                             }
                         }
-                    }
 
-                    ListView {
-                        id: list
+                        Column {
+                            anchors {
+                                left: iconFrame.right
+                                right: actionHint.left
+                                leftMargin: 13
+                                rightMargin: 12
+                                verticalCenter: parent.verticalCenter
+                            }
+                            spacing: 2
 
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.leftMargin: 12
-                        Layout.rightMargin: 12
-                        Layout.bottomMargin: 12
-
-                        clip: true
-                        model: window.results
-                        currentIndex: window.results.length > 0 ? 0 : -1
-                        highlightMoveDuration: 0
-                        keyNavigationEnabled: false
-                        reuseItems: true
-                        boundsBehavior: Flickable.StopAtBounds
-
-                        delegate: Rectangle {
-                            id: row
-
-                            required property var modelData
-                            required property int index
-
-                            readonly property var entry: modelData.entry
-                            readonly property bool selected: ListView.isCurrentItem
-
-                            width: list.width
-                            implicitHeight: 54
-                            color: row.selected ? Theme.surface : "transparent"
-
-                            RowLayout {
-                                anchors {
-                                    fill: parent
-                                    leftMargin: 12
-                                    rightMargin: 12
-                                }
-                                spacing: 12
-
-                                Item {
-                                    Layout.preferredWidth: 28
-                                    Layout.preferredHeight: 28
-
-                                    Grid {
-                                        anchors.centerIn: parent
-                                        columns: 2
-                                        spacing: 3
-                                        visible: applicationIcon.status !== Image.Ready
-
-                                        Repeater {
-                                            model: 4
-
-                                            Rectangle {
-                                                required property int index
-
-                                                width: 9
-                                                height: 9
-                                                radius: 2
-                                                color: row.selected ? Theme.foreground : Theme.muted
-                                                opacity: index === 0 || index === 3 ? 1 : 0.65
-                                            }
-                                        }
-                                    }
-
-                                    Image {
-                                        id: applicationIcon
-
-                                        anchors.fill: parent
-                                        // `check: true` returns an empty URL when desktop entry's
-                                        // icon is absent instead of icon provider's checkerboard.
-                                        source: row.entry.icon ? Quickshell.iconPath(row.entry.icon, true) : ""
-                                        sourceSize.width: 56
-                                        sourceSize.height: 56
-                                        cache: true
-                                        asynchronous: true
-                                        smooth: true
-                                        visible: applicationIcon.status === Image.Ready
-                                    }
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: row.entry.name
-                                    elide: Text.ElideRight
-                                    color: row.selected ? Theme.foreground : Theme.muted
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: 18
-                                    font.weight: Font.Medium
-                                }
+                            Text {
+                                width: parent.width
+                                text: appRow.entry.name
+                                color: Theme.foreground
+                                elide: Text.ElideRight
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 14
+                                font.bold: appRow.selected
                             }
 
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                onClicked: mouse => {
-                                    list.currentIndex = row.index;
-
-                                    if (mouse.button === Qt.RightButton)
-                                        window.openContextMenu(row.entry, row, mouse.x, mouse.y);
-                                    else
-                                        window.launch(row.entry);
-                                }
+                            Text {
+                                width: parent.width
+                                text: appRow.modelData.subtitle
+                                color: Qt.darker(Theme.foreground, 1.4)
+                                elide: Text.ElideRight
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 11
                             }
                         }
 
                         Text {
-                            anchors.centerIn: parent
-                            visible: window.results.length === 0
-                            text: "No matching applications"
+                            id: actionHint
+                            anchors.right: parent.right
+                            anchors.rightMargin: 14
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: appRow.selected ? "↵" : ""
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: 16
+                            font.pixelSize: 14
+                        }
+
+                        MouseArea {
+                            id: rowMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onClicked: mouse => {
+                                appList.currentIndex = appRow.index;
+                                if (mouse.button === Qt.RightButton)
+                                    window.openContextMenu(appRow.entry, appRow, mouse.x, mouse.y);
+                                else
+                                    window.launch(appRow.entry);
+                            }
+                        }
+                    }
+
+                    Column {
+                        anchors.centerIn: parent
+                        visible: window.results.length === 0
+                        spacing: 10
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "󰈉"
+                            color: Theme.muted
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 28
+                        }
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "NO MATCHING APPLICATIONS"
+                            color: Theme.muted
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 11
+                            font.bold: true
+                            font.letterSpacing: 1
                         }
                     }
                 }
+
             }
         }
 
-        // Dismiss layer. Swallows the click so closing the menu does not also
-        // reach the launcher's own click-outside-to-close handler.
+        // Close context menu without also dismissing launcher.
         MouseArea {
             anchors.fill: parent
             visible: window.menuOpen
@@ -423,14 +487,10 @@ Scope {
 
             visible: window.menuOpen
             z: 11
-            width: 240
-            height: menuColumn.implicitHeight + 12
-
-            // Clamped so a row near the bottom or right edge does not push the
-            // menu off screen.
-            x: Math.max(8, Math.min(window.menuX, window.width - contextMenu.width - 8))
-            y: Math.max(8, Math.min(window.menuY, window.height - contextMenu.height - 8))
-
+            width: 250
+            height: contextColumn.implicitHeight + 24
+            x: Math.max(8, Math.min(window.menuX, window.width - width - 8))
+            y: Math.max(8, Math.min(window.menuY, window.height - height - 8))
             color: Theme.background
             border.width: 2
             border.color: Theme.border
@@ -442,39 +502,54 @@ Scope {
             }
 
             Column {
-                id: menuColumn
-
+                id: contextColumn
                 anchors {
-                    fill: parent
-                    leftMargin: 2
-                    rightMargin: 2
-                    topMargin: 6
-                    bottomMargin: 6
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 12
+                }
+                spacing: 2
+
+                PanelSectionHeader {
+                    width: contextColumn.width
+                    title: "APPLICATION ACTIONS"
                 }
 
+                Item { width: 1; height: 6 }
+
                 Rectangle {
-                    width: menuColumn.width
-                    height: 30
-                    color: launchHover.containsMouse ? Theme.surface : "transparent"
+                    width: contextColumn.width
+                    height: 34
+                    color: launchMouse.containsMouse ? Theme.surface : "transparent"
 
                     Text {
                         anchors {
                             left: parent.left
-                            leftMargin: 14
-                            right: parent.right
-                            rightMargin: 14
+                            leftMargin: 10
                             verticalCenter: parent.verticalCenter
                         }
                         text: "Launch"
                         color: Theme.foreground
-                        elide: Text.ElideRight
                         font.family: Theme.fontFamily
-                        font.pixelSize: 14
+                        font.pixelSize: 13
+                        font.bold: true
+                    }
+
+                    Text {
+                        anchors {
+                            right: parent.right
+                            rightMargin: 10
+                            verticalCenter: parent.verticalCenter
+                        }
+                        text: "↵"
+                        color: Theme.muted
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 12
                     }
 
                     MouseArea {
-                        id: launchHover
-
+                        id: launchMouse
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
@@ -491,31 +566,28 @@ Scope {
 
                     Rectangle {
                         id: actionRow
-
                         required property var modelData
-
-                        width: menuColumn.width
-                        height: 30
-                        color: actionHover.containsMouse ? Theme.surface : "transparent"
+                        width: contextColumn.width
+                        height: 34
+                        color: actionMouse.containsMouse ? Theme.surface : "transparent"
 
                         Text {
                             anchors {
                                 left: parent.left
-                                leftMargin: 14
                                 right: parent.right
-                                rightMargin: 14
+                                leftMargin: 10
+                                rightMargin: 10
                                 verticalCenter: parent.verticalCenter
                             }
                             text: actionRow.modelData.name
                             color: Theme.muted
                             elide: Text.ElideRight
                             font.family: Theme.fontFamily
-                            font.pixelSize: 14
+                            font.pixelSize: 13
                         }
 
                         MouseArea {
-                            id: actionHover
-
+                            id: actionMouse
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor

@@ -22,6 +22,8 @@ Item {
     readonly property bool outputMuted: output && output.audio ? output.audio.muted : false
     readonly property bool inputMuted: input && input.audio ? input.audio.muted : false
 
+    signal volumeIpcInvoked()
+
     function audioNodes(sinks: bool): var {
         return nodes.filter(node => node && node.ready && node.audio
             && !node.isStream && node.isSink === sinks);
@@ -76,14 +78,38 @@ Item {
     IpcHandler {
         target: "audio"
 
-        function outputUp(): void { root.adjustOutputVolume(root.outputStep); }
-        function outputDown(): void { root.adjustOutputVolume(-root.outputStep); }
-        function inputUp(): void { root.adjustInputVolume(root.inputStep); }
-        function inputDown(): void { root.adjustInputVolume(-root.inputStep); }
-        function toggleOutputMute(): void { root.toggleOutputMute(); }
-        function toggleInputMute(): void { root.toggleInputMute(); }
-        function setOutput(percent: int): void { root.setOutputVolume(percent / 100); }
-        function setInput(percent: int): void { root.setInputVolume(percent / 100); }
+        function outputUp(): void {
+            root.adjustOutputVolume(root.outputStep);
+            root.volumeIpcInvoked();
+        }
+        function outputDown(): void {
+            root.adjustOutputVolume(-root.outputStep);
+            root.volumeIpcInvoked();
+        }
+        function inputUp(): void {
+            root.adjustInputVolume(root.inputStep);
+            root.volumeIpcInvoked();
+        }
+        function inputDown(): void {
+            root.adjustInputVolume(-root.inputStep);
+            root.volumeIpcInvoked();
+        }
+        function toggleOutputMute(): void {
+            root.toggleOutputMute();
+            root.volumeIpcInvoked();
+        }
+        function toggleInputMute(): void {
+            root.toggleInputMute();
+            root.volumeIpcInvoked();
+        }
+        function setOutput(percent: int): void {
+            root.setOutputVolume(percent / 100);
+            root.volumeIpcInvoked();
+        }
+        function setInput(percent: int): void {
+            root.setInputVolume(percent / 100);
+            root.volumeIpcInvoked();
+        }
         function outputPercent(): int { return Math.round(root.outputVolume * 100); }
         function inputPercent(): int { return Math.round(root.inputVolume * 100); }
     }

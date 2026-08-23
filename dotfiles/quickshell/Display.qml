@@ -9,6 +9,7 @@ import Stylix
 Item {
     id: root
 
+    required property var screen
     readonly property bool available: DisplayService.available || DisplayService.monitors.length > 0
     readonly property bool opened: PanelService.activePanel === root
     readonly property var scales: [1, 1.33, 1.6, 2, 3.13, 4]
@@ -31,6 +32,41 @@ Item {
     function scaleLabel(scale: real): string {
         return Number(scale).toFixed(Number.isInteger(scale) ? 0 : 2)
             .replace(/0$/, "") + "x";
+    }
+
+    function showIpcFeedback(): void {
+        const focused = Hyprland.focusedMonitor;
+        if (focused && String(screen.name) !== String(focused.name))
+            return;
+        if (!opened) {
+            feedbackOpened = true;
+            PanelService.open(root);
+        }
+        if (feedbackOpened)
+            feedbackClose.restart();
+    }
+
+    property bool feedbackOpened: false
+
+    onOpenedChanged: {
+        if (!opened && feedbackOpened) {
+            feedbackClose.stop();
+            feedbackOpened = false;
+        }
+    }
+
+    Connections {
+        target: DisplayService
+        function onBrightnessIpcInvoked(): void { root.showIpcFeedback(); }
+    }
+
+    Timer {
+        id: feedbackClose
+        interval: 800
+        onTriggered: {
+            PanelService.close(root);
+            root.feedbackOpened = false;
+        }
     }
 
     BarButton {

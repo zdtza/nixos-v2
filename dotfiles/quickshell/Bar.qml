@@ -71,11 +71,15 @@ PanelWindow {
 
         Tray {}
 
-        Volume {}
+        Volume {
+            screen: bar.screen
+        }
 
         Bluetooth {}
 
-        Display {}
+        Display {
+            screen: bar.screen
+        }
 
         Network {}
 

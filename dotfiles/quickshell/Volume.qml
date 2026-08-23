@@ -10,6 +10,7 @@ import Stylix
 Item {
     id: root
 
+    required property var screen
     readonly property bool available: !!AudioService.output
     readonly property bool opened: PanelService.activePanel === root
     readonly property int outputPercent: Math.round(AudioService.outputVolume * 100)
@@ -49,6 +50,41 @@ Item {
         if (AudioService.outputVolume <= 1)
             return "TURNED UP";
         return "OVERDRIVE";
+    }
+
+    function showIpcFeedback(): void {
+        const focused = Hyprland.focusedMonitor;
+        if (focused && String(screen.name) !== String(focused.name))
+            return;
+        if (!opened) {
+            feedbackOpened = true;
+            PanelService.open(root);
+        }
+        if (feedbackOpened)
+            feedbackClose.restart();
+    }
+
+    property bool feedbackOpened: false
+
+    onOpenedChanged: {
+        if (!opened && feedbackOpened) {
+            feedbackClose.stop();
+            feedbackOpened = false;
+        }
+    }
+
+    Connections {
+        target: AudioService
+        function onVolumeIpcInvoked(): void { root.showIpcFeedback(); }
+    }
+
+    Timer {
+        id: feedbackClose
+        interval: 800
+        onTriggered: {
+            PanelService.close(root);
+            root.feedbackOpened = false;
+        }
     }
 
     PwNodePeakMonitor {

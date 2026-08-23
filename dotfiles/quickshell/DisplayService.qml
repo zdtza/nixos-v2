@@ -18,6 +18,8 @@ Item {
     property int pendingBrightness: 0
     property int writingBrightness: 0
 
+    signal brightnessIpcInvoked()
+
     function clampBrightness(percent: int): int {
         return Math.max(1, Math.min(100, Math.round(Number(percent))));
     }
@@ -123,9 +125,18 @@ Item {
     IpcHandler {
         target: "display"
 
-        function brightnessUp(): void { root.adjustBrightness(root.brightnessStep); }
-        function brightnessDown(): void { root.adjustBrightness(-root.brightnessStep); }
-        function setBrightness(percent: int): void { root.setBrightness(percent); }
+        function brightnessUp(): void {
+            root.adjustBrightness(root.brightnessStep);
+            root.brightnessIpcInvoked();
+        }
+        function brightnessDown(): void {
+            root.adjustBrightness(-root.brightnessStep);
+            root.brightnessIpcInvoked();
+        }
+        function setBrightness(percent: int): void {
+            root.setBrightness(percent);
+            root.brightnessIpcInvoked();
+        }
         function brightness(): int { return root.brightnessPercent; }
         function setScale(scale: real): void { root.setScale(scale); }
     }

@@ -96,10 +96,10 @@ Item {
             ? connectedHeader.implicitHeight
                 + root.connectedDevices.length * (root.deviceRowHeight + root.deviceRowSpacing)
             : 0
-        readonly property real availableSectionHeight: root.availableDevices.length > 0
-            ? availableHeader.implicitHeight
-                + root.availableDevices.length * (root.deviceRowHeight + root.deviceRowSpacing)
-            : root.emptyStateHeight
+        readonly property real availableSectionHeight: availableHeader.implicitHeight
+            + (root.availableDevices.length > 0
+                ? root.availableDevices.length * (root.deviceRowHeight + root.deviceRowSpacing)
+                : root.deviceRowSpacing + root.emptyStateHeight)
         readonly property real desiredDeviceHeight: connectedSectionHeight
             + availableSectionHeight
             + (root.connectedDevices.length > 0 ? root.deviceSectionSpacing : 0)
@@ -201,7 +201,6 @@ Item {
 
                         PanelSectionHeader {
                             id: availableHeader
-                            visible: root.availableDevices.length > 0
                             title: "AVAILABLE"
                             detail: BluetoothService.adapter && BluetoothService.adapter.discovering
                                 ? "DISCOVERING" : "READY"

@@ -294,7 +294,7 @@ PanelPopup {
 
         Text {
             anchors.centerIn: parent
-            anchors.verticalCenterOffset: 2
+            anchors.verticalCenterOffset: 5
             text: (root.monthNames[root.shownMonth] + " " + root.currentYear).toUpperCase()
             color: Theme.muted
             font.family: Theme.fontFamily

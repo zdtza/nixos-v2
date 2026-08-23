@@ -24,7 +24,7 @@ Item {
             command: ["windows-launch"]
         },
         {
-            label: "Open web viewer",
+            label: "Web viewer",
             command: ["xdg-open", root.viewerUrl]
         },
         {

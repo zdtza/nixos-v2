@@ -70,7 +70,7 @@ let
     text = ''
       ${helpers}
 
-      notify 'Windows' 'Launching virtual machine... This may take a few minutes.'
+      notify 'Windows' 'Connecting to virtual machine...'
 
       if ! vm_running; then
         systemctl start ${unit}
@@ -202,7 +202,7 @@ in
         exec = lib.getExe install;
       };
       viewer = {
-        name = "Open web viewer";
+        name = "Web viewer";
         exec = "${pkgs.xdg-utils}/bin/xdg-open ${webUrl}";
       };
       shutdown = {

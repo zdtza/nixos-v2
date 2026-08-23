@@ -16,21 +16,20 @@ Item {
     implicitHeight: 26
 
     function durationParts(value: string): var {
-        const match = /^(\d{2}):(\d{2}):(\d{2})$/.exec(String(value));
+        const match = /^(\d{2}):(\d{2})$/.exec(String(value));
         if (!match)
             return null;
 
-        const hours = Number(match[1]);
-        const minutes = Number(match[2]);
-        const seconds = Number(match[3]);
-        if (minutes > 59 || seconds > 59)
+        const minutes = Number(match[1]);
+        const seconds = Number(match[2]);
+        if (minutes > 99 || seconds > 59)
             return null;
-        return { hours, minutes, seconds };
+        return { minutes, seconds };
     }
 
     function parseDuration(value: string): int {
         const parts = durationParts(value);
-        return parts ? parts.hours * 3600 + parts.minutes * 60 + parts.seconds : 0;
+        return parts ? parts.minutes * 60 + parts.seconds : 0;
     }
 
     function setInputText(value: string): void {
@@ -50,6 +49,15 @@ Item {
             setInputText(TimerService.formatDuration(seconds));
     }
 
+    function toggleSavedTimer(): void {
+        if (TimerService.running) {
+            TimerService.cancel();
+            resetInput();
+        } else {
+            TimerService.start(TimerService.lastDurationSeconds);
+        }
+    }
+
     Component.onCompleted: inputReady = true
 
     Text {
@@ -63,9 +71,15 @@ Item {
 
     MouseArea {
         anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: PanelService.toggle(root)
+        onClicked: mouse => {
+            if (mouse.button === Qt.RightButton)
+                root.toggleSavedTimer();
+            else
+                PanelService.toggle(root);
+        }
     }
 
     Timer {
@@ -80,7 +94,7 @@ Item {
         target: TimerService
         function onElapsed(): void {
             if (root.opened)
-                root.setInputText("00:00:00");
+                root.setInputText("00:00");
         }
     }
 
@@ -118,13 +132,57 @@ Item {
             icon: "󱎫"
             title: "Timer"
             status: TimerService.running ? "TICK TOCK" : "READY"
+            trailingWidth: 44
+            trailingHeight: 24
+
+            Rectangle {
+                anchors.fill: parent
+                readonly property bool canStart: root.parseDuration(durationInput.text) > 0
+                readonly property bool controlEnabled: TimerService.running || canStart
+                color: TimerService.running
+                    ? Theme.foreground
+                    : Qt.rgba(Theme.foreground.r, Theme.foreground.g,
+                        Theme.foreground.b, 0.18)
+                border.width: 1
+                border.color: Qt.rgba(Theme.foreground.r, Theme.foreground.g,
+                    Theme.foreground.b, 0.4)
+                opacity: controlEnabled ? 1 : 0.5
+                Behavior on color { ColorAnimation { duration: 120 } }
+
+                Rectangle {
+                    width: 18
+                    height: 18
+                    y: 3
+                    x: TimerService.running ? parent.width - width - 3 : 3
+                    color: TimerService.running ? Theme.background : Theme.foreground
+                    Behavior on x {
+                        NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: parent.controlEnabled
+                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: {
+                        if (TimerService.running) {
+                            TimerService.cancel();
+                            root.resetInput();
+                            durationInput.forceActiveFocus();
+                            durationInput.selectAll();
+                        } else {
+                            root.startTimer();
+                        }
+                    }
+                }
+            }
         }
 
         PanelSeparator {}
 
         PanelSectionHeader {
             title: "DURATION"
-            detail: TimerService.running ? "REMAINING" : "HH : MM : SS"
+            detail: TimerService.running ? "REMAINING" : "MM : SS"
         }
 
         Rectangle {
@@ -145,8 +203,8 @@ Item {
                 focus: true
                 activeFocusOnPress: true
                 selectByMouse: true
-                inputMask: "00:00:00"
-                text: "00:00:00"
+                inputMask: "00:00"
+                text: "00:00"
                 onTextChanged: {
                     if (root.inputReady && !root.updatingInput
                             && !TimerService.running && root.durationParts(text))
@@ -166,50 +224,5 @@ Item {
             }
         }
 
-        Rectangle {
-            id: actionButton
-
-            width: parent.width
-            height: 38
-            readonly property bool canStart: root.parseDuration(durationInput.text) > 0
-            color: actionMouse.enabled
-                ? actionMouse.containsMouse
-                    ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.18)
-                    : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.08)
-                : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.04)
-            border.width: 1
-            border.color: Qt.rgba(Theme.foreground.r, Theme.foreground.g,
-                Theme.foreground.b, actionMouse.enabled ? 0.4 : 0.2)
-            Behavior on color { ColorAnimation { duration: 120 } }
-
-            Text {
-                anchors.centerIn: parent
-                text: TimerService.running ? "CANCEL TIMER" : "START TIMER"
-                color: actionMouse.enabled ? Theme.foreground : Theme.muted
-                font.family: Theme.fontFamily
-                font.pixelSize: 11
-                font.bold: true
-                font.letterSpacing: 1.2
-            }
-
-            MouseArea {
-                id: actionMouse
-
-                anchors.fill: parent
-                enabled: TimerService.running || actionButton.canStart
-                hoverEnabled: true
-                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onClicked: {
-                    if (TimerService.running) {
-                        TimerService.cancel();
-                        root.resetInput();
-                        durationInput.forceActiveFocus();
-                        durationInput.selectAll();
-                    } else {
-                        root.startTimer();
-                    }
-                }
-            }
-        }
     }
 }

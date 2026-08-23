@@ -6,8 +6,8 @@ in
 {
   home.packages = [ package ];
 
-  # Keep hyprsunset available as an identity transform. Quickshell switches
-  # the warm filter through hyprsunset's Hyprland IPC endpoint.
+  # Keep hyprsunset available as an identity transform. Quickshell restores
+  # persisted enablement and color temperature through Hyprland IPC.
   systemd.user.services.hyprsunset = {
     Unit = {
       Description = "Hyprland blue-light filter";
@@ -16,7 +16,7 @@ in
     };
 
     Service = {
-      ExecStart = "${package}/bin/hyprsunset --temperature 4000 --identity";
+      ExecStart = "${package}/bin/hyprsunset --identity";
       Restart = "on-failure";
       RestartSec = 2;
     };

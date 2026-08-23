@@ -21,6 +21,16 @@ Scope {
         return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
     }
 
+    function clearNotifications(): void {
+        for (const notification of server.trackedNotifications.values)
+            notification.dismiss();
+    }
+
+    Component.onCompleted: {
+        if (DoNotDisturbService.enabled)
+            Qt.callLater(root.clearNotifications);
+    }
+
     NotificationServer {
         id: server
 
@@ -36,8 +46,20 @@ Scope {
         inlineReplySupported: false
 
         onNotification: notification => {
+            if (DoNotDisturbService.enabled) {
+                notification.dismiss();
+                return;
+            }
             root.targetScreen = root.focusedScreen();
             notification.tracked = true;
+        }
+    }
+
+    Connections {
+        target: DoNotDisturbService
+        function onEnabledChanged(): void {
+            if (DoNotDisturbService.enabled)
+                root.clearNotifications();
         }
     }
 
@@ -45,7 +67,8 @@ Scope {
         id: window
 
         screen: root.targetScreen
-        visible: server.trackedNotifications.values.length > 0
+        visible: !DoNotDisturbService.enabled
+            && server.trackedNotifications.values.length > 0
         color: "transparent"
         implicitWidth: 420
         exclusionMode: ExclusionMode.Ignore

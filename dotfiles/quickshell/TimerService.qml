@@ -16,18 +16,16 @@ Item {
     signal elapsed()
 
     function formatDuration(seconds: int): string {
-        const total = Math.max(0, Math.floor(Number(seconds)));
-        const hours = Math.floor(total / 3600);
-        const minutes = Math.floor(total % 3600 / 60);
+        const total = Math.max(0, Math.min(5999, Math.floor(Number(seconds))));
+        const minutes = Math.floor(total / 60);
         const secs = total % 60;
-        return String(hours).padStart(2, "0") + ":"
-            + String(minutes).padStart(2, "0") + ":"
+        return String(minutes).padStart(2, "0") + ":"
             + String(secs).padStart(2, "0");
     }
 
     function rememberDuration(seconds: int): bool {
         const duration = Math.floor(Number(seconds));
-        if (!Number.isFinite(duration) || duration < 0 || duration > 359999)
+        if (!Number.isFinite(duration) || duration < 0 || duration > 5999)
             return false;
 
         lastDurationSeconds = duration;
@@ -37,7 +35,7 @@ Item {
 
     function start(seconds: int): bool {
         const duration = Math.floor(Number(seconds));
-        if (!Number.isFinite(duration) || duration <= 0 || duration > 359999)
+        if (!Number.isFinite(duration) || duration <= 0 || duration > 5999)
             return false;
 
         rememberDuration(duration);
@@ -79,7 +77,7 @@ Item {
         printErrors: false
         onLoaded: {
             const duration = Number(text().trim());
-            if (Number.isFinite(duration) && duration >= 0 && duration <= 359999)
+            if (Number.isFinite(duration) && duration >= 0 && duration <= 5999)
                 root.lastDurationSeconds = Math.floor(duration);
         }
     }

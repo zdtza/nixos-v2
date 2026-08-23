@@ -8,7 +8,8 @@ import Stylix
 Item {
     id: root
 
-    readonly property bool expanded: hover.hovered || timerToggle.opened
+    readonly property bool expanded: hover.hovered || nightLightToggle.opened
+        || timerToggle.opened
     // XDPH creates one of these PipeWire sources per active portal capture.
     readonly property var recordingNodes: Pipewire.nodes
         ? Pipewire.nodes.values.filter(node => node && node.ready
@@ -34,7 +35,7 @@ Item {
 
     function initializeToggleOrder(): void {
         const states = [NightLightService.enabled, StayAwakeService.enabled,
-            TimerService.running, recordingActive];
+            TimerService.running, DoNotDisturbService.enabled, recordingActive];
         const nextActive = [];
         const nextInactive = [];
 
@@ -51,7 +52,8 @@ Item {
 
     function toggleX(index: int): real {
         const order = inactiveOrder.concat(activeOrder);
-        const slots = [nightLightSlot, stayAwakeSlot, timerSlot, recordingSlot];
+        const slots = [nightLightSlot, stayAwakeSlot, timerSlot, dndSlot,
+            recordingSlot];
         let x = 0;
 
         for (let position = 0; position < order.indexOf(index); ++position)
@@ -61,7 +63,7 @@ Item {
     }
 
     Component.onCompleted: initializeToggleOrder()
-    onRecordingActiveChanged: moveToggle(3, recordingActive)
+    onRecordingActiveChanged: moveToggle(4, recordingActive)
 
     Connections {
         target: NightLightService
@@ -84,8 +86,16 @@ Item {
         }
     }
 
-    // Preserve an invisible hover target when every toggle is inactive.
-    implicitWidth: Math.max(28, viewport.implicitWidth)
+    Connections {
+        target: DoNotDisturbService
+        function onEnabledChanged() {
+            root.moveToggle(3, DoNotDisturbService.enabled);
+        }
+    }
+
+    // Keep one icon-width of empty hover space left of visible toggles so
+    // inactive controls can be revealed without hovering an active icon.
+    implicitWidth: Math.max(28, viewport.implicitWidth + 28)
     implicitHeight: 26
 
     HoverHandler {
@@ -117,7 +127,7 @@ Item {
             width: implicitWidth
             height: 26
             implicitWidth: nightLightSlot.width + stayAwakeSlot.width
-                + timerSlot.width + recordingSlot.width
+                + timerSlot.width + dndSlot.width + recordingSlot.width
 
             Item {
                 id: nightLightSlot
@@ -132,26 +142,9 @@ Item {
                     NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
                 }
 
-                Item {
-                    width: 28
-                    height: 26
+                NightLightToggle {
+                    id: nightLightToggle
                     anchors.right: parent.right
-
-                    Text {
-                        anchors.centerIn: parent
-                        anchors.verticalCenterOffset: -1
-                        text: "󰖔"
-                        color: NightLightService.enabled ? Theme.foreground : Theme.muted
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 14
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: NightLightService.toggle()
-                    }
                 }
             }
 
@@ -184,6 +177,7 @@ Item {
 
                     MouseArea {
                         anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: StayAwakeService.toggle()
@@ -211,9 +205,47 @@ Item {
             }
 
             Item {
-                id: recordingSlot
+                id: dndSlot
 
                 x: root.toggleX(3)
+                width: implicitWidth
+                implicitWidth: root.expanded || DoNotDisturbService.enabled ? 28 : 0
+                implicitHeight: 26
+                clip: true
+
+                Behavior on implicitWidth {
+                    NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                }
+
+                Item {
+                    width: 28
+                    height: 26
+                    anchors.right: parent.right
+
+                    Text {
+                        anchors.centerIn: parent
+                        anchors.verticalCenterOffset: -1
+                        text: "󰂛"
+                        color: DoNotDisturbService.enabled
+                            ? Theme.foreground : Theme.muted
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 14
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: DoNotDisturbService.toggle()
+                    }
+                }
+            }
+
+            Item {
+                id: recordingSlot
+
+                x: root.toggleX(4)
                 width: implicitWidth
                 implicitWidth: root.recordingActive ? 28 : 0
                 implicitHeight: 26

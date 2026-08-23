@@ -40,6 +40,8 @@ PanelWindow {
             verticalCenter: parent.verticalCenter
         }
 
+        Power {}
+
         Workspaces {
             screen: bar.screen
         }
@@ -57,6 +59,7 @@ PanelWindow {
             verticalCenter: clock.verticalCenter
         }
     }
+
 
     // --- right ---
     RowLayout {

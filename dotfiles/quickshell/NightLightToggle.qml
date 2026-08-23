@@ -8,6 +8,7 @@ Item {
     id: root
 
     readonly property bool opened: PanelService.activePanel === root
+    readonly property bool requiresKeyboardFocus: true
     readonly property var presets: [2500, 3500, 4500, 5500]
 
     implicitWidth: 28
@@ -45,6 +46,20 @@ Item {
             else
                 PanelService.toggle(root);
         }
+    }
+
+    Shortcut {
+        enabled: root.opened
+        sequence: "Return"
+        context: Qt.ApplicationShortcut
+        onActivated: NightLightService.toggle()
+    }
+
+    Shortcut {
+        enabled: root.opened
+        sequence: "Enter"
+        context: Qt.ApplicationShortcut
+        onActivated: NightLightService.toggle()
     }
 
     HyprlandFocusGrab {

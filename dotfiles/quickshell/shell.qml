@@ -21,7 +21,7 @@ ShellRoot {
         target: "panels"
 
         function toggle(name: string): bool {
-            return PanelService.toggleNamed(name);
+            return ServicePanel.toggleNamed(name);
         }
     }
 

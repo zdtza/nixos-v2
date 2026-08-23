@@ -12,7 +12,7 @@ import Stylix
 Item {
     id: root
 
-    readonly property bool opened: PanelService.activePanel === root
+    readonly property bool opened: ServicePanel.activePanel === root
     readonly property bool requiresKeyboardFocus: true
 
     property string passwordSsid: ""
@@ -31,9 +31,9 @@ Item {
     property real pingLatency: -1
     property int packetLoss: 0
 
-    readonly property bool available: NetworkService.backendAvailable
-    readonly property var connectedNetworks: NetworkService.wifiNetworks.filter(network => network.connected)
-    readonly property var availableNetworks: NetworkService.wifiNetworks.filter(network => !network.connected)
+    readonly property bool available: ServiceNetwork.backendAvailable
+    readonly property var connectedNetworks: ServiceNetwork.wifiNetworks.filter(network => network.connected)
+    readonly property var availableNetworks: ServiceNetwork.wifiNetworks.filter(network => !network.connected)
     readonly property var networks: connectedNetworks.concat(availableNetworks)
     readonly property int networkRowHeight: 48
     readonly property int passwordRowHeight: 96
@@ -42,8 +42,12 @@ Item {
     readonly property int emptyStateHeight: 52
     readonly property int sectionHeaderHeight: 14
     readonly property int networkBottomPadding: 4
-    readonly property var phrases: ["Wiring bits", "Handling packets", "Sorting frames", "Hauling bytes", "Routing crumbs", "Counting collisions", "Bending light"]
-    readonly property string statusText: NetworkService.kind === "disconnected" ? "NOT CONNECTED" : phrases[phraseIndex % phrases.length].toUpperCase()
+    readonly property var phrases: [
+        "Wiring bits", "Handling packets", "Sorting frames", "Hauling bytes",
+        "Routing crumbs", "Counting collisions", "Bending light"
+    ]
+    readonly property string statusText: ServiceNetwork.kind === "disconnected"
+        ? "NOT CONNECTED" : phrases[phraseIndex % phrases.length].toUpperCase()
 
     signal restorePasswordFocus
 
@@ -137,14 +141,14 @@ Item {
     }
 
     function close(): void {
-        PanelService.close(root);
+        ServicePanel.close(root);
         passwordSsid = "";
         passwordText = "";
         failureText = "";
     }
 
     function toggle(): void {
-        PanelService.toggle(root);
+        ServicePanel.toggle(root);
     }
 
     function activateNetwork(network: var): void {
@@ -152,12 +156,12 @@ Item {
         failureText = "";
         if (network.connected)
             return;
-        if (NetworkService.securityRequiresPassword(network.security) && !network.known) {
+        if (ServiceNetwork.securityRequiresPassword(network.security) && !network.known) {
             passwordSsid = network.ssid;
             passwordText = "";
             return;
         }
-        NetworkService.connect(network.ssid, "");
+        ServiceNetwork.connect(network.ssid, "");
     }
 
     function selectNetwork(delta: int): void {
@@ -187,7 +191,7 @@ Item {
         if (!network)
             return;
         if (network.connected)
-            NetworkService.disconnect(String(network.ssid));
+            ServiceNetwork.disconnect(String(network.ssid));
         else
             activateNetwork(network);
     }
@@ -195,7 +199,7 @@ Item {
     function forgetSelectedNetwork(): void {
         const network = networks.find(candidate => candidate.ssid === selectedSsid);
         if (network && (network.known || network.connected))
-            NetworkService.forget(String(network.ssid));
+            ServiceNetwork.forget(String(network.ssid));
     }
 
     function restoreNetworkListFocus(): void {
@@ -206,7 +210,7 @@ Item {
     function submitPassword(): void {
         if (passwordSsid === "" || passwordText === "")
             return;
-        if (NetworkService.connect(passwordSsid, passwordText)) {
+        if (ServiceNetwork.connect(passwordSsid, passwordText)) {
             passwordSsid = "";
             passwordText = "";
             restoreNetworkListFocus();
@@ -222,14 +226,14 @@ Item {
             downloadRate = 0;
             uploadRate = 0;
             pingSamples = [];
-            NetworkService.acquireScanner();
+            ServiceNetwork.acquireScanner();
             if (networks.length > 0)
                 selectedSsid = networks[0].ssid;
             Qt.callLater(() => networkList.forceActiveFocus());
             if (!detailsProcess.running)
                 detailsProcess.running = true;
         } else {
-            NetworkService.releaseScanner();
+            ServiceNetwork.releaseScanner();
         }
     }
 
@@ -253,7 +257,7 @@ Item {
     }
 
     Component.onDestruction: if (opened)
-        NetworkService.releaseScanner()
+        ServiceNetwork.releaseScanner()
 
     Timer {
         id: passwordFocusTimer
@@ -281,7 +285,7 @@ Item {
 
     PanelStatusRotator {
         target: networkHero.statusLabel
-        running: root.opened && NetworkService.kind !== "disconnected"
+        running: root.opened && ServiceNetwork.kind !== "disconnected"
         onAdvance: root.phraseIndex = (root.phraseIndex + 1) % root.phrases.length
     }
 
@@ -319,14 +323,14 @@ Item {
         enabled: root.opened && root.passwordSsid === ""
         sequence: "Space"
         context: Qt.ApplicationShortcut
-        onActivated: NetworkService.toggleWifi()
+        onActivated: ServiceNetwork.toggleWifi()
     }
 
     BarButton {
         id: label
         anchors.centerIn: parent
         panel: root
-        text: NetworkService.icon
+        text: ServiceNetwork.icon
         onClicked: root.toggle()
     }
 
@@ -344,7 +348,9 @@ Item {
         onCloseRequested: root.close()
         borderColor: Theme.border
         contentSpacing: 14
-        readonly property real maximumHeight: Math.max(320, (root.QsWindow.window && root.QsWindow.window.screen ? root.QsWindow.window.screen.height : 800) - 45)
+        readonly property real maximumHeight: Math.max(320,
+            (root.QsWindow.window && root.QsWindow.window.screen
+                ? root.QsWindow.window.screen.height : 800) - 45)
         readonly property real panelChromeHeight: 194
         // Calculate from stable row counts rather than animated delegate size.
         // Password space exists only while editor is open, removing idle blank
@@ -371,44 +377,16 @@ Item {
         PanelHero {
             id: networkHero
             width: parent.width
-            icon: NetworkService.icon
-            title: NetworkService.connectionName
+            icon: ServiceNetwork.icon
+            title: ServiceNetwork.connectionName
             status: root.statusText
             trailingWidth: 44
             trailingHeight: 24
 
-            Rectangle {
+            PanelToggleSwitch {
                 anchors.fill: parent
-                radius: 0
-                color: NetworkService.wifiEnabled ? Theme.foreground : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.18)
-                border.width: 1
-                border.color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.4)
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 120
-                    }
-                }
-
-                Rectangle {
-                    width: 18
-                    height: 18
-                    radius: 0
-                    y: 3
-                    x: NetworkService.wifiEnabled ? parent.width - width - 3 : 3
-                    color: NetworkService.wifiEnabled ? Theme.background : Theme.foreground
-                    Behavior on x {
-                        NumberAnimation {
-                            duration: 140
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: NetworkService.toggleWifi()
-                }
+                checked: ServiceNetwork.wifiEnabled
+                onToggled: ServiceNetwork.toggleWifi()
             }
         }
 
@@ -516,14 +494,13 @@ Item {
                             width: parent.width
                             height: passwordOpen ? root.passwordRowHeight : root.networkRowHeight
                             color: rowMouse.pressed && !passwordOpen
-                                ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.22)
+                                ? Util.alpha(Theme.foreground, 0.22)
                                 : (networkRow.keyboardSelected || networkHover.hovered) && !passwordOpen
-                                    ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.08)
+                                    ? Util.alpha(Theme.foreground, 0.08)
                                     : "transparent"
                             border.width: (networkRow.keyboardSelected || networkHover.hovered)
                                 && !passwordOpen ? 1 : 0
-                            border.color: Qt.rgba(Theme.foreground.r,
-                                Theme.foreground.g, Theme.foreground.b, 0.25)
+                            border.color: Util.alpha(Theme.foreground, 0.25)
                             radius: 0
                             Behavior on color {
                                 ColorAnimation {
@@ -536,9 +513,9 @@ Item {
                             }
 
                             Connections {
-                                target: NetworkService.networkForSsid(String(networkRow.modelData.ssid))
+                                target: ServiceNetwork.networkForSsid(String(networkRow.modelData.ssid))
                                 function onConnectionFailed(reason): void {
-                                    if (!NetworkService.securityRequiresPassword(networkRow.modelData.security))
+                                    if (!ServiceNetwork.securityRequiresPassword(networkRow.modelData.security))
                                         return;
                                     root.passwordSsid = String(networkRow.modelData.ssid);
                                     root.passwordText = "";
@@ -567,7 +544,7 @@ Item {
                                     anchors.left: parent.left
                                     anchors.leftMargin: 10
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: NetworkService.wifiIcon(networkRow.modelData.signal)
+                                    text: ServiceNetwork.wifiIcon(networkRow.modelData.signal)
                                     color: Theme.foreground
                                     font.family: Theme.fontFamily
                                     font.pixelSize: 16
@@ -590,7 +567,10 @@ Item {
                                     }
                                     Text {
                                         width: parent.width
-                                        text: networkRow.modelData.stateChanging ? "Connecting…" : (networkRow.modelData.connected ? "Connected" : (networkRow.modelData.known ? "Known network" : NetworkService.securityLabel(networkRow.modelData.security)))
+                                        text: networkRow.modelData.stateChanging ? "Connecting…"
+                                            : networkRow.modelData.connected ? "Connected"
+                                            : networkRow.modelData.known ? "Known network"
+                                            : ServiceNetwork.securityLabel(networkRow.modelData.security)
                                         color: Theme.muted
                                         font.family: Theme.fontFamily
                                         font.pixelSize: 11
@@ -608,62 +588,16 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: 8
 
-                                    Rectangle {
+                                    PanelRowActionButton {
                                         visible: networkRow.modelData.connected
-                                        width: visible ? 28 : 0
-                                        height: 28
-                                        color: disconnectMouse.containsMouse
-                                            ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.12)
-                                            : "transparent"
-                                        border.width: 1
-                                        border.color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.3)
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "󰅖"
-                                            color: Theme.foreground
-                                            font.family: Theme.fontFamily
-                                            font.pixelSize: 12
-                                        }
-                                        MouseArea {
-                                            id: disconnectMouse
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: mouse => {
-                                                mouse.accepted = true;
-                                                NetworkService.disconnect(String(networkRow.modelData.ssid));
-                                            }
-                                        }
+                                        icon: "󰅖"
+                                        onClicked: ServiceNetwork.disconnect(String(networkRow.modelData.ssid))
                                     }
 
-                                    Rectangle {
+                                    PanelRowActionButton {
                                         visible: networkRow.modelData.known || networkRow.modelData.connected
-                                        width: visible ? 28 : 0
-                                        height: 28
-                                        color: forgetMouse.containsMouse
-                                            ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.12)
-                                            : "transparent"
-                                        border.width: 1
-                                        border.color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.3)
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "󰆴"
-                                            color: Theme.foreground
-                                            font.family: Theme.fontFamily
-                                            font.pixelSize: 12
-                                        }
-                                        MouseArea {
-                                            id: forgetMouse
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: mouse => {
-                                                mouse.accepted = true;
-                                                NetworkService.forget(String(networkRow.modelData.ssid));
-                                            }
-                                        }
+                                        icon: "󰆴"
+                                        onClicked: ServiceNetwork.forget(String(networkRow.modelData.ssid))
                                     }
                                 }
 
@@ -672,7 +606,7 @@ Item {
                                     anchors.right: parent.right
                                     anchors.rightMargin: 10
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: NetworkService.securityRequiresPassword(networkRow.modelData.security) ? "󰌾" : ""
+                                    text: ServiceNetwork.securityRequiresPassword(networkRow.modelData.security) ? "󰌾" : ""
                                     color: Theme.muted
                                     font.family: Theme.fontFamily
                                     font.pixelSize: 12
@@ -710,9 +644,9 @@ Item {
                                 Rectangle {
                                     width: parent.width - connectButton.width - cancelButton.width - parent.spacing * 2
                                     height: 32
-                                    color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.04)
+                                    color: Util.alpha(Theme.foreground, 0.04)
                                     border.width: 1
-                                    border.color: passwordInput.activeFocus ? Theme.muted : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.4)
+                                    border.color: passwordInput.activeFocus ? Theme.muted : Util.alpha(Theme.foreground, 0.4)
 
                                     Text {
                                         anchors {
@@ -756,9 +690,9 @@ Item {
                                     id: connectButton
                                     width: 72
                                     height: 32
-                                    color: connectMouse.containsMouse ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.18) : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.08)
+                                    color: connectMouse.containsMouse ? Util.alpha(Theme.foreground, 0.18) : Util.alpha(Theme.foreground, 0.08)
                                     border.width: 1
-                                    border.color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.4)
+                                    border.color: Util.alpha(Theme.foreground, 0.4)
                                     Text {
                                         anchors.centerIn: parent
                                         text: "Connect"
@@ -780,9 +714,9 @@ Item {
                                     id: cancelButton
                                     width: 32
                                     height: 32
-                                    color: cancelMouse.containsMouse ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.12) : "transparent"
+                                    color: cancelMouse.containsMouse ? Util.alpha(Theme.foreground, 0.12) : "transparent"
                                     border.width: 1
-                                    border.color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.3)
+                                    border.color: Util.alpha(Theme.foreground, 0.3)
                                     Text {
                                         anchors.centerIn: parent
                                         text: "󰅖"
@@ -832,14 +766,14 @@ Item {
                             id: availableHeader
                             width: parent.width
                             title: "AVAILABLE"
-                            detail: NetworkService.wifiEnabled ? "SCANNING" : "WI-FI OFF"
+                            detail: ServiceNetwork.wifiEnabled ? "SCANNING" : "WI-FI OFF"
                         }
 
                         Text {
                             width: parent.width
                             height: root.emptyStateHeight
                             visible: root.availableNetworks.length === 0
-                            text: NetworkService.wifiEnabled
+                            text: ServiceNetwork.wifiEnabled
                                 ? "No available networks" : "Wi-Fi is turned off"
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter

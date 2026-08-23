@@ -86,7 +86,7 @@ Item {
                     // The lua config backend takes lua expressions, not the
                     // classic `workspace N` dispatcher string.
                     onClicked: {
-                        PanelService.closeActive();
+                        ServicePanel.closeActive();
                         Hyprland.dispatch(Hyprland.usingLua ? `hl.dsp.focus({ workspace = ${workspaceItem.workspaceId} })` : `workspace ${workspaceItem.workspaceId}`);
                     }
                 }

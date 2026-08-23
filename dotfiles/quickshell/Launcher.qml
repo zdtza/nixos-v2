@@ -55,7 +55,7 @@ Scope {
         const monitorName = String(Hyprland.focusedMonitor?.name ?? "");
         root.openedMonitorName = monitorName;
         root.targetScreen = root.screenForMonitor(monitorName);
-        PanelService.closeActive();
+        ServicePanel.closeActive();
         root.open = true;
     }
 
@@ -134,7 +134,7 @@ Scope {
         }
 
         exclusionMode: ExclusionMode.Ignore
-        color: Qt.rgba(Theme.dark_background.r, Theme.dark_background.g, Theme.dark_background.b, 0.45)
+        color: Util.alpha(Theme.dark_background, 0.45)
         WlrLayershell.namespace: "quickshell:launcher"
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: root.open

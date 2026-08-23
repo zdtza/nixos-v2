@@ -37,8 +37,8 @@ Item {
     }
 
     function initializeToggleOrder(): void {
-        const states = [NightLightService.enabled, StayAwakeService.enabled,
-            TimerService.running, DoNotDisturbService.enabled, recordingActive];
+        const states = [ServiceNightLight.enabled, ServiceStayAwake.enabled,
+            ServiceTimer.running, ServiceDoNotDisturb.enabled, recordingActive];
         const nextActive = [];
         const nextInactive = [];
 
@@ -69,30 +69,30 @@ Item {
     onRecordingActiveChanged: moveToggle(4, recordingActive)
 
     Connections {
-        target: NightLightService
+        target: ServiceNightLight
         function onEnabledChanged() {
-            root.moveToggle(0, NightLightService.enabled);
+            root.moveToggle(0, ServiceNightLight.enabled);
         }
     }
 
     Connections {
-        target: StayAwakeService
+        target: ServiceStayAwake
         function onEnabledChanged() {
-            root.moveToggle(1, StayAwakeService.enabled);
+            root.moveToggle(1, ServiceStayAwake.enabled);
         }
     }
 
     Connections {
-        target: TimerService
+        target: ServiceTimer
         function onRunningChanged() {
-            root.moveToggle(2, TimerService.running);
+            root.moveToggle(2, ServiceTimer.running);
         }
     }
 
     Connections {
-        target: DoNotDisturbService
+        target: ServiceDoNotDisturb
         function onEnabledChanged() {
-            root.moveToggle(3, DoNotDisturbService.enabled);
+            root.moveToggle(3, ServiceDoNotDisturb.enabled);
         }
     }
 
@@ -137,7 +137,7 @@ Item {
 
                 x: root.toggleX(0)
                 width: implicitWidth
-                implicitWidth: root.expanded || NightLightService.enabled ? 28 : 0
+                implicitWidth: root.expanded || ServiceNightLight.enabled ? 28 : 0
                 implicitHeight: 26
                 clip: true
 
@@ -145,7 +145,7 @@ Item {
                     NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
                 }
 
-                NightLightToggle {
+                PanelNightLightToggle {
                     id: nightLightToggle
                     anchors.right: parent.right
                 }
@@ -156,7 +156,7 @@ Item {
 
                 x: root.toggleX(1)
                 width: implicitWidth
-                implicitWidth: root.expanded || StayAwakeService.enabled ? 28 : 0
+                implicitWidth: root.expanded || ServiceStayAwake.enabled ? 28 : 0
                 implicitHeight: 26
                 clip: true
 
@@ -173,7 +173,7 @@ Item {
                         anchors.centerIn: parent
                         anchors.verticalCenterOffset: -1
                         text: "󰅶"
-                        color: StayAwakeService.enabled ? Theme.foreground : Theme.muted
+                        color: ServiceStayAwake.enabled ? Theme.foreground : Theme.muted
                         font.family: Theme.fontFamily
                         font.pixelSize: 14
                     }
@@ -183,7 +183,7 @@ Item {
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: StayAwakeService.toggle()
+                        onClicked: ServiceStayAwake.toggle()
                     }
                 }
             }
@@ -193,7 +193,7 @@ Item {
 
                 x: root.toggleX(2)
                 width: implicitWidth
-                implicitWidth: root.expanded || TimerService.running ? 28 : 0
+                implicitWidth: root.expanded || ServiceTimer.running ? 28 : 0
                 implicitHeight: 26
                 clip: true
 
@@ -201,7 +201,7 @@ Item {
                     NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
                 }
 
-                TimerToggle {
+                PanelTimerToggle {
                     id: timerToggle
                     anchors.right: parent.right
                 }
@@ -212,7 +212,7 @@ Item {
 
                 x: root.toggleX(3)
                 width: implicitWidth
-                implicitWidth: root.expanded || DoNotDisturbService.enabled ? 28 : 0
+                implicitWidth: root.expanded || ServiceDoNotDisturb.enabled ? 28 : 0
                 implicitHeight: 26
                 clip: true
 
@@ -229,7 +229,7 @@ Item {
                         anchors.centerIn: parent
                         anchors.verticalCenterOffset: -1
                         text: "󰂛"
-                        color: DoNotDisturbService.enabled
+                        color: ServiceDoNotDisturb.enabled
                             ? Theme.foreground : Theme.muted
                         font.family: Theme.fontFamily
                         font.pixelSize: 14
@@ -240,7 +240,7 @@ Item {
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: DoNotDisturbService.toggle()
+                        onClicked: ServiceDoNotDisturb.toggle()
                     }
                 }
             }

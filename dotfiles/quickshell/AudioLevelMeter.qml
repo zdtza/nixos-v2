@@ -12,7 +12,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.12)
+        color: Util.alpha(Theme.foreground, 0.12)
 
         Rectangle {
             height: parent.height

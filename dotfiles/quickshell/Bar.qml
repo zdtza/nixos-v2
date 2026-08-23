@@ -11,8 +11,8 @@ PanelWindow {
 
     required property var modelData
 
-    function registerPanels(): void {
-        const panels = [
+    function panelEntries(): var {
+        return [
             ["power", power],
             ["calendar", clock],
             ["nightlight", quickToggles.nightLightPanel],
@@ -24,25 +24,16 @@ PanelWindow {
             ["network", network],
             ["battery", battery]
         ];
-        for (const entry of panels)
-            PanelService.registerPanel(entry[0], entry[1], bar.screen);
+    }
+
+    function registerPanels(): void {
+        for (const entry of panelEntries())
+            ServicePanel.registerPanel(entry[0], entry[1], bar.screen);
     }
 
     function unregisterPanels(): void {
-        const panels = [
-            ["power", power],
-            ["calendar", clock],
-            ["nightlight", quickToggles.nightLightPanel],
-            ["timer", quickToggles.timerPanel],
-            ["tray", tray],
-            ["volume", volume],
-            ["bluetooth", bluetooth],
-            ["display", display],
-            ["network", network],
-            ["battery", battery]
-        ];
-        for (const entry of panels)
-            PanelService.unregisterPanel(entry[0], entry[1]);
+        for (const entry of panelEntries())
+            ServicePanel.unregisterPanel(entry[0], entry[1]);
     }
 
     Component.onCompleted: registerPanels()
@@ -50,10 +41,10 @@ PanelWindow {
 
     screen: modelData
     color: Theme.dark_background
-    implicitHeight: PanelService.barHeight
+    implicitHeight: ServicePanel.barHeight
 
     WlrLayershell.namespace: "quickshell:bar"
-    WlrLayershell.keyboardFocus: PanelService.activePanel?.requiresKeyboardFocus
+    WlrLayershell.keyboardFocus: ServicePanel.activePanel?.requiresKeyboardFocus
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
     anchors {
@@ -66,7 +57,7 @@ PanelWindow {
     // This background target dismisses active popup when unused bar area is hit.
     MouseArea {
         anchors.fill: parent
-        onClicked: PanelService.closeActive()
+        onClicked: ServicePanel.closeActive()
     }
 
     // Keep keyboard focus on bar without intercepting pointer input. Popup
@@ -76,10 +67,10 @@ PanelWindow {
         width: 1
         height: 1
         opacity: 0
-        focus: !!PanelService.activePanel
-            && PanelService.activePanel !== quickToggles.timerPanel
-            && !(PanelService.activePanel === network && network.passwordSsid !== "")
-            && !!PanelService.activePanel.requiresKeyboardFocus
+        focus: !!ServicePanel.activePanel
+            && ServicePanel.activePanel !== quickToggles.timerPanel
+            && !(ServicePanel.activePanel === network && network.passwordSsid !== "")
+            && !!ServicePanel.activePanel.requiresKeyboardFocus
     }
 
     TextInput {
@@ -89,7 +80,7 @@ PanelWindow {
         width: 1
         height: 1
         opacity: 0
-        enabled: PanelService.activePanel === quickToggles.timerPanel
+        enabled: ServicePanel.activePanel === quickToggles.timerPanel
         focus: enabled
         inputMask: "00:00"
         text: quickToggles.timerPanel?.keyboardInputText ?? "00:00"
@@ -104,7 +95,7 @@ PanelWindow {
         Keys.onUpPressed: quickToggles.timerPanel.selectTimer(-1)
         Keys.onDeletePressed: if (quickToggles.timerPanel.selectedTimerIndex >= 0)
             quickToggles.timerPanel.removeSelectedTimer()
-        Keys.onEscapePressed: PanelService.close(quickToggles.timerPanel)
+        Keys.onEscapePressed: ServicePanel.close(quickToggles.timerPanel)
     }
 
     TextInput {
@@ -114,7 +105,7 @@ PanelWindow {
         width: 1
         height: 1
         opacity: 0
-        enabled: PanelService.activePanel === network && network.passwordSsid !== ""
+        enabled: ServicePanel.activePanel === network && network.passwordSsid !== ""
         focus: enabled
         echoMode: TextInput.Password
         text: network.passwordText
@@ -136,20 +127,20 @@ PanelWindow {
             verticalCenter: parent.verticalCenter
         }
 
-        Power { id: power }
+        PanelPower { id: power }
 
-        Workspaces {
+        BarWorkspaces {
             screen: bar.screen
         }
     }
 
     // --- center ---
-    Clock {
+    BarClock {
         id: clock
         anchors.centerIn: parent
     }
 
-    QuickToggles {
+    BarQuickToggles {
         id: quickToggles
 
         anchors {
@@ -167,22 +158,22 @@ PanelWindow {
             verticalCenter: parent.verticalCenter
         }
 
-        Tray { id: tray }
+        PanelTray { id: tray }
 
-        Volume {
+        PanelVolume {
             id: volume
             screen: bar.screen
         }
 
-        Bluetooth { id: bluetooth }
+        PanelBluetooth { id: bluetooth }
 
-        Display {
+        PanelDisplay {
             id: display
             screen: bar.screen
         }
 
-        Network { id: network }
+        PanelNetwork { id: network }
 
-        Battery { id: battery }
+        PanelBattery { id: battery }
     }
 }

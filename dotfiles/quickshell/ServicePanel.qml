@@ -2,9 +2,10 @@ pragma Singleton
 
 import QtQuick
 import Quickshell.Hyprland
+import Quickshell.Io
 
 // Coordinates bar panels so only one instance is open across all screens.
-QtObject {
+Item {
     id: root
 
     property var activePanel: null
@@ -14,7 +15,45 @@ QtObject {
 
     // Shared top-bar geometry keeps standalone panels aligned with popups.
     property real barHeight: 30
+    // Gap below the bar for popups/notifications. Mirrors Hyprland's
+    // general:gaps_out (top value) so panels line up with window edges
+    // regardless of gap configuration; refreshed on startup and whenever
+    // Hyprland reloads its config. Falls back to this default until the
+    // first query resolves, or if hyprctl is ever unavailable.
     property real barGap: 9
+
+    function refreshBarGap(): void {
+        if (!gapsProcess.running)
+            gapsProcess.running = true;
+    }
+
+    Process {
+        id: gapsProcess
+        command: ["hyprctl", "-j", "getoption", "general:gaps_out"]
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
+                let topGap;
+                try {
+                    topGap = Number(String(JSON.parse(text).css ?? "").trim().split(/\s+/)[0]);
+                } catch (e) {
+                    topGap = NaN;
+                }
+                if (Number.isFinite(topGap))
+                    root.barGap = topGap;
+            }
+        }
+    }
+
+    Component.onCompleted: refreshBarGap()
+
+    Connections {
+        target: Hyprland
+        function onRawEvent(event: var): void {
+            if (event.name === "configreloaded")
+                root.refreshBarGap();
+        }
+    }
 
     function open(panel: var): void {
         if (!panel)

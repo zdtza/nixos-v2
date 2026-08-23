@@ -11,7 +11,7 @@ Item {
     property int acceptedButtons: Qt.LeftButton
     property bool showPanelIndicator: true
 
-    readonly property bool panelOpen: PanelService.activePanel === root.panel
+    readonly property bool panelOpen: ServicePanel.activePanel === root.panel
 
     signal clicked(var mouse)
     signal wheeled(var wheel)

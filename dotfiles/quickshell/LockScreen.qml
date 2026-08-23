@@ -28,7 +28,7 @@ Scope {
         pendingPassword = "";
         errorText = "";
         authenticating = false;
-        PanelService.closeActive();
+        ServicePanel.closeActive();
         sessionLock.locked = true;
     }
 
@@ -107,8 +107,7 @@ Scope {
 
             Rectangle {
                 anchors.fill: parent
-                color: Qt.rgba(Theme.background.r, Theme.background.g,
-                    Theme.background.b, 0.45)
+                color: Util.alpha(Theme.background, 0.45)
             }
 
             Column {
@@ -119,8 +118,7 @@ Scope {
                 Rectangle {
                     width: parent.width
                     height: 48
-                    color: Qt.rgba(Theme.dark_background.r, Theme.dark_background.g,
-                        Theme.dark_background.b, 0.88)
+                    color: Util.alpha(Theme.dark_background, 0.88)
                     border.width: 2
                     border.color: root.errorText.length > 0 ? Theme.urgent
                         : (passwordInput.activeFocus ? Theme.muted : Theme.border)

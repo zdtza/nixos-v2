@@ -3,6 +3,11 @@ pragma ComponentBehavior: Bound
 // Themed replacement for the platform tray menu (QsMenuAnchor renders a native
 // Qt menu that ignores the system palette). Recurses into submenus by loading
 // itself, anchored to the row that owns them.
+//
+// Backed by either a live DBus menu (`handle`, e.g. SystemTrayItem.menu) or a
+// static `entries` list built elsewhere (e.g. the synthetic Windows VM tray
+// entry), normalized to the same shape:
+// { text, isSeparator, enabled, hasChildren, checkState, triggered() }.
 import QtQuick
 import Quickshell
 import Stylix
@@ -10,8 +15,10 @@ import Stylix
 PopupWindow {
     id: menu
 
-    // QsMenuHandle to display, usually SystemTrayItem.menu
-    required property var handle
+    // Exactly one of these is provided by the caller.
+    property var handle: null
+    property var entries: null
+
     // Item and bar window this menu is positioned against.
     required property Item anchorItem
     required property var anchorWindow
@@ -19,12 +26,16 @@ PopupWindow {
     property int menuWidth: 220
     property string menuTitle: ""
     property string menuStatus: ""
-    property bool contentReady: false
+
+    readonly property bool staticEntries: !handle
+    property bool contentReady: staticEntries
     property var selectedEntry: null
-    readonly property var keyboardEntries: opener.children.values.filter(entry =>
+    readonly property var menuEntries: staticEntries ? (entries ?? []) : opener.children.values
+    readonly property var keyboardEntries: menuEntries.filter(entry =>
         entry && !entry.isSeparator && entry.enabled)
 
     // Submenus grow sideways out of their parent row instead of downwards.
+    // Only ever set true recursively below, for DBus submenus.
     property bool submenu: false
 
     // Stable menu entry whose submenu is currently open, null for none.
@@ -33,7 +44,7 @@ PopupWindow {
     // Currently open child menu, if any.
     property var activeSubmenu: null
 
-    // This window plus every open descendant, for the focus grab in Tray.qml:
+    // This window plus every open descendant, for the focus grab in PanelTray.qml:
     // clicking inside any of them must not dismiss the menu.
     readonly property var openWindows: [menu].concat(activeSubmenu ? activeSubmenu.openWindows : [])
 
@@ -63,6 +74,15 @@ PopupWindow {
         }
         selectedEntry.triggered();
         closeRequested();
+    }
+
+    Component.onCompleted: {
+        if (staticEntries) {
+            if (keyboardEntries.length > 0)
+                selectedEntry = keyboardEntries[0];
+        } else {
+            revealTimer.restart();
+        }
     }
 
     Shortcut {
@@ -123,10 +143,10 @@ PopupWindow {
             let point = menu.anchorWindow.contentItem.mapFromItem(
                 menu.anchorItem,
                 menu.anchorItem.width / 2 - menu.implicitWidth / 2,
-                menu.anchorItem.height + PanelService.barGap
+                menu.anchorItem.height + ServicePanel.barGap
             );
-            point.x = Math.max(5, Math.min(point.x,
-                menu.anchorWindow.width - menu.implicitWidth - 7));
+            point.x = Math.max(ServicePanel.barGap, Math.min(point.x,
+                menu.anchorWindow.width - menu.implicitWidth - ServicePanel.barGap));
             popupAnchor.rect.x = Math.round(point.x);
             popupAnchor.rect.y = Math.round(point.y);
         }
@@ -142,6 +162,8 @@ PopupWindow {
             menu.submenuEntry = null;
     }
 
+    // Only meaningful in handle mode; harmless no-op (null menu, no children)
+    // when driven by a static entries list instead.
     QsMenuOpener {
         id: opener
         menu: menu.handle
@@ -174,8 +196,6 @@ PopupWindow {
             }
         }
     }
-
-    Component.onCompleted: revealTimer.restart()
 
     Rectangle {
         anchors.fill: parent
@@ -243,7 +263,7 @@ PopupWindow {
             }
 
             Repeater {
-                model: opener.children
+                model: menu.menuEntries
 
                 Item {
                     id: row
@@ -344,7 +364,8 @@ PopupWindow {
                         }
                     }
 
-                    // --- submenu ---
+                    // --- submenu (DBus entries only; static entries never
+                    // report hasChildren, so this loader never activates) ---
                     // Loaded by URL rather than as an inline component: QML
                     // refuses to instantiate a type inside its own definition.
                     Loader {
@@ -364,7 +385,7 @@ PopupWindow {
                                 return;
                             }
 
-                            setSource("TrayMenu.qml", {
+                            setSource("PanelTrayMenu.qml", {
                                 handle: row.entry,
                                 anchorItem: row,
                                 anchorWindow: menu.anchorWindow,

@@ -9,7 +9,7 @@ import Stylix
 Item {
     id: root
 
-    readonly property bool opened: PanelService.activePanel === root
+    readonly property bool opened: ServicePanel.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     readonly property int timerRowHeight: 48
     readonly property int timerRowSpacing: 8
@@ -45,43 +45,43 @@ Item {
     }
 
     function resetInput(): void {
-        setInputText(TimerService.formatDuration(TimerService.lastDurationSeconds));
+        setInputText(ServiceTimer.formatDuration(ServiceTimer.lastDurationSeconds));
     }
 
     function startTimer(): void {
         const seconds = parseDuration(durationInput.text);
-        if (TimerService.start(seconds)) {
-            setInputText(TimerService.formatDuration(seconds));
+        if (ServiceTimer.start(seconds)) {
+            setInputText(ServiceTimer.formatDuration(seconds));
             durationInput.forceActiveFocus();
             durationInput.selectAll();
         }
     }
 
     function startSavedTimer(): void {
-        TimerService.start(TimerService.lastDurationSeconds);
+        ServiceTimer.start(ServiceTimer.lastDurationSeconds);
     }
 
     function selectTimer(offset: int): void {
-        if (TimerService.timers.length === 0) {
+        if (ServiceTimer.timers.length === 0) {
             selectedTimerIndex = -1;
             return;
         }
         if (selectedTimerIndex < 0) {
-            selectedTimerIndex = offset > 0 ? 0 : TimerService.timers.length - 1;
+            selectedTimerIndex = offset > 0 ? 0 : ServiceTimer.timers.length - 1;
         } else if (selectedTimerIndex === 0 && offset < 0) {
             selectedTimerIndex = -1;
             durationInput.forceActiveFocus();
             durationInput.selectAll();
         } else {
             selectedTimerIndex = Math.max(0,
-                Math.min(TimerService.timers.length - 1, selectedTimerIndex + offset));
+                Math.min(ServiceTimer.timers.length - 1, selectedTimerIndex + offset));
         }
     }
 
     function removeSelectedTimer(): void {
-        const timer = TimerService.timers[selectedTimerIndex];
+        const timer = ServiceTimer.timers[selectedTimerIndex];
         if (timer)
-            TimerService.removeTimer(timer.id);
+            ServiceTimer.removeTimer(timer.id);
     }
 
     function focusTimerList(): void {
@@ -92,14 +92,14 @@ Item {
 
     onOpenedChanged: if (!opened)
         selectedTimerIndex = -1
-    onSelectedTimerIndexChanged: if (selectedTimerIndex >= TimerService.timers.length)
-        selectedTimerIndex = TimerService.timers.length - 1
+    onSelectedTimerIndexChanged: if (selectedTimerIndex >= ServiceTimer.timers.length)
+        selectedTimerIndex = ServiceTimer.timers.length - 1
 
     Connections {
-        target: TimerService
+        target: ServiceTimer
         function onTimersChanged(): void {
-            if (root.selectedTimerIndex >= TimerService.timers.length)
-                root.selectedTimerIndex = TimerService.timers.length - 1;
+            if (root.selectedTimerIndex >= ServiceTimer.timers.length)
+                root.selectedTimerIndex = ServiceTimer.timers.length - 1;
             if (root.opened && root.selectedTimerIndex < 0) {
                 durationInput.forceActiveFocus();
                 durationInput.selectAll();
@@ -113,7 +113,7 @@ Item {
         anchors.centerIn: parent
         anchors.verticalCenterOffset: -1
         text: "󱎫"
-        color: TimerService.running ? Theme.foreground : Theme.muted
+        color: ServiceTimer.running ? Theme.foreground : Theme.muted
         font.family: Theme.fontFamily
         font.pixelSize: 14
     }
@@ -127,14 +127,14 @@ Item {
             if (mouse.button === Qt.RightButton)
                 root.startSavedTimer();
             else
-                PanelService.toggle(root);
+                ServicePanel.toggle(root);
         }
     }
 
     HyprlandFocusGrab {
         active: root.opened
         windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
+        onCleared: ServicePanel.close(root)
     }
 
     PanelPopup {
@@ -144,7 +144,7 @@ Item {
         anchorWindow: root.QsWindow.window
         visible: root.opened
         freezePositionWhileVisible: true
-        onCloseRequested: PanelService.close(root)
+        onCloseRequested: ServicePanel.close(root)
         onVisibleChanged: {
             if (!visible)
                 return;
@@ -165,9 +165,9 @@ Item {
         readonly property real panelChromeHeight: contentMargins * 2
             + timerHero.implicitHeight + durationHeader.implicitHeight
             + timersHeader.implicitHeight + 76 + contentSpacing * 6
-        readonly property real desiredTimerHeight: TimerService.timers.length > 0
-            ? TimerService.timers.length * root.timerRowHeight
-                + Math.max(0, TimerService.timers.length - 1) * root.timerRowSpacing
+        readonly property real desiredTimerHeight: ServiceTimer.timers.length > 0
+            ? ServiceTimer.timers.length * root.timerRowHeight
+                + Math.max(0, ServiceTimer.timers.length - 1) * root.timerRowSpacing
             : 52
         readonly property real timerViewportHeight: Math.min(272,
             Math.max(52, maximumHeight - panelChromeHeight), desiredTimerHeight)
@@ -181,8 +181,8 @@ Item {
             width: parent.width
             icon: "󱎫"
             title: "Timer"
-            status: TimerService.timers.length > 0
-                ? TimerService.timers.length + (TimerService.timers.length === 1
+            status: ServiceTimer.timers.length > 0
+                ? ServiceTimer.timers.length + (ServiceTimer.timers.length === 1
                     ? " TIMER RUNNING" : " TIMERS RUNNING")
                 : "READY"
             trailingWidth: 32
@@ -192,12 +192,10 @@ Item {
                 anchors.fill: parent
                 readonly property bool canStart: root.parseDuration(durationInput.text) > 0
                 color: addMouse.containsMouse
-                    ? Qt.rgba(Theme.foreground.r, Theme.foreground.g,
-                        Theme.foreground.b, 0.12)
+                    ? Util.alpha(Theme.foreground, 0.12)
                     : "transparent"
                 border.width: 1
-                border.color: Qt.rgba(Theme.foreground.r, Theme.foreground.g,
-                    Theme.foreground.b, 0.3)
+                border.color: Util.alpha(Theme.foreground, 0.3)
                 opacity: canStart ? 1 : 0.5
                 Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -234,7 +232,7 @@ Item {
             color: Theme.dark_background
             border.width: 1
             border.color: durationInput.activeFocus ? Theme.muted
-                : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.3)
+                : Util.alpha(Theme.foreground, 0.3)
 
             TextInput {
                 id: durationInput
@@ -249,7 +247,7 @@ Item {
                 text: "00:00"
                 onTextChanged: {
                     if (root.inputReady && !root.updatingInput && root.durationParts(text))
-                        TimerService.rememberDuration(root.parseDuration(text));
+                        ServiceTimer.rememberDuration(root.parseDuration(text));
                 }
                 color: Theme.foreground
                 selectionColor: Theme.surface
@@ -262,7 +260,7 @@ Item {
                 Keys.onReturnPressed: root.startTimer()
                 Keys.onEnterPressed: root.startTimer()
                 Keys.onDownPressed: root.focusTimerList()
-                Keys.onEscapePressed: PanelService.close(root)
+                Keys.onEscapePressed: ServicePanel.close(root)
             }
         }
 
@@ -271,8 +269,8 @@ Item {
         PanelSectionHeader {
             id: timersHeader
             title: "CURRENT TIMERS"
-            detail: TimerService.timers.length === 0 ? "NONE"
-                : String(TimerService.timers.length)
+            detail: ServiceTimer.timers.length === 0 ? "NONE"
+                : String(ServiceTimer.timers.length)
         }
 
         Item {
@@ -282,7 +280,7 @@ Item {
 
             Text {
                 anchors.fill: parent
-                visible: TimerService.timers.length === 0
+                visible: ServiceTimer.timers.length === 0
                 text: "No running timers"
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
@@ -294,7 +292,7 @@ Item {
             Flickable {
                 id: timerList
                 anchors.fill: parent
-                visible: TimerService.timers.length > 0
+                visible: ServiceTimer.timers.length > 0
                 contentHeight: timerColumn.implicitHeight
                 clip: true
                 interactive: contentHeight > height
@@ -305,7 +303,7 @@ Item {
                 Keys.onUpPressed: root.selectTimer(-1)
                 Keys.onDownPressed: root.selectTimer(1)
                 Keys.onDeletePressed: root.removeSelectedTimer()
-                Keys.onEscapePressed: PanelService.close(root)
+                Keys.onEscapePressed: ServicePanel.close(root)
 
                 Column {
                     id: timerColumn
@@ -313,7 +311,7 @@ Item {
                     spacing: root.timerRowSpacing
 
                     Repeater {
-                        model: TimerService.timers
+                        model: ServiceTimer.timers
 
                         Rectangle {
                             id: timerRow
@@ -323,13 +321,11 @@ Item {
                             width: timerColumn.width
                             height: root.timerRowHeight
                             color: timerRow.index === root.selectedTimerIndex || rowHover.hovered
-                                ? Qt.rgba(Theme.foreground.r, Theme.foreground.g,
-                                    Theme.foreground.b, 0.08)
+                                ? Util.alpha(Theme.foreground, 0.08)
                                 : "transparent"
                             border.width: timerRow.index === root.selectedTimerIndex
                                 || rowHover.hovered ? 1 : 0
-                            border.color: Qt.rgba(Theme.foreground.r,
-                                Theme.foreground.g, Theme.foreground.b, 0.25)
+                            border.color: Util.alpha(Theme.foreground, 0.25)
                             Behavior on color { ColorAnimation { duration: 120 } }
 
                             HoverHandler { id: rowHover }
@@ -352,9 +348,9 @@ Item {
                                     ? deleteButton.left : parent.right
                                 anchors.rightMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: TimerService.formatDuration(Math.max(0,
+                                text: ServiceTimer.formatDuration(Math.max(0,
                                     Math.ceil((timerRow.modelData.deadlineMs
-                                        - TimerService.nowMs) / 1000)))
+                                        - ServiceTimer.nowMs) / 1000)))
                                 color: Theme.foreground
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 24
@@ -371,12 +367,10 @@ Item {
                                 anchors.rightMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: deleteMouse.containsMouse
-                                    ? Qt.rgba(Theme.foreground.r,
-                                        Theme.foreground.g, Theme.foreground.b, 0.12)
+                                    ? Util.alpha(Theme.foreground, 0.12)
                                     : "transparent"
                                 border.width: 1
-                                border.color: Qt.rgba(Theme.foreground.r,
-                                    Theme.foreground.g, Theme.foreground.b, 0.3)
+                                border.color: Util.alpha(Theme.foreground, 0.3)
 
                                 Text {
                                     anchors.centerIn: parent
@@ -393,7 +387,7 @@ Item {
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
                                         root.selectedTimerIndex = timerRow.index;
-                                        TimerService.removeTimer(timerRow.modelData.id);
+                                        ServiceTimer.removeTimer(timerRow.modelData.id);
                                     }
                                 }
                             }

@@ -7,7 +7,7 @@ import Stylix
 Item {
     id: root
 
-    readonly property bool opened: PanelService.activePanel === root
+    readonly property bool opened: ServicePanel.activePanel === root
     readonly property bool requiresKeyboardFocus: true
 
     implicitWidth: label.implicitWidth + 16
@@ -44,21 +44,21 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: PanelService.toggle(root)
+        onClicked: ServicePanel.toggle(root)
     }
 
     HyprlandFocusGrab {
         active: root.opened
         windows: [calendar, root.QsWindow.window]
-        onCleared: PanelService.close(root)
+        onCleared: ServicePanel.close(root)
     }
 
-    Calendar {
+    PanelCalendar {
         id: calendar
 
         anchorItem: root
         anchorWindow: root.QsWindow.window
         visible: root.opened
-        onCloseRequested: PanelService.close(root)
+        onCloseRequested: ServicePanel.close(root)
     }
 }

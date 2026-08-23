@@ -9,33 +9,43 @@ import Stylix
 Item {
     id: root
 
-    readonly property bool available: BatteryService.available
-    readonly property real fraction: BatteryService.fraction
-    readonly property int percent: BatteryService.chargePercent
-    readonly property bool discharging: BatteryService.isDischarging
-    readonly property bool thresholdActive: BatteryService.thresholdActive
-    readonly property bool fullyCharged: BatteryService.fullyCharged && !thresholdActive
-    readonly property bool charging: BatteryService.isCharging && !thresholdActive
+    readonly property bool available: ServiceBattery.available
+    readonly property real fraction: ServiceBattery.fraction
+    readonly property int percent: ServiceBattery.chargePercent
+    readonly property bool discharging: ServiceBattery.isDischarging
+    readonly property bool thresholdActive: ServiceBattery.thresholdActive
+    readonly property bool fullyCharged: ServiceBattery.fullyCharged && !thresholdActive
+    readonly property bool charging: ServiceBattery.isCharging && !thresholdActive
     readonly property bool low: discharging && percent <= 20
-    readonly property var profiles: BatteryService.availableProfiles
-    readonly property string activeProfile: BatteryService.powerProfile
+    readonly property var profiles: ServiceBattery.availableProfiles
+    readonly property string activeProfile: ServiceBattery.powerProfile
 
-    readonly property bool opened: PanelService.activePanel === root
+    readonly property bool opened: ServicePanel.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     property int phraseIndex: 0
     property int selectedProfileIndex: 0
 
-    readonly property var chargingPhrases: ["Pumping power", "Injecting electrons", "Pouring juice", "Amassing watts", "Hoarding joules", "Sucking volts", "Topping reserves", "Soaking amps", "Inhaling kilowatts"]
-    readonly property var batteryPhrases: ["Slurping power", "Spending joules", "Draining watts", "Burning electrons", "Sipping juice", "Spending coulombs", "Bleeding amps", "Guzzling volts", "Munching reserves"]
+    readonly property var chargingPhrases: [
+        "Pumping power", "Injecting electrons", "Pouring juice", "Amassing watts",
+        "Hoarding joules", "Sucking volts", "Topping reserves", "Soaking amps",
+        "Inhaling kilowatts"
+    ]
+    readonly property var batteryPhrases: [
+        "Slurping power", "Spending joules", "Draining watts", "Burning electrons",
+        "Sipping juice", "Spending coulombs", "Bleeding amps", "Guzzling volts",
+        "Munching reserves"
+    ]
     readonly property var activePhrases: charging ? chargingPhrases : (discharging ? batteryPhrases : [])
-    readonly property string statusText: fullyCharged ? "Fully charged" : thresholdActive ? "Threshold" : activePhrases.length > 0 ? activePhrases[phraseIndex % activePhrases.length] : "Battery"
+    readonly property string statusText: fullyCharged ? "Fully charged"
+        : thresholdActive ? "Threshold"
+        : activePhrases.length > 0 ? activePhrases[phraseIndex % activePhrases.length] : "Battery"
 
     visible: available
     implicitWidth: available ? label.implicitWidth : 0
     implicitHeight: label.implicitHeight
 
     function batteryIcon(): string {
-        return available ? BatteryService.batteryIcon : "";
+        return available ? ServiceBattery.batteryIcon : "";
     }
 
     function profileIcon(profile: string): string {
@@ -49,7 +59,7 @@ Item {
     }
 
     function setProfile(profile: string): void {
-        BatteryService.setPowerProfile(profile);
+        ServiceBattery.setPowerProfile(profile);
     }
 
     onOpenedChanged: if (opened) {
@@ -58,7 +68,7 @@ Item {
             profiles.findIndex(profile => String(profile) === activeProfile));
     }
     onAvailableChanged: if (!available)
-        PanelService.close(root)
+        ServicePanel.close(root)
 
     Shortcut {
         enabled: root.opened
@@ -112,21 +122,21 @@ Item {
         id: label
         anchors.centerIn: parent
         panel: root
-        text: BatteryService.showPercentage ? root.percent + "% " + root.batteryIcon() : root.batteryIcon()
+        text: ServiceBattery.showPercentage ? root.percent + "% " + root.batteryIcon() : root.batteryIcon()
         textColor: root.low ? Theme.urgent : Theme.foreground
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton)
-                BatteryService.togglePercentage();
+                ServiceBattery.togglePercentage();
             else
-                PanelService.toggle(root);
+                ServicePanel.toggle(root);
         }
     }
 
     HyprlandFocusGrab {
         active: root.opened
         windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
+        onCleared: ServicePanel.close(root)
     }
 
     PanelPopup {
@@ -134,7 +144,7 @@ Item {
         anchorItem: root
         anchorWindow: root.QsWindow.window
         visible: root.opened
-        onCloseRequested: PanelService.close(root)
+        onCloseRequested: ServicePanel.close(root)
         borderColor: Theme.border
         contentSpacing: 14
         // Wider card gives each equal-width profile button real horizontal
@@ -171,7 +181,7 @@ Item {
                 id: chargeTrack
                 anchors.fill: parent
                 radius: height / 2
-                color: Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.12)
+                color: Util.alpha(Theme.foreground, 0.12)
             }
             Rectangle {
                 anchors.left: chargeTrack.left
@@ -214,23 +224,32 @@ Item {
                 spacing: 12
                 InfoPair {
                     labelText: "Battery size"
-                    valueText: BatteryService.batterySizeWh > 0 ? Math.round(BatteryService.batterySizeWh) + "Wh" : "—"
+                    valueText: ServiceBattery.batterySizeWh > 0
+                        ? Math.round(ServiceBattery.batterySizeWh) + "Wh" : "—"
                 }
                 InfoPair {
                     labelText: "Charge cycles"
-                    valueText: BatteryService.chargeCycles >= 0 ? String(BatteryService.chargeCycles) : "—"
+                    valueText: ServiceBattery.chargeCycles >= 0
+                        ? String(ServiceBattery.chargeCycles) : "—"
                 }
             }
             Column {
                 width: (parent.width - 20) / 2
                 spacing: 12
                 InfoPair {
-                    labelText: root.thresholdActive ? "Charge limit" : (root.discharging ? "Time left" : "Time to full")
-                    valueText: root.thresholdActive ? (BatteryService.chargeThreshold || "—") : (root.fullyCharged ? "—" : BatteryService.formatDuration(BatteryService.secondsRemaining))
+                    labelText: root.thresholdActive ? "Charge limit"
+                        : (root.discharging ? "Time left" : "Time to full")
+                    valueText: root.thresholdActive ? (ServiceBattery.chargeThreshold || "—")
+                        : (root.fullyCharged ? "—"
+                            : ServiceBattery.formatDuration(ServiceBattery.secondsRemaining))
                 }
                 InfoPair {
-                    labelText: root.thresholdActive ? "Battery state" : (root.discharging ? "Discharging" : "Charging")
-                    valueText: root.thresholdActive ? "Holding" : (root.fullyCharged ? "—" : (BatteryService.changeRate > 0 ? BatteryService.changeRate.toFixed(1).replace(/\\.0$/, "") + "W" : "—"))
+                    labelText: root.thresholdActive ? "Battery state"
+                        : (root.discharging ? "Discharging" : "Charging")
+                    valueText: root.thresholdActive ? "Holding"
+                        : (root.fullyCharged ? "—"
+                            : (ServiceBattery.changeRate > 0
+                                ? ServiceBattery.changeRate.toFixed(1).replace(/\\.0$/, "") + "W" : "—"))
                 }
             }
         }
@@ -249,24 +268,24 @@ Item {
                 id: profileRow
                 width: parent.width
                 spacing: 6
-                readonly property real cellWidth: root.profiles.length > 0 ? (width - spacing * (root.profiles.length - 1)) / root.profiles.length : 0
+                readonly property real cellWidth: root.profiles.length > 0
+                    ? (width - spacing * (root.profiles.length - 1)) / root.profiles.length : 0
 
                 Repeater {
                     model: root.profiles
-                    Rectangle {
+                    PanelOptionButton {
                         id: profileButton
                         required property var modelData
                         required property int index
+                        readonly property bool isActive: root.activeProfile === String(modelData)
+
                         width: profileRow.cellWidth
                         height: 36
-                        color: profileMouse.pressed ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.22) : root.activeProfile === String(modelData) ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.18) : profileButton.index === root.selectedProfileIndex || profileMouse.containsMouse ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.08) : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.04)
-                        border.width: 1
-                        border.color: profileButton.index === root.selectedProfileIndex || profileMouse.containsMouse ? Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.25) : Qt.rgba(Theme.foreground.r, Theme.foreground.g, Theme.foreground.b, 0.4)
-                        radius: 0
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 120
-                            }
+                        active: profileButton.isActive
+                        keyboardFocused: profileButton.index === root.selectedProfileIndex
+                        onActivated: {
+                            root.selectedProfileIndex = profileButton.index;
+                            root.setProfile(String(profileButton.modelData));
                         }
 
                         Row {
@@ -281,22 +300,12 @@ Item {
                             }
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: String(profileButton.modelData) === "PowerSaver" ? "Power-saver" : String(profileButton.modelData)
+                                text: String(profileButton.modelData) === "PowerSaver"
+                                    ? "Power-saver" : String(profileButton.modelData)
                                 color: Theme.foreground
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 12
-                                font.bold: root.activeProfile === String(profileButton.modelData)
-                            }
-                        }
-
-                        MouseArea {
-                            id: profileMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.selectedProfileIndex = profileButton.index;
-                                root.setProfile(String(profileButton.modelData));
+                                font.bold: profileButton.isActive
                             }
                         }
                     }
@@ -319,7 +328,8 @@ Item {
             font.pixelSize: 12
         }
         Item {
-            width: Math.max(0, parent.width - parent.children[0].implicitWidth - parent.children[2].implicitWidth - 16)
+            width: Math.max(0, parent.width
+                - parent.children[0].implicitWidth - parent.children[2].implicitWidth - 16)
             height: 1
         }
         Text {

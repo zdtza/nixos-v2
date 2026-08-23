@@ -6,10 +6,10 @@ pragma ComponentBehavior: Bound
 // so nothing is rebuilt on every hover.
 //
 // Left click activates an item, right click opens its menu, rendered by
-// TrayMenu so it follows the system palette instead of the Qt default.
+// PanelTrayMenu so it follows the system palette instead of the Qt default.
 //
 // The Windows VM is appended as a synthetic entry: it exports no
-// StatusNotifierItem, so WindowsVmService polls systemd for it instead.
+// StatusNotifierItem, so ServiceWindowsVm polls systemd for it instead.
 import QtQuick
 import Quickshell
 import Stylix
@@ -20,12 +20,23 @@ Item {
     id: root
 
     readonly property var items: SystemTray.items.values
-    readonly property bool opened: PanelService.activePanel === root
+    readonly property bool opened: ServicePanel.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     property bool pinned: false
     property int selectedItemIndex: 0
-    readonly property int keyboardItemCount: items.length + (WindowsVmService.running ? 1 : 0)
+    readonly property int keyboardItemCount: items.length + (ServiceWindowsVm.running ? 1 : 0)
     readonly property bool expanded: root.pinned || hover.hovered || root.opened
+
+    // Normalizes the Windows VM's plain action list to the same shape as a
+    // real DBus menu's entries, so PanelTrayMenu can render either.
+    readonly property var vmMenuEntries: ServiceWindowsVm.actions.map(action => ({
+        text: action.label,
+        isSeparator: false,
+        enabled: true,
+        hasChildren: false,
+        checkState: Qt.Unchecked,
+        triggered: () => ServiceWindowsVm.run(action.command)
+    }))
 
     // Which of the two menu loaders the open panel belongs to.
     property bool vmMenuOpen: false
@@ -52,7 +63,7 @@ Item {
     function collapseTray(): void {
         pinned = false;
         dismissMenu();
-        PanelService.close(root);
+        ServicePanel.close(root);
     }
 
     function moveSelection(offset: int): void {
@@ -70,17 +81,17 @@ Item {
                 vmMenuOpen = false;
                 menuLoader.trayItem = item;
                 menuLoader.anchorItem = entry;
-                PanelService.open(root);
+                ServicePanel.open(root);
             } else if (!item.onlyMenu) {
                 item.activate();
-                PanelService.close(root);
+                ServicePanel.close(root);
             }
             return;
         }
-        if (WindowsVmService.running) {
+        if (ServiceWindowsVm.running) {
             vmMenuOpen = true;
             vmMenuLoader.anchorItem = vmEntry;
-            PanelService.open(root);
+            ServicePanel.open(root);
         }
     }
 
@@ -138,7 +149,7 @@ Item {
         return "Active";
     }
 
-    visible: items.length > 0 || WindowsVmService.running
+    visible: items.length > 0 || ServiceWindowsVm.running
     implicitWidth: row.implicitWidth
     implicitHeight: 25
 
@@ -161,7 +172,7 @@ Item {
             onClicked: {
                 root.pinned = !root.pinned;
                 if (!root.pinned)
-                    PanelService.close(root);
+                    ServicePanel.close(root);
             }
         }
 
@@ -250,21 +261,21 @@ Item {
                                 if (entry.modelData.hasMenu) {
                                     // Same item toggles; another item transfers menu ownership.
                                     if (root.opened && !root.vmMenuOpen && menuLoader.trayItem === entry.modelData) {
-                                        PanelService.close(root);
+                                        ServicePanel.close(root);
                                         return;
                                     }
 
                                     root.vmMenuOpen = false;
                                     menuLoader.trayItem = entry.modelData;
                                     menuLoader.anchorItem = entry;
-                                    PanelService.open(root);
+                                    ServicePanel.open(root);
                                     return;
                                 }
 
                                 // Fall back to activation only when no menu exists.
                                 if (mouse.button === Qt.LeftButton && !entry.modelData.onlyMenu) {
                                     entry.modelData.activate();
-                                    PanelService.close(root);
+                                    ServicePanel.close(root);
                                 }
                             }
                         }
@@ -276,7 +287,7 @@ Item {
                 Item {
                     id: vmEntry
 
-                    visible: WindowsVmService.running
+                    visible: ServiceWindowsVm.running
                     implicitWidth: visible ? 30 : 0
                     implicitHeight: 25
 
@@ -315,13 +326,13 @@ Item {
                         onClicked: {
                             root.selectedItemIndex = root.items.length;
                             if (root.opened && root.vmMenuOpen) {
-                                PanelService.close(root);
+                                ServicePanel.close(root);
                                 return;
                             }
 
                             root.vmMenuOpen = true;
                             vmMenuLoader.anchorItem = vmEntry;
-                            PanelService.open(root);
+                            ServicePanel.open(root);
                         }
                     }
                 }
@@ -339,7 +350,7 @@ Item {
             .concat(menuLoader.item?.openWindows ?? [])
             .concat(vmMenuLoader.item?.openWindows ?? [])
 
-        onCleared: PanelService.close(root)
+        onCleared: ServicePanel.close(root)
     }
 
     Loader {
@@ -350,7 +361,7 @@ Item {
 
         active: root.opened && !root.vmMenuOpen && !!trayItem
 
-        sourceComponent: TrayMenu {
+        sourceComponent: PanelTrayMenu {
             handle: menuLoader.trayItem?.menu ?? null
             anchorItem: menuLoader.anchorItem
             anchorWindow: root.QsWindow.window
@@ -358,7 +369,7 @@ Item {
             menuStatus: root.menuStatus(menuLoader.trayItem)
 
             onDismissRequested: root.dismissMenu()
-            onCloseRequested: PanelService.close(root)
+            onCloseRequested: ServicePanel.close(root)
         }
     }
 
@@ -369,16 +380,15 @@ Item {
 
         active: root.opened && root.vmMenuOpen
 
-        sourceComponent: WindowsVmMenu {
-            actions: WindowsVmService.actions
+        sourceComponent: PanelTrayMenu {
+            entries: root.vmMenuEntries
             anchorItem: vmMenuLoader.anchorItem
             anchorWindow: root.QsWindow.window
             menuTitle: "Windows"
-            menuStatus: WindowsVmService.running ? "Running" : "Stopped"
+            menuStatus: ServiceWindowsVm.running ? "Running" : "Stopped"
 
-            onActionTriggered: command => WindowsVmService.run(command)
             onDismissRequested: root.dismissMenu()
-            onCloseRequested: PanelService.close(root)
+            onCloseRequested: ServicePanel.close(root)
         }
     }
 }

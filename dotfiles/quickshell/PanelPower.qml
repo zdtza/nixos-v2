@@ -7,7 +7,7 @@ import Stylix
 Item {
     id: root
 
-    readonly property bool opened: PanelService.activePanel === root
+    readonly property bool opened: ServicePanel.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     property int phraseIndex: 0
     property int selectedActionIndex: 0
@@ -87,7 +87,7 @@ Item {
     function runAction(action: string): void {
         if (!action)
             return;
-        PanelService.close(root);
+        ServicePanel.close(root);
         if (action === "lock")
             Quickshell.execDetached(["qs", "ipc", "call", "lock", "activate"]);
         else
@@ -104,13 +104,13 @@ Item {
         anchors.centerIn: parent
         panel: root
         text: ""
-        onClicked: PanelService.toggle(root)
+        onClicked: ServicePanel.toggle(root)
     }
 
     HyprlandFocusGrab {
         active: root.opened
         windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
+        onCleared: ServicePanel.close(root)
     }
 
     PanelPopup {
@@ -119,7 +119,7 @@ Item {
         anchorItem: root
         anchorWindow: root.QsWindow.window
         visible: root.opened
-        onCloseRequested: PanelService.close(root)
+        onCloseRequested: ServicePanel.close(root)
         borderColor: Theme.border
         contentSpacing: 14
         implicitWidth: 360
@@ -155,8 +155,7 @@ Item {
                     height: 50
                     color: modelData.available
                         && (actionButton.index === root.selectedActionIndex || actionMouse.containsMouse)
-                        ? Qt.rgba(Theme.foreground.r, Theme.foreground.g,
-                            Theme.foreground.b, 0.12)
+                        ? Util.alpha(Theme.foreground, 0.12)
                         : "transparent"
                     Behavior on color { ColorAnimation { duration: 140 } }
 

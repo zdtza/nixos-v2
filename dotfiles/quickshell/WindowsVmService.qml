@@ -1,0 +1,71 @@
+pragma Singleton
+
+// The Windows container registers no StatusNotifierItem of its own, so there is
+// nothing for Quickshell.Services.SystemTray to pick up. Its state is polled
+// from systemd instead and rendered by Tray.qml as a synthetic entry that sits
+// alongside the real tray icons.
+import QtQuick
+import Quickshell
+import Quickshell.Io
+
+Item {
+    id: root
+
+    readonly property string unit: "docker-windows.service"
+    readonly property string viewerUrl: "http://127.0.0.1:8006"
+
+    property bool running: false
+
+    // One command per action, none of which can delete anything. Erasing is
+    // windows-remove, deliberately terminal-only.
+    readonly property var actions: [
+        {
+            label: "Connect",
+            command: ["windows-launch"]
+        },
+        {
+            label: "Open web viewer",
+            command: ["xdg-open", root.viewerUrl]
+        },
+        {
+            label: "Shut down",
+            command: ["windows-stop"]
+        }
+    ]
+
+    function probe(): void {
+        if (!statusProcess.running)
+            statusProcess.running = true;
+    }
+
+    function run(command: var): void {
+        Quickshell.execDetached({
+            command
+        });
+        // Starting or stopping takes a moment to land; re-probe ahead of the
+        // regular poll so the icon does not lag behind the click.
+        settleTimer.restart();
+    }
+
+    Process {
+        id: statusProcess
+
+        command: ["systemctl", "is-active", "--quiet", root.unit]
+        onExited: exitCode => root.running = exitCode === 0
+    }
+
+    Timer {
+        interval: 5000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: root.probe()
+    }
+
+    Timer {
+        id: settleTimer
+
+        interval: 1500
+        onTriggered: root.probe()
+    }
+}

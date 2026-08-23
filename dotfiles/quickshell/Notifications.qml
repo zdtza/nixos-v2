@@ -47,7 +47,7 @@ Scope {
         screen: root.targetScreen
         visible: server.trackedNotifications.values.length > 0
         color: "transparent"
-        implicitWidth: 476
+        implicitWidth: 420
         exclusionMode: ExclusionMode.Ignore
 
         // Keep layer surface height stable while cards are removed. Resizing

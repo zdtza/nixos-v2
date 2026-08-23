@@ -7,6 +7,9 @@ pragma ComponentBehavior: Bound
 //
 // Left click activates an item, right click opens its menu, rendered by
 // TrayMenu so it follows the system palette instead of the Qt default.
+//
+// The Windows VM is appended as a synthetic entry: it exports no
+// StatusNotifierItem, so WindowsVmService polls systemd for it instead.
 import QtQuick
 import Quickshell
 import Stylix
@@ -21,6 +24,14 @@ Item {
     property bool pinned: false
     readonly property bool expanded: root.pinned || hover.hovered || root.opened
 
+    // Which of the two menu loaders the open panel belongs to.
+    property bool vmMenuOpen: false
+
+    onOpenedChanged: {
+        if (!opened)
+            vmMenuOpen = false;
+    }
+
     function menuStatus(item: SystemTrayItem): string {
         const description = item?.tooltipDescription?.trim() ?? "";
         if (description !== "")
@@ -32,7 +43,7 @@ Item {
         return "Active";
     }
 
-    visible: items.length > 0
+    visible: items.length > 0 || WindowsVmService.running
     implicitWidth: row.implicitWidth
     implicitHeight: 25
 
@@ -119,8 +130,11 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             width: 16
                             height: 2
+                            // menuLoader.trayItem still points at the last item
+                            // clicked, so the VM menu has to be excluded here or
+                            // that item lights up alongside it.
                             visible: itemMouse.containsMouse
-                                || (root.opened && menuLoader.trayItem === entry.modelData)
+                                || (root.opened && !root.vmMenuOpen && menuLoader.trayItem === entry.modelData)
                             color: Theme.accent
                         }
 
@@ -136,11 +150,12 @@ Item {
                             onClicked: mouse => {
                                 if (entry.modelData.hasMenu) {
                                     // Same item toggles; another item transfers menu ownership.
-                                    if (root.opened && menuLoader.trayItem === entry.modelData) {
+                                    if (root.opened && !root.vmMenuOpen && menuLoader.trayItem === entry.modelData) {
                                         PanelService.close(root);
                                         return;
                                     }
 
+                                    root.vmMenuOpen = false;
                                     menuLoader.trayItem = entry.modelData;
                                     menuLoader.anchorItem = entry;
                                     PanelService.open(root);
@@ -156,6 +171,58 @@ Item {
                         }
                     }
                 }
+
+                // Synthetic Windows VM entry, shown only while the container is
+                // up so it behaves like a background app that comes and goes.
+                Item {
+                    id: vmEntry
+
+                    visible: WindowsVmService.running
+                    implicitWidth: visible ? 30 : 0
+                    implicitHeight: 25
+
+                    Image {
+                        anchors.centerIn: parent
+                        anchors.verticalCenterOffset: -2
+                        width: 16
+                        height: 16
+                        source: Quickshell.iconPath("windows-vm", true)
+                        sourceSize.width: 16 * 2
+                        sourceSize.height: 16 * 2
+                        cache: true
+                        smooth: true
+                    }
+
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 16
+                        height: 2
+                        visible: vmMouse.containsMouse || (root.opened && root.vmMenuOpen)
+                        color: Theme.accent
+                    }
+
+                    MouseArea {
+                        id: vmMouse
+
+                        anchors.fill: parent
+                        enabled: root.expanded
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+
+                        onClicked: {
+                            if (root.opened && root.vmMenuOpen) {
+                                PanelService.close(root);
+                                return;
+                            }
+
+                            root.vmMenuOpen = true;
+                            vmMenuLoader.anchorItem = vmEntry;
+                            PanelService.open(root);
+                        }
+                    }
+                }
             }
         }
     }
@@ -166,7 +233,9 @@ Item {
         active: root.opened
         // Keep bar in grab scope so clicks can transfer directly to another
         // tray menu or panel without an intermediate dismissing click.
-        windows: [root.QsWindow.window].concat(menuLoader.item?.openWindows ?? [])
+        windows: [root.QsWindow.window]
+            .concat(menuLoader.item?.openWindows ?? [])
+            .concat(vmMenuLoader.item?.openWindows ?? [])
 
         onCleared: PanelService.close(root)
     }
@@ -177,7 +246,7 @@ Item {
         property SystemTrayItem trayItem: null
         property Item anchorItem: null
 
-        active: root.opened && !!trayItem
+        active: root.opened && !root.vmMenuOpen && !!trayItem
 
         sourceComponent: TrayMenu {
             handle: menuLoader.trayItem?.menu ?? null
@@ -186,6 +255,25 @@ Item {
             menuTitle: menuLoader.trayItem?.title ?? ""
             menuStatus: root.menuStatus(menuLoader.trayItem)
 
+            onCloseRequested: PanelService.close(root)
+        }
+    }
+
+    Loader {
+        id: vmMenuLoader
+
+        property Item anchorItem: null
+
+        active: root.opened && root.vmMenuOpen
+
+        sourceComponent: WindowsVmMenu {
+            actions: WindowsVmService.actions
+            anchorItem: vmMenuLoader.anchorItem
+            anchorWindow: root.QsWindow.window
+            menuTitle: "Windows"
+            menuStatus: WindowsVmService.running ? "Running" : "Stopped"
+
+            onActionTriggered: command => WindowsVmService.run(command)
             onCloseRequested: PanelService.close(root)
         }
     }

@@ -58,8 +58,15 @@ let
     paths = [ pkgs.quickshell ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
+      # Stylix/home-manager export QT_QPA_PLATFORMTHEME=qt5ct, but the Qt6
+      # plugin only registers the key `qt6ct`, so quickshell loads no platform
+      # theme at all and QIcon ends up with an empty theme name -> every generic
+      # desktop-entry icon misses. Pin the Qt6 key for quickshell only, leaving
+      # Qt5 apps on qt5ct.
       for bin in qs quickshell; do
-        wrapProgram $out/bin/$bin --prefix QML2_IMPORT_PATH : ${stylixQmlModule}
+        wrapProgram $out/bin/$bin \
+          --prefix QML2_IMPORT_PATH : ${stylixQmlModule} \
+          --set QT_QPA_PLATFORMTHEME qt6ct
       done
     '';
   };

@@ -82,8 +82,8 @@ Item {
             notification.dismiss();
     }
 
-    width: 476
-    implicitHeight: Math.max(104, 39 + textContent.implicitHeight + 28)
+    width: 420
+    implicitHeight: Math.max(64, textContent.implicitHeight + 24)
     height: implicitHeight
 
     Timer {
@@ -137,57 +137,17 @@ Item {
             color: Theme.border
         }
 
-        Item {
-            id: header
-            anchors {
-                left: parent.left
-                right: parent.right
-                top: parent.top
-                leftMargin: 8
-                rightMargin: 2
-                topMargin: 2
-            }
-            height: 36
-
-            Text {
-                anchors {
-                    left: parent.left
-                    leftMargin: 14
-                    right: parent.right
-                    rightMargin: 14
-                    verticalCenter: parent.verticalCenter
-                }
-                text: (root.notification.appName || root.notification.desktopEntry || "SYSTEM").toUpperCase()
-                color: Theme.muted
-                elide: Text.ElideRight
-                font.family: Theme.fontFamily
-                font.pixelSize: 9
-                font.weight: Font.Medium
-                font.letterSpacing: 2
-            }
-
-            Rectangle {
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    bottom: parent.bottom
-                }
-                height: 1
-                color: Theme.surface
-            }
-        }
-
         Column {
             id: textContent
             anchors {
                 left: parent.left
                 right: parent.right
-                top: header.bottom
+                top: parent.top
                 leftMargin: 24
                 rightMargin: 20
                 topMargin: 14
             }
-            spacing: 7
+            spacing: 10
 
             Text {
                 width: parent.width
@@ -199,8 +159,7 @@ Item {
                 maximumLineCount: 2
                 font.family: Theme.fontFamily
                 font.pixelSize: 14
-                font.weight: Font.Medium
-                font.letterSpacing: 0.2
+                font.weight: Font.Bold
             }
 
             Text {
@@ -213,9 +172,8 @@ Item {
                 elide: Text.ElideRight
                 maximumLineCount: 4
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: 12
                 lineHeight: 1.35
-                font.letterSpacing: 0.5
             }
         }
     }

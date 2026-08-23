@@ -55,10 +55,12 @@
                 ./home-manager/nvim.nix
                 ./home-manager/git.nix
                 ./home-manager/web-apps.nix
+                ./home-manager/windows-vm.nix
                 ./home-manager/fzf.nix
                 ./home-manager/yazi.nix
                 ./home-manager/npm.nix
                 ./home-manager/quickshell.nix
+                ./home-manager/lazydocker.nix
               ];
               home.stateVersion = "26.05";
             };

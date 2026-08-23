@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  repoPath,
   ...
 }:
 
@@ -49,14 +50,6 @@ let
       iconHash = "sha256-uFtVcoGXHvPhaO1ngV3fYQMd/UPItRmnRDrwUuhlyWY=";
     }
     {
-      id = "whatsapp";
-      name = "WhatsApp";
-      url = "https://web.whatsapp.com/";
-      isolated = false;
-      iconUrl = "https://static.whatsapp.net/rsrc.php/yI/r/EoOh62-jiPS.webp";
-      iconHash = "sha256-zwMr79bB+CS+6pls2+77lK4WBlBDgjXiUCK4rnRRREw=";
-    }
-    {
       id = "gmail";
       name = "Gmail";
       url = "https://mail.google.com/mail/u/0/#inbox";
@@ -64,19 +57,28 @@ let
       iconUrl = "https://www.google.com/s2/favicons?domain=https://mail.google.com/mail/u/0/&sz=256";
       iconHash = "sha256-uvp1erTkKXGuCXxFS5ZWm8fg4Sa0g7bdiT34YaClscM=";
     }
+    {
+      id = "whatsapp";
+      name = "WhatsApp";
+      url = "https://web.whatsapp.com/";
+      isolated = false;
+      iconUrl = "https://static.whatsapp.net/rsrc.php/yd/r/PfkSLByWV8O.webp";
+      iconHash = "sha256-SOlK/v+ynGb16E3I307iR/g4wof4fLiWDL9n9OjT3Tc=";
+    }
     # WEBAPPS
   ];
 
   mkWebappCommand =
     command:
     pkgs.writeShellScriptBin command ''
-      repo_dir=$(git rev-parse --show-toplevel 2>/dev/null)
-      script="$repo_dir/bash/${command}.sh"
-      [[ -x "$script" ]] || {
-        echo "Run ${command} from this repository or one of its subdirectories." >&2
+      # Resolved from repo.nix rather than the working directory, so the command
+      # works from anywhere instead of only inside the flake checkout.
+      script="${repoPath}/bash/${command}.sh"
+      [[ -f "$script" ]] || {
+        echo "Missing $script. Is the config repo checked out at ${repoPath}?" >&2
         exit 1
       }
-      exec "$script" "$@"
+      exec ${lib.getExe pkgs.bash} "$script" "$@"
     '';
   webappInstall = mkWebappCommand "webapp-install";
   webappRemove = mkWebappCommand "webapp-remove";
@@ -87,17 +89,25 @@ let
       profileFlag = lib.optionalString (app.isolated or false
       ) "--user-data-dir=${config.xdg.dataHome}/chromium-webapps/${app.id} ";
       url = lib.replaceStrings [ "%" "\"" ] [ "%%" "\\\"" ] app.url;
+      sourceIcon = pkgs.fetchurl {
+        url = app.iconUrl;
+        hash = app.iconHash;
+        name = "${app.id}-icon-source";
+      };
+      # Desktop launchers do not consistently detect formats when store paths
+      # lack matching extensions. Normalize PNG, JPEG, WebP, GIF, ICO, and SVG
+      # inputs to a static PNG with a truthful filename.
+      icon = pkgs.runCommand "${app.id}-icon.png" { } ''
+        ${pkgs.imagemagick}/bin/magick "${sourceIcon}[0]" \
+          -auto-orient -background none "PNG32:$out"
+      '';
     in
     lib.nameValuePair app.id {
       name = app.name;
       comment = "${app.name} web app";
 
       exec = ''${pkgs.chromium}/bin/chromium ${profileFlag}"--app=${url}"'';
-      icon = pkgs.fetchurl {
-        url = app.iconUrl;
-        hash = app.iconHash;
-        name = "${app.id}-icon.png";
-      };
+      inherit icon;
       categories = [ "Network" ];
       terminal = false;
       type = "Application";

@@ -101,6 +101,15 @@ for _, window in ipairs(picker_windows) do
 	})
 end
 
+hl.window_rule({
+	name = "tte-screensaver",
+	match = { class = "^tte-screensaver$" },
+	float = true,
+	fullscreen = true,
+	no_anim = true,
+	opaque = true,
+})
+
 -- =============================================================================
 -- MONITORS AND WORKSPACES
 -- =============================================================================
@@ -290,8 +299,8 @@ bind("SUPER + J", "Toggle split direction", hl.dsp.layout("togglesplit"))
 bind("SUPER + T", "Toggle floating window", hl.dsp.window.float({ action = "toggle" }))
 bind("SUPER + F", "Toggle fullscreen window", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 bind("SUPER + Tab", "Focus previous workspace", hl.dsp.focus({ workspace = "previous" }))
-bind("SUPER + mouse_up", "Focus next workspace", focus_next_workspace)
-bind("SUPER + mouse_down", "Focus previous workspace", focus_previous_workspace)
+bind("SUPER + mouse_down", "Focus next workspace", focus_next_workspace)
+bind("SUPER + mouse_up", "Focus previous workspace", focus_previous_workspace)
 
 -- =============================================================================
 -- KEYBINDS: WINDOW FOCUS AND MOVEMENT
@@ -337,6 +346,8 @@ bind("SUPER + SHIFT + 9", "Move window to workspace 9", hl.dsp.window.move({ wor
 
 bind("SUPER + equal", "Increase window width", hl.dsp.window.resize({ x = 75, y = 0, relative = true }), { repeating = true })
 bind("SUPER + minus", "Decrease window width", hl.dsp.window.resize({ x = -75, y = 0, relative = true }), { repeating = true })
+bind("SUPER + SHIFT + minus", "Increase window height", hl.dsp.window.resize({ x = 0, y = 75, relative = true }), { repeating = true })
+bind("SUPER + SHIFT + equal", "Decrease window height", hl.dsp.window.resize({ x = 0, y = -75, relative = true }), { repeating = true })
 bind("SUPER + mouse:272", "Drag window", hl.dsp.window.drag(), { mouse = true })
 bind("SUPER + mouse:273", "Resize window", hl.dsp.window.resize(), { mouse = true })
 bind("SUPER + SHIFT + K", "Pick screen colour and copy hex code", hl.dsp.exec_cmd("hyprpicker --autocopy --format=hex --lowercase-hex"))

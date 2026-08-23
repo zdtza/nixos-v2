@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
-# Add a Chromium web app entry to home-manager/apps.nix.
+# Add a Chromium web app entry to home-manager/web-apps.nix.
 set -euo pipefail
 
-repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-apps_file="$repo_dir/home-manager/apps.nix"
+# Located relative to this script (symlinks resolved), never the working
+# directory, so the script runs correctly from anywhere.
+script_path=$(readlink -f -- "${BASH_SOURCE[0]}")
+repo_dir=$(cd -- "$(dirname -- "$script_path")/.." && pwd)
+apps_file="$repo_dir/home-manager/web-apps.nix"
 [[ -f "$apps_file" ]] || {
   printf 'Missing %s\n' "$apps_file" >&2
   exit 1
@@ -58,7 +61,8 @@ class Icons(HTMLParser):
         values = dict(attrs)
         rel = values.get("rel", "").lower()
         href = values.get("href")
-        if href and "apple-touch-icon" in rel:
+        rel_tokens = rel.replace(",", " ").split()
+        if href and any(token == "icon" or token.endswith("-icon") for token in rel_tokens):
             self.icons.append(href)
 
 url = sys.argv[1]

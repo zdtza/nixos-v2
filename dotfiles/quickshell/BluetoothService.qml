@@ -13,7 +13,7 @@ Item {
     readonly property bool enabled: available && adapter.enabled
     readonly property var deviceObjects: Bluetooth.devices ? Bluetooth.devices.values : []
     readonly property var devices: sortedDevices()
-    readonly property var connectedDevices: devices.filter(device => device.connected)
+    readonly property var connectedDevices: devices.filter(device => isConnected(device))
     readonly property var connectedDevice: connectedDevices.length > 0 ? connectedDevices[0] : null
     readonly property bool busy: devices.some(device => device.pairing
         || device.state === BluetoothDeviceState.Connecting
@@ -22,6 +22,29 @@ Item {
 
     property int scannerUsers: 0
     property bool scannerActive: false
+    property var connectedAddresses: ({})
+    property bool connectionSnapshotReady: false
+
+    // Quickshell 0.3 can miss BlueZ Connected property changes, leaving its
+    // BluetoothDevice.connected cache stale until shell restart. Poll BlueZ's
+    // authoritative view so every active device appears in connected section.
+    Process {
+        id: connectionStatusProcess
+        command: ["bluetoothctl", "devices", "Connected"]
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: root.updateConnectedAddresses(text)
+        }
+    }
+
+    Timer {
+        interval: 1500
+        repeat: true
+        running: root.available
+        triggeredOnStart: true
+        onTriggered: if (!connectionStatusProcess.running)
+            connectionStatusProcess.running = true
+    }
 
     // BluetoothDevice.pair() delegates authentication to BlueZ. Keep a
     // no-input/no-output agent registered so mice, keyboards, and other
@@ -37,11 +60,28 @@ Item {
     function sortedDevices(): var {
         const rows = deviceObjects.filter(device => device && device.adapter === adapter);
         rows.sort((a, b) => {
-            if (a.connected !== b.connected) return a.connected ? -1 : 1;
+            const aConnected = isConnected(a);
+            const bConnected = isConnected(b);
+            if (aConnected !== bConnected) return aConnected ? -1 : 1;
             if (a.paired !== b.paired) return a.paired ? -1 : 1;
             return deviceLabel(a).localeCompare(deviceLabel(b));
         });
         return rows;
+    }
+
+    function updateConnectedAddresses(output: string): void {
+        const addresses = {};
+        const matches = String(output).match(/[0-9a-f]{2}(?::[0-9a-f]{2}){5}/gi) || [];
+        for (const address of matches)
+            addresses[address.toUpperCase()] = true;
+        connectedAddresses = addresses;
+        connectionSnapshotReady = true;
+    }
+
+    function isConnected(device: var): bool {
+        if (!device) return false;
+        if (!connectionSnapshotReady) return device.connected;
+        return connectedAddresses[String(device.address).toUpperCase()] === true;
     }
 
     function deviceLabel(device: var): string {
@@ -64,7 +104,7 @@ Item {
     }
 
     function activate(device: var): void {
-        if (!enabled || !device || device.connected || device.pairing) return;
+        if (!enabled || !device || isConnected(device) || device.pairing) return;
         // Explicit selection is consent to trust device for future reconnects.
         device.trusted = true;
         if (device.paired) device.connect();
@@ -72,7 +112,7 @@ Item {
     }
 
     function disconnect(device: var): void {
-        if (device && device.connected) device.disconnect();
+        if (device && isConnected(device)) device.disconnect();
     }
 
     function forget(device: var): void {

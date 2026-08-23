@@ -35,6 +35,7 @@ let
           readonly property color urgent: "${colors.base08}"
           readonly property color warning: "${colors.base0A}"
           readonly property color success: "${colors.base0B}"
+          readonly property url wallpaper: "file://${config.stylix.image}"
 
           readonly property string fontFamily: "${fonts.monospace.name}"
           readonly property int fontSize: 13

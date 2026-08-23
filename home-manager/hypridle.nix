@@ -63,6 +63,7 @@ let
   configFile = pkgs.writeText "hypridle.conf" ''
     general {
         ignore_dbus_inhibit = false
+        before_sleep_cmd = ${pkgs.quickshell}/bin/qs ipc call lock activate
         after_sleep_cmd = ${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.dpms({ action = "enable" })'
     }
 

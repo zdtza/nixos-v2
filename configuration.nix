@@ -79,6 +79,9 @@ in
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
+  # PAM policy used by Quickshell's secure Wayland session lock.
+  security.pam.services.quickshell = { };
+
   # trust locally-issued mkcert dev certs (e.g. pmis management-portal) system-wide
   # so Chromium-based webapps (WhatsApp, etc.) and Firefox accept them without warnings.
   security.pki.certificateFiles = [ ./rootCA.pem ];

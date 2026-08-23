@@ -13,12 +13,22 @@ PopupWindow {
     property real contentHorizontalMargins: contentMargins
     property real contentVerticalMargins: contentMargins
     property real contentSpacing: 14
+    // Moving/reordered bar controls can otherwise drag an open popup with them.
+    property bool freezePositionWhileVisible: false
+    property bool positionFrozen: false
+    property point frozenPosition: Qt.point(0, 0)
     default property alias panelChildren: contentColumn.data
     readonly property alias panelContent: contentColumn
 
     signal closeRequested()
+    signal backgroundClicked()
 
     color: "transparent"
+
+    onVisibleChanged: {
+        if (!visible)
+            positionFrozen = false;
+    }
 
     Shortcut {
         enabled: root.visible
@@ -40,10 +50,24 @@ PopupWindow {
             const window = root.anchorWindow;
             if (!window)
                 return;
-            let point = window.contentItem.mapFromItem(root.anchorItem, root.anchorItem.width / 2 - root.implicitWidth / 2, root.anchorItem.height + PanelService.barGap);
-            point.x = Math.max(5, Math.min(point.x, window.width - root.implicitWidth - 7));
-            popupAnchor.rect.x = Math.round(point.x);
-            popupAnchor.rect.y = Math.round(point.y);
+            let point;
+            if (root.freezePositionWhileVisible && root.positionFrozen) {
+                point = root.frozenPosition;
+            } else {
+                point = window.contentItem.mapFromItem(root.anchorItem,
+                    root.anchorItem.width / 2 - root.implicitWidth / 2,
+                    root.anchorItem.height + PanelService.barGap);
+                point.x = Math.max(5, Math.min(point.x,
+                    window.width - root.implicitWidth - 7));
+                point.x = Math.round(point.x);
+                point.y = Math.round(point.y);
+                if (root.freezePositionWhileVisible) {
+                    root.frozenPosition = point;
+                    root.positionFrozen = true;
+                }
+            }
+            popupAnchor.rect.x = point.x;
+            popupAnchor.rect.y = point.y;
         }
     }
 
@@ -53,6 +77,11 @@ PopupWindow {
         border.width: 2
         border.color: root.borderColor
         radius: 0
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: root.backgroundClicked()
+        }
 
         Column {
             id: contentColumn

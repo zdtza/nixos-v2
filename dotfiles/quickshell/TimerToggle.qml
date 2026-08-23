@@ -1,4 +1,6 @@
-// Countdown control and duration-entry panel.
+pragma ComponentBehavior: Bound
+
+// Multiple countdown controls and duration-entry panel.
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -9,6 +11,8 @@ Item {
 
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
+    readonly property int timerRowHeight: 48
+    readonly property int timerRowSpacing: 8
     property bool inputReady: false
     property bool updatingInput: false
 
@@ -39,23 +43,20 @@ Item {
     }
 
     function resetInput(): void {
-        setInputText(TimerService.formatDuration(TimerService.running
-            ? TimerService.remainingSeconds : TimerService.lastDurationSeconds));
+        setInputText(TimerService.formatDuration(TimerService.lastDurationSeconds));
     }
 
     function startTimer(): void {
         const seconds = parseDuration(durationInput.text);
-        if (TimerService.start(seconds))
+        if (TimerService.start(seconds)) {
             setInputText(TimerService.formatDuration(seconds));
+            durationInput.forceActiveFocus();
+            durationInput.selectAll();
+        }
     }
 
-    function toggleSavedTimer(): void {
-        if (TimerService.running) {
-            TimerService.cancel();
-            resetInput();
-        } else {
-            TimerService.start(TimerService.lastDurationSeconds);
-        }
+    function startSavedTimer(): void {
+        TimerService.start(TimerService.lastDurationSeconds);
     }
 
     Component.onCompleted: inputReady = true
@@ -76,25 +77,9 @@ Item {
         cursorShape: Qt.PointingHandCursor
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton)
-                root.toggleSavedTimer();
+                root.startSavedTimer();
             else
                 PanelService.toggle(root);
-        }
-    }
-
-    Timer {
-        interval: 250
-        running: root.opened && TimerService.running
-        repeat: true
-        onTriggered: root.setInputText(TimerService.formatDuration(
-            TimerService.remainingSeconds))
-    }
-
-    Connections {
-        target: TimerService
-        function onElapsed(): void {
-            if (root.opened)
-                root.setInputText("00:00");
         }
     }
 
@@ -110,70 +95,79 @@ Item {
         anchorItem: root
         anchorWindow: root.QsWindow.window
         visible: root.opened
+        freezePositionWhileVisible: true
         onCloseRequested: PanelService.close(root)
         onVisibleChanged: {
             if (!visible)
                 return;
             root.resetInput();
-            if (!TimerService.running)
-                Qt.callLater(() => {
-                    durationInput.forceActiveFocus();
-                    durationInput.selectAll();
-                });
+            Qt.callLater(() => {
+                durationInput.forceActiveFocus();
+                durationInput.selectAll();
+            });
         }
 
         borderColor: Theme.border
         contentSpacing: 14
+        readonly property real maximumHeight: Math.max(320,
+            (root.QsWindow.window && root.QsWindow.window.screen
+                ? root.QsWindow.window.screen.height : 800) - 55)
+        // Derive popup size from stable controls and timer count. Avoid
+        // Column.implicitHeight while repeater delegates are changing.
+        readonly property real panelChromeHeight: contentMargins * 2
+            + timerHero.implicitHeight + durationHeader.implicitHeight
+            + timersHeader.implicitHeight + 76 + contentSpacing * 6
+        readonly property real desiredTimerHeight: TimerService.timers.length > 0
+            ? TimerService.timers.length * root.timerRowHeight
+                + Math.max(0, TimerService.timers.length - 1) * root.timerRowSpacing
+            : 52
+        readonly property real timerViewportHeight: Math.min(272,
+            Math.max(52, maximumHeight - panelChromeHeight), desiredTimerHeight)
+
         implicitWidth: 420
-        implicitHeight: panelContent.implicitHeight + contentMargins * 2
+        implicitHeight: Math.min(maximumHeight,
+            panelChromeHeight + timerViewportHeight)
 
         PanelHero {
+            id: timerHero
             width: parent.width
             icon: "󱎫"
             title: "Timer"
-            status: TimerService.running ? "TICK TOCK" : "READY"
-            trailingWidth: 44
-            trailingHeight: 24
+            status: TimerService.timers.length > 0
+                ? TimerService.timers.length + (TimerService.timers.length === 1
+                    ? " TIMER RUNNING" : " TIMERS RUNNING")
+                : "READY"
+            trailingWidth: 32
+            trailingHeight: 28
 
             Rectangle {
                 anchors.fill: parent
                 readonly property bool canStart: root.parseDuration(durationInput.text) > 0
-                readonly property bool controlEnabled: TimerService.running || canStart
-                color: TimerService.running
-                    ? Theme.foreground
-                    : Qt.rgba(Theme.foreground.r, Theme.foreground.g,
-                        Theme.foreground.b, 0.18)
+                color: addMouse.containsMouse
+                    ? Qt.rgba(Theme.foreground.r, Theme.foreground.g,
+                        Theme.foreground.b, 0.12)
+                    : "transparent"
                 border.width: 1
                 border.color: Qt.rgba(Theme.foreground.r, Theme.foreground.g,
-                    Theme.foreground.b, 0.4)
-                opacity: controlEnabled ? 1 : 0.5
+                    Theme.foreground.b, 0.3)
+                opacity: canStart ? 1 : 0.5
                 Behavior on color { ColorAnimation { duration: 120 } }
 
-                Rectangle {
-                    width: 18
-                    height: 18
-                    y: 3
-                    x: TimerService.running ? parent.width - width - 3 : 3
-                    color: TimerService.running ? Theme.background : Theme.foreground
-                    Behavior on x {
-                        NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
-                    }
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰐕"
+                    color: Theme.foreground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 14
                 }
 
                 MouseArea {
+                    id: addMouse
                     anchors.fill: parent
-                    enabled: parent.controlEnabled
+                    enabled: parent.canStart
+                    hoverEnabled: true
                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: {
-                        if (TimerService.running) {
-                            TimerService.cancel();
-                            root.resetInput();
-                            durationInput.forceActiveFocus();
-                            durationInput.selectAll();
-                        } else {
-                            root.startTimer();
-                        }
-                    }
+                    onClicked: root.startTimer()
                 }
             }
         }
@@ -181,8 +175,9 @@ Item {
         PanelSeparator {}
 
         PanelSectionHeader {
+            id: durationHeader
             title: "DURATION"
-            detail: TimerService.running ? "REMAINING" : "MM : SS"
+            detail: "MM : SS"
         }
 
         Rectangle {
@@ -199,18 +194,16 @@ Item {
                 anchors.fill: parent
                 horizontalAlignment: TextInput.AlignHCenter
                 verticalAlignment: TextInput.AlignVCenter
-                enabled: !TimerService.running
                 focus: true
                 activeFocusOnPress: true
                 selectByMouse: true
                 inputMask: "00:00"
                 text: "00:00"
                 onTextChanged: {
-                    if (root.inputReady && !root.updatingInput
-                            && !TimerService.running && root.durationParts(text))
+                    if (root.inputReady && !root.updatingInput && root.durationParts(text))
                         TimerService.rememberDuration(root.parseDuration(text));
                 }
-                color: enabled ? Theme.foreground : Theme.muted
+                color: Theme.foreground
                 selectionColor: Theme.surface
                 selectedTextColor: Theme.foreground
                 font.family: Theme.fontFamily
@@ -224,5 +217,130 @@ Item {
             }
         }
 
+        PanelSeparator {}
+
+        PanelSectionHeader {
+            id: timersHeader
+            title: "CURRENT TIMERS"
+            detail: TimerService.timers.length === 0 ? "NONE"
+                : String(TimerService.timers.length)
+        }
+
+        Item {
+            width: parent.width
+            height: panel.timerViewportHeight
+            clip: true
+
+            Text {
+                anchors.fill: parent
+                visible: TimerService.timers.length === 0
+                text: "No running timers"
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                color: Theme.muted
+                font.family: Theme.fontFamily
+                font.pixelSize: 12
+            }
+
+            Flickable {
+                id: timerList
+                anchors.fill: parent
+                visible: TimerService.timers.length > 0
+                contentHeight: timerColumn.implicitHeight
+                clip: true
+                interactive: contentHeight > height
+                boundsBehavior: Flickable.StopAtBounds
+                flickableDirection: Flickable.VerticalFlick
+
+                Column {
+                    id: timerColumn
+                    width: timerList.width
+                    spacing: root.timerRowSpacing
+
+                    Repeater {
+                        model: TimerService.timers
+
+                        Rectangle {
+                            id: timerRow
+                            required property var modelData
+
+                            width: timerColumn.width
+                            height: root.timerRowHeight
+                            color: rowHover.hovered
+                                ? Qt.rgba(Theme.foreground.r, Theme.foreground.g,
+                                    Theme.foreground.b, 0.08)
+                                : "transparent"
+                            border.width: rowHover.hovered ? 1 : 0
+                            border.color: Qt.rgba(Theme.foreground.r,
+                                Theme.foreground.g, Theme.foreground.b, 0.25)
+                            Behavior on color { ColorAnimation { duration: 120 } }
+
+                            HoverHandler { id: rowHover }
+
+                            Text {
+                                id: timerIcon
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "󱎫"
+                                color: Theme.foreground
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 16
+                            }
+
+                            Text {
+                                anchors.left: timerIcon.right
+                                anchors.leftMargin: 12
+                                anchors.right: deleteButton.visible
+                                    ? deleteButton.left : parent.right
+                                anchors.rightMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: TimerService.formatDuration(Math.max(0,
+                                    Math.ceil((timerRow.modelData.deadlineMs
+                                        - TimerService.nowMs) / 1000)))
+                                color: Theme.foreground
+                                font.family: Theme.fontFamily
+                                font.pixelSize: 24
+                                font.weight: Font.Medium
+                            }
+
+                            Rectangle {
+                                id: deleteButton
+                                z: 2
+                                visible: rowHover.hovered
+                                width: 28
+                                height: 28
+                                anchors.right: parent.right
+                                anchors.rightMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: deleteMouse.containsMouse
+                                    ? Qt.rgba(Theme.foreground.r,
+                                        Theme.foreground.g, Theme.foreground.b, 0.12)
+                                    : "transparent"
+                                border.width: 1
+                                border.color: Qt.rgba(Theme.foreground.r,
+                                    Theme.foreground.g, Theme.foreground.b, 0.3)
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰆴"
+                                    color: Theme.foreground
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: 12
+                                }
+
+                                MouseArea {
+                                    id: deleteMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: TimerService.removeTimer(timerRow.modelData.id)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

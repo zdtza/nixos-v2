@@ -122,7 +122,14 @@ local configured_monitors = {
 		mode = "1920x1080@60",
 		position = "0x0",
 		scale = 1,
-		workspaces = { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+		workspaces = { 1, 2, 3 },
+	},
+	{
+		output = "HDMI-A-1",
+		mode = "3440x1440@59.96Hz",
+		position = "1920x0",
+		scale = 1,
+		workspaces = { 4, 5, 6, 7, 8, 9 },
 	},
 }
 
@@ -278,12 +285,14 @@ local function bind(keys, description, dispatcher, options)
 	return hl.bind(keys, dispatcher, options)
 end
 
-local screenshot_command = 'mkdir -p ~/Screenshots && file="$HOME/Screenshots/screenshot-$(date +%Y%m%d-%H%M%S).png" && grim -g "$(slurp)" "$file" && wl-copy --type image/png < "$file"'
+local screenshot_command =
+	'mkdir -p ~/Screenshots && file="$HOME/Screenshots/screenshot-$(date +%Y%m%d-%H%M%S).png" && grim -g "$(slurp)" "$file" && wl-copy --type image/png < "$file"'
 
 -- =============================================================================
 -- KEYBINDS: SYSTEM
 -- =============================================================================
 
+bind("SUPER + L", "Lock session", hl.dsp.exec_cmd("qs ipc call lock activate"))
 bind("XF86PowerOff", "Suspend system", hl.dsp.exec_cmd("systemctl suspend"), { locked = true })
 bind("switch:on:Lid Switch", "Suspend when lid closes", hl.dsp.exec_cmd("systemctl suspend"), { locked = true })
 
@@ -344,13 +353,37 @@ bind("SUPER + SHIFT + 9", "Move window to workspace 9", hl.dsp.window.move({ wor
 -- KEYBINDS: RESIZE, SCREENSHOTS, AND APPEARANCE
 -- =============================================================================
 
-bind("SUPER + equal", "Increase window width", hl.dsp.window.resize({ x = 75, y = 0, relative = true }), { repeating = true })
-bind("SUPER + minus", "Decrease window width", hl.dsp.window.resize({ x = -75, y = 0, relative = true }), { repeating = true })
-bind("SUPER + SHIFT + minus", "Increase window height", hl.dsp.window.resize({ x = 0, y = 75, relative = true }), { repeating = true })
-bind("SUPER + SHIFT + equal", "Decrease window height", hl.dsp.window.resize({ x = 0, y = -75, relative = true }), { repeating = true })
+bind(
+	"SUPER + equal",
+	"Increase window width",
+	hl.dsp.window.resize({ x = 75, y = 0, relative = true }),
+	{ repeating = true }
+)
+bind(
+	"SUPER + minus",
+	"Decrease window width",
+	hl.dsp.window.resize({ x = -75, y = 0, relative = true }),
+	{ repeating = true }
+)
+bind(
+	"SUPER + SHIFT + minus",
+	"Increase window height",
+	hl.dsp.window.resize({ x = 0, y = 75, relative = true }),
+	{ repeating = true }
+)
+bind(
+	"SUPER + SHIFT + equal",
+	"Decrease window height",
+	hl.dsp.window.resize({ x = 0, y = -75, relative = true }),
+	{ repeating = true }
+)
 bind("SUPER + mouse:272", "Drag window", hl.dsp.window.drag(), { mouse = true })
 bind("SUPER + mouse:273", "Resize window", hl.dsp.window.resize(), { mouse = true })
-bind("SUPER + SHIFT + K", "Pick screen colour and copy hex code", hl.dsp.exec_cmd("hyprpicker --autocopy --format=hex --lowercase-hex"))
+bind(
+	"SUPER + SHIFT + K",
+	"Pick screen colour and copy hex code",
+	hl.dsp.exec_cmd("hyprpicker --autocopy --format=hex --lowercase-hex")
+)
 bind("SUPER + SHIFT + S", "Capture screen region", hl.dsp.exec_cmd(screenshot_command))
 bind("SUPER + M", "Toggle single-window max width", toggle_aspect_ratio)
 bind("SUPER + backspace", "Toggle window opacity", toggle_window_opacity)
@@ -368,12 +401,42 @@ bind("SUPER + V", "Universal paste", universal_clipboard_shortcut("CTRL", "V", "
 -- KEYBINDS: AUDIO AND BRIGHTNESS
 -- =============================================================================
 
-bind("XF86AudioRaiseVolume", "Raise audio volume", hl.dsp.exec_cmd("qs ipc call audio outputUp"), { locked = true, repeating = true })
-bind("XF86AudioLowerVolume", "Lower audio volume", hl.dsp.exec_cmd("qs ipc call audio outputDown"), { locked = true, repeating = true })
-bind("XF86AudioMute", "Toggle audio mute", hl.dsp.exec_cmd("qs ipc call audio toggleOutputMute"), { locked = true, repeating = true })
-bind("XF86AudioMicMute", "Toggle microphone mute", hl.dsp.exec_cmd("qs ipc call audio toggleInputMute"), { locked = true, repeating = true })
-bind("XF86MonBrightnessUp", "Raise display brightness", hl.dsp.exec_cmd("qs ipc call display brightnessUp"), { locked = true, repeating = true })
-bind("XF86MonBrightnessDown", "Lower display brightness", hl.dsp.exec_cmd("qs ipc call display brightnessDown"), { locked = true, repeating = true })
+bind(
+	"XF86AudioRaiseVolume",
+	"Raise audio volume",
+	hl.dsp.exec_cmd("qs ipc call audio outputUp"),
+	{ locked = true, repeating = true }
+)
+bind(
+	"XF86AudioLowerVolume",
+	"Lower audio volume",
+	hl.dsp.exec_cmd("qs ipc call audio outputDown"),
+	{ locked = true, repeating = true }
+)
+bind(
+	"XF86AudioMute",
+	"Toggle audio mute",
+	hl.dsp.exec_cmd("qs ipc call audio toggleOutputMute"),
+	{ locked = true, repeating = true }
+)
+bind(
+	"XF86AudioMicMute",
+	"Toggle microphone mute",
+	hl.dsp.exec_cmd("qs ipc call audio toggleInputMute"),
+	{ locked = true, repeating = true }
+)
+bind(
+	"XF86MonBrightnessUp",
+	"Raise display brightness",
+	hl.dsp.exec_cmd("qs ipc call display brightnessUp"),
+	{ locked = true, repeating = true }
+)
+bind(
+	"XF86MonBrightnessDown",
+	"Lower display brightness",
+	hl.dsp.exec_cmd("qs ipc call display brightnessDown"),
+	{ locked = true, repeating = true }
+)
 
 -- =============================================================================
 -- KEYBINDS: DICTATION AND UI

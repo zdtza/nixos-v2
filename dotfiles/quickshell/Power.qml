@@ -10,10 +10,14 @@ Item {
     readonly property bool opened: PanelService.activePanel === root
     property int phraseIndex: 0
     readonly property var phrases: [
-        "Machines need naps too",
-        "Reboot. Deny everything",
+        "Don't forget to save your work.",
+        "Make sure to close all applications.",
+        "Remember to backup important files.",
+        "Check for any unsaved documents.",
     ]
     readonly property var actions: [
+        { title: "LOCK", icon: "󰌾", iconSize: 24,
+            action: "lock", available: true },
         { title: "SHUTDOWN", icon: "", iconSize: 22,
             action: "poweroff", available: true },
         { title: "REBOOT", icon: "󰜉", iconSize: 28,
@@ -32,7 +36,10 @@ Item {
         if (!action)
             return;
         PanelService.close(root);
-        Quickshell.execDetached(["systemctl", action]);
+        if (action === "lock")
+            Quickshell.execDetached(["qs", "ipc", "call", "lock", "activate"]);
+        else
+            Quickshell.execDetached(["systemctl", action]);
     }
 
     PanelStatusRotator {
@@ -63,7 +70,7 @@ Item {
         onCloseRequested: PanelService.close(root)
         borderColor: Theme.border
         contentSpacing: 14
-        implicitWidth: 280
+        implicitWidth: 360
         implicitHeight: panelContent.implicitHeight + contentMargins * 2
 
         PanelHero {
@@ -80,7 +87,7 @@ Item {
             id: actionGrid
 
             width: parent.width
-            columns: 3
+            columns: 4
             spacing: 10
             readonly property real cellWidth: (width - spacing * (columns - 1)) / columns
 
@@ -92,7 +99,7 @@ Item {
                     required property var modelData
 
                     width: actionGrid.cellWidth
-                    height: 72
+                    height: 50
                     color: modelData.available && actionMouse.containsMouse
                         ? Qt.rgba(Theme.foreground.r, Theme.foreground.g,
                             Theme.foreground.b, 0.12)

@@ -14,9 +14,9 @@ Item {
     readonly property bool opened: PanelService.activePanel === root
     readonly property var devices: BluetoothService.devices
     readonly property var connectedDevices: BluetoothService.enabled
-        ? devices.filter(device => device.connected) : []
+        ? devices.filter(device => BluetoothService.isConnected(device)) : []
     readonly property var availableDevices: BluetoothService.enabled
-        ? devices.filter(device => !device.connected) : []
+        ? devices.filter(device => !BluetoothService.isConnected(device)) : []
     readonly property int deviceRowHeight: 48
     readonly property int deviceRowSpacing: 8
     readonly property int deviceSectionSpacing: 14
@@ -303,7 +303,7 @@ Item {
                         return "Connecting…";
                     if (deviceRow.device.state === BluetoothDeviceState.Disconnecting)
                         return "Disconnecting…";
-                    if (deviceRow.device.connected) {
+                    if (BluetoothService.isConnected(deviceRow.device)) {
                         if (deviceRow.device.batteryAvailable)
                             return "Connected · " + Math.round(Number(deviceRow.device.battery) * 100) + "%";
                         return "Connected";
@@ -391,7 +391,7 @@ Item {
             anchors.right: parent.right
             anchors.rightMargin: 10
             anchors.verticalCenter: parent.verticalCenter
-            text: deviceRow.device.connected ? "󰂱"
+            text: BluetoothService.isConnected(deviceRow.device) ? "󰂱"
                 : (deviceRow.device.paired ? "󰌾" : "")
             color: Theme.muted
             font.family: Theme.fontFamily

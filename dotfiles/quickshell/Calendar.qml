@@ -10,6 +10,7 @@ PanelPopup {
 
     property int shownMonth: clock.date.getMonth()
     property string selectedDay: ""
+    property string selectedRangeEnd: ""
 
     readonly property real weekColumnWidth: 44
     readonly property real dayColumnWidth: (panelContent.width - weekColumnWidth) / 7
@@ -19,6 +20,14 @@ PanelPopup {
     ]
     readonly property var weekdayNames: ["W", "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
     readonly property int currentYear: clock.date.getFullYear()
+    readonly property int selectedDayCount: {
+        if (!selectedDay || !selectedRangeEnd) return 0;
+        const start = selectedDay.split("-").map(Number);
+        const end = selectedRangeEnd.split("-").map(Number);
+        const startTime = Date.UTC(start[0], start[1] - 1, start[2]);
+        const endTime = Date.UTC(end[0], end[1] - 1, end[2]);
+        return Math.round(Math.abs(endTime - startTime) / 86400000) + 1;
+    }
     readonly property int yearCompletePercent: {
         const start = new Date(root.currentYear, 0, 1);
         const end = new Date(root.currentYear + 1, 0, 1);
@@ -62,8 +71,42 @@ PanelPopup {
             + "-" + String(day).padStart(2, "0");
     }
 
-    function selectDay(key: string): void {
-        root.selectedDay = root.selectedDay === key ? "" : key;
+    function selectDay(key: string, extendSelection: bool): void {
+        if (extendSelection) {
+            if (!root.selectedDay) {
+                root.selectedDay = key;
+                root.selectedRangeEnd = "";
+            } else {
+                root.selectedRangeEnd = key === root.selectedDay ? "" : key;
+            }
+            return;
+        }
+
+        // Plain-clicking anywhere in a range clears it. Clicking elsewhere
+        // moves anchor there; clicking a single selected day clears it.
+        if (root.selectedRangeEnd && root.daySelected(key)) {
+            root.selectedDay = "";
+            root.selectedRangeEnd = "";
+            return;
+        }
+        const wasSingleSelection = !root.selectedRangeEnd && root.selectedDay === key;
+        root.selectedDay = wasSingleSelection ? "" : key;
+        root.selectedRangeEnd = "";
+    }
+
+    function daySelected(key: string): bool {
+        if (!root.selectedDay || !key) return false;
+        if (!root.selectedRangeEnd) return key === root.selectedDay;
+        const first = root.selectedDay < root.selectedRangeEnd
+            ? root.selectedDay : root.selectedRangeEnd;
+        const last = root.selectedDay < root.selectedRangeEnd
+            ? root.selectedRangeEnd : root.selectedDay;
+        return key >= first && key <= last;
+    }
+
+    function rangeEndpoint(key: string): bool {
+        return key === root.selectedDay
+            || (!!root.selectedRangeEnd && key === root.selectedRangeEnd);
     }
 
     function isoWeek(date: var): int {
@@ -78,8 +121,14 @@ PanelPopup {
         root.shownMonth = (root.shownMonth + offset + 12) % 12;
     }
 
-    onVisibleChanged: if (visible)
-        shownMonth = clock.date.getMonth()
+    onVisibleChanged: if (!visible)
+        clearSelection()
+    onBackgroundClicked: clearSelection()
+
+    function clearSelection(): void {
+        selectedDay = "";
+        selectedRangeEnd = "";
+    }
 
     contentHorizontalMargins: 80
     contentVerticalMargins: 18
@@ -211,7 +260,9 @@ PanelPopup {
                     required property int index
 
                     readonly property bool marked: !modelData.weekNumber
-                        && root.selectedDay === modelData.key
+                        && root.daySelected(modelData.key)
+                    readonly property bool rangeEndpoint: !modelData.weekNumber
+                        && root.rangeEndpoint(modelData.key)
 
                     width: index % 8 === 0 ? root.weekColumnWidth : root.dayColumnWidth
                     height: 42
@@ -224,8 +275,8 @@ PanelPopup {
                             && (dayCell.marked || dayCell.modelData.today || dayMouse.containsMouse)
                         color: dayCell.marked ? Theme.surface
                             : (dayMouse.containsMouse ? Theme.surface : "transparent")
-                        border.width: dayCell.marked || dayCell.modelData.today ? 1 : 0
-                        border.color: dayCell.marked ? Theme.muted : Theme.border
+                        border.width: dayCell.rangeEndpoint || dayCell.modelData.today ? 1 : 0
+                        border.color: dayCell.rangeEndpoint ? Theme.muted : Theme.border
                     }
 
                     Text {
@@ -245,7 +296,8 @@ PanelPopup {
                         enabled: !dayCell.modelData.weekNumber && dayCell.modelData.inYear
                         hoverEnabled: true
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onClicked: root.selectDay(dayCell.modelData.key)
+                        onClicked: mouse => root.selectDay(dayCell.modelData.key,
+                            (mouse.modifiers & Qt.ShiftModifier) !== 0)
                     }
                 }
             }
@@ -264,7 +316,7 @@ PanelPopup {
 
     Item {
         width: root.panelContent.width
-        implicitHeight: 34
+        implicitHeight: 42
 
         Rectangle {
             anchors.left: parent.left
@@ -292,15 +344,29 @@ PanelPopup {
             }
         }
 
-        Text {
+        Column {
             anchors.centerIn: parent
-            anchors.verticalCenterOffset: 5
-            text: (root.monthNames[root.shownMonth] + " " + root.currentYear).toUpperCase()
-            color: Theme.muted
-            font.family: Theme.fontFamily
-            font.pixelSize: 11
-            font.weight: Font.Medium
-            font.letterSpacing: 1.4
+            spacing: 2
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: (root.monthNames[root.shownMonth] + " " + root.currentYear).toUpperCase()
+                color: Theme.foreground
+                font.family: Theme.fontFamily
+                font.pixelSize: 11
+                font.weight: Font.Medium
+                font.letterSpacing: 1.4
+            }
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: root.selectedDayCount > 0
+                text: root.selectedDayCount + " DAYS SELECTED"
+                color: Theme.muted
+                font.family: Theme.fontFamily
+                font.pixelSize: 9
+                font.letterSpacing: 1
+            }
         }
 
         Rectangle {

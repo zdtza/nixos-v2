@@ -191,6 +191,7 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 readonly property bool canStart: root.parseDuration(durationInput.text) > 0
+                radius: ServicePanel.rounding
                 color: addMouse.containsMouse
                     ? Util.alpha(Theme.foreground, 0.12)
                     : "transparent"
@@ -229,6 +230,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 74
+            radius: ServicePanel.rounding
             color: Theme.dark_background
             border.width: 1
             border.color: durationInput.activeFocus ? Theme.muted
@@ -320,6 +322,7 @@ Item {
 
                             width: timerColumn.width
                             height: root.timerRowHeight
+                            radius: ServicePanel.rounding
                             color: timerRow.index === root.selectedTimerIndex || rowHover.hovered
                                 ? Util.alpha(Theme.foreground, 0.08)
                                 : "transparent"
@@ -357,38 +360,17 @@ Item {
                                 font.weight: Font.Medium
                             }
 
-                            Rectangle {
+                            PanelRowActionButton {
                                 id: deleteButton
                                 z: 2
                                 visible: timerRow.index === root.selectedTimerIndex || rowHover.hovered
-                                width: 28
-                                height: 28
                                 anchors.right: parent.right
                                 anchors.rightMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
-                                color: deleteMouse.containsMouse
-                                    ? Util.alpha(Theme.foreground, 0.12)
-                                    : "transparent"
-                                border.width: 1
-                                border.color: Util.alpha(Theme.foreground, 0.3)
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "󰆴"
-                                    color: Theme.foreground
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: 12
-                                }
-
-                                MouseArea {
-                                    id: deleteMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.selectedTimerIndex = timerRow.index;
-                                        ServiceTimer.removeTimer(timerRow.modelData.id);
-                                    }
+                                icon: "󰆴"
+                                onClicked: {
+                                    root.selectedTimerIndex = timerRow.index;
+                                    ServiceTimer.removeTimer(timerRow.modelData.id);
                                 }
                             }
                         }

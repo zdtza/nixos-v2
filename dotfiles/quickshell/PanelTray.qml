@@ -238,6 +238,7 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             width: 16
                             height: 2
+                            radius: ServicePanel.rounding
                             // menuLoader.trayItem still points at the last item
                             // clicked, so the VM menu has to be excluded here or
                             // that item lights up alongside it.
@@ -308,6 +309,7 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: 16
                         height: 2
+                        radius: ServicePanel.rounding
                         visible: vmMouse.containsMouse
                             || (root.opened && root.selectedItemIndex === root.items.length)
                             || (root.opened && root.vmMenuOpen)

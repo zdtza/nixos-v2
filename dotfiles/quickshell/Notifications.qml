@@ -199,6 +199,7 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
+            radius: ServicePanel.rounding
             color: notificationMouse.containsMouse ? Theme.dark_background : Theme.background
 
             Rectangle {

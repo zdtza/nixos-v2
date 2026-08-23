@@ -13,6 +13,7 @@ Rectangle {
 
     width: visible ? 28 : 0
     height: 28
+    radius: ServicePanel.rounding
     color: mouseArea.containsMouse ? Util.alpha(Theme.foreground, 0.12) : "transparent"
     border.width: 1
     border.color: Util.alpha(Theme.foreground, 0.3)

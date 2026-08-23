@@ -118,6 +118,7 @@ Scope {
                 Rectangle {
                     width: parent.width
                     height: 48
+                    radius: ServicePanel.rounding
                     color: Util.alpha(Theme.dark_background, 0.88)
                     border.width: 2
                     border.color: root.errorText.length > 0 ? Theme.urgent

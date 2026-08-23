@@ -78,9 +78,9 @@ PopupWindow {
     Rectangle {
         anchors.fill: parent
         color: Theme.background
-        border.width: 2
+        border.width: 1
         border.color: root.borderColor
-        radius: 0
+        radius: ServicePanel.rounding
 
         MouseArea {
             anchors.fill: parent

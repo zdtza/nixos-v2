@@ -12,11 +12,13 @@ Item {
 
     Rectangle {
         anchors.fill: parent
+        radius: ServicePanel.rounding
         color: Util.alpha(Theme.foreground, 0.12)
 
         Rectangle {
             height: parent.height
             width: parent.width * Math.max(0, Math.min(1, root.level))
+            radius: ServicePanel.rounding
             color: root.muted ? Theme.muted : Theme.foreground
             Behavior on width { NumberAnimation { duration: 55 } }
         }

@@ -34,6 +34,7 @@ Item {
         anchors.left: label.left
         anchors.right: label.right
         height: 2
+        radius: ServicePanel.rounding
         visible: root.opened || mouseArea.containsMouse
         color: Theme.accent
     }

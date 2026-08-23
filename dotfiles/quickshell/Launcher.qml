@@ -284,6 +284,7 @@ Scope {
             anchors.centerIn: parent
             width: 520
             height: 630
+            radius: ServicePanel.rounding
             color: Theme.dark_background
 
             MouseArea {
@@ -332,6 +333,7 @@ Scope {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 42
+                    radius: ServicePanel.rounding
                     color: Theme.dark_background
 
                     TextInput {
@@ -433,6 +435,7 @@ Scope {
 
                         width: appList.width
                         height: 52
+                        radius: ServicePanel.rounding
                         color: selected ? Theme.surface
                             : (rowMouse.containsMouse ? Theme.dark_background : "transparent")
 
@@ -443,6 +446,7 @@ Scope {
                                 bottom: parent.bottom
                             }
                             width: 2
+                            radius: ServicePanel.rounding
                             visible: appRow.selected
                             color: Theme.accent
                         }
@@ -591,6 +595,7 @@ Scope {
             z: 11
             width: 250
             height: contextColumn.implicitHeight + 24
+            radius: ServicePanel.rounding
             x: Math.max(8, Math.min(window.menuX, window.width - width - 8))
             y: Math.max(8, Math.min(window.menuY, window.height - height - 8))
             color: Theme.dark_background
@@ -621,6 +626,7 @@ Scope {
                 Rectangle {
                     width: contextColumn.width
                     height: 34
+                    radius: ServicePanel.rounding
                     color: window.menuActionIndex === 0 || launchMouse.containsMouse
                         ? Theme.surface : "transparent"
 
@@ -671,6 +677,7 @@ Scope {
                         required property int index
                         width: contextColumn.width
                         height: 34
+                        radius: ServicePanel.rounding
                         color: window.menuActionIndex === actionRow.index + 1
                             || actionMouse.containsMouse ? Theme.surface : "transparent"
 

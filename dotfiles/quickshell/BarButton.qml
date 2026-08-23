@@ -34,6 +34,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         width: 16
         height: 2
+        radius: ServicePanel.rounding
         visible: root.showPanelIndicator && (root.panelOpen || mouseArea.containsMouse)
         color: Theme.accent
     }

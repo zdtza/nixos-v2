@@ -308,6 +308,7 @@ Item {
 
         width: parent.width
         height: 36
+        radius: ServicePanel.rounding
         color: keyboardSelected || deviceMouse.containsMouse
             ? Util.alpha(Theme.foreground, 0.08)
             : "transparent"

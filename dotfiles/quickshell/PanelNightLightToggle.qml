@@ -9,16 +9,10 @@ Item {
 
     readonly property bool opened: ServicePanel.activePanel === root
     readonly property bool requiresKeyboardFocus: true
-    readonly property var presets: [2500, 3500, 4500, 5500]
-    property int selectedPresetIndex: 0
+    readonly property int temperatureStep: 100
 
     implicitWidth: 28
     implicitHeight: 26
-
-    onOpenedChanged: if (opened) {
-        const index = presets.indexOf(ServiceNightLight.temperature);
-        selectedPresetIndex = Math.max(0, index);
-    }
 
     function temperatureStatus(): string {
         if (!ServiceNightLight.available)
@@ -56,39 +50,27 @@ Item {
 
     Shortcut {
         enabled: root.opened
-        sequence: "Return"
-        context: Qt.ApplicationShortcut
-        onActivated: ServiceNightLight.setTemperature(root.presets[root.selectedPresetIndex])
-    }
-    Shortcut {
-        enabled: root.opened
-        sequence: "Enter"
-        context: Qt.ApplicationShortcut
-        onActivated: ServiceNightLight.setTemperature(root.presets[root.selectedPresetIndex])
-    }
-    Shortcut {
-        enabled: root.opened
         sequence: "Left"
         context: Qt.ApplicationShortcut
-        onActivated: root.selectedPresetIndex = Math.max(0, root.selectedPresetIndex - 1)
-    }
-    Shortcut {
-        enabled: root.opened
-        sequence: "Up"
-        context: Qt.ApplicationShortcut
-        onActivated: root.selectedPresetIndex = Math.max(0, root.selectedPresetIndex - 1)
-    }
-    Shortcut {
-        enabled: root.opened
-        sequence: "Right"
-        context: Qt.ApplicationShortcut
-        onActivated: root.selectedPresetIndex = Math.min(root.presets.length - 1, root.selectedPresetIndex + 1)
+        onActivated: ServiceNightLight.setTemperature(ServiceNightLight.temperature - root.temperatureStep)
     }
     Shortcut {
         enabled: root.opened
         sequence: "Down"
         context: Qt.ApplicationShortcut
-        onActivated: root.selectedPresetIndex = Math.min(root.presets.length - 1, root.selectedPresetIndex + 1)
+        onActivated: ServiceNightLight.setTemperature(ServiceNightLight.temperature - root.temperatureStep)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Right"
+        context: Qt.ApplicationShortcut
+        onActivated: ServiceNightLight.setTemperature(ServiceNightLight.temperature + root.temperatureStep)
+    }
+    Shortcut {
+        enabled: root.opened
+        sequence: "Up"
+        context: Qt.ApplicationShortcut
+        onActivated: ServiceNightLight.setTemperature(ServiceNightLight.temperature + root.temperatureStep)
     }
     Shortcut {
         enabled: root.opened
@@ -151,44 +133,5 @@ Item {
             onValueEdited: value => ServiceNightLight.setTemperature(
                 Math.round((1000 + value * 5500) / 100) * 100)
         }
-
-        Row {
-            id: presetRow
-
-            width: parent.width
-            spacing: 6
-            readonly property real cellWidth: (width - spacing * (root.presets.length - 1))
-                / root.presets.length
-
-            Repeater {
-                model: root.presets
-
-                PanelOptionButton {
-                    id: presetButton
-                    required property var modelData
-                    required property int index
-                    readonly property bool selected: ServiceNightLight.temperature === modelData
-
-                    width: presetRow.cellWidth
-                    active: selected
-                    keyboardFocused: presetButton.index === root.selectedPresetIndex
-                    enabled: ServiceNightLight.available
-                    onActivated: {
-                        root.selectedPresetIndex = presetButton.index;
-                        ServiceNightLight.setTemperature(presetButton.modelData);
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: presetButton.modelData + " K"
-                        color: Theme.foreground
-                        font.family: Theme.fontFamily
-                        font.pixelSize: 11
-                        font.bold: presetButton.selected
-                    }
-                }
-            }
-        }
-
     }
 }

@@ -209,6 +209,7 @@ Item {
 
                     width: parent.width
                     height: 38
+                    radius: ServicePanel.rounding
                     color: focused
                         ? Util.alpha(Theme.foreground, 0.18)
                         : "transparent"

@@ -201,7 +201,7 @@ PopupWindow {
         anchors.fill: parent
 
         color: Theme.background
-        radius: 0
+        radius: ServicePanel.rounding
         border.width: 2
         border.color: Theme.border
 
@@ -294,6 +294,7 @@ PopupWindow {
                             leftMargin: 6
                             rightMargin: 6
                         }
+                        radius: ServicePanel.rounding
                         color: (mouseArea.containsMouse || menu.selectedEntry === row.entry)
                             && row.interactive ? Theme.surface : "transparent"
 

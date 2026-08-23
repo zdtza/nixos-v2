@@ -324,6 +324,7 @@ Item {
 
         width: parent.width
         height: root.deviceRowHeight
+        radius: ServicePanel.rounding
         color: keyboardSelected || rowHover.hovered
             ? Util.alpha(Theme.foreground, 0.08)
             : "transparent"

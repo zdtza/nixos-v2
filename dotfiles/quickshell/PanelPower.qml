@@ -153,6 +153,7 @@ Item {
 
                     width: actionGrid.cellWidth
                     height: 50
+                    radius: ServicePanel.rounding
                     color: modelData.available
                         && (actionButton.index === root.selectedActionIndex || actionMouse.containsMouse)
                         ? Util.alpha(Theme.foreground, 0.12)

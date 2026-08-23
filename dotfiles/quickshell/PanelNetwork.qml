@@ -501,7 +501,7 @@ Item {
                             border.width: (networkRow.keyboardSelected || networkHover.hovered)
                                 && !passwordOpen ? 1 : 0
                             border.color: Util.alpha(Theme.foreground, 0.25)
-                            radius: 0
+                            radius: ServicePanel.rounding
                             Behavior on color {
                                 ColorAnimation {
                                     duration: 120
@@ -644,6 +644,7 @@ Item {
                                 Rectangle {
                                     width: parent.width - connectButton.width - cancelButton.width - parent.spacing * 2
                                     height: 32
+                                    radius: ServicePanel.rounding
                                     color: Util.alpha(Theme.foreground, 0.04)
                                     border.width: 1
                                     border.color: passwordInput.activeFocus ? Theme.muted : Util.alpha(Theme.foreground, 0.4)
@@ -690,6 +691,7 @@ Item {
                                     id: connectButton
                                     width: 72
                                     height: 32
+                                    radius: ServicePanel.rounding
                                     color: connectMouse.containsMouse ? Util.alpha(Theme.foreground, 0.18) : Util.alpha(Theme.foreground, 0.08)
                                     border.width: 1
                                     border.color: Util.alpha(Theme.foreground, 0.4)
@@ -714,6 +716,7 @@ Item {
                                     id: cancelButton
                                     width: 32
                                     height: 32
+                                    radius: ServicePanel.rounding
                                     color: cancelMouse.containsMouse ? Util.alpha(Theme.foreground, 0.12) : "transparent"
                                     border.width: 1
                                     border.color: Util.alpha(Theme.foreground, 0.3)

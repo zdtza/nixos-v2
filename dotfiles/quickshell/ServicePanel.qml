@@ -21,10 +21,20 @@ Item {
     // Hyprland reloads its config. Falls back to this default until the
     // first query resolves, or if hyprctl is ever unavailable.
     property real barGap: 9
+    // Corner rounding applied everywhere in the UI (panels, buttons, inputs,
+    // highlights, ...) except the workspace indicator. Mirrors Hyprland's
+    // decoration:rounding so the shell's corners match window corners;
+    // refreshed the same way as barGap.
+    property real rounding: 0
 
     function refreshBarGap(): void {
         if (!gapsProcess.running)
             gapsProcess.running = true;
+    }
+
+    function refreshRounding(): void {
+        if (!roundingProcess.running)
+            roundingProcess.running = true;
     }
 
     Process {
@@ -45,13 +55,36 @@ Item {
         }
     }
 
-    Component.onCompleted: refreshBarGap()
+    Process {
+        id: roundingProcess
+        command: ["hyprctl", "-j", "getoption", "decoration:rounding"]
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: {
+                let value;
+                try {
+                    value = Number(JSON.parse(text).int);
+                } catch (e) {
+                    value = NaN;
+                }
+                if (Number.isFinite(value))
+                    root.rounding = value;
+            }
+        }
+    }
+
+    Component.onCompleted: {
+        refreshBarGap();
+        refreshRounding();
+    }
 
     Connections {
         target: Hyprland
         function onRawEvent(event: var): void {
-            if (event.name === "configreloaded")
+            if (event.name === "configreloaded") {
                 root.refreshBarGap();
+                root.refreshRounding();
+            }
         }
     }
 

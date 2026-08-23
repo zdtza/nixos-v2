@@ -17,6 +17,7 @@ Rectangle {
     signal activated()
 
     implicitHeight: 32
+    radius: ServicePanel.rounding
     color: mouseArea.pressed
         ? Util.alpha(Theme.foreground, 0.22)
         : root.active

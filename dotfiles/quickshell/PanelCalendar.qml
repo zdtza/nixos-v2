@@ -290,6 +290,7 @@ PanelPopup {
 
             Rectangle {
                 anchors.fill: parent
+                radius: ServicePanel.rounding
                 color: Theme.surface
             }
 
@@ -298,6 +299,7 @@ PanelPopup {
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 width: parent.width * root.yearCompletePercent / 100
+                radius: ServicePanel.rounding
                 color: Theme.foreground
             }
         }
@@ -371,6 +373,7 @@ PanelPopup {
                         anchors.centerIn: parent
                         width: dayCell.modelData.weekNumber ? 0 : root.dayColumnWidth - 8
                         height: 36
+                        radius: ServicePanel.rounding
                         visible: !dayCell.modelData.weekNumber
                             && (dayCell.marked || dayCell.modelData.today
                                 || dayCell.keyboardSelected || dayMouse.containsMouse)

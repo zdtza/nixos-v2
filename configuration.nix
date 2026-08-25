@@ -411,7 +411,7 @@ in
       };
 
       sansSerif = {
-        package = pkgs.dejavu_fonts;
+        package = pkgs.adwaita-fonts;
         name = "Adwaita Sans";
       };
 

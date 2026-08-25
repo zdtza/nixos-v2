@@ -89,7 +89,7 @@ end
 -- Generic float/center rules for picker-style windows.
 local picker_windows = {
 	{ class = "xdg-desktop-portal-gtk" },
-	{ class = "termfilechooser" },
+	{ title = "termfilechooser" },
 }
 
 for _, window in ipairs(picker_windows) do
@@ -97,7 +97,7 @@ for _, window in ipairs(picker_windows) do
 		match = window.title and { title = window.title } or { class = window.class },
 		float = true,
 		center = true,
-		size = window.size or { 1200, 750 },
+		size = window.size or { 1300, 800 },
 	})
 end
 
@@ -106,15 +106,6 @@ hl.window_rule({
 	match = { class = "^org.gnome.Calculator$" },
 	float = true,
 	size = { 360, 616 },
-})
-
-hl.window_rule({
-	name = "tte-screensaver",
-	match = { class = "^tte-screensaver$" },
-	float = true,
-	fullscreen = true,
-	no_anim = true,
-	opaque = true,
 })
 
 -- =============================================================================

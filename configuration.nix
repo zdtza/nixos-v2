@@ -84,8 +84,8 @@ in
 
   # trust locally-issued mkcert dev certs (e.g. pmis management-portal) system-wide
   # so Chromium-based webapps (WhatsApp, etc.) and Firefox accept them without warnings.
-  # need to copy this from ~/.local/share/mkcert/rootCA.pem to ./rootCA.pem
-  security.pki.certificateFiles = [ ./rootCA.pem ];
+  # need to copy this from ~/.local/share/mkcert/rootCA.pem to ./assets/certs/rootCA.pem
+  security.pki.certificateFiles = [ ./assets/certs/rootCA.pem ];
 
   programs.neovim = {
     enable = true;

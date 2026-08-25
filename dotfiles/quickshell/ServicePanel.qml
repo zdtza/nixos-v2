@@ -36,6 +36,7 @@ Item {
     // by. Positive pushes the panel further from that edge. This is the only
     // place panel-edge spacing should be adjusted.
     property real gapTopOffset: 2
+    property real gapBottomOffset: 0
     property real gapLeftOffset: 0
     property real gapRightOffset: 0
     // Corner rounding applied everywhere in the UI (panels, buttons, inputs,

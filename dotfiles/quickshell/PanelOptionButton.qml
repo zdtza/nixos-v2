@@ -11,7 +11,9 @@ Rectangle {
     property bool keyboardFocused: false
     property bool enabled: true
     readonly property alias hovered: mouseArea.containsMouse
-    readonly property bool highlighted: keyboardFocused || hovered
+    // Hover and keyboard share one focus cursor. `active` remains separate: it
+    // marks value currently applied by system after cursor moves elsewhere.
+    readonly property bool highlighted: keyboardFocused
 
     signal activated()
 
@@ -20,11 +22,14 @@ Rectangle {
     opacity: root.enabled ? 1 : 0.5
     color: mouseArea.pressed
         ? Util.alpha(Theme.foreground, 0.22)
-        : root.active || root.highlighted
-            ? Util.alpha(Theme.foreground, 0.08)
-            : "transparent"
+        : root.highlighted
+            ? Util.alpha(Theme.foreground, 0.12)
+            : root.active
+                ? Util.alpha(Theme.foreground, 0.08)
+                : "transparent"
     border.width: root.active || root.highlighted ? 1 : 0
-    border.color: Util.alpha(Theme.foreground, 0.25)
+    border.color: Util.alpha(Theme.foreground,
+        root.highlighted ? 0.35 : 0.25)
     Behavior on color { ColorAnimation { duration: 120 } }
 
     MouseArea {

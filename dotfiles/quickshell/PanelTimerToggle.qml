@@ -315,15 +315,18 @@ Item {
                             width: timerColumn.width
                             height: root.timerRowHeight
                             radius: ServicePanel.rounding
-                            color: timerRow.index === root.selectedTimerIndex || rowHover.hovered
+                            color: timerRow.index === root.selectedTimerIndex
                                 ? Util.alpha(Theme.foreground, 0.08)
                                 : "transparent"
-                            border.width: timerRow.index === root.selectedTimerIndex
-                                || rowHover.hovered ? 1 : 0
+                            border.width: timerRow.index === root.selectedTimerIndex ? 1 : 0
                             border.color: Util.alpha(Theme.foreground, 0.25)
                             Behavior on color { ColorAnimation { duration: 120 } }
 
-                            HoverHandler { id: rowHover }
+                            HoverHandler {
+                                id: rowHover
+                                onHoveredChanged: if (hovered)
+                                    root.selectedTimerIndex = timerRow.index
+                            }
 
                             Text {
                                 id: timerIcon
@@ -355,7 +358,7 @@ Item {
                             PanelRowActionButton {
                                 id: deleteButton
                                 z: 2
-                                visible: timerRow.index === root.selectedTimerIndex || rowHover.hovered
+                                visible: timerRow.index === root.selectedTimerIndex
                                 anchors.right: parent.right
                                 anchors.rightMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter

@@ -327,14 +327,18 @@ Item {
         width: parent.width
         height: root.deviceRowHeight
         radius: ServicePanel.rounding
-        color: keyboardSelected || rowHover.hovered
+        color: keyboardSelected
             ? Util.alpha(Theme.foreground, 0.08)
             : "transparent"
-        border.width: keyboardSelected || rowHover.hovered ? 1 : 0
+        border.width: keyboardSelected ? 1 : 0
         border.color: Util.alpha(Theme.foreground, 0.25)
         Behavior on color { ColorAnimation { duration: 120 } }
 
-        HoverHandler { id: rowHover }
+        HoverHandler {
+            id: rowHover
+            onHoveredChanged: if (hovered)
+                root.selectedDevice = deviceRow.device
+        }
 
         Text {
             id: deviceIcon
@@ -389,7 +393,7 @@ Item {
         Row {
             id: actionRow
             z: 2
-            visible: (deviceRow.keyboardSelected || rowHover.hovered)
+            visible: deviceRow.keyboardSelected
                 && (deviceRow.actionVisible || deviceRow.secondaryActionVisible)
             anchors.right: stateIcon.left
             anchors.rightMargin: 16

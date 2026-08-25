@@ -148,6 +148,13 @@ Item {
         failureText = "";
     }
 
+    function cancelPasswordEntry(): void {
+        passwordSsid = "";
+        passwordText = "";
+        failureText = "";
+        restoreNetworkListFocus();
+    }
+
     function toggle(): void {
         ServicePanel.toggle(root);
     }
@@ -347,6 +354,7 @@ Item {
         anchorItem: root
         anchorWindow: root.QsWindow.window
         visible: root.opened
+        closeOnEscape: root.passwordSsid === ""
         onCloseRequested: root.close()
         borderColor: Theme.border
         contentSpacing: 14
@@ -501,11 +509,10 @@ Item {
                             height: passwordOpen ? root.passwordRowHeight : root.networkRowHeight
                             color: rowMouse.pressed && !passwordOpen
                                 ? Util.alpha(Theme.foreground, 0.22)
-                                : (networkRow.keyboardSelected || networkHover.hovered) && !passwordOpen
+                                : networkRow.keyboardSelected && !passwordOpen
                                     ? Util.alpha(Theme.foreground, 0.08)
                                     : "transparent"
-                            border.width: (networkRow.keyboardSelected || networkHover.hovered)
-                                && !passwordOpen ? 1 : 0
+                            border.width: networkRow.keyboardSelected && !passwordOpen ? 1 : 0
                             border.color: Util.alpha(Theme.foreground, 0.25)
                             radius: ServicePanel.rounding
                             Behavior on color {
@@ -516,6 +523,8 @@ Item {
 
                             HoverHandler {
                                 id: networkHover
+                                onHoveredChanged: if (hovered && !networkRow.passwordOpen)
+                                    root.selectedSsid = String(networkRow.modelData.ssid)
                             }
 
                             Connections {
@@ -587,7 +596,7 @@ Item {
                                 Row {
                                     id: actionRow
                                     z: 2
-                                    visible: (networkRow.keyboardSelected || networkHover.hovered)
+                                    visible: networkRow.keyboardSelected
                                         && (networkRow.modelData.connected || networkRow.modelData.known)
                                     anchors.right: lockIcon.left
                                     anchors.rightMargin: 16
@@ -689,7 +698,7 @@ Item {
                                                 Qt.callLater(() => passwordInput.forceActiveFocus());
                                         }
                                         Keys.onReturnPressed: root.submitPassword()
-                                        Keys.onEscapePressed: root.close()
+                                        Keys.onEscapePressed: root.cancelPasswordEntry()
                                     }
                                 }
 
@@ -738,10 +747,7 @@ Item {
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            root.passwordSsid = "";
-                                            root.passwordText = "";
-                                        }
+                                        onClicked: root.cancelPasswordEntry()
                                     }
                                 }
                             }

@@ -19,6 +19,7 @@ PopupWindow {
     // Moving/reordered bar controls can otherwise drag an open popup with them.
     property bool freezePositionWhileVisible: false
     property bool useNativeFocus: false
+    property bool closeOnEscape: true
     property bool positionFrozen: false
     property point frozenPosition: Qt.point(0, 0)
     default property alias panelChildren: contentColumn.data
@@ -38,7 +39,7 @@ PopupWindow {
     }
 
     Shortcut {
-        enabled: root.visible
+        enabled: root.visible && root.closeOnEscape
         sequence: "Escape"
         context: Qt.ApplicationShortcut
         onActivated: root.closeRequested()

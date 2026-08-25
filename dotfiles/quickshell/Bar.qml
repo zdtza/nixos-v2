@@ -13,7 +13,6 @@ PanelWindow {
 
     function panelEntries(): var {
         return [
-            ["power", power],
             ["calendar", clock],
             ["nightlight", quickToggles.nightLightPanel],
             ["timer", quickToggles.timerPanel],
@@ -116,7 +115,7 @@ PanelWindow {
 
         Keys.onReturnPressed: network.submitPassword()
         Keys.onEnterPressed: network.submitPassword()
-        Keys.onEscapePressed: network.close()
+        Keys.onEscapePressed: network.cancelPasswordEntry()
     }
 
     // --- left ---
@@ -149,15 +148,6 @@ PanelWindow {
         }
     }
 
-    PanelPower {
-        id: power
-        anchors {
-            left: clock.right
-            leftMargin: ServicePanel.barSpacing
-            verticalCenter: clock.verticalCenter
-        }
-    }
-
     // --- right ---
     RowLayout {
         spacing: ServicePanel.barSpacing
@@ -184,5 +174,9 @@ PanelWindow {
         PanelNetwork { id: network }
 
         PanelBattery { id: battery }
+
+        // PanelPower {
+        //     id: power
+        // }
     }
 }

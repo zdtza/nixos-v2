@@ -20,13 +20,18 @@ Item {
         radius: ServicePanel.rounding
         color: switchMouse.pressed
             ? Util.alpha(Theme.foreground, 0.16)
-            : root.checked || switchMouse.containsMouse
-                ? Util.alpha(Theme.foreground, 0.08)
-                : "transparent"
+            : root.checked
+                ? Util.alpha(Theme.foreground,
+                    switchMouse.containsMouse ? 0.12 : 0.08)
+                : switchMouse.containsMouse
+                    ? Util.alpha(Theme.foreground, 0.04)
+                    : "transparent"
         border.width: 1
-        border.color: root.checked || switchMouse.containsMouse
-            ? Util.alpha(Theme.foreground, 0.25)
-            : Util.alpha(Theme.foreground, 0.15)
+        border.color: root.checked
+            ? Util.alpha(Theme.foreground,
+                switchMouse.containsMouse ? 0.35 : 0.25)
+            : Util.alpha(Theme.foreground,
+                switchMouse.containsMouse ? 0.25 : 0.15)
         Behavior on color { ColorAnimation { duration: 120 } }
         Behavior on border.color { ColorAnimation { duration: 120 } }
 

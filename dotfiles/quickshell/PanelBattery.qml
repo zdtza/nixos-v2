@@ -122,15 +122,9 @@ Item {
         id: label
         anchors.centerIn: parent
         panel: root
-        text: ServiceBattery.showPercentage ? root.percent + "% " + root.batteryIcon() : root.batteryIcon()
+        text: root.batteryIcon()
         textColor: root.low ? Theme.urgent : Theme.foreground
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: mouse => {
-            if (mouse.button === Qt.RightButton)
-                ServiceBattery.togglePercentage();
-            else
-                ServicePanel.toggle(root);
-        }
+        onClicked: ServicePanel.toggle(root)
     }
 
     HyprlandFocusGrab {
@@ -217,11 +211,12 @@ Item {
         }
 
         Row {
+            id: batteryMetrics
             width: parent.width
-            spacing: 28
+            spacing: 20
 
             Column {
-                width: (parent.width - 20) / 2
+                width: (batteryMetrics.width - batteryMetrics.spacing) / 2
                 spacing: 12
                 InfoPair {
                     labelText: "Battery size"
@@ -235,7 +230,7 @@ Item {
                 }
             }
             Column {
-                width: (parent.width - 20) / 2
+                width: (batteryMetrics.width - batteryMetrics.spacing) / 2
                 spacing: 12
                 InfoPair {
                     labelText: root.thresholdActive ? "Charge limit"
@@ -284,6 +279,8 @@ Item {
                         height: 36
                         active: profileButton.isActive
                         keyboardFocused: profileButton.index === root.selectedProfileIndex
+                        onHoveredChanged: if (hovered)
+                            root.selectedProfileIndex = profileButton.index
                         onActivated: {
                             root.selectedProfileIndex = profileButton.index;
                             root.setProfile(String(profileButton.modelData));

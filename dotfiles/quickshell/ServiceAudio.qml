@@ -22,7 +22,7 @@ Item {
     readonly property bool outputMuted: output && output.audio ? output.audio.muted : false
     readonly property bool inputMuted: input && input.audio ? input.audio.muted : false
 
-    signal volumeIpcInvoked()
+    signal volumeIpcInvoked(bool input)
 
     function audioNodes(sinks: bool): var {
         return nodes.filter(node => node && node.ready && node.audio
@@ -80,35 +80,35 @@ Item {
 
         function outputUp(): void {
             root.adjustOutputVolume(root.outputStep);
-            root.volumeIpcInvoked();
+            root.volumeIpcInvoked(false);
         }
         function outputDown(): void {
             root.adjustOutputVolume(-root.outputStep);
-            root.volumeIpcInvoked();
+            root.volumeIpcInvoked(false);
         }
         function inputUp(): void {
             root.adjustInputVolume(root.inputStep);
-            root.volumeIpcInvoked();
+            root.volumeIpcInvoked(true);
         }
         function inputDown(): void {
             root.adjustInputVolume(-root.inputStep);
-            root.volumeIpcInvoked();
+            root.volumeIpcInvoked(true);
         }
         function toggleOutputMute(): void {
             root.toggleOutputMute();
-            root.volumeIpcInvoked();
+            root.volumeIpcInvoked(false);
         }
         function toggleInputMute(): void {
             root.toggleInputMute();
-            root.volumeIpcInvoked();
+            root.volumeIpcInvoked(true);
         }
         function setOutput(percent: int): void {
             root.setOutputVolume(percent / 100);
-            root.volumeIpcInvoked();
+            root.volumeIpcInvoked(false);
         }
         function setInput(percent: int): void {
             root.setInputVolume(percent / 100);
-            root.volumeIpcInvoked();
+            root.volumeIpcInvoked(true);
         }
         function outputPercent(): int { return Math.round(root.outputVolume * 100); }
         function inputPercent(): int { return Math.round(root.inputVolume * 100); }

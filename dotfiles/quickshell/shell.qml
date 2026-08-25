@@ -43,6 +43,8 @@ ShellRoot {
 
     Notifications {}
 
+    Osd {}
+
     // Secure compositor session lock: `qs ipc call lock activate`
     LockScreen {}
 

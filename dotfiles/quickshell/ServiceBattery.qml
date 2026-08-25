@@ -10,7 +10,6 @@ import Quickshell.Services.UPower
 Item {
     id: root
 
-    readonly property bool showPercentage: persisted.showPercentage
     readonly property var battery: UPower.displayDevice
     readonly property var physicalBattery: findPhysicalBattery()
     readonly property bool available: !!(battery && battery.ready && battery.isPresent)
@@ -79,10 +78,6 @@ Item {
         return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
     }
 
-    function togglePercentage(): void {
-        persisted.showPercentage = !persisted.showPercentage;
-    }
-
     function setPowerProfile(profile: string): bool {
         switch (profile) {
         case "PowerSaver":
@@ -105,12 +100,6 @@ Item {
         cycleCountFile.reload();
         thresholdStartFile.reload();
         thresholdEndFile.reload();
-    }
-
-    PersistentProperties {
-        id: persisted
-        reloadableId: "quickshell-battery"
-        property bool showPercentage: false
     }
 
     FileView {

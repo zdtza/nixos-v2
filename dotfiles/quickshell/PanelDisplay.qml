@@ -80,17 +80,6 @@ Item {
         onActivated: ServiceDisplay.setScale(Number(root.scales[root.selectedScaleIndex]))
     }
 
-    PanelIpcFeedback {
-        id: ipcFeedback
-        panel: root
-        screen: root.screen
-    }
-
-    Connections {
-        target: ServiceDisplay
-        function onBrightnessIpcInvoked(): void { ipcFeedback.show(); }
-    }
-
     BarButton {
         id: indicator
         anchors.centerIn: parent
@@ -171,6 +160,8 @@ Item {
                     active: selected
                     keyboardFocused: scaleButton.index === root.selectedScaleIndex
                     enabled: !!ServiceDisplay.focusedMonitor
+                    onHoveredChanged: if (hovered)
+                        root.selectedScaleIndex = scaleButton.index
                     onActivated: {
                         root.selectedScaleIndex = scaleButton.index;
                         ServiceDisplay.setScale(Number(scaleButton.modelData));

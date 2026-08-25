@@ -377,9 +377,9 @@ PanelPopup {
                         radius: ServicePanel.rounding
                         visible: !dayCell.modelData.weekNumber
                             && (dayCell.marked || dayCell.modelData.today
-                                || dayCell.keyboardSelected || dayMouse.containsMouse)
-                        color: dayCell.marked || dayCell.keyboardSelected ? Theme.surface
-                            : (dayMouse.containsMouse ? Theme.surface : "transparent")
+                                || dayCell.keyboardSelected)
+                        color: dayCell.marked || dayCell.keyboardSelected
+                            ? Theme.surface : "transparent"
                         border.width: dayCell.rangeEndpoint || dayCell.modelData.today
                             || dayCell.keyboardSelected ? 1 : 0
                         border.color: dayCell.rangeEndpoint ? Theme.muted : Theme.border
@@ -402,6 +402,12 @@ PanelPopup {
                         enabled: !dayCell.modelData.weekNumber
                         hoverEnabled: true
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onContainsMouseChanged: if (containsMouse) {
+                            const index = root.keyboardDays.findIndex(day =>
+                                day.key === dayCell.modelData.key);
+                            if (index >= 0)
+                                root.keyboardDayIndex = index;
+                        }
                         onClicked: mouse => root.selectDay(dayCell.modelData.key,
                             (mouse.modifiers & Qt.ShiftModifier) !== 0)
                     }

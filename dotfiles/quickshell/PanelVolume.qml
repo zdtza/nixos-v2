@@ -125,17 +125,6 @@ Item {
         context: Qt.ApplicationShortcut
         onActivated: ServiceAudio.toggleOutputMute()
     }
-    PanelIpcFeedback {
-        id: ipcFeedback
-        panel: root
-        screen: root.screen
-    }
-
-    Connections {
-        target: ServiceAudio
-        function onVolumeIpcInvoked(): void { ipcFeedback.show(); }
-    }
-
     PwNodePeakMonitor {
         id: inputPeak
         node: ServiceAudio.input
@@ -310,10 +299,10 @@ Item {
         width: parent.width
         height: 36
         radius: ServicePanel.rounding
-        color: keyboardSelected || deviceMouse.containsMouse
+        color: keyboardSelected
             ? Util.alpha(Theme.foreground, 0.08)
             : "transparent"
-        border.width: keyboardSelected || deviceMouse.containsMouse ? 1 : 0
+        border.width: keyboardSelected ? 1 : 0
         border.color: Util.alpha(Theme.foreground, 0.25)
         Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -358,6 +347,12 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
+            onContainsMouseChanged: if (containsMouse) {
+                const index = ServiceAudio.outputs.indexOf(deviceRow.node);
+                root.selectedDeviceIndex = index >= 0 ? index
+                    : ServiceAudio.outputs.length
+                        + ServiceAudio.inputs.indexOf(deviceRow.node);
+            }
             onClicked: deviceRow.activated()
         }
     }

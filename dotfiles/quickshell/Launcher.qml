@@ -465,8 +465,7 @@ Scope {
                         width: appList.width
                         height: 52
                         radius: ServicePanel.rounding
-                        color: selected ? Theme.surface
-                            : (rowMouse.containsMouse ? Theme.dark_background : "transparent")
+                        color: selected ? Theme.surface : "transparent"
 
                         Rectangle {
                             anchors {
@@ -567,6 +566,8 @@ Scope {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onContainsMouseChanged: if (containsMouse)
+                                appList.currentIndex = appRow.index
                             onClicked: mouse => {
                                 appList.currentIndex = appRow.index;
                                 if (mouse.button === Qt.RightButton)
@@ -656,8 +657,7 @@ Scope {
                     width: contextColumn.width
                     height: 34
                     radius: ServicePanel.rounding
-                    color: window.menuActionIndex === 0 || launchMouse.containsMouse
-                        ? Theme.surface : "transparent"
+                    color: window.menuActionIndex === 0 ? Theme.surface : "transparent"
 
                     Text {
                         anchors {
@@ -689,6 +689,8 @@ Scope {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
+                        onContainsMouseChanged: if (containsMouse)
+                            window.menuActionIndex = 0
                         onClicked: {
                             const entry = window.menuEntry;
                             window.closeContextMenu();
@@ -708,7 +710,7 @@ Scope {
                         height: 34
                         radius: ServicePanel.rounding
                         color: window.menuActionIndex === actionRow.index + 1
-                            || actionMouse.containsMouse ? Theme.surface : "transparent"
+                            ? Theme.surface : "transparent"
 
                         Text {
                             anchors {
@@ -730,6 +732,8 @@ Scope {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
+                            onContainsMouseChanged: if (containsMouse)
+                                window.menuActionIndex = actionRow.index + 1
                             onClicked: {
                                 window.menuActionIndex = actionRow.index + 1;
                                 actionRow.modelData.execute();

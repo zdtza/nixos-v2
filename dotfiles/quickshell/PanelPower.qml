@@ -156,7 +156,7 @@ Item {
                     height: 50
                     radius: ServicePanel.rounding
                     color: modelData.available
-                        && (actionButton.index === root.selectedActionIndex || actionMouse.containsMouse)
+                        && actionButton.index === root.selectedActionIndex
                         ? Util.alpha(Theme.foreground, 0.12)
                         : "transparent"
                     Behavior on color { ColorAnimation { duration: 140 } }
@@ -167,8 +167,7 @@ Item {
                         color: actionButton.modelData.available
                             ? Theme.foreground : Theme.muted
                         opacity: actionButton.modelData.available ? 1 : 0.45
-                        scale: actionButton.index === root.selectedActionIndex
-                            || actionMouse.containsMouse ? 1.1 : 1
+                        scale: actionButton.index === root.selectedActionIndex ? 1.1 : 1
                         font.family: Theme.fontFamily
                         font.pixelSize: Util.scaledFont(actionButton.modelData.iconSize)
                         Behavior on scale {
@@ -182,6 +181,8 @@ Item {
                         enabled: actionButton.modelData.available
                         hoverEnabled: true
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onContainsMouseChanged: if (containsMouse)
+                            root.selectedActionIndex = actionButton.index
                         onClicked: {
                             root.selectedActionIndex = actionButton.index;
                             root.runAction(actionButton.modelData.action);

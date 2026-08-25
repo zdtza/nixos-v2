@@ -278,8 +278,13 @@ in
     powerOnBoot = true;
   };
 
-  xdg.portal.enable = true;
-  xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
+  xdg.portal = {
+    enable = true;
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-hyprland
+      xdg-desktop-portal-termfilechooser
+    ];
+  };
 
   hardware.graphics = {
     enable = true;

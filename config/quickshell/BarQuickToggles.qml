@@ -118,7 +118,7 @@ Item {
 
         Behavior on opacity {
             NumberAnimation {
-                duration: 160
+                duration: 120
                 easing.type: Easing.OutCubic
             }
         }
@@ -142,7 +142,7 @@ Item {
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
                 }
 
                 PanelNightLightToggle {
@@ -161,7 +161,7 @@ Item {
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
                 }
 
                 Item {
@@ -198,7 +198,7 @@ Item {
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
                 }
 
                 PanelTimerToggle {
@@ -217,7 +217,7 @@ Item {
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
                 }
 
                 Item {
@@ -255,7 +255,7 @@ Item {
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
                 }
 
                 Item {

@@ -63,8 +63,14 @@ Item {
     }
 
     function toggleFromIpc(): void {
+        const closing = ServicePanel.activePanel === root
+            || ServicePanel.pendingPanel === root;
         openedFromIpc = true;
         ServicePanel.toggle(root);
+        if (!closing && keyboardItemCount > 0) {
+            selectedItemIndex = 0;
+            cycleSelection(0);
+        }
     }
 
     function dismissMenuFromEscape(): void {
@@ -85,6 +91,32 @@ Item {
             return;
         selectedItemIndex = Math.max(0,
             Math.min(keyboardItemCount - 1, selectedItemIndex + offset));
+    }
+
+    function cycleSelection(offset: int): void {
+        if (keyboardItemCount === 0)
+            return;
+        selectedItemIndex = (selectedItemIndex + offset + keyboardItemCount)
+            % keyboardItemCount;
+
+        if (selectedItemIndex < items.length) {
+            const item = items[selectedItemIndex];
+            const entry = trayRepeater.itemAt(selectedItemIndex);
+            vmMenuOpen = false;
+            vmMenuLoader.anchorItem = null;
+            if (item.hasMenu) {
+                menuLoader.trayItem = item;
+                menuLoader.anchorItem = entry;
+            } else {
+                dismissMenu();
+            }
+            return;
+        }
+
+        menuLoader.trayItem = null;
+        menuLoader.anchorItem = null;
+        vmMenuOpen = true;
+        vmMenuLoader.anchorItem = vmEntry;
     }
 
     function activateSelection(): void {
@@ -116,10 +148,10 @@ Item {
         onActivated: root.collapseTray()
     }
     Shortcut {
-        enabled: root.opened && !menuLoader.item && !vmMenuLoader.item
+        enabled: root.opened && !menuLoader.item?.activeSubmenu
         sequence: "Left"
         context: Qt.ApplicationShortcut
-        onActivated: root.moveSelection(-1)
+        onActivated: root.cycleSelection(-1)
     }
     Shortcut {
         enabled: root.opened && !menuLoader.item && !vmMenuLoader.item
@@ -128,10 +160,10 @@ Item {
         onActivated: root.moveSelection(-1)
     }
     Shortcut {
-        enabled: root.opened && !menuLoader.item && !vmMenuLoader.item
+        enabled: root.opened && !menuLoader.item?.activeSubmenu
         sequence: "Right"
         context: Qt.ApplicationShortcut
-        onActivated: root.moveSelection(1)
+        onActivated: root.cycleSelection(1)
     }
     Shortcut {
         enabled: root.opened && !menuLoader.item && !vmMenuLoader.item

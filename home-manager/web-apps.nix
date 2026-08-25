@@ -88,6 +88,14 @@ let
       # Match nixos-manual.desktop exactly and let current icon theme resolve it.
       iconName = "nix-snowflake";
     }
+    {
+      id = "google-calendar";
+      name = "Google Calendar";
+      url = "https://calendar.google.com/calendar/u/0/r";
+      isolated = false;
+      iconUrl = "https://www.google.com/s2/favicons?domain=https://calendar.google.com/calendar/u/0/r&sz=256";
+      iconHash = "sha256-O97EwqiGS7Ad1zo5dpjSziJjcj0gcLvHfPPmoSIMM7A=";
+    }
     # WEBAPPS
   ];
 

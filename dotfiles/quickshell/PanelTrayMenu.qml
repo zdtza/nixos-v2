@@ -121,7 +121,7 @@ PopupWindow {
         onActivated: menu.activateSelection()
     }
     Shortcut {
-        enabled: menu.visible && !menu.activeSubmenu
+        enabled: menu.visible && menu.submenu && !menu.activeSubmenu
         sequence: "Right"
         context: Qt.ApplicationShortcut
         onActivated: {

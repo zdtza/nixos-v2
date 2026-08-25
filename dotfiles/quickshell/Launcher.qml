@@ -243,6 +243,19 @@ Scope {
                 Math.min(menuActions.length, menuActionIndex + offset));
         }
 
+        function moveAppSelection(offset: int): void {
+            const count = results.length;
+            if (count === 0) {
+                appList.currentIndex = -1;
+                return;
+            }
+            if (appList.currentIndex < 0) {
+                appList.currentIndex = offset > 0 ? 0 : count - 1;
+                return;
+            }
+            appList.currentIndex = (appList.currentIndex + offset + count) % count;
+        }
+
         function activateContextSelection(): void {
             const entry = menuEntry;
             if (!entry)
@@ -410,13 +423,13 @@ Scope {
                             if (window.menuOpen)
                                 window.moveContextSelection(1);
                             else
-                                appList.incrementCurrentIndex();
+                                window.moveAppSelection(1);
                         }
                         Keys.onUpPressed: {
                             if (window.menuOpen)
                                 window.moveContextSelection(-1);
                             else
-                                appList.decrementCurrentIndex();
+                                window.moveAppSelection(-1);
                         }
                         Keys.onLeftPressed: if (window.menuOpen)
                             window.closeContextMenu()

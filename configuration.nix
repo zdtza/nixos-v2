@@ -216,6 +216,19 @@ in
           return polkit.Result.YES;
         }
       });
+
+      // Internal drives (e.g. a second OS's disk) count as "system devices"
+      // to udisks2, which normally demands admin auth every mount/unlock even
+      // for the session's own active user. Single-user machine; skip it.
+      var diskActions = [
+        "org.freedesktop.udisks2.filesystem-mount-system",
+        "org.freedesktop.udisks2.encrypted-unlock-system",
+      ];
+      polkit.addRule(function(action, subject) {
+        if (diskActions.indexOf(action.id) >= 0 && subject.user == "zdtza") {
+          return polkit.Result.YES;
+        }
+      });
     '';
   };
 
@@ -277,6 +290,9 @@ in
     enable = true;
     powerOnBoot = true;
   };
+
+  services.udisks2.enable = true;
+  services.gvfs.enable = true;
 
   xdg.portal = {
     enable = true;

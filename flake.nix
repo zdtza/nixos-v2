@@ -57,6 +57,7 @@
                 ./home/web-apps.nix
                 ./home/windows.nix
                 ./home/fzf.nix
+                ./home/polkit-agent.nix
                 ./home/yazi.nix
                 ./home/npm.nix
                 ./home/quickshell.nix

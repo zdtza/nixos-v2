@@ -73,6 +73,7 @@ in
     ];
   };
 
+
   # registers fish in /etc/shells and sets up system-wide completions
   programs.fish.enable = true;
 
@@ -143,11 +144,7 @@ in
         CPU_CORES = "4";
         DISK_SIZE = "64G";
         USERNAME = "zdtza";
-        # The base image runs QEMU with `-rtc base=localtime`, so the guest
-        # clock follows the container's, which defaults to UTC.
         TZ = config.time.timeZone;
-        # World-readable in /nix/store. Acceptable only because both ports below
-        # are bound to loopback; switch to `environmentFiles` if that changes.
         PASSWORD = "windows";
       };
 
@@ -168,10 +165,6 @@ in
   };
 
   systemd.tmpfiles.rules = [ "d ${windowsStorage} 0700 root root -" ];
-
-  # oci-containers hardcodes 120s. Windows needs far longer to flush and shut
-  # down; being killed mid-update corrupts the disk image.
-  systemd.services.docker-windows.serviceConfig.TimeoutStopSec = lib.mkForce 300;
 
   # Erases every trace of Windows: container, disk image, and pulled image.
   # Runs as a unit rather than through sudo so the launcher can trigger it via
@@ -266,20 +259,14 @@ in
     steam
     gnome-calculator
     libnotify
-
-    # default apps for common file types opened from nautilus
-    mpv # video/audio
-    imv # images
-
-    # lazyvim runtime deps
+    mpv
+    imv
     ripgrep
     fd
     gcc
     unzip
     lazygit
     nodejs
-
-    # nix dev stuff
     nixfmt
     nixd
   ];
@@ -354,11 +341,11 @@ in
 
   networking = {
     firewall = {
-      # opening for local send
+      # local send ports
       allowedTCPPorts = [ 53317 ];
       allowedUDPPorts = [ 53317 ];
     };
-    # any local hosts you want to point to
+    # any custom local hosts
     hosts = {
       "127.0.0.1" = localHosts;
       "::1" = localHosts;
@@ -366,12 +353,14 @@ in
     networkmanager = {
       enable = true;
       dns = "systemd-resolved";
+      # used by custom shelll and nmtui to manage Wi-Fi connections
       wifi = {
         backend = "wpa_supplicant";
         powersave = false;
       };
     };
   };
+
 
   services.resolved = {
     enable = true;

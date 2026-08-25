@@ -1,6 +1,14 @@
 { pkgs, ... }:
 
 {
+  # Stylix's gtk target never sets `gtk.colorScheme`; that's only done by its
+  # gnome/kde targets, neither of which apply on this Hyprland session. Without
+  # it, gtk-application-prefer-dark-theme / color-scheme are absent from
+  # settings.ini, so adw-gtk3 renders widgets (buttons, native dialogs like
+  # VS Code's "save changes" prompt) with light-theme assets on top of
+  # stylix's dark color overrides -> washed-out, low-contrast controls.
+  gtk.colorScheme = "dark";
+
   # setting the icon theme
   gtk.iconTheme = {
     name = "Adwaita";

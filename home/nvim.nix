@@ -28,13 +28,12 @@
   # find terminal required for application". Override it to spawn kitty
   # directly instead of asking the launcher to find a terminal.
   xdg.desktopEntries.nvim = {
-    name = "Neovim wrapper";
-    genericName = "Text Editor";
+    name = "Neovim";
+    genericName = "Terminal based text editor";
     comment = "Edit text files";
     exec = "kitty nvim %F";
     terminal = false;
     icon = "nvim";
-    categories = [ "Utility" "TextEditor" "Development" ];
     mimeType = [
       "text/english"
       "text/plain"

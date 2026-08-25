@@ -267,6 +267,10 @@ in
     gnome-calculator
     libnotify
 
+    # default apps for common file types opened from nautilus
+    mpv # video/audio
+    imv # images
+
     # lazyvim runtime deps
     ripgrep
     fd

@@ -10,10 +10,10 @@ let
   rawColors = config.lib.stylix.colors;
   fonts = config.stylix.fonts;
 
-  # Stylix-derived values can't live in the editable dotfiles dir, so they are
+  # Stylix-derived values can't live in the editable config dir, so they are
   # generated as a standalone QML module (`import Stylix` -> `Theme.*`) that is
   # put on QML2_IMPORT_PATH. Palette changes need a rebuild; everything else in
-  # dotfiles/quickshell is hot-reloaded by quickshell itself.
+  # config/quickshell is hot-reloaded by quickshell itself.
   stylixQml = pkgs.writeTextFile {
     name = "quickshell-stylix-qml";
     destination = "/Stylix/Theme.qml";
@@ -145,7 +145,7 @@ in
     timerAlert
   ];
 
-  home.file.".config/quickshell".source = repoFile "dotfiles/quickshell";
+  home.file.".config/quickshell".source = repoFile "config/quickshell";
 
   systemd.user.services.quickshell = {
     Unit = {

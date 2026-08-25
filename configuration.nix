@@ -358,7 +358,7 @@ in
   stylix = {
     enable = true;
     polarity = "dark";
-    image = ./wallpapers/winding-road.jpg;
+    image = ./assets/wallpapers/winding-road.jpg;
 
     # Keep boot and virtual consoles on their default palette.
     targets.console.enable = false;

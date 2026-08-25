@@ -11,7 +11,7 @@ in
   _module.args = {
     inherit repoPath;
 
-    # repoFile "dotfiles/nvim" -> live symlink to <repo>/dotfiles/nvim
+    # repoFile "config/nvim" -> live symlink to <repo>/config/nvim
     repoFile = relativePath: config.lib.file.mkOutOfStoreSymlink "${repoPath}/${relativePath}";
   };
 }

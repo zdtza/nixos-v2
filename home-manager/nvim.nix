@@ -1,8 +1,8 @@
 { repoFile, ... }:
 
 {
-  home.file.".config/nvim".source = repoFile "dotfiles/nvim";
-  home.file.".config/lazygit/config.yml".source = repoFile "dotfiles/nvim/lazygit/config.yml";
+  home.file.".config/nvim".source = repoFile "config/nvim";
+  home.file.".config/lazygit/config.yml".source = repoFile "config/nvim/lazygit/config.yml";
 
   # LazyVim ships its own Tokyo Night colorscheme - skip Stylix repainting it.
   stylix.targets.neovim.enable = false;

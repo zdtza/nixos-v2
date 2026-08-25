@@ -7,6 +7,7 @@ set -euo pipefail
 script_path=$(readlink -f -- "${BASH_SOURCE[0]}")
 repo_dir=$(cd -- "$(dirname -- "$script_path")/.." && pwd)
 apps_file="$repo_dir/home-manager/web-apps.nix"
+icons_dir="$repo_dir/assets/icons"
 [[ -f "$apps_file" ]] || {
   printf 'Missing %s\n' "$apps_file" >&2
   exit 1
@@ -50,6 +51,8 @@ if count == 0:
     raise SystemExit(f"Could not find web app entry: {app_id}")
 path.write_text(new_text)
 PY
+
+rm -f -- "$icons_dir/$app_id.png"
 
 nixfmt "$apps_file"
 printf '\nRemoved %s. Run: sudo nixos-rebuild switch --flake %s\n' "$app_id" "$repo_dir"

@@ -28,7 +28,7 @@ in
   '';
 
   home.file.".config/hyprland-preview-share-picker/config.yaml".source =
-    repoFile "dotfiles/screensharepicker/config.yaml";
+    repoFile "config/screensharepicker/config.yaml";
 
   # style.css has to be generated so it follows the system-wide stylix theme
   # instead of hardcoding colors.

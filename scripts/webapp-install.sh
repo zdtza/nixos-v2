@@ -7,6 +7,7 @@ set -euo pipefail
 script_path=$(readlink -f -- "${BASH_SOURCE[0]}")
 repo_dir=$(cd -- "$(dirname -- "$script_path")/.." && pwd)
 apps_file="$repo_dir/home-manager/web-apps.nix"
+icons_dir="$repo_dir/assets/icons"
 [[ -f "$apps_file" ]] || {
   printf 'Missing %s\n' "$apps_file" >&2
   exit 1
@@ -38,7 +39,8 @@ done
 
 page_file=$(mktemp)
 icon_file=$(mktemp)
-trap 'rm -f -- "$page_file" "$icon_file"' EXIT
+normalized_icon=$(mktemp --suffix=.png)
+trap 'rm -f -- "$page_file" "$icon_file" "$normalized_icon"' EXIT
 
 curl -fsSL --max-time 2 --user-agent 'Mozilla/5.0' "$app_url" 2>/dev/null \
   | head -c 200000 > "$page_file" || true
@@ -83,11 +85,14 @@ print(f"https://www.google.com/s2/favicons?domain={url_without_fragment}&sz=256"
 PY
 )
 
+magick_bin=${WEBAPP_MAGICK:-magick}
 icon_url=''
 for candidate in "${icon_candidates[@]}"; do
   if curl -fsSL --max-time 10 --user-agent 'Mozilla/5.0' -o "$icon_file" "$candidate" 2>/dev/null \
     && [[ -s "$icon_file" ]] \
-    && [[ $(file -b --mime-type "$icon_file") == image/* ]]; then
+    && [[ $(file -b --mime-type "$icon_file") == image/* ]] \
+    && "$magick_bin" "${icon_file}[0]" \
+      -auto-orient -background none "PNG32:$normalized_icon" 2>/dev/null; then
     icon_url="$candidate"
     break
   fi
@@ -96,15 +101,14 @@ done
   printf 'Could not find a usable site icon.\n' >&2
   exit 1
 }
-icon_hash=$(nix hash file "$icon_file")
 
-python3 - "$apps_file" "$app_id" "$app_name" "$app_url" "$app_private" "$icon_url" "$icon_hash" <<'PY'
+python3 - "$apps_file" "$app_id" "$app_name" "$app_url" "$app_private" <<'PY'
 import json
 import sys
 from pathlib import Path
 
 path = Path(sys.argv[1])
-app_id, name, url, isolated, icon_url, icon_hash = sys.argv[2:]
+app_id, name, url, isolated = sys.argv[2:]
 marker = "    # WEBAPPS"
 text = path.read_text()
 if marker not in text:
@@ -116,12 +120,14 @@ entry = (
     f"      name = {q(name)};\n"
     f"      url = {q(url)};\n"
     f"      isolated = {isolated};\n"
-    f"      iconUrl = {q(icon_url)};\n"
-    f"      iconHash = {q(icon_hash)};\n"
     "    }\n"
 )
 path.write_text(text.replace(marker, entry + marker, 1))
 PY
 
+mkdir -p "$icons_dir"
+mv -- "$normalized_icon" "$icons_dir/$app_id.png"
+
 nixfmt "$apps_file"
-printf 'Added %s (%s). Run: sudo nixos-rebuild switch --flake %s\n' "$app_name" "$app_id" "$repo_dir"
+printf 'Added %s (%s). Icon: %s\nRun: sudo nixos-rebuild switch --flake %s\n' \
+  "$app_name" "$app_id" "$icons_dir/$app_id.png" "$repo_dir"

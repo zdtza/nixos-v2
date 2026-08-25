@@ -14,32 +14,24 @@ let
       name = "YouTube";
       url = "https://www.youtube.com/";
       isolated = false;
-      iconUrl = "https://www.google.com/s2/favicons?domain=https://www.youtube.com/&sz=256";
-      iconHash = "sha256-y2rbGYQ7ZFvCJxgfUnRvAemo/abBEzjKwjxZd8fSOGw=";
     }
     {
       id = "google-drive";
       name = "Google Drive";
       url = "https://drive.google.com/drive/my-drive";
       isolated = false;
-      iconUrl = "https://www.google.com/s2/favicons?domain=https://drive.google.com/drive/my-drive&sz=256";
-      iconHash = "sha256-Q2CC+4/ZmvKJ1CPQqRPlUWR2lo7PvyMsZTPXAMxpSq4=";
     }
     {
       id = "llama-slack";
       name = "Llama Slack";
       url = "https://app.slack.com/client/TNZGA82FQ";
       isolated = false;
-      iconUrl = "https://www.google.com/s2/favicons?domain=https://app.slack.com/client/TNZGA82FQ&sz=256";
-      iconHash = "sha256-3vONfw6TIFUEiBaCgZTV6voOvziOTzYs/wnJ1+6cmos=";
     }
     {
       id = "yt-music";
       name = "YT Music";
       url = "https://music.youtube.com/";
       isolated = false;
-      iconUrl = "https://www.google.com/s2/favicons?domain=https://music.youtube.com/&sz=256";
-      iconHash = "sha256-f5M74vVmAmIrigDa0PWVPvZr88RJXLqKrTcqt8T9/Fs=";
     }
     {
       id = "teams";
@@ -53,32 +45,24 @@ let
         "--disable-renderer-backgrounding"
         "--disable-background-timer-throttling"
       ];
-      iconUrl = "https://www.google.com/s2/favicons?domain=https://teams.cloud.microsoft/&sz=256";
-      iconHash = "sha256-uFtVcoGXHvPhaO1ngV3fYQMd/UPItRmnRDrwUuhlyWY=";
     }
     {
       id = "gmail";
       name = "Gmail";
       url = "https://mail.google.com/mail/u/0/#inbox";
       isolated = false;
-      iconUrl = "https://www.google.com/s2/favicons?domain=https://mail.google.com/mail/u/0/&sz=256";
-      iconHash = "sha256-uvp1erTkKXGuCXxFS5ZWm8fg4Sa0g7bdiT34YaClscM=";
     }
     {
       id = "whatsapp";
       name = "WhatsApp";
       url = "https://web.whatsapp.com/";
       isolated = false;
-      iconUrl = "https://static.whatsapp.net/rsrc.php/yd/r/PfkSLByWV8O.webp";
-      iconHash = "sha256-SOlK/v+ynGb16E3I307iR/g4wof4fLiWDL9n9OjT3Tc=";
     }
     {
       id = "chatgpt";
       name = "ChatGPT";
       url = "https://chatgpt.com/";
       isolated = false;
-      iconUrl = "https://www.google.com/s2/favicons?domain=https://chatgpt.com/&sz=256";
-      iconHash = "sha256-kma57MEuQyyD54Pd8NPplY4T7E6s20exD2F6zfXXAUY=";
     }
     {
       id = "packages";
@@ -93,22 +77,23 @@ let
       name = "Google Calendar";
       url = "https://calendar.google.com/calendar/u/0/r";
       isolated = false;
-      iconUrl = "https://www.google.com/s2/favicons?domain=https://calendar.google.com/calendar/u/0/r&sz=256";
-      iconHash = "sha256-O97EwqiGS7Ad1zo5dpjSziJjcj0gcLvHfPPmoSIMM7A=";
     }
     # WEBAPPS
   ];
+
+  iconDir = ../assets/icons;
 
   mkWebappCommand =
     command:
     pkgs.writeShellScriptBin command ''
       # Resolved from repo.nix rather than the working directory, so the command
       # works from anywhere instead of only inside the flake checkout.
-      script="${repoPath}/bash/${command}.sh"
+      script="${repoPath}/scripts/${command}.sh"
       [[ -f "$script" ]] || {
         echo "Missing $script. Is the config repo checked out at ${repoPath}?" >&2
         exit 1
       }
+      export WEBAPP_MAGICK=${lib.getExe pkgs.imagemagick}
       exec ${lib.getExe pkgs.bash} "$script" "$@"
     '';
   webappInstall = mkWebappCommand "webapp-install";
@@ -123,24 +108,7 @@ let
         "${lib.concatStringsSep " " app.chromiumFlags} "
       );
       url = lib.replaceStrings [ "%" "\"" ] [ "%%" "\\\"" ] app.url;
-      icon =
-        if app ? iconName then
-          app.iconName
-        else
-          let
-            sourceIcon = pkgs.fetchurl {
-              url = app.iconUrl;
-              hash = app.iconHash;
-              name = "${app.id}-icon-source";
-            };
-          in
-          # Desktop launchers do not consistently detect formats when store paths
-          # lack matching extensions. Normalize PNG, JPEG, WebP, GIF, ICO, and SVG
-          # inputs to a static PNG with a truthful filename.
-          pkgs.runCommand "${app.id}-icon.png" { } ''
-            ${pkgs.imagemagick}/bin/magick "${sourceIcon}[0]" \
-              -auto-orient -background none "PNG32:$out"
-          '';
+      icon = if app ? iconName then app.iconName else iconDir + "/${app.id}.png";
     in
     lib.nameValuePair app.id {
       name = app.name;

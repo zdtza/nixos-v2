@@ -177,7 +177,7 @@ in
   # Installed under hicolor as a themed name rather than referenced by path, so
   # the launcher resolves it the same way it resolves any other app icon.
   home.file.".local/share/icons/hicolor/scalable/apps/windows-vm.svg".source =
-    repoFile "dotfiles/icons/windows-vm.svg";
+    repoFile "assets/icons/windows-vm.svg";
 
   home.packages = [
     launch

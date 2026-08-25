@@ -125,7 +125,7 @@ Scope {
                 "notify-send",
                 "--app-name=Application Launcher",
                 `--icon=${root.pendingLaunchIcon}`,
-                "--expire-time=3000",
+                "--expire-time=2000",
                 `${root.pendingLaunchName}`,
                 "Application is launching..."
             ]);

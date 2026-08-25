@@ -32,7 +32,7 @@ let
       notify-send \
         --app-name='Windows' \
         --icon=windows \
-        --expire-time=3000 \
+        --expire-time=2000 \
         "$@" || true
     }
 

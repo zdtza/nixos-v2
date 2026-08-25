@@ -71,7 +71,7 @@ Scope {
         visible: !ServiceDoNotDisturb.enabled
             && server.trackedNotifications.values.length > 0
         color: "transparent"
-        implicitWidth: 420
+        implicitWidth: 450
         exclusionMode: ExclusionMode.Ignore
 
         // Keep layer surface height stable while cards are removed. Resizing
@@ -129,9 +129,8 @@ Scope {
         function urgencyColor(): color {
             if (notification.urgency === NotificationUrgency.Critical)
                 return Theme.urgent;
-            if (notification.urgency === NotificationUrgency.Low)
+            else
                 return Theme.muted;
-            return Theme.accent;
         }
 
         function normalizedIdentity(value: string): string {
@@ -188,8 +187,8 @@ Scope {
                 notification.dismiss();
         }
 
-        width: 420
-        implicitHeight: Math.max(64, textContent.implicitHeight + 24)
+        width: 450
+        implicitHeight: textContent.implicitHeight + 22
         height: implicitHeight
 
         Timer {

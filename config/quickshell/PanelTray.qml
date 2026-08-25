@@ -36,7 +36,7 @@ Item {
         enabled: true,
         hasChildren: false,
         checkState: Qt.Unchecked,
-        triggered: () => ServiceWindows.run(action.command)
+        triggered: () => action.triggered()
     }))
 
     // Which of the two menu loaders the open panel belongs to.

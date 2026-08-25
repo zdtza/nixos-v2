@@ -6,6 +6,7 @@ pragma Singleton
 // alongside real tray icons.
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 
 Item {
@@ -21,17 +22,33 @@ Item {
     readonly property var actions: [
         {
             label: "Connect",
-            command: ["windows-launch"]
+            triggered: () => root.connect()
         },
         {
             label: "Web viewer",
-            command: ["xdg-open", root.viewerUrl]
+            triggered: () => root.run(["xdg-open", root.viewerUrl])
         },
         {
             label: "Shut down",
-            command: ["windows-stop"]
+            triggered: () => root.run(["windows-stop"])
         }
     ]
+
+    function connect(): void {
+        for (const toplevel of Hyprland.toplevels.values) {
+            const ipc = toplevel.lastIpcObject ?? {};
+            const identities = [ipc.class ?? "", ipc.initialClass ?? "",
+                toplevel.wayland?.appId ?? ""]
+                .map(value => String(value).toLowerCase());
+            if (!identities.some(value => value === "windows"))
+                continue;
+
+            Quickshell.execDetached(["hyprctl", "dispatch",
+                "hl.dsp.focus({ window = 'class:^(windows)$' })"]);
+            return;
+        }
+        run(["windows-launch"]);
+    }
 
     function probe(): void {
         if (!statusProcess.running)

@@ -1,10 +1,9 @@
 import QtQuick
 import Stylix
 
-// Segmented-control cell: one option in a row of equal-width buttons (power
-// profiles, display scales, color-temperature presets). Distinguishes hover,
-// the keyboard cursor, the currently active value, and press, independent of
-// each other. Content (label, icon, ...) is declared as normal children.
+// Selectable option cell used by power profiles and display scales. Selection
+// and hover use the same visual language as device, network, and monitor rows.
+// Content (label, icon, ...) is declared as normal children.
 Rectangle {
     id: root
 
@@ -18,17 +17,14 @@ Rectangle {
 
     implicitHeight: 32
     radius: ServicePanel.rounding
+    opacity: root.enabled ? 1 : 0.5
     color: mouseArea.pressed
         ? Util.alpha(Theme.foreground, 0.22)
-        : root.active
-            ? Util.alpha(Theme.foreground, 0.18)
-            : root.highlighted
-                ? Util.alpha(Theme.foreground, 0.08)
-                : Util.alpha(Theme.foreground, 0.04)
-    border.width: 1
-    border.color: root.active
-        ? Theme.muted
-        : root.highlighted ? Util.alpha(Theme.foreground, 0.25) : Util.alpha(Theme.foreground, 0.4)
+        : root.active || root.highlighted
+            ? Util.alpha(Theme.foreground, 0.08)
+            : "transparent"
+    border.width: root.active || root.highlighted ? 1 : 0
+    border.color: Util.alpha(Theme.foreground, 0.25)
     Behavior on color { ColorAnimation { duration: 120 } }
 
     MouseArea {

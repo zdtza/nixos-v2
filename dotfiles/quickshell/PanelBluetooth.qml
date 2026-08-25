@@ -36,7 +36,7 @@ Item {
         if (connectedDevices.length > 0)
             return phrases[phraseIndex % phrases.length];
         return ServiceBluetooth.adapter && ServiceBluetooth.adapter.discovering
-            ? "DISCOVERING" : "READY TO CONNECT";
+            ? "SCANNING" : "READY TO CONNECT";
     }
 
     property int phraseIndex: 0
@@ -268,7 +268,7 @@ Item {
                             id: availableHeader
                             title: "AVAILABLE"
                             detail: ServiceBluetooth.adapter && ServiceBluetooth.adapter.discovering
-                                ? "DISCOVERING" : "READY"
+                                ? "SCANNING" : "READY"
                         }
 
                         Text {

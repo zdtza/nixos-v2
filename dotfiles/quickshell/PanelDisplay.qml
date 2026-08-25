@@ -181,7 +181,6 @@ Item {
                         color: Theme.foreground
                         font.family: Theme.fontFamily
                         font.pixelSize: 12
-                        font.bold: scaleButton.selected
                     }
                 }
             }
@@ -208,13 +207,14 @@ Item {
                     readonly property bool focused: ServiceDisplay.focusedMonitor === modelData
 
                     width: parent.width
-                    height: 38
+                    height: 36
                     radius: ServicePanel.rounding
                     color: focused
-                        ? Util.alpha(Theme.foreground, 0.18)
+                        ? Util.alpha(Theme.foreground, 0.08)
                         : "transparent"
                     border.width: focused ? 1 : 0
-                    border.color: Theme.muted
+                    border.color: Util.alpha(Theme.foreground, 0.25)
+                    Behavior on color { ColorAnimation { duration: 120 } }
 
                     Text {
                         id: monitorIcon
@@ -222,7 +222,7 @@ Item {
                         anchors.leftMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
                         text: "󰍹"
-                        color: monitorRow.focused ? Theme.foreground : Theme.muted
+                        color: Theme.foreground
                         font.family: Theme.fontFamily
                         font.pixelSize: 14
                     }
@@ -234,8 +234,7 @@ Item {
                         anchors.rightMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
                         text: String(monitorRow.modelData.name)
-                            + (monitorRow.focused ? " · focused" : "")
-                        color: monitorRow.focused ? Theme.foreground : Theme.muted
+                        color: Theme.foreground
                         font.family: Theme.fontFamily
                         font.pixelSize: 12
                         elide: Text.ElideRight

@@ -305,7 +305,6 @@ Item {
                                 color: Theme.foreground
                                 font.family: Theme.fontFamily
                                 font.pixelSize: 12
-                                font.bold: profileButton.isActive
                             }
                         }
                     }

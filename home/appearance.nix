@@ -9,6 +9,21 @@
   # stylix's dark color overrides -> washed-out, low-contrast controls.
   gtk.colorScheme = "dark";
 
+  # adw-gtk3 ships an asymmetric `decoration { border-radius: 15px 15px 0 0; }`
+  # rule (rounded top, square bottom - meant for windows with a headerbar
+  # owning the rounded top edge). Chromium/Electron's GTK theme integration
+  # reads that radius to shape its own window surface. VS Code's native
+  # dialogs (e.g. the "save changes" prompt) have no headerbar, so Chromium
+  # only carves the corner it's responsible for - the bottom two corners -
+  # into real alpha-transparent pixels, leaving the top square. Hyprland's
+  # blur xray then bleeds the desktop through those bottom corners. Zero the
+  # radius so no corner gets cut.
+  stylix.targets.gtk.extraCss = ''
+    decoration, messagedialog.csd decoration, .csd.popup decoration, tooltip.csd decoration {
+      border-radius: 0;
+    }
+  '';
+
   # setting the icon theme
   gtk.iconTheme = {
     name = "Adwaita";

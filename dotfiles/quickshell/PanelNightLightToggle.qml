@@ -93,7 +93,8 @@ Item {
         borderColor: Theme.border
         contentSpacing: 14
         implicitWidth: 420
-        implicitHeight: panelContent.implicitHeight + contentMargins * 2
+        implicitHeight: panelContent.implicitHeight
+            + contentTopMargin + contentBottomMargin
 
         PanelHero {
             width: parent.width

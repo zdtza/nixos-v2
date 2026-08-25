@@ -172,7 +172,9 @@ Item {
         readonly property real maximumHeight: Math.max(260,
             (root.QsWindow.window && root.QsWindow.window.screen
                 ? root.QsWindow.window.screen.height : 800) - 55)
-        readonly property real panelChromeHeight: 98
+        readonly property real panelChromeHeight: contentTopMargin
+            + contentBottomMargin + bluetoothHero.implicitHeight
+            + bluetoothSeparator.height + contentSpacing * 2
         // Use stable section counts instead of Column.implicitHeight. Popup
         // follows actual content while ignoring transient delegate layouts.
         readonly property real connectedSectionHeight: root.connectedDevices.length > 0
@@ -208,7 +210,7 @@ Item {
             }
         }
 
-        PanelSeparator {}
+        PanelSeparator { id: bluetoothSeparator }
 
         Item {
             width: parent.width
@@ -281,7 +283,7 @@ Item {
                             verticalAlignment: Text.AlignVCenter
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: 12
+                            font.pixelSize: Util.scaledFont(12)
                         }
 
                         Repeater {
@@ -342,7 +344,7 @@ Item {
             text: ServiceBluetooth.deviceIcon(deviceRow.device)
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: 16
+            font.pixelSize: Util.scaledFont(16)
         }
 
         Column {
@@ -358,7 +360,7 @@ Item {
                 text: ServiceBluetooth.deviceLabel(deviceRow.device)
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: 12
+                font.pixelSize: Util.scaledFont(12)
                 elide: Text.ElideRight
             }
 
@@ -379,7 +381,7 @@ Item {
                 }
                 color: Theme.muted
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Util.scaledFont(11)
                 elide: Text.ElideRight
             }
         }
@@ -416,7 +418,7 @@ Item {
                 : (deviceRow.device.paired ? "󰌾" : "")
             color: Theme.muted
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Util.scaledFont(12)
         }
 
         MouseArea {

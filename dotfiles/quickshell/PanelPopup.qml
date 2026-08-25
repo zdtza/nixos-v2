@@ -11,7 +11,10 @@ PopupWindow {
     property color borderColor: Theme.border
     property real contentMargins: 20
     property real contentHorizontalMargins: contentMargins
-    property real contentVerticalMargins: contentMargins
+    property real contentTopMargin: contentMargins
+    // Shared bottom inset: every panel ends on same 20 px baseline even when
+    // its top inset or internal layout differs.
+    readonly property real contentBottomMargin: contentMargins
     property real contentSpacing: 14
     // Moving/reordered bar controls can otherwise drag an open popup with them.
     property bool freezePositionWhileVisible: false
@@ -94,8 +97,8 @@ PopupWindow {
                 fill: parent
                 leftMargin: root.contentHorizontalMargins
                 rightMargin: root.contentHorizontalMargins
-                topMargin: root.contentVerticalMargins
-                bottomMargin: root.contentVerticalMargins
+                topMargin: root.contentTopMargin
+                bottomMargin: root.contentBottomMargin
             }
             spacing: root.contentSpacing
         }

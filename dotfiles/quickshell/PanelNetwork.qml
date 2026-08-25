@@ -40,8 +40,9 @@ Item {
     readonly property int networkRowSpacing: 8
     readonly property int networkSectionSpacing: 14
     readonly property int emptyStateHeight: 52
-    readonly property int sectionHeaderHeight: 14
-    readonly property int networkBottomPadding: 4
+    // One pixel lets the final row's antialiased border render inside the
+    // clipped viewport without adding visible panel padding.
+    readonly property int networkEdgeInset: 1
     readonly property var phrases: [
         "Wiring bits", "Handling packets", "Sorting frames", "Hauling bytes",
         "Routing crumbs", "Counting collisions", "Bending light"
@@ -178,8 +179,9 @@ Item {
         let headerCount = connectedNetworks.length > 0 ? 1 : 0;
         if (index >= connectedNetworks.length)
             headerCount++;
+        const headerHeight = Number(availableHeader?.implicitHeight || 14);
         const rowTop = index * (networkRowHeight + networkRowSpacing)
-            + headerCount * (sectionHeaderHeight + networkRowSpacing);
+            + headerCount * (headerHeight + networkRowSpacing);
         if (rowTop < networkList.contentY)
             networkList.contentY = rowTop;
         else if (rowTop + networkRowHeight > networkList.contentY + networkList.height)
@@ -351,22 +353,25 @@ Item {
         readonly property real maximumHeight: Math.max(320,
             (root.QsWindow.window && root.QsWindow.window.screen
                 ? root.QsWindow.window.screen.height : 800) - 45)
-        readonly property real panelChromeHeight: 194
+        readonly property real panelChromeHeight: contentTopMargin
+            + contentBottomMargin + networkHero.implicitHeight
+            + connectionInfo.implicitHeight + networkSeparator.height
+            + contentSpacing * 3
         // Calculate from stable row counts rather than animated delegate size.
         // Password space exists only while editor is open, removing idle blank
         // space without reintroducing transient intermediate popup heights.
         readonly property real connectedSectionHeight: root.connectedNetworks.length > 0
-            ? root.sectionHeaderHeight
+            ? connectedHeader.implicitHeight
                 + root.connectedNetworks.length * (root.networkRowHeight + root.networkRowSpacing)
             : 0
-        readonly property real availableSectionHeight: root.sectionHeaderHeight
+        readonly property real availableSectionHeight: availableHeader.implicitHeight
             + (root.availableNetworks.length > 0
                 ? root.availableNetworks.length * (root.networkRowHeight + root.networkRowSpacing)
                 : root.networkRowSpacing + root.emptyStateHeight)
         readonly property real passwordEditorHeight: root.passwordSsid !== ""
             ? root.passwordRowHeight - root.networkRowHeight : 0
         readonly property real desiredNetworkHeight: connectedSectionHeight
-            + availableSectionHeight + passwordEditorHeight + root.networkBottomPadding
+            + availableSectionHeight + passwordEditorHeight + root.networkEdgeInset
             + (root.connectedNetworks.length > 0 ? root.networkSectionSpacing : 0)
         readonly property real networkViewportHeight: Math.min(420,
             Math.max(80, maximumHeight - panelChromeHeight), desiredNetworkHeight)
@@ -393,6 +398,7 @@ Item {
         // Omarchy connection information block. Rows remain mounted
         // before the first sample so opening data never shifts layout.
         GridLayout {
+            id: connectionInfo
             width: parent.width
             columns: 4
             columnSpacing: 20
@@ -455,7 +461,7 @@ Item {
             }
         }
 
-        PanelSeparator {}
+        PanelSeparator { id: networkSeparator }
 
         Item {
             width: parent.width
@@ -465,7 +471,7 @@ Item {
             Flickable {
                 id: networkList
                 anchors.fill: parent
-                contentHeight: networkColumn.implicitHeight
+                contentHeight: networkColumn.implicitHeight + root.networkEdgeInset
                 clip: true
                 interactive: contentHeight > height
                 boundsBehavior: Flickable.StopAtBounds
@@ -547,7 +553,7 @@ Item {
                                     text: ServiceNetwork.wifiIcon(networkRow.modelData.signal)
                                     color: Theme.foreground
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 16
+                                    font.pixelSize: Util.scaledFont(16)
                                 }
                                 Column {
                                     anchors.left: networkIcon.right
@@ -562,7 +568,7 @@ Item {
                                         text: networkRow.modelData.ssid
                                         color: Theme.foreground
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 12
+                                        font.pixelSize: Util.scaledFont(12)
                                         elide: Text.ElideRight
                                     }
                                     Text {
@@ -573,7 +579,7 @@ Item {
                                             : ServiceNetwork.securityLabel(networkRow.modelData.security)
                                         color: Theme.muted
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 11
+                                        font.pixelSize: Util.scaledFont(11)
                                         elide: Text.ElideRight
                                     }
                                 }
@@ -609,7 +615,7 @@ Item {
                                     text: ServiceNetwork.securityRequiresPassword(networkRow.modelData.security) ? "󰌾" : ""
                                     color: Theme.muted
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: 12
+                                    font.pixelSize: Util.scaledFont(12)
                                 }
 
                                 MouseArea {
@@ -659,7 +665,7 @@ Item {
                                         text: root.failureText !== "" ? root.failureText : "Password"
                                         color: root.failureText !== "" ? Theme.urgent : Theme.muted
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 12
+                                        font.pixelSize: Util.scaledFont(12)
                                     }
 
                                     TextInput {
@@ -675,7 +681,7 @@ Item {
                                         selectionColor: Theme.muted
                                         selectedTextColor: Theme.background
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 12
+                                        font.pixelSize: Util.scaledFont(12)
                                         font.letterSpacing: 2
                                         clip: true
                                         Component.onCompleted: {
@@ -700,7 +706,7 @@ Item {
                                         text: "Connect"
                                         color: Theme.foreground
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 11
+                                        font.pixelSize: Util.scaledFont(11)
                                         font.bold: true
                                     }
                                     MouseArea {
@@ -725,7 +731,7 @@ Item {
                                         text: "󰅖"
                                         color: Theme.foreground
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: 12
+                                        font.pixelSize: Util.scaledFont(12)
                                     }
                                     MouseArea {
                                         id: cancelMouse
@@ -782,18 +788,13 @@ Item {
                             verticalAlignment: Text.AlignVCenter
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: 12
+                            font.pixelSize: Util.scaledFont(12)
                         }
 
                         Repeater {
                             model: root.availableNetworks
                             delegate: networkRowComponent
                         }
-                    }
-
-                    Item {
-                        width: 1
-                        height: root.networkBottomPadding
                     }
                 }
             }
@@ -804,7 +805,7 @@ Item {
         color: Theme.foreground
         opacity: 0.6
         font.family: Theme.fontFamily
-        font.pixelSize: 12
+        font.pixelSize: Util.scaledFont(12)
     }
 
     component DetailValue: Text {
@@ -815,7 +816,7 @@ Item {
         horizontalAlignment: Text.AlignRight
         color: valueColor
         font.family: Theme.fontFamily
-        font.pixelSize: 12
+        font.pixelSize: Util.scaledFont(12)
         elide: Text.ElideRight
 
         MouseArea {

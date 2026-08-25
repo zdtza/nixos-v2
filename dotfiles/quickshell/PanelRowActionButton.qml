@@ -23,7 +23,7 @@ Rectangle {
         text: root.icon
         color: Theme.foreground
         font.family: Theme.fontFamily
-        font.pixelSize: 12
+        font.pixelSize: Util.scaledFont(12)
     }
 
     MouseArea {

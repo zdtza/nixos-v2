@@ -23,7 +23,7 @@ Item {
         text: root.icon
         color: Theme.foreground
         font.family: Theme.fontFamily
-        font.pixelSize: 26
+        font.pixelSize: Util.scaledFont(26)
     }
 
     Column {
@@ -40,7 +40,7 @@ Item {
             text: root.title
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: 15
+            font.pixelSize: Util.scaledFont(15)
             font.bold: true
             elide: Text.ElideRight
         }
@@ -51,7 +51,7 @@ Item {
             text: root.status
             color: Qt.darker(Theme.foreground, 1.4)
             font.family: Theme.fontFamily
-            font.pixelSize: 11
+            font.pixelSize: Util.scaledFont(11)
             font.bold: true
             font.letterSpacing: 1.2
             elide: Text.ElideRight

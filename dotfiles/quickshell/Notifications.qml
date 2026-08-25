@@ -241,7 +241,7 @@ Scope {
                     elide: Text.ElideRight
                     maximumLineCount: 2
                     font.family: Theme.fontFamily
-                    font.pixelSize: 14
+                    font.pixelSize: Util.scaledFont(14)
                     font.weight: Font.Bold
                 }
 
@@ -255,7 +255,7 @@ Scope {
                     elide: Text.ElideRight
                     maximumLineCount: 4
                     font.family: Theme.fontFamily
-                    font.pixelSize: 12
+                    font.pixelSize: Util.scaledFont(12)
                     lineHeight: 1.35
                 }
             }

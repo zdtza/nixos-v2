@@ -26,7 +26,7 @@ Item {
         text: root.text
         color: root.textColor
         font.family: Theme.fontFamily
-        font.pixelSize: 14
+        font.pixelSize: Util.scaledFont(14)
     }
 
     Rectangle {

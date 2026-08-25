@@ -116,7 +116,8 @@ Item {
         borderColor: Theme.border
         contentSpacing: 14
         implicitWidth: 460
-        implicitHeight: panelContent.implicitHeight + contentMargins * 2
+        implicitHeight: panelContent.implicitHeight
+            + contentTopMargin + contentBottomMargin
 
         PanelHero {
             width: parent.width
@@ -180,7 +181,7 @@ Item {
                         text: root.scaleLabel(Number(scaleButton.modelData))
                         color: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: 12
+                        font.pixelSize: Util.scaledFont(12)
                     }
                 }
             }
@@ -224,7 +225,7 @@ Item {
                         text: "󰍹"
                         color: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: 14
+                        font.pixelSize: Util.scaledFont(14)
                     }
 
                     Text {
@@ -236,7 +237,7 @@ Item {
                         text: String(monitorRow.modelData.name)
                         color: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: 12
+                        font.pixelSize: Util.scaledFont(12)
                         elide: Text.ElideRight
                     }
 
@@ -249,7 +250,7 @@ Item {
                         text: "󰄬"
                         color: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: 12
+                        font.pixelSize: Util.scaledFont(12)
                     }
                 }
             }

@@ -138,7 +138,7 @@ Scope {
                         selectionColor: Theme.surface
                         selectedTextColor: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: 22
+                        font.pixelSize: Util.scaledFont(22)
                         font.letterSpacing: 2
                         text: root.password
                         onTextChanged: root.password = text

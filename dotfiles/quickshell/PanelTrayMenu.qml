@@ -233,7 +233,7 @@ PopupWindow {
                     color: Theme.foreground
                     elide: Text.ElideRight
                     font.family: Theme.fontFamily
-                    font.pixelSize: 14
+                    font.pixelSize: Util.scaledFont(14)
                     font.weight: Font.Medium
                     font.letterSpacing: 0.1
                 }
@@ -250,7 +250,7 @@ PopupWindow {
                     color: Theme.muted
                     elide: Text.ElideRight
                     font.family: Theme.fontFamily
-                    font.pixelSize: 9
+                    font.pixelSize: Util.scaledFont(9)
                     font.weight: Font.Medium
                     font.letterSpacing: 1.8
                 }
@@ -312,7 +312,7 @@ PopupWindow {
                             elide: Text.ElideRight
                             color: row.sectionLabel ? Theme.border : (row.interactive ? Theme.foreground : Theme.muted)
                             font.family: Theme.fontFamily
-                            font.pixelSize: row.sectionLabel ? 9 : 12
+                            font.pixelSize: Util.scaledFont(row.sectionLabel ? 9 : 12)
                             font.weight: row.sectionLabel ? Font.Medium : Font.Normal
                             font.letterSpacing: row.sectionLabel ? 1.8 : 0.1
                         }
@@ -336,7 +336,7 @@ PopupWindow {
                             }
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontSize
+                            font.pixelSize: Util.scaledFont(Theme.fontSize)
                         }
 
                         MouseArea {

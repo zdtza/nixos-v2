@@ -162,10 +162,11 @@ PanelPopup {
     }
 
     contentHorizontalMargins: 80
-    contentVerticalMargins: 18
+    contentTopMargin: 18
     contentSpacing: 16
     implicitWidth: 650
-    implicitHeight: panelContent.implicitHeight + contentVerticalMargins * 2
+    implicitHeight: panelContent.implicitHeight
+        + contentTopMargin + contentBottomMargin
 
     SystemClock {
         id: clock
@@ -252,7 +253,7 @@ PanelPopup {
                 text: "󰃭"
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: 50
+                font.pixelSize: Util.scaledFont(50)
                 font.bold: true
             }
 
@@ -261,7 +262,7 @@ PanelPopup {
                 text: root.monthNames[clock.date.getMonth()] + " " + clock.date.getDate()
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: 48
+                font.pixelSize: Util.scaledFont(48)
                 font.weight: Font.Bold
             }
         }
@@ -279,7 +280,7 @@ PanelPopup {
             text: root.currentYear
             color: Theme.muted
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Util.scaledFont(12)
             font.letterSpacing: 1
         }
 
@@ -311,7 +312,7 @@ PanelPopup {
             text: root.yearCompletePercent + "%"
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Util.scaledFont(12)
             font.letterSpacing: 1
         }
     }
@@ -332,7 +333,7 @@ PanelPopup {
                 text: modelData
                 color: Theme.muted
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Util.scaledFont(11)
                 font.weight: Font.Medium
                 font.letterSpacing: 1
             }
@@ -390,7 +391,7 @@ PanelPopup {
                         color: dayCell.modelData.weekNumber || !dayCell.modelData.inMonth
                             ? Theme.border : Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: dayCell.modelData.weekNumber ? 10 : 13
+                        font.pixelSize: Util.scaledFont(dayCell.modelData.weekNumber ? 10 : 13)
                         font.weight: dayCell.marked ? Font.Medium : Font.Normal
                     }
 
@@ -437,7 +438,7 @@ PanelPopup {
                 text: "‹"
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: 18
+                font.pixelSize: Util.scaledFont(18)
             }
 
             MouseArea {
@@ -458,7 +459,7 @@ PanelPopup {
                 text: (root.monthNames[root.shownMonth] + " " + root.currentYear).toUpperCase()
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: 11
+                font.pixelSize: Util.scaledFont(11)
                 font.weight: Font.Medium
                 font.letterSpacing: 1.4
             }
@@ -469,7 +470,7 @@ PanelPopup {
                 text: root.selectedDayCount + " DAYS SELECTED"
                 color: Theme.muted
                 font.family: Theme.fontFamily
-                font.pixelSize: 9
+                font.pixelSize: Util.scaledFont(9)
                 font.letterSpacing: 1
             }
         }
@@ -488,7 +489,7 @@ PanelPopup {
                 text: "›"
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: 18
+                font.pixelSize: Util.scaledFont(18)
             }
 
             MouseArea {

@@ -173,7 +173,8 @@ Item {
         borderColor: Theme.border
         contentSpacing: 14
         implicitWidth: 420
-        implicitHeight: panelContent.implicitHeight + contentMargins * 2
+        implicitHeight: panelContent.implicitHeight
+            + contentTopMargin + contentBottomMargin
 
         PanelHero {
             width: parent.width
@@ -215,7 +216,7 @@ Item {
                 text: "No audio outputs"
                 color: Theme.muted
                 font.family: Theme.fontFamily
-                font.pixelSize: 12
+                font.pixelSize: Util.scaledFont(12)
             }
 
             Repeater {
@@ -271,7 +272,7 @@ Item {
                 text: "No audio inputs"
                 color: Theme.muted
                 font.family: Theme.fontFamily
-                font.pixelSize: 12
+                font.pixelSize: Util.scaledFont(12)
             }
 
             Repeater {
@@ -324,7 +325,7 @@ Item {
             text: deviceRow.icon
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: 14
+            font.pixelSize: Util.scaledFont(14)
         }
 
         Text {
@@ -336,7 +337,7 @@ Item {
             text: root.nodeLabel(deviceRow.node)
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Util.scaledFont(12)
             elide: Text.ElideRight
         }
 
@@ -349,7 +350,7 @@ Item {
             text: "󰄬"
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Util.scaledFont(12)
         }
 
         MouseArea {

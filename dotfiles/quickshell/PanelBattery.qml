@@ -150,7 +150,8 @@ Item {
         // Wider card gives each equal-width profile button real horizontal
         // breathing room around its icon and longest label (Power-saver).
         implicitWidth: 420
-        implicitHeight: panelContent.implicitHeight + contentMargins * 2
+        implicitHeight: panelContent.implicitHeight
+            + contentTopMargin + contentBottomMargin
 
         PanelHero {
             id: batteryHero
@@ -168,7 +169,7 @@ Item {
                 text: root.percent + "%"
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: 30
+                font.pixelSize: Util.scaledFont(30)
                 font.bold: true
             }
         }
@@ -296,7 +297,7 @@ Item {
                                 text: root.profileIcon(String(profileButton.modelData))
                                 color: Theme.foreground
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 15
+                                font.pixelSize: Util.scaledFont(15)
                             }
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
@@ -304,7 +305,7 @@ Item {
                                     ? "Power-saver" : String(profileButton.modelData)
                                 color: Theme.foreground
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 12
+                                font.pixelSize: Util.scaledFont(12)
                             }
                         }
                     }
@@ -324,7 +325,7 @@ Item {
             color: Theme.foreground
             opacity: 0.6
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Util.scaledFont(12)
         }
         Item {
             width: Math.max(0, parent.width
@@ -335,7 +336,7 @@ Item {
             text: parent.valueText
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: 12
+            font.pixelSize: Util.scaledFont(12)
         }
     }
 }

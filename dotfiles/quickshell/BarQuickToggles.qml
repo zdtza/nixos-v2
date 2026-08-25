@@ -175,7 +175,7 @@ Item {
                         text: "󰅶"
                         color: ServiceStayAwake.enabled ? Theme.foreground : Theme.muted
                         font.family: Theme.fontFamily
-                        font.pixelSize: 14
+                        font.pixelSize: Util.scaledFont(14)
                     }
 
                     MouseArea {
@@ -232,7 +232,7 @@ Item {
                         color: ServiceDoNotDisturb.enabled
                             ? Theme.foreground : Theme.muted
                         font.family: Theme.fontFamily
-                        font.pixelSize: 14
+                        font.pixelSize: Util.scaledFont(14)
                     }
 
                     MouseArea {
@@ -269,7 +269,7 @@ Item {
                         text: ""
                         color: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: 14
+                        font.pixelSize: Util.scaledFont(14)
                     }
                 }
             }

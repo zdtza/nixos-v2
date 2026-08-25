@@ -25,6 +25,7 @@ Item {
         anchors.verticalCenterOffset: -1
         text: Qt.formatDateTime(clock.date, "dddd HH:mm")
         font.family: Theme.fontFamily
+        // Keep clock compact even when rest of shell uses readability boost.
         font.pixelSize: Theme.fontSize
         color: Theme.foreground
     }

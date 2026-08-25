@@ -381,7 +381,7 @@ Scope {
                         selectionColor: Theme.surface
                         selectedTextColor: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: 14
+                        font.pixelSize: Util.scaledFont(14)
 
                         cursorDelegate: Rectangle {
                             width: 1
@@ -397,7 +397,7 @@ Scope {
                             text: "Type to search applications…"
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: 14
+                            font.pixelSize: Util.scaledFont(14)
                         }
 
                         Keys.onEscapePressed: {
@@ -536,7 +536,7 @@ Scope {
                                 color: Theme.foreground
                                 elide: Text.ElideRight
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 14
+                                font.pixelSize: Util.scaledFont(14)
                                 font.bold: appRow.selected
                             }
 
@@ -546,7 +546,7 @@ Scope {
                                 color: Qt.darker(Theme.foreground, 1.4)
                                 elide: Text.ElideRight
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 11
+                                font.pixelSize: Util.scaledFont(11)
                             }
                         }
 
@@ -558,7 +558,7 @@ Scope {
                             text: appRow.selected ? "↵" : ""
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: 14
+                            font.pixelSize: Util.scaledFont(14)
                         }
 
                         MouseArea {
@@ -587,7 +587,7 @@ Scope {
                             text: "󰈉"
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: 28
+                            font.pixelSize: Util.scaledFont(28)
                         }
 
                         Text {
@@ -595,7 +595,7 @@ Scope {
                             text: "NO MATCHING APPLICATIONS"
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: 11
+                            font.pixelSize: Util.scaledFont(11)
                             font.bold: true
                             font.letterSpacing: 1
                         }
@@ -668,7 +668,7 @@ Scope {
                         text: "Launch"
                         color: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: 13
+                        font.pixelSize: Util.scaledFont(13)
                         font.bold: true
                     }
 
@@ -681,7 +681,7 @@ Scope {
                         text: "↵"
                         color: Theme.muted
                         font.family: Theme.fontFamily
-                        font.pixelSize: 12
+                        font.pixelSize: Util.scaledFont(12)
                     }
 
                     MouseArea {
@@ -722,7 +722,7 @@ Scope {
                             color: Theme.muted
                             elide: Text.ElideRight
                             font.family: Theme.fontFamily
-                            font.pixelSize: 13
+                            font.pixelSize: Util.scaledFont(13)
                         }
 
                         MouseArea {

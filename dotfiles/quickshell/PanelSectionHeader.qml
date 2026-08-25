@@ -18,7 +18,7 @@ Item {
         text: root.title
         color: Qt.darker(Theme.foreground, 1.4)
         font.family: Theme.fontFamily
-        font.pixelSize: 11
+        font.pixelSize: Util.scaledFont(11)
         font.bold: true
         font.letterSpacing: 1
     }
@@ -31,7 +31,7 @@ Item {
         visible: text !== ""
         color: Theme.muted
         font.family: Theme.fontFamily
-        font.pixelSize: 11
+        font.pixelSize: Util.scaledFont(11)
         font.bold: true
         font.letterSpacing: 1
     }

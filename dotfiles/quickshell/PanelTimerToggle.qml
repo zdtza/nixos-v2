@@ -154,8 +154,8 @@ Item {
                 ? root.QsWindow.window.screen.height : 800) - 55)
         // Derive popup size from stable controls and timer count. Avoid
         // Column.implicitHeight while repeater delegates are changing.
-        readonly property real panelChromeHeight: contentMargins * 2
-            + timerHero.implicitHeight + durationHeader.implicitHeight
+        readonly property real panelChromeHeight: contentTopMargin
+            + contentBottomMargin + timerHero.implicitHeight + durationHeader.implicitHeight
             + timersHeader.implicitHeight + 76 + contentSpacing * 6
         readonly property real desiredTimerHeight: ServiceTimer.timers.length > 0
             ? ServiceTimer.timers.length * root.timerRowHeight
@@ -197,7 +197,7 @@ Item {
                     text: "󰐕"
                     color: Theme.foreground
                     font.family: Theme.fontFamily
-                    font.pixelSize: 14
+                    font.pixelSize: Util.scaledFont(14)
                 }
 
                 MouseArea {
@@ -247,7 +247,7 @@ Item {
                 selectionColor: Theme.surface
                 selectedTextColor: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: 36
+                font.pixelSize: Util.scaledFont(36)
                 font.weight: Font.Medium
                 font.letterSpacing: 3
 
@@ -280,7 +280,7 @@ Item {
                 verticalAlignment: Text.AlignVCenter
                 color: Theme.muted
                 font.family: Theme.fontFamily
-                font.pixelSize: 12
+                font.pixelSize: Util.scaledFont(12)
             }
 
             Flickable {
@@ -333,7 +333,7 @@ Item {
                                 text: "󱎫"
                                 color: Theme.foreground
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 16
+                                font.pixelSize: Util.scaledFont(16)
                             }
 
                             Text {
@@ -348,7 +348,7 @@ Item {
                                         - ServiceTimer.nowMs) / 1000)))
                                 color: Theme.foreground
                                 font.family: Theme.fontFamily
-                                font.pixelSize: 24
+                                font.pixelSize: Util.scaledFont(24)
                                 font.weight: Font.Medium
                             }
 

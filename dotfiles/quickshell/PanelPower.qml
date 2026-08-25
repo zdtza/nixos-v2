@@ -123,7 +123,8 @@ Item {
         borderColor: Theme.border
         contentSpacing: 14
         implicitWidth: 360
-        implicitHeight: panelContent.implicitHeight + contentMargins * 2
+        implicitHeight: panelContent.implicitHeight
+            + contentTopMargin + contentBottomMargin
 
         PanelHero {
             id: powerHero
@@ -169,7 +170,7 @@ Item {
                         scale: actionButton.index === root.selectedActionIndex
                             || actionMouse.containsMouse ? 1.1 : 1
                         font.family: Theme.fontFamily
-                        font.pixelSize: actionButton.modelData.iconSize
+                        font.pixelSize: Util.scaledFont(actionButton.modelData.iconSize)
                         Behavior on scale {
                             NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
                         }

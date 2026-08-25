@@ -73,7 +73,7 @@ Item {
                     text: workspaceItem.workspaceId
                     color: workspaceItem.isActive || workspaceItem.isOccupied ? Theme.foreground : Theme.muted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize
+                    font.pixelSize: Util.scaledFont(Theme.fontSize)
                 }
 
                 MouseArea {

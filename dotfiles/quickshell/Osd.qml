@@ -92,9 +92,7 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
-            color: Theme.background
-            border.width: 1
-            border.color: Theme.border
+            color: Theme.dark_background
             radius: ServicePanel.rounding
 
             Row {

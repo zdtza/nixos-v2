@@ -143,7 +143,10 @@ PanelWindow {
 
         anchors {
             right: clock.left
-            rightMargin: ServicePanel.barSpacing
+            // Clock and toggle slots both include transparent horizontal
+            // padding. Pull their bounds together so visible content keeps
+            // the same compact gap as neighboring bar icons.
+            rightMargin: ServicePanel.barSpacing - 8
             verticalCenter: clock.verticalCenter
         }
     }

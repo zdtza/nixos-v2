@@ -189,7 +189,7 @@ in
   xdg.desktopEntries.windows-vm = {
     name = "Windows";
     genericName = "Windows 11 VM";
-    comment = "Connect to the Windows VM over RDP";
+    comment = "Windows Virtual Machine";
     exec = lib.getExe launch;
     icon = "windows-vm";
     categories = [ "System" ];

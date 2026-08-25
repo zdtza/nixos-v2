@@ -116,7 +116,7 @@ Scope {
 
     Timer {
         id: slowLaunchTimer
-        interval: 1500
+        interval: 3000
 
         onTriggered: {
             if (root.pendingLaunchName === "")
@@ -125,7 +125,7 @@ Scope {
                 "notify-send",
                 "--app-name=Application Launcher",
                 `--icon=${root.pendingLaunchIcon}`,
-                "--expire-time=5000",
+                "--expire-time=3000",
                 `${root.pendingLaunchName}`,
                 "Application is launching..."
             ]);

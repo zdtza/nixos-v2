@@ -242,12 +242,32 @@ Item {
             onValueEdited: value => ServiceAudio.setInputVolume(value * ServiceAudio.maximumVolume)
         }
 
-        AudioLevelMeter {
-            width: parent.width
-            muted: ServiceAudio.inputMuted
+        Item {
+            id: inputLevelMeter
+
             // Mild compression keeps speech responsive without amplifying the
             // microphone noise floor as aggressively as a square-root curve.
-            level: Math.pow(Math.max(0, Number(inputPeak.peak || 0)), 0.75)
+            readonly property real level: Math.pow(
+                Math.max(0, Number(inputPeak.peak || 0)), 0.75)
+
+            width: parent.width
+            implicitHeight: 6
+
+            Rectangle {
+                anchors.fill: parent
+                radius: ServicePanel.rounding
+                color: Util.alpha(Theme.foreground, 0.12)
+
+                Rectangle {
+                    height: parent.height
+                    width: parent.width * Math.max(0,
+                        Math.min(1, inputLevelMeter.level))
+                    radius: ServicePanel.rounding
+                    color: ServiceAudio.inputMuted
+                        ? Theme.muted : Theme.foreground
+                    Behavior on width { NumberAnimation { duration: 55 } }
+                }
+            }
         }
 
         Column {

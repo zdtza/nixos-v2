@@ -280,10 +280,18 @@ in
 
   xdg.portal = {
     enable = true;
-    extraPortals = with pkgs; [
-      xdg-desktop-portal-hyprland
-      xdg-desktop-portal-termfilechooser
-    ];
+    # Hyprland's NixOS module adds GTK automatically; force exact backends.
+    extraPortals = lib.mkForce (
+      with pkgs;
+      [
+        xdg-desktop-portal-hyprland
+        xdg-desktop-portal-termfilechooser
+      ]
+    );
+    config.hyprland = {
+      default = [ "hyprland" ];
+      "org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
+    };
   };
 
   hardware.graphics = {
@@ -402,14 +410,9 @@ in
         popups = 10;
       };
 
-      serif = {
-        package = pkgs.dejavu_fonts;
-        name = "DejaVu Serif";
-      };
-
       sansSerif = {
         package = pkgs.dejavu_fonts;
-        name = "DejaVu Sans";
+        name = "Adwaita Sans";
       };
 
       monospace = {

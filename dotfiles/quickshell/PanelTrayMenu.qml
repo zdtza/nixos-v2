@@ -24,15 +24,19 @@ PopupWindow {
     required property var anchorWindow
 
     property int menuWidth: 220
+    property int panelPadding: 6
+    property int itemAreaPadding: 6
     property string menuTitle: ""
     property string menuStatus: ""
 
     readonly property bool staticEntries: !handle
     property bool contentReady: staticEntries
     property var selectedEntry: null
+    property int selectedEntryIndex: -1
     readonly property var menuEntries: staticEntries ? (entries ?? []) : opener.children.values
-    readonly property var keyboardEntries: menuEntries.filter(entry =>
-        entry && !entry.isSeparator && entry.enabled)
+    readonly property var keyboardEntryIndices: menuEntries
+        .map((entry, index) => entry && !entry.isSeparator && entry.enabled ? index : -1)
+        .filter(index => index >= 0)
 
     // Submenus grow sideways out of their parent row instead of downwards.
     // Only ever set true recursively below, for DBus submenus.
@@ -51,35 +55,42 @@ PopupWindow {
     signal closeRequested
     signal dismissRequested
 
+    function selectEntry(index: int): void {
+        selectedEntryIndex = index;
+        selectedEntry = index >= 0 ? menuEntries[index] : null;
+    }
+
     function moveSelection(offset: int): void {
-        if (keyboardEntries.length === 0) {
-            selectedEntry = null;
+        if (keyboardEntryIndices.length === 0) {
+            selectEntry(-1);
             return;
         }
-        let index = keyboardEntries.indexOf(selectedEntry);
-        if (index < 0)
-            index = offset > 0 ? 0 : keyboardEntries.length - 1;
+        let position = keyboardEntryIndices.indexOf(selectedEntryIndex);
+        if (position < 0)
+            position = offset > 0 ? 0 : keyboardEntryIndices.length - 1;
         else
-            index = Math.max(0, Math.min(keyboardEntries.length - 1, index + offset));
-        selectedEntry = keyboardEntries[index];
+            position = (position + offset + keyboardEntryIndices.length)
+                % keyboardEntryIndices.length;
+        selectEntry(keyboardEntryIndices[position]);
         submenuEntry = null;
     }
 
     function activateSelection(): void {
-        if (!selectedEntry)
+        const entry = selectedEntryIndex >= 0 ? menuEntries[selectedEntryIndex] : null;
+        if (!entry)
             return;
-        if (selectedEntry.hasChildren) {
-            submenuEntry = selectedEntry;
+        if (entry.hasChildren) {
+            submenuEntry = entry;
             return;
         }
-        selectedEntry.triggered();
+        entry.triggered();
         closeRequested();
     }
 
     Component.onCompleted: {
         if (staticEntries) {
-            if (keyboardEntries.length > 0)
-                selectedEntry = keyboardEntries[0];
+            if (keyboardEntryIndices.length > 0)
+                selectEntry(keyboardEntryIndices[0]);
         } else {
             revealTimer.restart();
         }
@@ -113,7 +124,12 @@ PopupWindow {
         enabled: menu.visible && !menu.activeSubmenu
         sequence: "Right"
         context: Qt.ApplicationShortcut
-        onActivated: menu.activateSelection()
+        onActivated: {
+            const entry = menu.selectedEntryIndex >= 0
+                ? menu.menuEntries[menu.selectedEntryIndex] : null;
+            if (entry?.hasChildren)
+                menu.submenuEntry = entry;
+        }
     }
 
     Shortcut {
@@ -154,7 +170,8 @@ PopupWindow {
     }
 
     implicitWidth: menu.menuWidth
-    implicitHeight: Math.max(1, column.implicitHeight + 12)
+    implicitHeight: Math.max(1, column.implicitHeight
+        + menu.panelPadding * 2)
     visible: contentReady
     color: "transparent"
 
@@ -170,13 +187,13 @@ PopupWindow {
         menu: menu.handle
 
         onMenuChanged: {
-            menu.selectedEntry = null;
+            menu.selectEntry(-1);
             menu.submenuEntry = null;
             menu.contentReady = false;
             revealTimer.restart();
         }
         onChildrenChanged: {
-            menu.selectedEntry = null;
+            menu.selectEntry(-1);
             menu.submenuEntry = null;
             if (!menu.contentReady)
                 revealTimer.restart();
@@ -192,8 +209,8 @@ PopupWindow {
         onTriggered: {
             if (opener.children.values.length > 0) {
                 menu.contentReady = true;
-                if (!menu.selectedEntry && menu.keyboardEntries.length > 0)
-                    menu.selectedEntry = menu.keyboardEntries[0];
+                if (menu.selectedEntryIndex < 0 && menu.keyboardEntryIndices.length > 0)
+                    menu.selectEntry(menu.keyboardEntryIndices[0]);
             }
         }
     }
@@ -213,13 +230,13 @@ PopupWindow {
                 fill: parent
                 leftMargin: 2
                 rightMargin: 2
-                topMargin: 6
-                bottomMargin: 6
+                topMargin: menu.panelPadding
+                bottomMargin: menu.panelPadding
             }
 
             Item {
                 width: column.width
-                implicitHeight: menu.menuTitle === "" ? 0 : (menu.menuStatus === "" ? 44 : 58)
+                implicitHeight: menu.menuTitle === "" ? 0 : (menu.menuStatus === "" ? 38 : 52)
                 visible: implicitHeight > 0
 
                 Text {
@@ -228,7 +245,7 @@ PopupWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: 14
                     anchors.top: parent.top
-                    anchors.topMargin: 12
+                    anchors.topMargin: 6
                     text: menu.menuTitle
                     color: Theme.foreground
                     elide: Text.ElideRight
@@ -244,7 +261,7 @@ PopupWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: 14
                     anchors.top: parent.top
-                    anchors.topMargin: 32
+                    anchors.topMargin: 26
                     visible: menu.menuStatus !== ""
                     text: menu.menuStatus.toUpperCase()
                     color: Theme.muted
@@ -263,6 +280,11 @@ PopupWindow {
                 color: Theme.border
             }
 
+            Item {
+                width: column.width
+                implicitHeight: menu.itemAreaPadding
+            }
+
             Repeater {
                 model: menu.menuEntries
 
@@ -270,6 +292,7 @@ PopupWindow {
                     id: row
 
                     required property var modelData
+                    required property int index
 
                     readonly property var entry: modelData
                     readonly property bool interactive: !entry.isSeparator && entry.enabled
@@ -296,7 +319,8 @@ PopupWindow {
                             rightMargin: 6
                         }
                         radius: ServicePanel.rounding
-                        color: menu.selectedEntry === row.entry
+                        color: (mouseArea.containsMouse
+                            || menu.selectedEntryIndex === row.index)
                             && row.interactive ? Theme.surface : "transparent"
 
                         Text {
@@ -359,7 +383,7 @@ PopupWindow {
                             // popup entirely (into the submenu) changes nothing.
                             onContainsMouseChanged: {
                                 if (containsMouse) {
-                                    menu.selectedEntry = row.interactive ? row.entry : null;
+                                    menu.selectEntry(row.interactive ? row.index : -1);
                                     menu.submenuEntry = row.entry.hasChildren ? row.entry : null;
                                 }
                             }
@@ -412,6 +436,11 @@ PopupWindow {
                         }
                     }
                 }
+            }
+
+            Item {
+                width: column.width
+                implicitHeight: menu.itemAreaPadding / 2
             }
         }
     }

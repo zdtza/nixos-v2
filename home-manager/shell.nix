@@ -33,14 +33,6 @@
       set -l log_file "$log_dir/latest.log"
       command mkdir -p "$log_dir"
 
-      # Show changed lines without surrounding source context. Diff against HEAD
-      # includes both staged and unstaged tracked changes used by the flake.
-      if not command git -C "$repo" diff --quiet HEAD --
-        command git -C "$repo" --no-pager diff \
-          --color=always --unified=0 HEAD --
-        printf '\n'
-      end
-
       # Authenticate before redirecting output so sudo's prompt stays visible.
       command sudo -v; or return $status
 

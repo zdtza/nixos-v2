@@ -178,7 +178,10 @@ Item {
         const focusedName = String(Hyprland.focusedMonitor?.name ?? "");
         const candidate = panels.find(entry => String(entry.screen?.name ?? "") === focusedName)
             ?? panels[0];
-        toggle(candidate.panel);
+        if (typeof candidate.panel.toggleFromIpc === "function")
+            candidate.panel.toggleFromIpc();
+        else
+            toggle(candidate.panel);
         return true;
     }
 }

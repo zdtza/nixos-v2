@@ -23,6 +23,7 @@ Item {
     readonly property bool opened: ServicePanel.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     property bool pinned: false
+    property bool openedFromIpc: false
     property int selectedItemIndex: 0
     readonly property int keyboardItemCount: items.length + (ServiceWindowsVm.running ? 1 : 0)
     readonly property bool expanded: root.pinned || hover.hovered || root.opened
@@ -43,6 +44,7 @@ Item {
 
     onOpenedChanged: {
         if (!opened) {
+            openedFromIpc = false;
             vmMenuOpen = false;
             menuLoader.trayItem = null;
             menuLoader.anchorItem = null;
@@ -58,6 +60,18 @@ Item {
         menuLoader.trayItem = null;
         menuLoader.anchorItem = null;
         vmMenuLoader.anchorItem = null;
+    }
+
+    function toggleFromIpc(): void {
+        openedFromIpc = true;
+        ServicePanel.toggle(root);
+    }
+
+    function dismissMenuFromEscape(): void {
+        if (openedFromIpc && keyboardItemCount > 1)
+            dismissMenu();
+        else
+            collapseTray();
     }
 
     function collapseTray(): void {
@@ -190,14 +204,14 @@ Item {
 
             Behavior on implicitWidth {
                 NumberAnimation {
-                    duration: 160
+                    duration: 140
                     easing.type: Easing.OutCubic
                 }
             }
 
             Behavior on opacity {
                 NumberAnimation {
-                    duration: 160
+                    duration: 140
                     easing.type: Easing.OutCubic
                 }
             }
@@ -258,6 +272,7 @@ Item {
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                             onClicked: mouse => {
+                                root.openedFromIpc = false;
                                 root.selectedItemIndex = entry.index;
                                 if (entry.modelData.hasMenu) {
                                     // Same item toggles; another item transfers menu ownership.
@@ -326,6 +341,7 @@ Item {
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                         onClicked: {
+                            root.openedFromIpc = false;
                             root.selectedItemIndex = root.items.length;
                             if (root.opened && root.vmMenuOpen) {
                                 ServicePanel.close(root);
@@ -370,7 +386,7 @@ Item {
             menuTitle: menuLoader.trayItem?.title ?? ""
             menuStatus: root.menuStatus(menuLoader.trayItem)
 
-            onDismissRequested: root.dismissMenu()
+            onDismissRequested: root.dismissMenuFromEscape()
             onCloseRequested: ServicePanel.close(root)
         }
     }
@@ -389,7 +405,7 @@ Item {
             menuTitle: "Windows"
             menuStatus: ServiceWindowsVm.running ? "Running" : "Stopped"
 
-            onDismissRequested: root.dismissMenu()
+            onDismissRequested: root.dismissMenuFromEscape()
             onCloseRequested: ServicePanel.close(root)
         }
     }

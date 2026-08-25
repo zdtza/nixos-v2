@@ -53,8 +53,10 @@
         set -l profile (command readlink /nix/var/nix/profiles/system)
         set -l generation (string replace -r \
           '^system-([0-9]+)-link$' '$1' (path basename "$profile"))
-        set -l version (string trim (command cat /run/current-system/nixos-version))
-        set -l commit_message "NixOS generation $generation ($version)"
+        # `$version` is Fish's read-only version variable; use distinct name.
+        set -l nixos_version (string trim \
+          (command cat /run/current-system/nixos-version))
+        set -l commit_message "NixOS generation $generation ($nixos_version)"
 
         printf 'Rebuild complete: %s\n' "$commit_message"
         if not command git -C "$repo" diff --quiet HEAD --

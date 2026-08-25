@@ -24,10 +24,19 @@ hl.config({
 		rounding = 3,
 		active_opacity = 0.98,
 		inactive_opacity = 0.96,
-		blur = { enabled = true, special = true, passes = 2, size = 3 },
+		blur = { enabled = true, xray = true, special = true, passes = 2, size = 3 },
+		shadow = {
+			enabled = true,
+			range = 30,
+			render_power = 50,
+			color = 0x33000000,
+			color_inactive = 0x22000000,
+			offset = { 0, 4 },
+		},
 	},
 	animations = { enabled = true },
 	layout = { single_window_aspect_ratio = { 16, 9 } },
+	
 	dwindle = {
 		preserve_split = true,
 		smart_split = false,
@@ -106,6 +115,16 @@ hl.window_rule({
 	match = { class = "^org.gnome.Calculator$" },
 	float = true,
 	size = { 360, 616 },
+})
+
+hl.window_rule({
+    -- Matches any window that is in a floating state
+    match = { float = true },
+    
+    -- "0.85 override" forces it to stay exactly at 85% opacity,
+    -- bypassing the global active_opacity and inactive_opacity.
+    -- Format: "active_opacity inactive_opacity fullscreen_opacity"
+    opacity = "0.99 override 0.98 override 1.0 override",
 })
 
 -- =============================================================================

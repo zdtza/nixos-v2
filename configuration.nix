@@ -410,9 +410,14 @@ in
         popups = 10;
       };
 
+      serif = {
+        package = pkgs.dejavu_fonts;
+        name = "Dejavu Serif";
+      };
+
       sansSerif = {
-        package = pkgs.adwaita-fonts;
-        name = "Adwaita Sans";
+        package = pkgs.dejavu_fonts;
+        name = "Dejavu Sans";
       };
 
       monospace = {

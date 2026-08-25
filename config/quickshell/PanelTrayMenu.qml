@@ -5,7 +5,7 @@ pragma ComponentBehavior: Bound
 // itself, anchored to the row that owns them.
 //
 // Backed by either a live DBus menu (`handle`, e.g. SystemTrayItem.menu) or a
-// static `entries` list built elsewhere (e.g. the synthetic Windows VM tray
+// static `entries` list built elsewhere (e.g. the synthetic Windows tray
 // entry), normalized to the same shape:
 // { text, isSeparator, enabled, hasChildren, checkState, triggered() }.
 import QtQuick

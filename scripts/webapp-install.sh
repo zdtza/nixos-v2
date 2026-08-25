@@ -6,7 +6,7 @@ set -euo pipefail
 # directory, so the script runs correctly from anywhere.
 script_path=$(readlink -f -- "${BASH_SOURCE[0]}")
 repo_dir=$(cd -- "$(dirname -- "$script_path")/.." && pwd)
-apps_file="$repo_dir/home-manager/web-apps.nix"
+apps_file="$repo_dir/home/web-apps.nix"
 icons_dir="$repo_dir/assets/icons"
 [[ -f "$apps_file" ]] || {
   printf 'Missing %s\n' "$apps_file" >&2

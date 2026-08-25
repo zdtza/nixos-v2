@@ -3,7 +3,7 @@ pragma Singleton
 // The Windows container registers no StatusNotifierItem of its own, so there is
 // nothing for Quickshell.Services.SystemTray to pick up. Its state is polled
 // from systemd instead and rendered by PanelTray.qml as a synthetic entry that sits
-// alongside the real tray icons.
+// alongside real tray icons.
 import QtQuick
 import Quickshell
 import Quickshell.Io

@@ -40,27 +40,27 @@
 
             home-manager.users.zdtza = {
               imports = [
-                ./home-manager/repo.nix
-                ./home-manager/defaults.nix
-                ./home-manager/appearance.nix
-                ./home-manager/kitty.nix
-                ./home-manager/shell.nix
-                ./home-manager/hyprland.nix
-                ./home-manager/hypridle.nix
-                ./home-manager/hyprsunset.nix
-                ./home-manager/pi.nix
-                ./home-manager/screen-share.nix
-                ./home-manager/voxtype.nix
-                ./home-manager/btop.nix
-                ./home-manager/nvim.nix
-                ./home-manager/git.nix
-                ./home-manager/web-apps.nix
-                ./home-manager/windows-vm.nix
-                ./home-manager/fzf.nix
-                ./home-manager/yazi.nix
-                ./home-manager/npm.nix
-                ./home-manager/quickshell.nix
-                ./home-manager/lazydocker.nix
+                ./home/repo.nix
+                ./home/defaults.nix
+                ./home/appearance.nix
+                ./home/kitty.nix
+                ./home/shell.nix
+                ./home/hyprland.nix
+                ./home/hypridle.nix
+                ./home/hyprsunset.nix
+                ./home/pi.nix
+                ./home/screen-share.nix
+                ./home/voxtype.nix
+                ./home/btop.nix
+                ./home/nvim.nix
+                ./home/git.nix
+                ./home/web-apps.nix
+                ./home/windows.nix
+                ./home/fzf.nix
+                ./home/yazi.nix
+                ./home/npm.nix
+                ./home/quickshell.nix
+                ./home/lazydocker.nix
               ];
               home.stateVersion = "26.05";
             };

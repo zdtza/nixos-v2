@@ -17,26 +17,26 @@ let
   container = osConfig.virtualisation.oci-containers.containers.windows;
 
   unit = "docker-windows.service";
-  wipeUnit = "windows-vm-wipe.service";
+  wipeUnit = "windows-wipe.service";
   host = "127.0.0.1";
   rdpPort = "3389";
   webUrl = "http://127.0.0.1:8006";
 
   # Written once Windows genuinely answers RDP, and removed by windows-remove.
   # Only ever a cache: a live RDP handshake outranks it, so a stale or missing
-  # marker can never block a working VM.
+  # marker can never block a working Windows instance.
   marker = "${config.xdg.stateHome}/windows-vm/installed";
 
   helpers = ''
     notify() {
       notify-send \
-        --app-name='Windows VM' \
-        --icon=windows-vm \
+        --app-name='Windows' \
+        --icon=windows \
         --expire-time=3000 \
         "$@" || true
     }
 
-    vm_running() {
+    windows_running() {
       systemctl is-active --quiet ${unit}
     }
 
@@ -67,14 +67,14 @@ let
     systemd
   ];
 
-  # Connect to the VM, starting it first if needed. No install, no delete path.
+  # Connect to Windows, starting it first if needed. No install, no delete path.
   launch = pkgs.writeShellApplication {
     name = "windows-launch";
     runtimeInputs = runtimeInputs ++ [ pkgs.freerdp ];
     text = ''
       ${helpers}
 
-      if ! vm_running; then
+      if ! windows_running; then
         systemctl start ${unit}
       fi
 
@@ -100,7 +100,7 @@ let
         /microphone \
         +clipboard \
         +auto-reconnect \
-        /wm-class:windows-vm
+        /wm-class:windows
     '';
   };
 
@@ -117,7 +117,7 @@ let
         exit 0
       fi
 
-      if ! vm_running; then
+      if ! windows_running; then
         systemctl start ${unit}
       fi
 
@@ -125,7 +125,7 @@ let
     '';
   };
 
-  # Shut the VM down. Refuses while Setup looks unfinished, because stopping
+  # Shut Windows down. Refuses while Setup looks unfinished, because stopping
   # then throws the whole install away.
   stop = pkgs.writeShellApplication {
     name = "windows-stop";
@@ -133,7 +133,7 @@ let
     text = ''
       ${helpers}
 
-      if ! vm_running; then
+      if ! windows_running; then
         notify 'Windows' 'Already stopped.'
         exit 0
       fi
@@ -164,20 +164,20 @@ let
         exit 1
       fi
 
-      read -r -p 'Erase the Windows VM? This permanently deletes the disk image. [y/N] ' reply
+      read -r -p 'Erase Windows? This permanently deletes the disk image. [y/N] ' reply
       [[ $reply == [Yy]* ]] || exit 0
 
       systemctl start ${wipeUnit}
       rm -f ${marker}
-      notify 'Windows VM erased' 'Run windows-install to set it up again.'
+      notify 'Windows erased' 'Run windows-install to set it up again.'
     '';
   };
 in
 {
   # Installed under hicolor as a themed name rather than referenced by path, so
   # the launcher resolves it the same way it resolves any other app icon.
-  home.file.".local/share/icons/hicolor/scalable/apps/windows-vm.svg".source =
-    repoFile "assets/icons/windows-vm.svg";
+  home.file.".local/share/icons/hicolor/scalable/apps/windows.svg".source =
+    repoFile "assets/icons/windows.svg";
 
   home.packages = [
     launch
@@ -186,16 +186,16 @@ in
     remove
   ];
 
-  xdg.desktopEntries.windows-vm = {
+  xdg.desktopEntries.windows = {
     name = "Windows";
-    genericName = "Windows 11 VM";
-    comment = "Windows Virtual Machine";
+    genericName = "Windows 11";
+    comment = "Windows 11";
     exec = lib.getExe launch;
-    icon = "windows-vm";
+    icon = "windows";
     categories = [ "System" ];
     terminal = false;
     type = "Application";
-    settings.StartupWMClass = "windows-vm";
+    settings.StartupWMClass = "windows";
 
     # No erase action: windows-remove is terminal-only by design.
     actions = {

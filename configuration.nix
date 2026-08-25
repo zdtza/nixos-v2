@@ -12,9 +12,9 @@ let
     "learner-local.pmis.servicesseta.org.za"
   ];
 
-  # Persistent disk image for the Windows VM. Deliberately outside the nix store
+  # Persistent Windows disk image. Deliberately outside the nix store
   # and never touched by a rebuild.
-  windowsVmStorage = "/var/lib/windows-vm";
+  windowsStorage = "/var/lib/windows-vm";
 in
 {
   imports = [
@@ -151,7 +151,7 @@ in
         PASSWORD = "windows";
       };
 
-      volumes = [ "${windowsVmStorage}:/storage" ];
+      volumes = [ "${windowsStorage}:/storage" ];
 
       ports = [
         "127.0.0.1:8006:8006" # web viewer, needed to watch the first install
@@ -167,27 +167,27 @@ in
     };
   };
 
-  systemd.tmpfiles.rules = [ "d ${windowsVmStorage} 0700 root root -" ];
+  systemd.tmpfiles.rules = [ "d ${windowsStorage} 0700 root root -" ];
 
   # oci-containers hardcodes 120s. Windows needs far longer to flush and shut
   # down; being killed mid-update corrupts the disk image.
   systemd.services.docker-windows.serviceConfig.TimeoutStopSec = lib.mkForce 300;
 
-  # Erases every trace of the VM: container, disk image, and the pulled image.
+  # Erases every trace of Windows: container, disk image, and pulled image.
   # Runs as a unit rather than through sudo so the launcher can trigger it via
   # the same polkit rule, instead of an unanswerable password prompt.
-  systemd.services.windows-vm-wipe = {
-    description = "Erase the Windows VM and its container image";
+  systemd.services.windows-wipe = {
+    description = "Erase Windows and its container image";
     serviceConfig = {
       Type = "oneshot";
-      # Stopping the VM alone can use the full 300s shutdown budget.
+      # Stopping Windows alone can use the full 300s shutdown budget.
       TimeoutStartSec = 600;
       ExecStart =
         let
           docker = "${config.virtualisation.docker.package}/bin/docker";
           image = config.virtualisation.oci-containers.containers.windows.image;
         in
-        pkgs.writeShellScript "windows-vm-wipe" ''
+        pkgs.writeShellScript "windows-wipe" ''
           set -eu
 
           systemctl stop docker-windows.service || true
@@ -196,22 +196,22 @@ in
           ${docker} rm -f windows >/dev/null 2>&1 || true
 
           # Contents only: the directory keeps its 0700 root ownership.
-          find ${windowsVmStorage} -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+          find ${windowsStorage} -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
 
           ${docker} image rm -f ${image} >/dev/null 2>&1 || true
         '';
     };
   };
 
-  # Lets the desktop entry start/stop the VM without a root password prompt,
+  # Lets the desktop entry start/stop Windows without a root password prompt,
   # which would otherwise be unanswerable when launched from the app launcher.
   security.polkit = {
     enable = true;
     extraConfig = ''
-      var windowsVmUnits = ["docker-windows.service", "windows-vm-wipe.service"];
+      var windowsUnits = ["docker-windows.service", "windows-wipe.service"];
       polkit.addRule(function(action, subject) {
         if (action.id == "org.freedesktop.systemd1.manage-units" &&
-            windowsVmUnits.indexOf(action.lookup("unit")) >= 0 &&
+            windowsUnits.indexOf(action.lookup("unit")) >= 0 &&
             subject.user == "zdtza") {
           return polkit.Result.YES;
         }

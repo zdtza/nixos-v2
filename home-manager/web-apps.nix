@@ -46,6 +46,13 @@ let
       name = "Teams";
       url = "https://teams.cloud.microsoft/";
       isolated = true;
+      # Test whether Chromium background throttling causes Teams screen shares
+      # to drop to a lower-resolution stream after inactivity or occlusion.
+      chromiumFlags = [
+        "--disable-backgrounding-occluded-windows"
+        "--disable-renderer-backgrounding"
+        "--disable-background-timer-throttling"
+      ];
       iconUrl = "https://www.google.com/s2/favicons?domain=https://teams.cloud.microsoft/&sz=256";
       iconHash = "sha256-uFtVcoGXHvPhaO1ngV3fYQMd/UPItRmnRDrwUuhlyWY=";
     }
@@ -73,6 +80,14 @@ let
       iconUrl = "https://www.google.com/s2/favicons?domain=https://chatgpt.com/&sz=256";
       iconHash = "sha256-kma57MEuQyyD54Pd8NPplY4T7E6s20exD2F6zfXXAUY=";
     }
+    {
+      id = "packages";
+      name = "NixOS Packages";
+      url = "https://search.nixos.org/packages?channel=unstable";
+      isolated = false;
+      # Match nixos-manual.desktop exactly and let current icon theme resolve it.
+      iconName = "nix-snowflake";
+    }
     # WEBAPPS
   ];
 
@@ -96,25 +111,34 @@ let
     let
       profileFlag = lib.optionalString (app.isolated or false
       ) "--user-data-dir=${config.xdg.dataHome}/chromium-webapps/${app.id} ";
+      chromiumFlags = lib.optionalString ((app.chromiumFlags or [ ]) != [ ]) (
+        "${lib.concatStringsSep " " app.chromiumFlags} "
+      );
       url = lib.replaceStrings [ "%" "\"" ] [ "%%" "\\\"" ] app.url;
-      sourceIcon = pkgs.fetchurl {
-        url = app.iconUrl;
-        hash = app.iconHash;
-        name = "${app.id}-icon-source";
-      };
-      # Desktop launchers do not consistently detect formats when store paths
-      # lack matching extensions. Normalize PNG, JPEG, WebP, GIF, ICO, and SVG
-      # inputs to a static PNG with a truthful filename.
-      icon = pkgs.runCommand "${app.id}-icon.png" { } ''
-        ${pkgs.imagemagick}/bin/magick "${sourceIcon}[0]" \
-          -auto-orient -background none "PNG32:$out"
-      '';
+      icon =
+        if app ? iconName then
+          app.iconName
+        else
+          let
+            sourceIcon = pkgs.fetchurl {
+              url = app.iconUrl;
+              hash = app.iconHash;
+              name = "${app.id}-icon-source";
+            };
+          in
+          # Desktop launchers do not consistently detect formats when store paths
+          # lack matching extensions. Normalize PNG, JPEG, WebP, GIF, ICO, and SVG
+          # inputs to a static PNG with a truthful filename.
+          pkgs.runCommand "${app.id}-icon.png" { } ''
+            ${pkgs.imagemagick}/bin/magick "${sourceIcon}[0]" \
+              -auto-orient -background none "PNG32:$out"
+          '';
     in
     lib.nameValuePair app.id {
       name = app.name;
       comment = "${app.name} web app";
 
-      exec = ''${pkgs.chromium}/bin/chromium ${profileFlag}"--app=${url}"'';
+      exec = ''${pkgs.chromium}/bin/chromium ${profileFlag}${chromiumFlags}"--app=${url}"'';
       inherit icon;
       categories = [ "Network" ];
       terminal = false;

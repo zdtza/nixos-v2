@@ -71,8 +71,8 @@ end
 -- LAYER RULES
 -- =============================================================================
 
--- Quickshell surfaces must appear instantly: the launcher maps and unmaps its
--- layer surface on every toggle, which would otherwise get the global fade.
+-- Quickshell launcher stays mapped with an empty input region while closed.
+-- Keep layer animations disabled so opacity changes remain immediate.
 local quickshell_layers = { "quickshell:bar", "quickshell:launcher" }
 
 for _, namespace in ipairs(quickshell_layers) do
@@ -465,7 +465,9 @@ bind("SUPER + SHIFT + V", "Toggle dictation", hl.dsp.exec_cmd("voxtype record to
 bind("F9", "Start dictation", hl.dsp.exec_cmd("voxtype record start"))
 bind("F9", "Stop dictation", hl.dsp.exec_cmd("voxtype record stop"), { release = true })
 
-bind("SUPER + space", "Toggle app launcher", hl.dsp.exec_cmd("qs ipc call launcher toggle"))
+-- Dispatch directly to Quickshell's registered global shortcut. This avoids
+-- starting the ~50 ms `qs` Qt IPC client on every invocation.
+bind("SUPER + space", "Toggle app launcher", hl.dsp.global("quickshell:launcher"))
 bind("SUPER + CTRL + P", "Toggle power panel", hl.dsp.exec_cmd("qs ipc call panels toggle power"))
 bind("SUPER + CTRL + C", "Toggle calendar panel", hl.dsp.exec_cmd("qs ipc call panels toggle calendar"))
 bind("SUPER + CTRL + L", "Toggle night-light panel", hl.dsp.exec_cmd("qs ipc call panels toggle nightlight"))

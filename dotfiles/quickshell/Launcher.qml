@@ -66,6 +66,18 @@ Scope {
             root.show();
     }
 
+    // Hyprland dispatches this in-process through its global-shortcut protocol.
+    // Unlike `qs ipc call`, no Qt client process is started for each key press.
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "launcher"
+        description: "Toggle application launcher"
+        triggerDescription: "Super+Space"
+        onPressed: root.toggle()
+    }
+
+    // Keep IPC for scripts and manual control; the keyboard bind uses the
+    // GlobalShortcut above.
     IpcHandler {
         target: "launcher"
 
@@ -125,7 +137,15 @@ Scope {
         id: window
 
         screen: root.targetScreen
-        visible: root.open
+
+        // Keep the layer surface mapped. Closing only makes it transparent and
+        // removes its input region, avoiding a Wayland map round trip on open.
+        visible: true
+        color: root.open ? Util.alpha(Theme.dark_background, 0.45) : "transparent"
+        mask: Region {
+            width: root.open ? window.width : 0
+            height: root.open ? window.height : 0
+        }
         anchors {
             top: true
             bottom: true
@@ -134,7 +154,6 @@ Scope {
         }
 
         exclusionMode: ExclusionMode.Ignore
-        color: Util.alpha(Theme.dark_background, 0.45)
         WlrLayershell.namespace: "quickshell:launcher"
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: root.open
@@ -264,17 +283,22 @@ Scope {
             root.open = false;
         }
 
-        onVisibleChanged: {
-            window.closeContextMenu();
-            if (!visible)
-                return;
-            search.text = "";
-            search.forceActiveFocus();
-            appList.currentIndex = 0;
+        Connections {
+            target: root
+
+            function onOpenChanged(): void {
+                window.closeContextMenu();
+                if (!root.open)
+                    return;
+                search.text = "";
+                search.forceActiveFocus();
+                appList.currentIndex = 0;
+            }
         }
 
         MouseArea {
             anchors.fill: parent
+            enabled: root.open
             onClicked: root.open = false
         }
 
@@ -284,6 +308,8 @@ Scope {
             anchors.centerIn: parent
             width: 520
             height: 630
+            opacity: root.open ? 1 : 0
+            enabled: root.open
             radius: ServicePanel.rounding
             color: Theme.dark_background
 
@@ -422,6 +448,9 @@ Scope {
                     highlightMoveDuration: 0
                     keyNavigationEnabled: false
                     reuseItems: true
+                    // Materialize every row while the persistent shell starts.
+                    // This resolves desktop icons before the first invocation.
+                    cacheBuffer: Math.max(height, window.entries.length * (52 + spacing))
                     boundsBehavior: Flickable.StopAtBounds
                     spacing: 2
 

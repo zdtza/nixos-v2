@@ -58,6 +58,26 @@ in
       "audio/mp4" = "mpv.desktop";
 
       "application/x-code-workspace" = "code.desktop";
+
+      # nvim.desktop's MimeType= list (home/nvim.nix) only advertises
+      # capability; without an explicit default here text/plain is
+      # ambiguous since code.desktop claims it too and would otherwise win
+      # arbitrarily.
+      "text/english" = "nvim.desktop";
+      "text/plain" = "nvim.desktop";
+      "text/x-makefile" = "nvim.desktop";
+      "text/x-c++hdr" = "nvim.desktop";
+      "text/x-c++src" = "nvim.desktop";
+      "text/x-chdr" = "nvim.desktop";
+      "text/x-csrc" = "nvim.desktop";
+      "text/x-java" = "nvim.desktop";
+      "text/x-moc" = "nvim.desktop";
+      "text/x-pascal" = "nvim.desktop";
+      "text/x-tcl" = "nvim.desktop";
+      "text/x-tex" = "nvim.desktop";
+      "text/x-c" = "nvim.desktop";
+      "text/x-c++" = "nvim.desktop";
+      "application/x-shellscript" = "nvim.desktop";
     };
   };
 }

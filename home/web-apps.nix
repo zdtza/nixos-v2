@@ -96,6 +96,11 @@ let
       name = "Screenshare Test";
       url = "https://pigeoncast.com/tools/screen-share-test";
       isolated = false;
+      chromiumFlags = [
+        "--auto-select-desktop-capture-source=Entire screen"
+        "--use-fake-ui-for-media-stream"
+        "--enable-usermedia-screen-capturing"
+      ];
     }
     # WEBAPPS
   ];

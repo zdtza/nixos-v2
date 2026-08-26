@@ -78,6 +78,12 @@ let
       url = "https://calendar.google.com/calendar/u/0/r";
       isolated = false;
     }
+    {
+      id = "claude";
+      name = "Claude";
+      url = "https://claude.ai/new";
+      isolated = false;
+    }
     # WEBAPPS
   ];
 

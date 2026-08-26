@@ -118,11 +118,92 @@ in
       title    = { fg = "${colors.base0D}" }
       tbl_cell = { fg = "${colors.base05}", bg = "${colors.base02}" }
 
+      # Yazi's bundled default theme ships its own `exts`/`conds` icon tables
+      # with hard-coded Material/devicon hex colors (e.g. PDF is always
+      # #b30b00, webm is always #fd971f) that are completely independent of
+      # the base16 scheme. Stylix's `filetype` colors only reach the filename
+      # text, not the icon glyph, so leaving `exts`/`conds` on defaults is what
+      # made file rows clash with the rest of the theme. Overriding them here
+      # (same glyphs, base16 fg) is what actually fixes it -- the old
+      # `prepend_conds` key below was a no-op (not a real yazi icon field).
       [icon]
       dirs = []
-      prepend_conds = [
-        { if = "dir & hovered", text = "󰝰", fg = "${colors.base0D}" },
-        { if = "dir",           text = "󰉋", fg = "${colors.base0D}" },
+      exts = [
+        # Images
+        { name = "jpg",  text = "", fg = "${colors.base0E}" },
+        { name = "jpeg",  text = "", fg = "${colors.base0E}" },
+        { name = "png",  text = "", fg = "${colors.base0E}" },
+        { name = "gif",  text = "", fg = "${colors.base0E}" },
+        { name = "bmp",  text = "", fg = "${colors.base0E}" },
+        { name = "webp",  text = "", fg = "${colors.base0E}" },
+        { name = "svg",  text = "󰜡", fg = "${colors.base0E}" },
+        { name = "ico",  text = "", fg = "${colors.base0E}" },
+        { name = "tiff",  text = "", fg = "${colors.base0E}" },
+        { name = "tif",  text = "", fg = "${colors.base0E}" },
+        { name = "heic",  text = "", fg = "${colors.base0E}" },
+        { name = "heif",  text = "", fg = "${colors.base0E}" },
+        { name = "avif",  text = "", fg = "${colors.base0E}" },
+        # Video
+        { name = "mp4",  text = "", fg = "${colors.base0E}" },
+        { name = "mkv",  text = "", fg = "${colors.base0E}" },
+        { name = "webm",  text = "", fg = "${colors.base0E}" },
+        { name = "mov",  text = "", fg = "${colors.base0E}" },
+        { name = "avi",  text = "", fg = "${colors.base0E}" },
+        { name = "flv",  text = "", fg = "${colors.base0E}" },
+        { name = "wmv",  text = "", fg = "${colors.base0E}" },
+        { name = "m4v",  text = "", fg = "${colors.base0E}" },
+        { name = "mpg",  text = "", fg = "${colors.base0E}" },
+        { name = "mpeg",  text = "", fg = "${colors.base0E}" },
+        { name = "3gp",  text = "", fg = "${colors.base0E}" },
+        { name = "ogv",  text = "", fg = "${colors.base0E}" },
+        # Audio
+        { name = "mp3",  text = "", fg = "${colors.base0C}" },
+        { name = "flac",  text = "", fg = "${colors.base0C}" },
+        { name = "wav",  text = "", fg = "${colors.base0C}" },
+        { name = "ogg",  text = "", fg = "${colors.base0C}" },
+        { name = "opus",  text = "", fg = "${colors.base0C}" },
+        { name = "m4a",  text = "", fg = "${colors.base0C}" },
+        { name = "aac",  text = "", fg = "${colors.base0C}" },
+        { name = "wma",  text = "", fg = "${colors.base0C}" },
+        { name = "aiff",  text = "", fg = "${colors.base0C}" },
+        # Archives
+        { name = "zip",  text = "", fg = "${colors.base0A}" },
+        { name = "rar",  text = "", fg = "${colors.base0A}" },
+        { name = "7z",  text = "", fg = "${colors.base0A}" },
+        { name = "tar",  text = "", fg = "${colors.base0A}" },
+        { name = "gz",  text = "", fg = "${colors.base0A}" },
+        { name = "xz",  text = "", fg = "${colors.base0A}" },
+        { name = "zst",  text = "", fg = "${colors.base0A}" },
+        { name = "bz2",  text = "", fg = "${colors.base0A}" },
+        { name = "iso",  text = "", fg = "${colors.base0A}" },
+        { name = "cab",  text = "", fg = "${colors.base0A}" },
+        { name = "cpio",  text = "", fg = "${colors.base0A}" },
+        # Documents
+        { name = "pdf",  text = "", fg = "${colors.base0D}" },
+        { name = "doc",  text = "󰈬", fg = "${colors.base0D}" },
+        { name = "docx",  text = "󰈬", fg = "${colors.base0D}" },
+        { name = "odt",  text = "", fg = "${colors.base0D}" },
+        { name = "rtf",  text = "󰈬", fg = "${colors.base0D}" },
+        { name = "xls",  text = "󰈛", fg = "${colors.base0D}" },
+        { name = "xlsx",  text = "󰈛", fg = "${colors.base0D}" },
+        { name = "ppt",  text = "󰈧", fg = "${colors.base0D}" },
+        { name = "pptx",  text = "󰈧", fg = "${colors.base0D}" },
+        { name = "epub",  text = "", fg = "${colors.base0D}" },
+      ]
+      conds = [
+        { if = "orphan", text = "", fg = "${colors.base08}" },
+        { if = "link",   text = "", fg = "${colors.base04}" },
+        { if = "block",  text = "", fg = "${colors.base0A}" },
+        { if = "char",   text = "", fg = "${colors.base0A}" },
+        { if = "fifo",   text = "", fg = "${colors.base0A}" },
+        { if = "sock",   text = "", fg = "${colors.base0A}" },
+        { if = "sticky", text = "", fg = "${colors.base0A}" },
+        { if = "dummy",  text = "", fg = "${colors.base08}" },
+
+        { if = "dir & hovered", text = "", fg = "${colors.base0D}" },
+        { if = "dir",           text = "", fg = "${colors.base0D}" },
+        { if = "exec",          text = "", fg = "${colors.base0B}" },
+        { if = "!dir",          text = "", fg = "${colors.base05}" },
       ]
 
       [filetype]

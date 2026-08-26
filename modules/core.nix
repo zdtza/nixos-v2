@@ -15,7 +15,7 @@
       "quiet"
       "loglevel=0"
       "udev.log_level=3"
-      "systemd.show_status=true"
+      "systemd.show_status=auto"
     ];
     loader = {
       efi.canTouchEfiVariables = true;

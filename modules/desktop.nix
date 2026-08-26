@@ -53,6 +53,7 @@
 
     # Keep boot and virtual consoles on their default palette.
     targets.console.enable = false;
+    targets.fish.enable = false;
 
     cursor = {
       package = pkgs.adwaita-icon-theme;

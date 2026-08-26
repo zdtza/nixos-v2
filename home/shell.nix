@@ -1,10 +1,13 @@
-{ config, ... }:
+{ ... }:
 
 {
-  stylix.targets.fish.colors.override = {
-    base03 = config.lib.stylix.colors.base05; # muted -> foreground
-    base0B = config.lib.stylix.colors.base0E; # green -> magenta
-  };
+  # Home Manager's stylix fish target sources base16-fish and re-applies it
+  # on every interactive shell start via OSC escape sequences. Those
+  # sequences also recolor the real Linux virtual console (tty), not just
+  # terminal emulators, so disable it here (mirrors targets.console.enable
+  # = false / targets.fish.enable = false in modules/desktop.nix, which
+  # only cover the NixOS-level stylix instance, not this per-user one).
+  stylix.targets.fish.enable = false;
 
   programs.fish = {
     enable = true;

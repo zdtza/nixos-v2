@@ -11,10 +11,6 @@ let
     "partner-local.pmis.servicesseta.org.za"
     "learner-local.pmis.servicesseta.org.za"
   ];
-
-  # Persistent Windows disk image. Deliberately outside the nix store
-  # and never touched by a rebuild.
-  windowsStorage = "/var/lib/windows-vm";
 in
 {
   imports = [
@@ -125,104 +121,9 @@ in
   };
 
   # Windows 11 in a container (dockurr/windows: KVM + QEMU inside Docker),
-  # reachable over RDP. Started on demand from the app launcher, not at boot,
-  # so it costs nothing while unused.
-  virtualisation.docker = {
+  services.windows = {
     enable = true;
-    enableOnBoot = false;
-  };
-
-  virtualisation.oci-containers = {
-    backend = "docker";
-    containers.windows = {
-      image = "dockurr/windows:6.05";
-      autoStart = false;
-
-      environment = {
-        VERSION = "11";
-        RAM_SIZE = "8G";
-        CPU_CORES = "4";
-        DISK_SIZE = "64G";
-        USERNAME = "zdtza";
-        TZ = config.time.timeZone;
-        PASSWORD = "windows";
-      };
-
-      volumes = [ "${windowsStorage}:/storage" ];
-
-      ports = [
-        "127.0.0.1:8006:8006" # web viewer, needed to watch the first install
-        "127.0.0.1:3389:3389/tcp" # RDP
-        "127.0.0.1:3389:3389/udp"
-      ];
-
-      devices = [
-        "/dev/kvm"
-        "/dev/net/tun"
-      ];
-      capabilities.NET_ADMIN = true;
-    };
-  };
-
-  systemd.tmpfiles.rules = [ "d ${windowsStorage} 0700 root root -" ];
-
-  # Erases every trace of Windows: container, disk image, and pulled image.
-  # Runs as a unit rather than through sudo so the launcher can trigger it via
-  # the same polkit rule, instead of an unanswerable password prompt.
-  systemd.services.windows-wipe = {
-    description = "Erase Windows and its container image";
-    serviceConfig = {
-      Type = "oneshot";
-      # Stopping Windows alone can use the full 300s shutdown budget.
-      TimeoutStartSec = 600;
-      ExecStart =
-        let
-          docker = "${config.virtualisation.docker.package}/bin/docker";
-          image = config.virtualisation.oci-containers.containers.windows.image;
-        in
-        pkgs.writeShellScript "windows-wipe" ''
-          set -eu
-
-          systemctl stop docker-windows.service || true
-
-          # Normally a no-op, since the container runs with --rm.
-          ${docker} rm -f windows >/dev/null 2>&1 || true
-
-          # Contents only: the directory keeps its 0700 root ownership.
-          find ${windowsStorage} -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
-
-          ${docker} image rm -f ${image} >/dev/null 2>&1 || true
-        '';
-    };
-  };
-
-  # Lets the desktop entry start/stop Windows without a root password prompt,
-  # which would otherwise be unanswerable when launched from the app launcher.
-  security.polkit = {
-    enable = true;
-    extraConfig = ''
-      var windowsUnits = ["docker-windows.service", "windows-wipe.service"];
-      polkit.addRule(function(action, subject) {
-        if (action.id == "org.freedesktop.systemd1.manage-units" &&
-            windowsUnits.indexOf(action.lookup("unit")) >= 0 &&
-            subject.user == "zdtza") {
-          return polkit.Result.YES;
-        }
-      });
-
-      // Internal drives (e.g. a second OS's disk) count as "system devices"
-      // to udisks2, which normally demands admin auth every mount/unlock even
-      // for the session's own active user. Single-user machine; skip it.
-      var diskActions = [
-        "org.freedesktop.udisks2.filesystem-mount-system",
-        "org.freedesktop.udisks2.encrypted-unlock-system",
-      ];
-      polkit.addRule(function(action, subject) {
-        if (diskActions.indexOf(action.id) >= 0 && subject.user == "zdtza") {
-          return polkit.Result.YES;
-        }
-      });
-    '';
+    user = "zdtza";
   };
 
   environment.systemPackages = with pkgs; [

@@ -3,24 +3,26 @@
   pkgs,
   lib,
   osConfig,
-  repoFile,
   ...
 }:
 
-# Front end for the `dockurr/windows` container defined in configuration.nix.
+# Front end for the container defined by nixosModules.windows. Pairs with
+# it 1:1 — enable comes from the NixOS side (services.windows.enable),
+# nothing here to configure independently.
 #
 # Four separate commands rather than one with flags: nothing in windows-launch,
 # windows-install or windows-stop can reach the code that deletes the disk
 # image. Only windows-remove touches it, and the deletion itself lives in a
 # root-owned systemd unit.
 let
+  cfg = osConfig.services.windows;
   container = osConfig.virtualisation.oci-containers.containers.windows;
 
   unit = "docker-windows.service";
   wipeUnit = "windows-wipe.service";
   host = "127.0.0.1";
-  rdpPort = "3389";
-  webUrl = "http://127.0.0.1:8006";
+  rdpPort = toString cfg.ports.rdp;
+  webUrl = "http://127.0.0.1:${toString cfg.ports.web}";
 
   # Written once Windows genuinely answers RDP, and removed by windows-remove.
   # Only ever a cache: a live RDP handshake outranks it, so a stale or missing
@@ -173,11 +175,10 @@ let
     '';
   };
 in
-{
-  # Installed under hicolor as a themed name rather than referenced by path, so
-  # the launcher resolves it the same way it resolves any other app icon.
-  home.file.".local/share/icons/hicolor/scalable/apps/windows.svg".source =
-    repoFile "assets/icons/windows.svg";
+lib.mkIf cfg.enable {
+  # Colocated with the module rather than pulled from ./assets, so the
+  # module works standalone when imported by another flake.
+  home.file.".local/share/icons/hicolor/scalable/apps/windows.svg".source = ./windows.svg;
 
   home.packages = [
     launch

@@ -130,7 +130,8 @@
 
       directory = {
         format = "[$path](green) ";
-        truncation_length = 3;
+        truncation_length = 0;
+        truncate_to_repo = false;
         truncation_symbol = "";
       };
 

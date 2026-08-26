@@ -23,12 +23,20 @@
       ...
     }:
     {
+      # Reusable pieces, importable by this flake's own host below or by any
+      # other flake that takes this repo as an input. Add a `nixosModules.<x>`
+      # / `homeManagerModules.<x>` pair here as more of the config is split
+      # out this way.
+      nixosModules.windows = ./modules/windows/nixos.nix;
+      homeManagerModules.windows = ./modules/windows/home.nix;
+
       nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
         modules = [
           # main config
           ./configuration.nix
+          self.nixosModules.windows
 
-          # extra flakes
+          # external modules
           stylix.nixosModules.stylix
           home-manager.nixosModules.home-manager
 
@@ -37,6 +45,7 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.extraSpecialArgs = { inherit inputs self; };
+            home-manager.sharedModules = [ self.homeManagerModules.windows ];
 
             home-manager.users.zdtza = {
               imports = [
@@ -55,7 +64,6 @@
                 ./home/nvim.nix
                 ./home/git.nix
                 ./home/web-apps.nix
-                ./home/windows.nix
                 ./home/fzf.nix
                 ./home/polkit-agent.nix
                 ./home/yazi.nix

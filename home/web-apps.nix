@@ -45,7 +45,7 @@ let
       # capture. Skips Chromium's own share-type dialog entirely; the Hyprland
       # picker still shows once per target unless a restore token is valid.
       chromiumFlags = [
-        "\"--auto-select-desktop-capture-source=Entire screen\""
+        "--auto-select-desktop-capture-source=\"Entire screen\""
         "--disable-backgrounding-occluded-windows"
         "--disable-renderer-backgrounding"
         "--disable-background-timer-throttling"

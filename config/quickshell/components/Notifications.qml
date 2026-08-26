@@ -7,6 +7,8 @@ import Quickshell.Hyprland
 import Quickshell.Services.Notifications
 import Quickshell.Wayland
 import Stylix
+import "../services"
+import ".."
 
 Scope {
     id: root
@@ -240,7 +242,7 @@ Scope {
                     elide: Text.ElideRight
                     maximumLineCount: 2
                     font.family: Theme.fontFamily
-                    font.pixelSize: Util.scaledFont(14)
+                    font.pixelSize: Utils.scaledFont(14)
                     font.weight: Font.Bold
                 }
 
@@ -248,13 +250,13 @@ Scope {
                     width: parent.width
                     text: card.notification.body
                     visible: text !== ""
-                    color: Theme.muted
+                    color: Utils.alpha(Theme.foreground, 0.75)
                     textFormat: Text.StyledText
                     wrapMode: Text.Wrap
                     elide: Text.ElideRight
                     maximumLineCount: 4
                     font.family: Theme.fontFamily
-                    font.pixelSize: Util.scaledFont(12)
+                    font.pixelSize: Utils.scaledFont(12)
                     lineHeight: 1.35
                 }
             }

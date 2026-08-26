@@ -2,6 +2,8 @@
 // remaining time when one or more timers are running; hidden otherwise.
 import QtQuick
 import Stylix
+import "../services"
+import ".."
 
 Item {
     id: root
@@ -27,9 +29,9 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: height / 2
-        color: Util.alpha(Theme.foreground, 0.1)
+        color: Utils.alpha(Theme.foreground, 0.1)
         border.width: 1
-        border.color: Util.alpha(Theme.foreground, 0.3)
+        border.color: Utils.alpha(Theme.foreground, 0.3)
     }
 
     Row {
@@ -42,7 +44,7 @@ Item {
             text: "󱎫"
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: Util.scaledFont(11)
+            font.pixelSize: Utils.scaledFont(11)
         }
 
         Text {
@@ -50,7 +52,7 @@ Item {
             text: root.display
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: Util.scaledFont(11)
+            font.pixelSize: Utils.scaledFont(11)
             font.weight: Font.Medium
         }
     }

@@ -15,6 +15,7 @@ import Quickshell
 import Stylix
 import Quickshell.Hyprland
 import Quickshell.Services.SystemTray
+import "../services"
 
 Item {
     id: root

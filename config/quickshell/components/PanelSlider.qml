@@ -1,5 +1,6 @@
 import QtQuick
 import Stylix
+import ".."
 
 // Square value slider shared by panel controls (volume, brightness, color
 // temperature, ...).
@@ -26,7 +27,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         height: 5
         radius: height / 2
-        color: Util.alpha(Theme.foreground, 0.12)
+        color: Utils.alpha(Theme.foreground, 0.12)
 
         Rectangle {
             width: parent.width * Math.max(0, Math.min(1, root.value))

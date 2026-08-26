@@ -6,6 +6,9 @@ import Quickshell
 import Quickshell.Bluetooth
 import Quickshell.Hyprland
 import Stylix
+import "../components"
+import "../services"
+import ".."
 
 Item {
     id: root
@@ -283,7 +286,7 @@ Item {
                             verticalAlignment: Text.AlignVCenter
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: Util.scaledFont(12)
+                            font.pixelSize: Utils.scaledFont(12)
                         }
 
                         Repeater {
@@ -328,10 +331,10 @@ Item {
         height: root.deviceRowHeight
         radius: ServicePanel.rounding
         color: keyboardSelected
-            ? Util.alpha(Theme.foreground, 0.08)
+            ? Utils.alpha(Theme.foreground, 0.08)
             : "transparent"
         border.width: keyboardSelected ? 1 : 0
-        border.color: Util.alpha(Theme.foreground, 0.25)
+        border.color: Utils.alpha(Theme.foreground, 0.25)
         Behavior on color { ColorAnimation { duration: 120 } }
 
         HoverHandler {
@@ -348,7 +351,7 @@ Item {
             text: ServiceBluetooth.deviceIcon(deviceRow.device)
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: Util.scaledFont(16)
+            font.pixelSize: Utils.scaledFont(16)
         }
 
         Column {
@@ -364,7 +367,7 @@ Item {
                 text: ServiceBluetooth.deviceLabel(deviceRow.device)
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(12)
+                font.pixelSize: Utils.scaledFont(12)
                 elide: Text.ElideRight
             }
 
@@ -385,7 +388,7 @@ Item {
                 }
                 color: Theme.muted
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(11)
+                font.pixelSize: Utils.scaledFont(11)
                 elide: Text.ElideRight
             }
         }
@@ -422,7 +425,7 @@ Item {
                 : (deviceRow.device.paired ? "󰌾" : "")
             color: Theme.muted
             font.family: Theme.fontFamily
-            font.pixelSize: Util.scaledFont(12)
+            font.pixelSize: Utils.scaledFont(12)
         }
 
         MouseArea {

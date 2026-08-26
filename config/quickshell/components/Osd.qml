@@ -4,6 +4,8 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import Stylix
+import "../services"
+import ".."
 
 Scope {
     id: root
@@ -111,7 +113,7 @@ Scope {
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                     font.family: Theme.fontFamily
-                    font.pixelSize: Util.scaledFont(16)
+                    font.pixelSize: Utils.scaledFont(16)
                 }
 
                 Item {
@@ -124,7 +126,7 @@ Scope {
                         anchors.verticalCenter: parent.verticalCenter
                         height: 5
                         radius: height / 2
-                        color: Util.alpha(Theme.foreground, 0.12)
+                        color: Utils.alpha(Theme.foreground, 0.12)
 
                         Rectangle {
                             width: parent.width * root.value

@@ -3,6 +3,8 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Stylix
+import "../panels"
+import "../services"
 
 Item {
     id: root

@@ -12,6 +12,8 @@ import QtQuick
 import Quickshell
 import Stylix
 import Quickshell.Hyprland
+import "../services"
+import ".."
 
 Item {
     id: root
@@ -73,7 +75,7 @@ Item {
                     text: workspaceItem.workspaceId
                     color: workspaceItem.isActive || workspaceItem.isOccupied ? Theme.foreground : Theme.muted
                     font.family: Theme.fontFamily
-                    font.pixelSize: Util.scaledFont(Theme.fontSize)
+                    font.pixelSize: Utils.scaledFont(Theme.fontSize)
                 }
 
                 MouseArea {

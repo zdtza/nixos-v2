@@ -3,6 +3,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Stylix
+import "../components"
+import "../services"
+import ".."
 
 Item {
     id: root
@@ -157,7 +160,7 @@ Item {
                     radius: ServicePanel.rounding
                     color: modelData.available
                         && actionButton.index === root.selectedActionIndex
-                        ? Util.alpha(Theme.foreground, 0.12)
+                        ? Utils.alpha(Theme.foreground, 0.12)
                         : "transparent"
                     Behavior on color { ColorAnimation { duration: 140 } }
 
@@ -169,7 +172,7 @@ Item {
                         opacity: actionButton.modelData.available ? 1 : 0.45
                         scale: actionButton.index === root.selectedActionIndex ? 1.1 : 1
                         font.family: Theme.fontFamily
-                        font.pixelSize: Util.scaledFont(actionButton.modelData.iconSize)
+                        font.pixelSize: Utils.scaledFont(actionButton.modelData.iconSize)
                         Behavior on scale {
                             NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
                         }

@@ -1,5 +1,6 @@
 import QtQuick
 import Stylix
+import ".."
 
 // Shared uppercase section heading with optional right-aligned status.
 Item {
@@ -18,7 +19,7 @@ Item {
         text: root.title
         color: Qt.darker(Theme.foreground, 1.4)
         font.family: Theme.fontFamily
-        font.pixelSize: Util.scaledFont(11)
+        font.pixelSize: Utils.scaledFont(11)
         font.bold: true
         font.letterSpacing: 1
     }
@@ -31,7 +32,7 @@ Item {
         visible: text !== ""
         color: Theme.muted
         font.family: Theme.fontFamily
-        font.pixelSize: Util.scaledFont(11)
+        font.pixelSize: Utils.scaledFont(11)
         font.bold: true
         font.letterSpacing: 1
     }

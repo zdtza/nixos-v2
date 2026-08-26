@@ -3,6 +3,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Stylix
+import "../components"
+import "../services"
+import ".."
 
 // Current-year calendar shown from clock in bar.
 PanelPopup {
@@ -253,7 +256,7 @@ PanelPopup {
                 text: "󰃭"
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(50)
+                font.pixelSize: Utils.scaledFont(50)
                 font.bold: true
             }
 
@@ -262,7 +265,7 @@ PanelPopup {
                 text: root.monthNames[clock.date.getMonth()] + " " + clock.date.getDate()
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(48)
+                font.pixelSize: Utils.scaledFont(48)
                 font.weight: Font.Bold
             }
         }
@@ -280,7 +283,7 @@ PanelPopup {
             text: root.currentYear
             color: Theme.muted
             font.family: Theme.fontFamily
-            font.pixelSize: Util.scaledFont(12)
+            font.pixelSize: Utils.scaledFont(12)
             font.letterSpacing: 1
         }
 
@@ -312,7 +315,7 @@ PanelPopup {
             text: root.yearCompletePercent + "%"
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: Util.scaledFont(12)
+            font.pixelSize: Utils.scaledFont(12)
             font.letterSpacing: 1
         }
     }
@@ -333,7 +336,7 @@ PanelPopup {
                 text: modelData
                 color: Theme.muted
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(11)
+                font.pixelSize: Utils.scaledFont(11)
                 font.weight: Font.Medium
                 font.letterSpacing: 1
             }
@@ -391,7 +394,7 @@ PanelPopup {
                         color: dayCell.modelData.weekNumber || !dayCell.modelData.inMonth
                             ? Theme.border : Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: Util.scaledFont(dayCell.modelData.weekNumber ? 10 : 13)
+                        font.pixelSize: Utils.scaledFont(dayCell.modelData.weekNumber ? 10 : 13)
                         font.weight: dayCell.marked ? Font.Medium : Font.Normal
                     }
 
@@ -444,7 +447,7 @@ PanelPopup {
                 text: "‹"
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(18)
+                font.pixelSize: Utils.scaledFont(18)
             }
 
             MouseArea {
@@ -465,7 +468,7 @@ PanelPopup {
                 text: (root.monthNames[root.shownMonth] + " " + root.currentYear).toUpperCase()
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(11)
+                font.pixelSize: Utils.scaledFont(11)
                 font.weight: Font.Medium
                 font.letterSpacing: 1.4
             }
@@ -476,7 +479,7 @@ PanelPopup {
                 text: root.selectedDayCount + " DAYS SELECTED"
                 color: Theme.muted
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(9)
+                font.pixelSize: Utils.scaledFont(9)
                 font.letterSpacing: 1
             }
         }
@@ -495,7 +498,7 @@ PanelPopup {
                 text: "›"
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(18)
+                font.pixelSize: Utils.scaledFont(18)
             }
 
             MouseArea {

@@ -8,6 +8,9 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import Stylix
+import "../components"
+import "../services"
+import ".."
 
 Item {
     id: root
@@ -508,12 +511,12 @@ Item {
                             width: parent.width
                             height: passwordOpen ? root.passwordRowHeight : root.networkRowHeight
                             color: rowMouse.pressed && !passwordOpen
-                                ? Util.alpha(Theme.foreground, 0.22)
+                                ? Utils.alpha(Theme.foreground, 0.22)
                                 : networkRow.keyboardSelected && !passwordOpen
-                                    ? Util.alpha(Theme.foreground, 0.08)
+                                    ? Utils.alpha(Theme.foreground, 0.08)
                                     : "transparent"
                             border.width: networkRow.keyboardSelected && !passwordOpen ? 1 : 0
-                            border.color: Util.alpha(Theme.foreground, 0.25)
+                            border.color: Utils.alpha(Theme.foreground, 0.25)
                             radius: ServicePanel.rounding
                             Behavior on color {
                                 ColorAnimation {
@@ -562,7 +565,7 @@ Item {
                                     text: ServiceNetwork.wifiIcon(networkRow.modelData.signal)
                                     color: Theme.foreground
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: Util.scaledFont(16)
+                                    font.pixelSize: Utils.scaledFont(16)
                                 }
                                 Column {
                                     anchors.left: networkIcon.right
@@ -577,7 +580,7 @@ Item {
                                         text: networkRow.modelData.ssid
                                         color: Theme.foreground
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: Util.scaledFont(12)
+                                        font.pixelSize: Utils.scaledFont(12)
                                         elide: Text.ElideRight
                                     }
                                     Text {
@@ -588,7 +591,7 @@ Item {
                                             : ServiceNetwork.securityLabel(networkRow.modelData.security)
                                         color: Theme.muted
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: Util.scaledFont(11)
+                                        font.pixelSize: Utils.scaledFont(11)
                                         elide: Text.ElideRight
                                     }
                                 }
@@ -624,7 +627,7 @@ Item {
                                     text: ServiceNetwork.securityRequiresPassword(networkRow.modelData.security) ? "󰌾" : ""
                                     color: Theme.muted
                                     font.family: Theme.fontFamily
-                                    font.pixelSize: Util.scaledFont(12)
+                                    font.pixelSize: Utils.scaledFont(12)
                                 }
 
                                 MouseArea {
@@ -660,9 +663,9 @@ Item {
                                     width: parent.width - connectButton.width - cancelButton.width - parent.spacing * 2
                                     height: 32
                                     radius: ServicePanel.rounding
-                                    color: Util.alpha(Theme.foreground, 0.04)
+                                    color: Utils.alpha(Theme.foreground, 0.04)
                                     border.width: 1
-                                    border.color: passwordInput.activeFocus ? Theme.muted : Util.alpha(Theme.foreground, 0.4)
+                                    border.color: passwordInput.activeFocus ? Theme.muted : Utils.alpha(Theme.foreground, 0.4)
 
                                     Text {
                                         anchors {
@@ -674,7 +677,7 @@ Item {
                                         text: root.failureText !== "" ? root.failureText : "Password"
                                         color: root.failureText !== "" ? Theme.urgent : Theme.muted
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: Util.scaledFont(12)
+                                        font.pixelSize: Utils.scaledFont(12)
                                     }
 
                                     TextInput {
@@ -690,7 +693,7 @@ Item {
                                         selectionColor: Theme.muted
                                         selectedTextColor: Theme.background
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: Util.scaledFont(12)
+                                        font.pixelSize: Utils.scaledFont(12)
                                         font.letterSpacing: 2
                                         clip: true
                                         Component.onCompleted: {
@@ -707,15 +710,15 @@ Item {
                                     width: 72
                                     height: 32
                                     radius: ServicePanel.rounding
-                                    color: connectMouse.containsMouse ? Util.alpha(Theme.foreground, 0.18) : Util.alpha(Theme.foreground, 0.08)
+                                    color: connectMouse.containsMouse ? Utils.alpha(Theme.foreground, 0.18) : Utils.alpha(Theme.foreground, 0.08)
                                     border.width: 1
-                                    border.color: Util.alpha(Theme.foreground, 0.4)
+                                    border.color: Utils.alpha(Theme.foreground, 0.4)
                                     Text {
                                         anchors.centerIn: parent
                                         text: "Connect"
                                         color: Theme.foreground
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: Util.scaledFont(11)
+                                        font.pixelSize: Utils.scaledFont(11)
                                         font.bold: true
                                     }
                                     MouseArea {
@@ -732,15 +735,15 @@ Item {
                                     width: 32
                                     height: 32
                                     radius: ServicePanel.rounding
-                                    color: cancelMouse.containsMouse ? Util.alpha(Theme.foreground, 0.12) : "transparent"
+                                    color: cancelMouse.containsMouse ? Utils.alpha(Theme.foreground, 0.12) : "transparent"
                                     border.width: 1
-                                    border.color: Util.alpha(Theme.foreground, 0.3)
+                                    border.color: Utils.alpha(Theme.foreground, 0.3)
                                     Text {
                                         anchors.centerIn: parent
                                         text: "󰅖"
                                         color: Theme.foreground
                                         font.family: Theme.fontFamily
-                                        font.pixelSize: Util.scaledFont(12)
+                                        font.pixelSize: Utils.scaledFont(12)
                                     }
                                     MouseArea {
                                         id: cancelMouse
@@ -794,7 +797,7 @@ Item {
                             verticalAlignment: Text.AlignVCenter
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: Util.scaledFont(12)
+                            font.pixelSize: Utils.scaledFont(12)
                         }
 
                         Repeater {
@@ -811,7 +814,7 @@ Item {
         color: Theme.foreground
         opacity: 0.6
         font.family: Theme.fontFamily
-        font.pixelSize: Util.scaledFont(12)
+        font.pixelSize: Utils.scaledFont(12)
     }
 
     component DetailValue: Text {
@@ -822,7 +825,7 @@ Item {
         horizontalAlignment: Text.AlignRight
         color: valueColor
         font.family: Theme.fontFamily
-        font.pixelSize: Util.scaledFont(12)
+        font.pixelSize: Utils.scaledFont(12)
         elide: Text.ElideRight
 
         MouseArea {

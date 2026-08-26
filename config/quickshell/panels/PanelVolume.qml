@@ -6,6 +6,9 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Services.Pipewire
 import Stylix
+import "../components"
+import "../services"
+import ".."
 
 Item {
     id: root
@@ -205,7 +208,7 @@ Item {
                 text: "No audio outputs"
                 color: Theme.muted
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(12)
+                font.pixelSize: Utils.scaledFont(12)
             }
 
             Repeater {
@@ -256,7 +259,7 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 radius: ServicePanel.rounding
-                color: Util.alpha(Theme.foreground, 0.12)
+                color: Utils.alpha(Theme.foreground, 0.12)
 
                 Rectangle {
                     height: parent.height
@@ -281,7 +284,7 @@ Item {
                 text: "No audio inputs"
                 color: Theme.muted
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(12)
+                font.pixelSize: Utils.scaledFont(12)
             }
 
             Repeater {
@@ -320,10 +323,10 @@ Item {
         height: 36
         radius: ServicePanel.rounding
         color: keyboardSelected
-            ? Util.alpha(Theme.foreground, 0.08)
+            ? Utils.alpha(Theme.foreground, 0.08)
             : "transparent"
         border.width: keyboardSelected ? 1 : 0
-        border.color: Util.alpha(Theme.foreground, 0.25)
+        border.color: Utils.alpha(Theme.foreground, 0.25)
         Behavior on color { ColorAnimation { duration: 120 } }
 
         Text {
@@ -334,7 +337,7 @@ Item {
             text: deviceRow.icon
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: Util.scaledFont(14)
+            font.pixelSize: Utils.scaledFont(14)
         }
 
         Text {
@@ -346,7 +349,7 @@ Item {
             text: root.nodeLabel(deviceRow.node)
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: Util.scaledFont(12)
+            font.pixelSize: Utils.scaledFont(12)
             elide: Text.ElideRight
         }
 
@@ -359,7 +362,7 @@ Item {
             text: "󰄬"
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: Util.scaledFont(12)
+            font.pixelSize: Utils.scaledFont(12)
         }
 
         MouseArea {

@@ -5,6 +5,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Stylix
+import "../components"
+import "../services"
+import ".."
 
 Item {
     id: root
@@ -163,7 +166,7 @@ Item {
                 text: root.percent + "%"
                 color: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(30)
+                font.pixelSize: Utils.scaledFont(30)
                 font.bold: true
             }
         }
@@ -176,7 +179,7 @@ Item {
                 id: chargeTrack
                 anchors.fill: parent
                 radius: height / 2
-                color: Util.alpha(Theme.foreground, 0.12)
+                color: Utils.alpha(Theme.foreground, 0.12)
             }
             Rectangle {
                 anchors.left: chargeTrack.left
@@ -294,7 +297,7 @@ Item {
                                 text: root.profileIcon(String(profileButton.modelData))
                                 color: Theme.foreground
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Util.scaledFont(15)
+                                font.pixelSize: Utils.scaledFont(15)
                             }
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
@@ -302,7 +305,7 @@ Item {
                                     ? "Power-saver" : String(profileButton.modelData)
                                 color: Theme.foreground
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Util.scaledFont(12)
+                                font.pixelSize: Utils.scaledFont(12)
                             }
                         }
                     }
@@ -322,7 +325,7 @@ Item {
             color: Theme.foreground
             opacity: 0.6
             font.family: Theme.fontFamily
-            font.pixelSize: Util.scaledFont(12)
+            font.pixelSize: Utils.scaledFont(12)
         }
         Item {
             width: Math.max(0, parent.width
@@ -333,7 +336,7 @@ Item {
             text: parent.valueText
             color: Theme.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: Util.scaledFont(12)
+            font.pixelSize: Utils.scaledFont(12)
         }
     }
 }

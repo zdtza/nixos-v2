@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Stylix
+import "../services"
 
 // Shared anchored card used by bar panel popups.
 PopupWindow {

@@ -4,6 +4,9 @@
 import QtQuick
 import Quickshell.Services.Pipewire
 import Stylix
+import "../panels"
+import "../services"
+import ".."
 
 Item {
     id: root
@@ -175,7 +178,7 @@ Item {
                         text: "󰅶"
                         color: ServiceStayAwake.enabled ? Theme.foreground : Theme.muted
                         font.family: Theme.fontFamily
-                        font.pixelSize: Util.scaledFont(14)
+                        font.pixelSize: Utils.scaledFont(14)
                     }
 
                     MouseArea {
@@ -235,7 +238,7 @@ Item {
                         color: ServiceDoNotDisturb.enabled
                             ? Theme.foreground : Theme.muted
                         font.family: Theme.fontFamily
-                        font.pixelSize: Util.scaledFont(14)
+                        font.pixelSize: Utils.scaledFont(14)
                     }
 
                     MouseArea {
@@ -272,7 +275,7 @@ Item {
                         text: ""
                         color: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: Util.scaledFont(14)
+                        font.pixelSize: Utils.scaledFont(14)
                     }
                 }
             }

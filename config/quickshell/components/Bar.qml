@@ -5,6 +5,8 @@ import QtQuick.Layouts
 import Quickshell
 import Stylix
 import Quickshell.Wayland
+import "../panels"
+import "../services"
 
 PanelWindow {
     id: bar

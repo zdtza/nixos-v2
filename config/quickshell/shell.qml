@@ -3,6 +3,8 @@
 // Root of the shell. One bar instance per connected screen.
 import Quickshell
 import Quickshell.Io
+import "components"
+import "services"
 
 ShellRoot {
     id: root

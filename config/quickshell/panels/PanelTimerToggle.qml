@@ -5,6 +5,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Stylix
+import "../components"
+import "../services"
+import ".."
 
 Item {
     id: root
@@ -185,10 +188,10 @@ Item {
                 readonly property bool canStart: root.parseDuration(durationInput.text) > 0
                 radius: ServicePanel.rounding
                 color: addMouse.containsMouse
-                    ? Util.alpha(Theme.foreground, 0.12)
+                    ? Utils.alpha(Theme.foreground, 0.12)
                     : "transparent"
                 border.width: 1
-                border.color: Util.alpha(Theme.foreground, 0.3)
+                border.color: Utils.alpha(Theme.foreground, 0.3)
                 opacity: canStart ? 1 : 0.5
                 Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -197,7 +200,7 @@ Item {
                     text: "󰐕"
                     color: Theme.foreground
                     font.family: Theme.fontFamily
-                    font.pixelSize: Util.scaledFont(14)
+                    font.pixelSize: Utils.scaledFont(14)
                 }
 
                 MouseArea {
@@ -226,7 +229,7 @@ Item {
             color: Theme.dark_background
             border.width: 1
             border.color: durationInput.activeFocus ? Theme.muted
-                : Util.alpha(Theme.foreground, 0.3)
+                : Utils.alpha(Theme.foreground, 0.3)
 
             TextInput {
                 id: durationInput
@@ -247,7 +250,7 @@ Item {
                 selectionColor: Theme.surface
                 selectedTextColor: Theme.foreground
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(36)
+                font.pixelSize: Utils.scaledFont(36)
                 font.weight: Font.Medium
                 font.letterSpacing: 3
 
@@ -280,7 +283,7 @@ Item {
                 verticalAlignment: Text.AlignVCenter
                 color: Theme.muted
                 font.family: Theme.fontFamily
-                font.pixelSize: Util.scaledFont(12)
+                font.pixelSize: Utils.scaledFont(12)
             }
 
             Flickable {
@@ -316,10 +319,10 @@ Item {
                             height: root.timerRowHeight
                             radius: ServicePanel.rounding
                             color: timerRow.index === root.selectedTimerIndex
-                                ? Util.alpha(Theme.foreground, 0.08)
+                                ? Utils.alpha(Theme.foreground, 0.08)
                                 : "transparent"
                             border.width: timerRow.index === root.selectedTimerIndex ? 1 : 0
-                            border.color: Util.alpha(Theme.foreground, 0.25)
+                            border.color: Utils.alpha(Theme.foreground, 0.25)
                             Behavior on color { ColorAnimation { duration: 120 } }
 
                             HoverHandler {
@@ -336,7 +339,7 @@ Item {
                                 text: "󱎫"
                                 color: Theme.foreground
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Util.scaledFont(16)
+                                font.pixelSize: Utils.scaledFont(16)
                             }
 
                             Text {
@@ -351,7 +354,7 @@ Item {
                                         - ServiceTimer.nowMs) / 1000)))
                                 color: Theme.foreground
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Util.scaledFont(24)
+                                font.pixelSize: Utils.scaledFont(24)
                                 font.weight: Font.Medium
                             }
 

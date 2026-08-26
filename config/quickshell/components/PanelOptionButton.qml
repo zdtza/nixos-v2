@@ -1,5 +1,7 @@
 import QtQuick
 import Stylix
+import "../services"
+import ".."
 
 // Selectable option cell used by power profiles and display scales. Selection
 // and hover use the same visual language as device, network, and monitor rows.
@@ -21,14 +23,14 @@ Rectangle {
     radius: ServicePanel.rounding
     opacity: root.enabled ? 1 : 0.5
     color: mouseArea.pressed
-        ? Util.alpha(Theme.foreground, 0.22)
+        ? Utils.alpha(Theme.foreground, 0.22)
         : root.highlighted
-            ? Util.alpha(Theme.foreground, 0.12)
+            ? Utils.alpha(Theme.foreground, 0.12)
             : root.active
-                ? Util.alpha(Theme.foreground, 0.08)
+                ? Utils.alpha(Theme.foreground, 0.08)
                 : "transparent"
     border.width: root.active || root.highlighted ? 1 : 0
-    border.color: Util.alpha(Theme.foreground,
+    border.color: Utils.alpha(Theme.foreground,
         root.highlighted ? 0.35 : 0.25)
     Behavior on color { ColorAnimation { duration: 120 } }
 

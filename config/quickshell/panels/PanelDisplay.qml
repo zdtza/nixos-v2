@@ -5,6 +5,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Stylix
+import "../components"
+import "../services"
+import ".."
 
 Item {
     id: root
@@ -172,7 +175,7 @@ Item {
                         text: root.scaleLabel(Number(scaleButton.modelData))
                         color: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: Util.scaledFont(12)
+                        font.pixelSize: Utils.scaledFont(12)
                     }
                 }
             }
@@ -202,10 +205,10 @@ Item {
                     height: 36
                     radius: ServicePanel.rounding
                     color: focused
-                        ? Util.alpha(Theme.foreground, 0.08)
+                        ? Utils.alpha(Theme.foreground, 0.08)
                         : "transparent"
                     border.width: focused ? 1 : 0
-                    border.color: Util.alpha(Theme.foreground, 0.25)
+                    border.color: Utils.alpha(Theme.foreground, 0.25)
                     Behavior on color { ColorAnimation { duration: 120 } }
 
                     Text {
@@ -216,7 +219,7 @@ Item {
                         text: "󰍹"
                         color: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: Util.scaledFont(14)
+                        font.pixelSize: Utils.scaledFont(14)
                     }
 
                     Text {
@@ -228,7 +231,7 @@ Item {
                         text: String(monitorRow.modelData.name)
                         color: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: Util.scaledFont(12)
+                        font.pixelSize: Utils.scaledFont(12)
                         elide: Text.ElideRight
                     }
 
@@ -241,7 +244,7 @@ Item {
                         text: "󰄬"
                         color: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: Util.scaledFont(12)
+                        font.pixelSize: Utils.scaledFont(12)
                     }
                 }
             }

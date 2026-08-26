@@ -9,6 +9,9 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import Stylix
+import "../panels"
+import "../services"
+import ".."
 
 Scope {
     id: root
@@ -141,7 +144,7 @@ Scope {
         // Keep the layer surface mapped. Closing only makes it transparent and
         // removes its input region, avoiding a Wayland map round trip on open.
         visible: true
-        color: root.open ? Util.alpha(Theme.dark_background, 0.45) : "transparent"
+        color: root.open ? Utils.alpha(Theme.dark_background, 0.45) : "transparent"
         mask: Region {
             width: root.open ? window.width : 0
             height: root.open ? window.height : 0
@@ -394,7 +397,7 @@ Scope {
                         selectionColor: Theme.surface
                         selectedTextColor: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: Util.scaledFont(14)
+                        font.pixelSize: Utils.scaledFont(14)
 
                         cursorDelegate: Rectangle {
                             width: 1
@@ -410,7 +413,7 @@ Scope {
                             text: "Type to search applications…"
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: Util.scaledFont(14)
+                            font.pixelSize: Utils.scaledFont(14)
                         }
 
                         Keys.onEscapePressed: {
@@ -548,7 +551,7 @@ Scope {
                                 color: Theme.foreground
                                 elide: Text.ElideRight
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Util.scaledFont(14)
+                                font.pixelSize: Utils.scaledFont(14)
                                 font.bold: appRow.selected
                             }
 
@@ -558,7 +561,7 @@ Scope {
                                 color: Qt.darker(Theme.foreground, 1.4)
                                 elide: Text.ElideRight
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Util.scaledFont(11)
+                                font.pixelSize: Utils.scaledFont(11)
                             }
                         }
 
@@ -570,7 +573,7 @@ Scope {
                             text: appRow.selected ? "↵" : ""
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: Util.scaledFont(14)
+                            font.pixelSize: Utils.scaledFont(14)
                         }
 
                         MouseArea {
@@ -601,7 +604,7 @@ Scope {
                             text: "󰈉"
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: Util.scaledFont(28)
+                            font.pixelSize: Utils.scaledFont(28)
                         }
 
                         Text {
@@ -609,7 +612,7 @@ Scope {
                             text: "NO MATCHING APPLICATIONS"
                             color: Theme.muted
                             font.family: Theme.fontFamily
-                            font.pixelSize: Util.scaledFont(11)
+                            font.pixelSize: Utils.scaledFont(11)
                             font.bold: true
                             font.letterSpacing: 1
                         }
@@ -681,7 +684,7 @@ Scope {
                         text: "Launch"
                         color: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: Util.scaledFont(13)
+                        font.pixelSize: Utils.scaledFont(13)
                         font.bold: true
                     }
 
@@ -694,7 +697,7 @@ Scope {
                         text: "↵"
                         color: Theme.muted
                         font.family: Theme.fontFamily
-                        font.pixelSize: Util.scaledFont(12)
+                        font.pixelSize: Utils.scaledFont(12)
                     }
 
                     MouseArea {
@@ -737,7 +740,7 @@ Scope {
                             color: Theme.muted
                             elide: Text.ElideRight
                             font.family: Theme.fontFamily
-                            font.pixelSize: Util.scaledFont(13)
+                            font.pixelSize: Utils.scaledFont(13)
                         }
 
                         MouseArea {

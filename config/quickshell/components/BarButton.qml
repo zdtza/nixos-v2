@@ -1,5 +1,7 @@
 import QtQuick
 import Stylix
+import "../services"
+import ".."
 
 // Fixed-width bar button shared by panel-backed status controls.
 Item {
@@ -26,7 +28,7 @@ Item {
         text: root.text
         color: root.textColor
         font.family: Theme.fontFamily
-        font.pixelSize: Util.scaledFont(14)
+        font.pixelSize: Utils.scaledFont(14)
     }
 
     Rectangle {

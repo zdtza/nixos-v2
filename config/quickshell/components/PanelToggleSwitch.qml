@@ -1,5 +1,7 @@
 import QtQuick
 import Stylix
+import "../services"
+import ".."
 
 // On/off pill switch used in panel hero trailing slots (mute, radio power,
 // wifi, night light).
@@ -19,18 +21,18 @@ Item {
         anchors.fill: parent
         radius: ServicePanel.rounding
         color: switchMouse.pressed
-            ? Util.alpha(Theme.foreground, 0.16)
+            ? Utils.alpha(Theme.foreground, 0.16)
             : root.checked
-                ? Util.alpha(Theme.foreground,
+                ? Utils.alpha(Theme.foreground,
                     switchMouse.containsMouse ? 0.12 : 0.08)
                 : switchMouse.containsMouse
-                    ? Util.alpha(Theme.foreground, 0.04)
+                    ? Utils.alpha(Theme.foreground, 0.04)
                     : "transparent"
         border.width: 1
         border.color: root.checked
-            ? Util.alpha(Theme.foreground,
+            ? Utils.alpha(Theme.foreground,
                 switchMouse.containsMouse ? 0.35 : 0.25)
-            : Util.alpha(Theme.foreground,
+            : Utils.alpha(Theme.foreground,
                 switchMouse.containsMouse ? 0.25 : 0.15)
         Behavior on color { ColorAnimation { duration: 120 } }
         Behavior on border.color { ColorAnimation { duration: 120 } }

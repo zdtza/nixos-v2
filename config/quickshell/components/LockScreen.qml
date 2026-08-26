@@ -9,6 +9,8 @@ import Quickshell.Io
 import Quickshell.Services.Pam
 import Quickshell.Wayland
 import Stylix
+import "../services"
+import ".."
 
 Scope {
     id: root
@@ -107,7 +109,7 @@ Scope {
 
             Rectangle {
                 anchors.fill: parent
-                color: Util.alpha(Theme.background, 0.45)
+                color: Utils.alpha(Theme.background, 0.45)
             }
 
             Column {
@@ -119,7 +121,7 @@ Scope {
                     width: parent.width
                     height: 48
                     radius: ServicePanel.rounding
-                    color: Util.alpha(Theme.dark_background, 0.88)
+                    color: Utils.alpha(Theme.dark_background, 0.88)
                     border.width: 2
                     border.color: root.errorText.length > 0 ? Theme.urgent
                         : (passwordInput.activeFocus ? Theme.muted : Theme.border)
@@ -138,7 +140,7 @@ Scope {
                         selectionColor: Theme.surface
                         selectedTextColor: Theme.foreground
                         font.family: Theme.fontFamily
-                        font.pixelSize: Util.scaledFont(22)
+                        font.pixelSize: Utils.scaledFont(22)
                         font.letterSpacing: 2
                         text: root.password
                         onTextChanged: root.password = text

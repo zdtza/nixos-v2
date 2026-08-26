@@ -41,8 +41,12 @@
       # Authenticate before redirecting output so sudo's prompt stays visible.
       command sudo -v; or return $status
 
-      printf 'Rebuilding NixOS...\n'
-      command sudo nixos-rebuild switch --flake "$repo" $argv \
+      # Flake attr per host is its unix hostname (see hosts/<name> in the
+      # repo), so this works unmodified on any machine this repo manages.
+      set -l flake_target "$repo#"(command hostname)
+
+      printf 'Rebuilding NixOS (%s)...\n' "$flake_target"
+      command sudo nixos-rebuild switch --flake "$flake_target" $argv \
         >"$log_file" 2>&1
       set -l rebuild_status $status
 

@@ -48,10 +48,6 @@ let
         "--disable-backgrounding-occluded-windows"
         "--disable-renderer-backgrounding"
         "--disable-background-timer-throttling"
-        "--auto-select-desktop-capture-source=Entire screen"
-        "--use-file-for-fake-audio-capture=/dev/null" # Stops Microsoft Teams feedback loops
-        "--use-fake-ui-for-media-stream"
-        "--enable-usermedia-screen-capturing"
       ];
     }
     {
@@ -91,17 +87,6 @@ let
       name = "Claude";
       url = "https://claude.ai/new";
       isolated = false;
-    }
-    {
-      id = "screenshare-test";
-      name = "Screenshare Test";
-      url = "https://pigeoncast.com/tools/screen-share-test";
-      isolated = false;
-      chromiumFlags = [
-        "--auto-select-desktop-capture-source=Entire screen"
-        "--use-fake-ui-for-media-stream"
-        "--enable-usermedia-screen-capturing"
-      ];
     }
     # WEBAPPS
   ];

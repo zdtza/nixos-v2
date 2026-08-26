@@ -24,6 +24,7 @@ in
   xdg.configFile."hypr/xdph.conf".text = ''
     screencopy {
       custom_picker_binary = ${lib.getExe' picker "hyprland-preview-share-picker"}
+      allow_token_by_default = 1
     }
   '';
 

@@ -34,7 +34,7 @@
       command mkdir -p "$log_dir"
 
       # Stage every tracked and untracked change so the flake sees the exact
-      # contents that will be committed after a successful rebuild.
+      # contents being rebuilt.
       printf 'Staging changes...\n'
       command git -C "$repo" add --all; or return $status
 
@@ -55,12 +55,7 @@
           (command cat /run/current-system/nixos-version))
         set -l commit_message "NixOS generation $generation ($nixos_version)"
 
-        printf 'Commiting clean build...\n'
         printf 'Rebuild complete: %s\n' "$commit_message"
-        if not command git -C "$repo" diff --quiet HEAD --
-          command git -C "$repo" commit -am "$commit_message"
-          return $status
-        end
         return 0
       end
 

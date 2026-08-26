@@ -1,8 +1,5 @@
 { config, ... }:
 
-let
-  colors = config.lib.stylix.colors.withHashtag;
-in
 {
   # custom theme.toml below renders semantic colors directly
   stylix.targets.yazi.enable = false;
@@ -24,123 +21,114 @@ in
   xdg = {
     configFile."yazi/theme.toml".text = ''
       [mgr]
-      cwd             = { fg = "${colors.base0D}" }
-      find_keyword    = { fg = "${colors.base0A}", bold = true, underline = true }
-      find_position   = { fg = "${colors.base05}", bg = "reset", bold = true }
-      marker_copied   = { fg = "${colors.base0B}",  bg = "${colors.base0B}" }
-      marker_cut      = { fg = "${colors.base08}",    bg = "${colors.base08}" }
-      marker_marked   = { fg = "${colors.base0C}",   bg = "${colors.base0C}" }
-      marker_selected = { fg = "${colors.base0A}", bg = "${colors.base0A}" }
-      count_copied    = { bg = "${colors.base0B}" }
-      count_cut       = { bg = "${colors.base08}" }
-      count_selected  = { bg = "${colors.base0A}" }
+      cwd             = { fg = "@accent@" }
+      find_keyword    = { fg = "@yellow@", bold = true, underline = true }
+      find_position   = { fg = "@foreground@", bg = "reset", bold = true }
+      marker_copied   = { fg = "@green@",  bg = "@green@" }
+      marker_cut      = { fg = "@red@",    bg = "@red@" }
+      marker_marked   = { fg = "@cyan@",   bg = "@cyan@" }
+      marker_selected = { fg = "@yellow@", bg = "@yellow@" }
+      count_copied    = { bg = "@green@" }
+      count_cut       = { bg = "@red@" }
+      count_selected  = { bg = "@yellow@" }
       border_symbol   = "│"
-      border_style    = { fg = "${colors.base03}" }
+      border_style    = { fg = "@muted@" }
 
       [indicator]
-      parent  = { fg = "${colors.base04}", bg = "${colors.base01}" }
-      current = { fg = "${colors.base07}", bg = "${colors.base03}", bold = true }
-      preview = { fg = "${colors.base04}", bg = "${colors.base01}" }
+      parent  = { fg = "@bright_foreground@", bg = "@selection@" }
+      current = { fg = "@bright_foreground@", bg = "@selection@", bold = true }
+      preview = { fg = "@bright_foreground@", bg = "@selection@" }
       padding = { open = "▐", close = "▌" }
 
       [tabs]
-      active    = { fg = "${colors.base02}", bg = "${colors.base0D}", bold = true }
-      inactive  = { fg = "${colors.base0D}", bg = "${colors.base02}" }
+      active    = { fg = "@selection@", bg = "@accent@", bold = true }
+      inactive  = { fg = "@accent@", bg = "@selection@" }
       sep_inner = { open = " ", close = " " }
       sep_outer = { open = " ", close = " " }
 
       [mode]
-      normal_main = { fg = "${colors.base01}", bg = "${colors.base0D}", bold = true }
-      normal_alt  = { fg = "${colors.base0D}", bg = "${colors.base02}" }
-      # Matches marker_selected below so visual-select mode and the files it
-      # marks read as the same action instead of two unrelated accents.
-      select_main = { fg = "${colors.base01}", bg = "${colors.base0A}", bold = true }
-      select_alt  = { fg = "${colors.base0A}", bg = "${colors.base02}" }
-      unset_main  = { fg = "${colors.base07}", bg = "${colors.base04}", bold = true }
-      unset_alt   = { fg = "${colors.base04}", bg = "${colors.base02}" }
+      normal_main = { fg = "@selection@", bg = "@accent@", bold = true }
+      normal_alt  = { fg = "@accent@", bg = "@selection@" }
+      select_main = { bg = "@cyan@",   bold = true }
+      select_alt  = { fg = "@cyan@",   bg = "@selection@" }
+      unset_main  = { bg = "@foreground@", bold = true }
+      unset_alt   = { fg = "@foreground@", bg = "@selection@" }
 
       [status]
       sep_left  = { open = " ", close = " " }
       sep_right = { open = " ", close = " " }
-      perm_sep        = { fg = "${colors.base03}" }
-      perm_type       = { fg = "${colors.base0D}" }
-      perm_read       = { fg = "${colors.base0A}" }
-      perm_write      = { fg = "${colors.base08}" }
-      perm_exec       = { fg = "${colors.base0B}" }
-      progress_label  = { fg = "${colors.base05}", bold = true }
-      progress_normal = { fg = "${colors.base0B}", bg = "${colors.base02}" }
-      progress_error  = { fg = "${colors.base0A}", bg = "${colors.base08}" }
+      perm_sep        = { fg = "@muted@" }
+      perm_type       = { fg = "@accent@" }
+      perm_read       = { fg = "@yellow@" }
+      perm_write      = { fg = "@red@" }
+      perm_exec       = { fg = "@green@" }
+      progress_label  = { fg = "@foreground@", bold = true }
+      progress_normal = { fg = "@green@", bg = "@selection@" }
+      progress_error  = { fg = "@yellow@", bg = "@red@" }
 
       [confirm]
-      border  = { fg = "${colors.base0D}" }
-      title   = { fg = "${colors.base0D}", bold = true }
-      body    = { fg = "${colors.base05}" }
-      list    = { fg = "${colors.base05}" }
-      btn_yes = { fg = "${colors.base02}", bg = "${colors.base0D}", bold = true }
-      btn_no  = { fg = "${colors.base05}", bg = "${colors.base02}" }
+      border  = { fg = "@accent@" }
+      title   = { fg = "@accent@", bold = true }
+      body    = { fg = "@foreground@" }
+      list    = { fg = "@foreground@" }
+      btn_yes = { fg = "@selection@", bg = "@accent@", bold = true }
+      btn_no  = { fg = "@foreground@", bg = "@selection@" }
 
       [pick]
-      border   = { fg = "${colors.base0D}" }
-      active   = { fg = "${colors.base05}", bold = true }
-      inactive = { fg = "${colors.base05}" }
+      border   = { fg = "@accent@" }
+      active   = { fg = "@foreground@", bold = true }
+      inactive = { fg = "@foreground@" }
 
       [input]
-      border   = { fg = "${colors.base0D}" }
-      title    = { fg = "${colors.base0D}" }
-      value    = { fg = "${colors.base05}" }
+      border   = { fg = "@accent@" }
+      title    = { fg = "@accent@" }
+      value    = { fg = "@foreground@" }
       selected = { reversed = true }
 
       [cmp]
-      border   = { fg = "${colors.base0D}" }
-      active   = { fg = "${colors.base02}", bg = "${colors.base0D}" }
-      inactive = { fg = "${colors.base05}" }
+      border   = { fg = "@accent@" }
+      active   = { fg = "@selection@", bg = "@accent@" }
+      inactive = { fg = "@foreground@" }
 
       [tasks]
-      border  = { fg = "${colors.base0D}" }
-      title   = { fg = "${colors.base0D}" }
-      hovered = { fg = "${colors.base05}", bold = true }
+      border  = { fg = "@accent@" }
+      title   = { fg = "@accent@" }
+      hovered = { fg = "@foreground@", bold = true }
 
       [which]
-      mask            = { bg = "${colors.base02}" }
-      rest            = { fg = "${colors.base03}" }
-      desc            = { fg = "${colors.base05}" }
+      mask            = { bg = "@selection@" }
+      rest            = { fg = "@muted@" }
+      desc            = { fg = "@foreground@" }
       separator       = "  "
-      separator_style = { fg = "${colors.base03}" }
+      separator_style = { fg = "@muted@" }
 
       [help]
-      on      = { fg = "${colors.base0C}" }
-      run     = { fg = "${colors.base05}" }
+      on      = { fg = "@cyan@" }
+      run     = { fg = "@foreground@" }
       hovered = { reversed = true, bold = true }
-      footer  = { fg = "${colors.base01}", bg = "${colors.base0D}" }
+      footer  = { bg = "@foreground@" }
 
       [spot]
-      border   = { fg = "${colors.base0D}" }
-      title    = { fg = "${colors.base0D}" }
-      tbl_cell = { fg = "${colors.base05}", bg = "${colors.base02}" }
+      border   = { fg = "@accent@" }
+      title    = { fg = "@accent@" }
+      tbl_cell = { fg = "@foreground@", bg = "@selection@" }
 
       [icon]
       dirs = []
       prepend_conds = [
-        { if = "dir & hovered", text = "󰝰", fg = "${colors.base0D}" },
-        { if = "dir",           text = "󰉋", fg = "${colors.base0D}" },
+        { if = "dir & hovered", text = "󰝰", fg = "@accent@" },
+        { if = "dir",           text = "󰉋", fg = "@accent@" },
       ]
 
       [filetype]
-      # Colors mirror the box/gradient roles Stylix already assigns btop
-      # (cpu = magenta, mem = green, net/cyan = media, temp/yellow = warning,
-      # blue = primary), so file categories read the same across TUIs
-      # instead of collapsing into one flat foreground color.
       rules = [
-        { url = "*", is = "hidden", fg = "${colors.base03}" },
-        { url = "*/", is = "hidden", fg = "${colors.base03}" },
-        { mime = "image/*", fg = "${colors.base0E}" },
-        { mime = "video/*", fg = "${colors.base0E}" },
-        { mime = "audio/*", fg = "${colors.base0C}" },
-        { mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "${colors.base0A}" },
-        { mime = "application/{pdf,doc,rtf}", fg = "${colors.base0D}" },
-        { mime = "vfs/{absent,stale}", fg = "${colors.base04}" },
-        { url = "*/", fg = "${colors.base0D}" },
-        { url = "*", fg = "${colors.base05}" },
+        { mime = "image/*", fg = "@foreground@" },
+        { mime = "{audio,video}/*", fg = "@foreground@" },
+        { mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "@foreground@" },
+        { mime = "application/{pdf,doc,rtf}", fg = "@foreground@" },
+        { mime = "vfs/{absent,stale}", fg = "@foreground@" },
+        { url = "*/", fg = "@foreground@" },
+        { url = "*", fg = "@foreground@" },
       ]
     '';
   };

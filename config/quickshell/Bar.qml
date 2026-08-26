@@ -138,6 +138,16 @@ PanelWindow {
         anchors.centerIn: parent
     }
 
+    BarTimerBadge {
+        id: timerBadge
+        anchors {
+            left: clock.right
+            leftMargin: ServicePanel.barSpacing
+            verticalCenter: clock.verticalCenter
+        }
+        panelTarget: quickToggles.timerPanel
+    }
+
     BarQuickToggles {
         id: quickToggles
 

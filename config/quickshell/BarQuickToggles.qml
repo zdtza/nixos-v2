@@ -193,7 +193,10 @@ Item {
 
                 x: root.toggleX(2)
                 width: implicitWidth
-                implicitWidth: root.expanded || ServiceTimer.running ? 28 : 0
+                // Running state is already surfaced by the badge next to the
+                // clock, so this slot only reveals on hover rather than
+                // staying pinned open while a timer counts down.
+                implicitWidth: root.expanded ? 28 : 0
                 implicitHeight: 26
                 clip: true
 

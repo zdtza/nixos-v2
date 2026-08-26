@@ -49,6 +49,7 @@ let
         "--disable-renderer-backgrounding"
         "--disable-background-timer-throttling"
         "--auto-select-desktop-capture-source=Entire screen"
+        "--use-file-for-fake-audio-capture=/dev/null" # Stops Microsoft Teams feedback loops
         "--use-fake-ui-for-media-stream"
         "--enable-usermedia-screen-capturing"
       ];

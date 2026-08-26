@@ -38,9 +38,9 @@ in
       border_style    = { fg = "${colors.base03}" }
 
       [indicator]
-      parent  = { fg = "${colors.base07}", bg = "${colors.base02}" }
-      current = { fg = "${colors.base07}", bg = "${colors.base02}", bold = true }
-      preview = { fg = "${colors.base07}", bg = "${colors.base02}" }
+      parent  = { fg = "${colors.base04}", bg = "${colors.base01}" }
+      current = { fg = "${colors.base07}", bg = "${colors.base03}", bold = true }
+      preview = { fg = "${colors.base04}", bg = "${colors.base01}" }
       padding = { open = "▐", close = "▌" }
 
       [tabs]
@@ -50,12 +50,14 @@ in
       sep_outer = { open = " ", close = " " }
 
       [mode]
-      normal_main = { fg = "${colors.base02}", bg = "${colors.base0D}", bold = true }
+      normal_main = { fg = "${colors.base01}", bg = "${colors.base0D}", bold = true }
       normal_alt  = { fg = "${colors.base0D}", bg = "${colors.base02}" }
-      select_main = { bg = "${colors.base0C}",   bold = true }
-      select_alt  = { fg = "${colors.base0C}",   bg = "${colors.base02}" }
-      unset_main  = { bg = "${colors.base05}", bold = true }
-      unset_alt   = { fg = "${colors.base05}", bg = "${colors.base02}" }
+      # Matches marker_selected below so visual-select mode and the files it
+      # marks read as the same action instead of two unrelated accents.
+      select_main = { fg = "${colors.base01}", bg = "${colors.base0A}", bold = true }
+      select_alt  = { fg = "${colors.base0A}", bg = "${colors.base02}" }
+      unset_main  = { fg = "${colors.base07}", bg = "${colors.base04}", bold = true }
+      unset_alt   = { fg = "${colors.base04}", bg = "${colors.base02}" }
 
       [status]
       sep_left  = { open = " ", close = " " }
@@ -109,7 +111,7 @@ in
       on      = { fg = "${colors.base0C}" }
       run     = { fg = "${colors.base05}" }
       hovered = { reversed = true, bold = true }
-      footer  = { bg = "${colors.base05}" }
+      footer  = { fg = "${colors.base01}", bg = "${colors.base0D}" }
 
       [spot]
       border   = { fg = "${colors.base0D}" }
@@ -124,15 +126,20 @@ in
       ]
 
       [filetype]
+      # Colors mirror the box/gradient roles Stylix already assigns btop
+      # (cpu = magenta, mem = green, net/cyan = media, temp/yellow = warning,
+      # blue = primary), so file categories read the same across TUIs
+      # instead of collapsing into one flat foreground color.
       rules = [
         { url = "*", is = "hidden", fg = "${colors.base03}" },
         { url = "*/", is = "hidden", fg = "${colors.base03}" },
-        { mime = "image/*", fg = "${colors.base05}" },
-        { mime = "{audio,video}/*", fg = "${colors.base05}" },
-        { mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "${colors.base05}" },
-        { mime = "application/{pdf,doc,rtf}", fg = "${colors.base05}" },
-        { mime = "vfs/{absent,stale}", fg = "${colors.base05}" },
-        { url = "*/", fg = "${colors.base05}" },
+        { mime = "image/*", fg = "${colors.base0E}" },
+        { mime = "video/*", fg = "${colors.base0E}" },
+        { mime = "audio/*", fg = "${colors.base0C}" },
+        { mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "${colors.base0A}" },
+        { mime = "application/{pdf,doc,rtf}", fg = "${colors.base0D}" },
+        { mime = "vfs/{absent,stale}", fg = "${colors.base04}" },
+        { url = "*/", fg = "${colors.base0D}" },
         { url = "*", fg = "${colors.base05}" },
       ]
     '';

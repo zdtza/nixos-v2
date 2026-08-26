@@ -219,6 +219,12 @@ Scope {
             return matches.sort((a, b) => a.tier - b.tier).map(match => match.item);
         }
 
+        // Hover-select is ignored until the pointer actually moves after the
+        // launcher opens. Without this, opening the launcher under a
+        // stationary cursor synthesizes a hover-enter on whatever row/action
+        // ends up beneath it, silently overriding the default selection.
+        property bool hoverSelectReady: false
+
         property var menuEntry: null
         property real menuX: 0
         property real menuY: 0
@@ -304,6 +310,7 @@ Scope {
 
             function onOpenChanged(): void {
                 window.closeContextMenu();
+                window.hoverSelectReady = false;
                 if (!root.open)
                     return;
                 search.text = "";
@@ -316,6 +323,16 @@ Scope {
             anchors.fill: parent
             enabled: root.open
             onClicked: root.open = false
+        }
+
+        // Arms hover-select once the pointer genuinely moves (as opposed to
+        // the launcher merely appearing underneath it).
+        MouseArea {
+            anchors.fill: parent
+            enabled: root.open && !window.hoverSelectReady
+            hoverEnabled: true
+            acceptedButtons: Qt.NoButton
+            onPositionChanged: window.hoverSelectReady = true
         }
 
         Rectangle {
@@ -582,7 +599,7 @@ Scope {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
-                            onContainsMouseChanged: if (containsMouse)
+                            onContainsMouseChanged: if (containsMouse && window.hoverSelectReady)
                                 appList.currentIndex = appRow.index
                             onClicked: mouse => {
                                 appList.currentIndex = appRow.index;
@@ -705,7 +722,7 @@ Scope {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onContainsMouseChanged: if (containsMouse)
+                        onContainsMouseChanged: if (containsMouse && window.hoverSelectReady)
                             window.menuActionIndex = 0
                         onClicked: {
                             const entry = window.menuEntry;
@@ -748,7 +765,7 @@ Scope {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onContainsMouseChanged: if (containsMouse)
+                            onContainsMouseChanged: if (containsMouse && window.hoverSelectReady)
                                 window.menuActionIndex = actionRow.index + 1
                             onClicked: {
                                 window.menuActionIndex = actionRow.index + 1;

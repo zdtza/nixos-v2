@@ -48,7 +48,7 @@ let
         "--disable-backgrounding-occluded-windows"
         "--disable-renderer-backgrounding"
         "--disable-background-timer-throttling"
-        "--auto-select-desktop-capture-source=\"Entire screen\""
+        "--auto-select-desktop-capture-source=Entire screen"
         "--use-fake-ui-for-media-stream"
         "--enable-usermedia-screen-capturing"
       ];

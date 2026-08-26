@@ -91,6 +91,12 @@ let
       url = "https://claude.ai/new";
       isolated = false;
     }
+    {
+      id = "screenshare-test";
+      name = "Screenshare Test";
+      url = "https://pigeoncast.com/tools/screen-share-test";
+      isolated = false;
+    }
     # WEBAPPS
   ];
 

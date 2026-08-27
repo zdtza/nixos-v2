@@ -9,7 +9,7 @@ hl.config({
 		repeat_delay = 200,
 		touchpad = {
 			natural_scroll = true,
-			scroll_factor = 0.5,
+			scroll_factor = 0.8,
 		},
 	},
 	binds = { scroll_event_delay = 0 },
@@ -36,7 +36,7 @@ hl.config({
 	},
 	animations = { enabled = true },
 	layout = { single_window_aspect_ratio = { 16, 9 } },
-	
+
 	dwindle = {
 		preserve_split = true,
 		smart_split = false,
@@ -117,14 +117,26 @@ hl.window_rule({
 	size = { 360, 616 },
 })
 
+-- Teams' "screen is being shared" indicator window; always keep it out of
+-- sight (shrunk to nothing, moved off-screen, and stripped of decoration).
 hl.window_rule({
-    -- Matches any window that is in a floating state
-    match = { float = true },
-    
-    -- "0.85 override" forces it to stay exactly at 85% opacity,
-    -- bypassing the global active_opacity and inactive_opacity.
-    -- Format: "active_opacity inactive_opacity fullscreen_opacity"
-    opacity = "0.99 override 0.98 override 1.0 override",
+	name = "teams-screen-share-indicator",
+	match = {
+		class = "^teams-for-linux$",
+		title = "^Teams for Linux - Screen is being shared$",
+	},
+    workspace = "special:hidden silent", -- Route silently to background scratchpad
+    no_focus = true, -- Do not steal focus on launch
+})
+
+hl.window_rule({
+	-- Matches any window that is in a floating state
+	match = { float = true },
+
+	-- "0.85 override" forces it to stay exactly at 85% opacity,
+	-- bypassing the global active_opacity and inactive_opacity.
+	-- Format: "active_opacity inactive_opacity fullscreen_opacity"
+	opacity = "0.99 override 0.98 override 1.0 override",
 })
 
 -- =============================================================================
@@ -376,7 +388,6 @@ bind("SUPER + SHIFT + 6", "Move window to workspace 6", hl.dsp.window.move({ wor
 bind("SUPER + SHIFT + 7", "Move window to workspace 7", hl.dsp.window.move({ workspace = 7 }))
 bind("SUPER + SHIFT + 8", "Move window to workspace 8", hl.dsp.window.move({ workspace = 8 }))
 bind("SUPER + SHIFT + 9", "Move window to workspace 9", hl.dsp.window.move({ workspace = 9 }))
--- bind("SUPER + SHIFT + S", "Move window to special workspace", hl.dsp.window.move({ workspace = "special:terminal" }))
 
 -- =============================================================================
 -- KEYBINDS: RESIZE, SCREENSHOTS, AND APPEARANCE

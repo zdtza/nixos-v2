@@ -185,11 +185,6 @@ PopupWindow {
         edges: menu.submenu ? Edges.Right | Edges.Top : Edges.Top | Edges.Left
         gravity: menu.submenu ? Edges.Right | Edges.Bottom : Edges.Bottom | Edges.Right
         adjustment: PopupAdjustment.Slide
-        // Submenus anchor to the parent row's right edge, which sits right at
-        // the panel padding; pull the anchor point in slightly so the
-        // submenu overlaps back over that padding instead of appearing to
-        // float a few pixels further right than the main dropdown's edge.
-        margins.right: menu.submenu ? 8 : 0
         rect.width: 1
         rect.height: 1
 

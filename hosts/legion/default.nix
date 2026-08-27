@@ -137,6 +137,7 @@ in
     nodejs
     nixfmt
     nixd
+    teams-for-linux
   ];
 
   networking = {

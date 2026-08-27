@@ -34,23 +34,6 @@ let
       isolated = false;
     }
     {
-      id = "teams";
-      name = "Teams";
-      url = "https://teams.cloud.microsoft/";
-      isolated = true;
-      # Test whether Chromium background throttling causes Teams screen shares
-      # to drop to a lower-resolution stream after inactivity or occlusion.
-      # Isolated single-site profile, so auto-approving "entire screen" for
-      # getDisplayMedia() here doesn't expose arbitrary sites to silent
-      # capture. Skips Chromium's own share-type dialog entirely; the Hyprland
-      # picker still shows once per target unless a restore token is valid.
-      chromiumFlags = [
-        "--disable-backgrounding-occluded-windows"
-        "--disable-renderer-backgrounding"
-        "--disable-background-timer-throttling"
-      ];
-    }
-    {
       id = "gmail";
       name = "Gmail";
       url = "https://mail.google.com/mail/u/0/#inbox";

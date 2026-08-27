@@ -40,7 +40,7 @@ PopupWindow {
         .map((entry, index) => entry && !entry.isSeparator && entry.enabled ? index : -1)
         .filter(index => index >= 0)
 
-    // Submenus grow sideways out of their parent row instead of downwards.
+    // Submenus open below their parent row instead of below the bar item.
     // Only ever set true recursively below, for DBus submenus.
     property bool submenu: false
 
@@ -182,9 +182,18 @@ PopupWindow {
     anchor {
         id: popupAnchor
 
-        edges: menu.submenu ? Edges.Right | Edges.Top : Edges.Top | Edges.Left
-        gravity: menu.submenu ? Edges.Right | Edges.Bottom : Edges.Bottom | Edges.Right
+        edges: menu.submenu ? Edges.Bottom | Edges.Left : Edges.Top | Edges.Left
+        gravity: Edges.Bottom | Edges.Right
         adjustment: PopupAdjustment.Slide
+        // Anchor rect is a 1x1 point in the anchor item's local coordinates,
+        // used only as the pivot the popup grows from (the popup's actual
+        // size comes from its own window geometry, not this rect). It
+        // defaults to the item's top-left corner (0,0). For submenus that
+        // needs to be the row's bottom-left corner instead, or the popup
+        // grows downward starting from the row's top edge and ends up
+        // covering the row itself, blocking the click needed to close the
+        // submenu again.
+        rect.y: menu.submenu ? menu.anchorItem.height : 0
         rect.width: 1
         rect.height: 1
 

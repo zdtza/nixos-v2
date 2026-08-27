@@ -189,7 +189,7 @@ PopupWindow {
         // the panel padding; pull the anchor point in slightly so the
         // submenu overlaps back over that padding instead of appearing to
         // float a few pixels further right than the main dropdown's edge.
-        margins.right: menu.submenu ? 4 : 0
+        margins.right: menu.submenu ? 8 : 0
         rect.width: 1
         rect.height: 1
 

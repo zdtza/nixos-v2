@@ -134,11 +134,26 @@ PopupWindow {
         }
     }
 
+    // Closes the deepest currently-open submenu in this chain, if any.
+    // Returns whether it closed something, so escape can be pressed
+    // repeatedly to walk back out one level at a time before finally
+    // dismissing the whole menu.
+    function closeSubmenu(): bool {
+        if (!menu.activeSubmenu)
+            return false;
+        if (!menu.activeSubmenu.closeSubmenu())
+            menu.submenuEntry = null;
+        return true;
+    }
+
     Shortcut {
         enabled: menu.visible && !menu.submenu
         sequence: "Escape"
         context: Qt.ApplicationShortcut
-        onActivated: menu.dismissRequested()
+        onActivated: {
+            if (!menu.closeSubmenu())
+                menu.dismissRequested();
+        }
     }
 
     // PopupAnchor.item and .window are mutually exclusive in quickshell's
@@ -438,7 +453,6 @@ PopupWindow {
                                 anchorItem: row,
                                 anchorWindow: menu.anchorWindow,
                                 menuWidth: menu.menuWidth,
-                                menuTitle: row.entry.text,
                                 submenu: true
                             });
                         }

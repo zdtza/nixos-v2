@@ -1,6 +1,7 @@
 { pkgs, ... }:
 
 {
+
   # global color scheme for GTK apps (need to align with stylix polarity later)
   gtk.colorScheme = "dark";
 

@@ -22,51 +22,39 @@
       stylix,
       ...
     }:
+    let
+      # One user across every host this repo manages. Parametrize this too
+      # if that ever stops being true.
+      user = "zdtza";
+      homeStateVersion = "26.05";
+
+      # Every host's default.nix imports whichever ./modules/*.nix files it
+      # needs directly and sets its own home-manager.users.<user>.imports.
+      # Add a new machine by dropping a directory in ./hosts and its name
+      # in here.
+      hostNames = [ "legion" ];
+
+      mkHost =
+        hostname:
+        nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            # import current host configuration
+            ./hosts/${hostname}
+
+            # external modules
+            stylix.nixosModules.stylix
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.extraSpecialArgs = { inherit inputs self; };
+              home-manager.users.${user}.home.stateVersion = homeStateVersion;
+            }
+          ];
+        };
+    in
     {
-      nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
-        modules = [
-          # main config
-          ./configuration.nix
-
-          # extra flakes
-          stylix.nixosModules.stylix
-          home-manager.nixosModules.home-manager
-
-          # home manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.extraSpecialArgs = { inherit inputs self; };
-
-            home-manager.users.zdtza = {
-              imports = [
-                ./home/repo.nix
-                ./home/defaults.nix
-                ./home/appearance.nix
-                ./home/kitty.nix
-                ./home/shell.nix
-                ./home/hyprland.nix
-                ./home/hypridle.nix
-                ./home/hyprsunset.nix
-                ./home/pi.nix
-                ./home/screen-share.nix
-                ./home/voxtype.nix
-                ./home/btop.nix
-                ./home/nvim.nix
-                ./home/git.nix
-                ./home/web-apps.nix
-                ./home/windows.nix
-                ./home/fzf.nix
-                ./home/polkit-agent.nix
-                ./home/yazi.nix
-                ./home/npm.nix
-                ./home/quickshell.nix
-                ./home/lazydocker.nix
-              ];
-              home.stateVersion = "26.05";
-            };
-          }
-        ];
-      };
+      nixosConfigurations = nixpkgs.lib.genAttrs hostNames mkHost;
     };
 }

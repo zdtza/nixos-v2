@@ -1,10 +1,6 @@
 { pkgs, ... }:
 
 {
-  # home.sessionVariables = {
-  #   BROWSER = "firefox";
-  # };
-
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {

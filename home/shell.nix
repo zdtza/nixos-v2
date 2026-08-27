@@ -1,10 +1,13 @@
-{ config, ... }:
+{ ... }:
 
 {
-  stylix.targets.fish.colors.override = {
-    base03 = config.lib.stylix.colors.base05; # muted -> foreground
-    base0B = config.lib.stylix.colors.base0E; # green -> magenta
-  };
+  # Home Manager's stylix fish target sources base16-fish and re-applies it
+  # on every interactive shell start via OSC escape sequences. Those
+  # sequences also recolor the real Linux virtual console (tty), not just
+  # terminal emulators, so disable it here (mirrors targets.console.enable
+  # = false / targets.fish.enable = false in modules/desktop.nix, which
+  # only cover the NixOS-level stylix instance, not this per-user one).
+  stylix.targets.fish.enable = false;
 
   programs.fish = {
     enable = true;
@@ -34,15 +37,19 @@
       command mkdir -p "$log_dir"
 
       # Stage every tracked and untracked change so the flake sees the exact
-      # contents that will be committed after a successful rebuild.
+      # contents being rebuilt.
       printf 'Staging changes...\n'
       command git -C "$repo" add --all; or return $status
 
       # Authenticate before redirecting output so sudo's prompt stays visible.
       command sudo -v; or return $status
 
-      printf 'Rebuilding NixOS...\n'
-      command sudo nixos-rebuild switch --flake "$repo" $argv \
+      # Flake attr per host is its unix hostname (see hosts/<name> in the
+      # repo), so this works unmodified on any machine this repo manages.
+      set -l flake_target "$repo#"(command hostname)
+
+      printf 'Rebuilding NixOS (%s)...\n' "$flake_target"
+      command sudo nixos-rebuild switch --flake "$flake_target" $argv \
         >"$log_file" 2>&1
       set -l rebuild_status $status
 
@@ -55,12 +62,7 @@
           (command cat /run/current-system/nixos-version))
         set -l commit_message "NixOS generation $generation ($nixos_version)"
 
-        printf 'Commiting clean build...\n'
         printf 'Rebuild complete: %s\n' "$commit_message"
-        if not command git -C "$repo" diff --quiet HEAD --
-          command git -C "$repo" commit -am "$commit_message"
-          return $status
-        end
         return 0
       end
 
@@ -135,7 +137,8 @@
 
       directory = {
         format = "[$path](green) ";
-        truncation_length = 3;
+        truncation_length = 0;
+        truncate_to_repo = false;
         truncation_symbol = "";
       };
 

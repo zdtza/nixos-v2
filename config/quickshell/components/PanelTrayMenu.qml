@@ -141,11 +141,32 @@ PopupWindow {
         onActivated: menu.dismissRequested()
     }
 
+    // PopupAnchor.item and .window are mutually exclusive in quickshell's
+    // native implementation (setting one unsets the other), and its internal
+    // onItemWindowChanged() dereferences the anchor item unconditionally
+    // whenever it's cleared. Binding both item and window permanently on the
+    // same anchor (e.g. `item: cond ? x : null; window: cond ? null : y`)
+    // means whichever evaluates second clobbers the other and can null-deref
+    // a still-live item, crashing quickshell. Only ever touch the property
+    // actually in use for this instance's lifetime, guarded so the other is
+    // never written at all.
+    Binding {
+        target: popupAnchor
+        property: "item"
+        value: menu.anchorItem
+        when: menu.submenu
+    }
+
+    Binding {
+        target: popupAnchor
+        property: "window"
+        value: menu.anchorWindow
+        when: !menu.submenu
+    }
+
     anchor {
         id: popupAnchor
 
-        item: menu.submenu ? menu.anchorItem : null
-        window: menu.submenu ? null : menu.anchorWindow
         edges: menu.submenu ? Edges.Right | Edges.Top : Edges.Top | Edges.Left
         gravity: menu.submenu ? Edges.Right | Edges.Bottom : Edges.Bottom | Edges.Right
         adjustment: PopupAdjustment.Slide

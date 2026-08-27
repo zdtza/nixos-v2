@@ -46,6 +46,8 @@ Item {
         color: root.enabled ? Theme.foreground : Theme.muted
         border.width: 2
         border.color: Theme.background
+
+        Behavior on color { ColorAnimation { duration: 120 } }
     }
 
     MouseArea {

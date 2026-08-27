@@ -37,8 +37,11 @@ Item {
         width: 16
         height: 2
         radius: ServicePanel.rounding
-        visible: root.showPanelIndicator && (root.panelOpen || mouseArea.containsMouse)
+        visible: opacity > 0
+        opacity: root.showPanelIndicator && (root.panelOpen || mouseArea.containsMouse) ? 1 : 0
         color: Theme.accent
+
+        Behavior on opacity { NumberAnimation { duration: 120 } }
     }
 
     MouseArea {

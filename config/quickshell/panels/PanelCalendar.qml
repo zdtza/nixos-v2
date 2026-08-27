@@ -386,6 +386,9 @@ PanelPopup {
                         border.width: dayCell.rangeEndpoint || dayCell.modelData.today
                             || dayCell.keyboardSelected ? 1 : 0
                         border.color: dayCell.rangeEndpoint ? Theme.muted : Theme.border
+
+                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on border.width { NumberAnimation { duration: 120 } }
                     }
 
                     Text {

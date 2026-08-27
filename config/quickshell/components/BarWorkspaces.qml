@@ -68,6 +68,8 @@ Item {
                 border.width: workspaceItem.isActive ? 1 : 0
                 border.color: Theme.foreground
 
+                Behavior on border.width { NumberAnimation { duration: 120 } }
+
                 Text {
                     id: workspaceNumber
 
@@ -76,6 +78,8 @@ Item {
                     color: workspaceItem.isActive || workspaceItem.isOccupied ? Theme.foreground : Theme.muted
                     font.family: Theme.fontFamily
                     font.pixelSize: Utils.scaledFont(Theme.fontSize)
+
+                    Behavior on color { ColorAnimation { duration: 120 } }
                 }
 
                 MouseArea {

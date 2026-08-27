@@ -237,6 +237,13 @@ Scope {
                 }
                 radius: ServicePanel.rounding
                 color: notificationMouse.containsMouse ? Theme.background : Theme.dark_background
+                // Two coincident-radius rects both antialiasing their corner curve
+                // leave a 1px seam where the accent bar bleeds through on the sides
+                // meant to fully cover it. This one's AA only matters on the
+                // straight left inset edge, which doesn't need it, so turn it off.
+                antialiasing: false
+
+                Behavior on color { ColorAnimation { duration: 120 } }
             }
 
             Column {

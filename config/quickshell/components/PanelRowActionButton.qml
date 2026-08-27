@@ -17,6 +17,9 @@ Rectangle {
     height: 28
     radius: ServicePanel.rounding
     color: mouseArea.containsMouse ? Utils.alpha(Theme.foreground, 0.12) : "transparent"
+
+    Behavior on color { ColorAnimation { duration: 120 } }
+
     border.width: 1
     border.color: Utils.alpha(Theme.foreground, 0.3)
 

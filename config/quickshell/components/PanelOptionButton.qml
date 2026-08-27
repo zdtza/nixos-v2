@@ -33,6 +33,9 @@ Rectangle {
     border.color: Utils.alpha(Theme.foreground,
         root.highlighted ? 0.35 : 0.25)
     Behavior on color { ColorAnimation { duration: 120 } }
+    Behavior on border.width { NumberAnimation { duration: 120 } }
+    Behavior on border.color { ColorAnimation { duration: 120 } }
+    Behavior on opacity { NumberAnimation { duration: 120 } }
 
     MouseArea {
         id: mouseArea

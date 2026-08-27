@@ -201,7 +201,7 @@ PopupWindow {
         // past the row's bottom edge to leave a visible gap instead of
         // touching it.
         rect.x: menu.submenu ? -2 : 0
-        rect.y: menu.submenu ? menu.anchorItem.height + 4 : 0
+        rect.y: menu.submenu ? menu.anchorItem.height + 5 : 0
         rect.width: 1
         rect.height: 1
 
@@ -273,7 +273,7 @@ PopupWindow {
     Rectangle {
         anchors.fill: parent
 
-        color: Theme.dark_background
+        color: Theme.background
         radius: ServicePanel.rounding
         border.width: 1
         border.color: Theme.border
@@ -376,6 +376,10 @@ PopupWindow {
                         radius: ServicePanel.rounding
                         color: menu.selectedEntryIndex === row.index
                             && row.interactive ? Theme.surface : "transparent"
+
+                        Behavior on color {
+                            ColorAnimation { duration: 120; easing.type: Easing.OutCubic }
+                        }
 
                         Text {
                             anchors {

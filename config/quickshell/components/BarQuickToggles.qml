@@ -179,6 +179,8 @@ Item {
                         color: ServiceStayAwake.enabled ? Theme.foreground : Theme.muted
                         font.family: Theme.fontFamily
                         font.pixelSize: Utils.scaledFont(14)
+
+                        Behavior on color { ColorAnimation { duration: 120 } }
                     }
 
                     MouseArea {
@@ -239,6 +241,8 @@ Item {
                             ? Theme.foreground : Theme.muted
                         font.family: Theme.fontFamily
                         font.pixelSize: Utils.scaledFont(14)
+
+                        Behavior on color { ColorAnimation { duration: 120 } }
                     }
 
                     MouseArea {

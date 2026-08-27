@@ -17,6 +17,8 @@ Item {
     implicitHeight: 24
     opacity: available ? 1 : 0.5
 
+    Behavior on opacity { NumberAnimation { duration: 120 } }
+
     Rectangle {
         anchors.fill: parent
         radius: ServicePanel.rounding

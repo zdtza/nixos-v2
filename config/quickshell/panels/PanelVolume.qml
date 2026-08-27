@@ -328,6 +328,7 @@ Item {
         border.width: keyboardSelected ? 1 : 0
         border.color: Utils.alpha(Theme.foreground, 0.25)
         Behavior on color { ColorAnimation { duration: 120 } }
+        Behavior on border.width { NumberAnimation { duration: 120 } }
 
         Text {
             id: deviceIcon

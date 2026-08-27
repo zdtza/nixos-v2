@@ -359,34 +359,6 @@ Scope {
                 }
                 spacing: 14
 
-                // PanelHero {
-                //     Layout.fillWidth: true
-                //     icon: "󰀻"
-                //     title: "Applications"
-                //     status: search.text.length > 0
-                //         ? `${window.results.length} MATCHES`
-                //         : `${window.entries.length} INSTALLED`
-                //     trailingWidth: 46
-                //     trailingHeight: 22
-
-                //     Rectangle {
-                //         anchors.fill: parent
-                //         color: Theme.dark_background
-                //         border.width: 1
-                //         border.color: Theme.surface
-
-                //         Text {
-                //             anchors.centerIn: parent
-                //             text: "ESC"
-                //             color: Theme.muted
-                //             font.family: Theme.fontFamily
-                //             font.pixelSize: 10
-                //             font.bold: true
-                //             font.letterSpacing: 1
-                //         }
-                //     }
-                // }
-
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 42
@@ -496,18 +468,27 @@ Scope {
                         width: appList.width
                         height: 52
                         radius: ServicePanel.rounding
-                        color: selected ? Theme.surface : "transparent"
+                        // Accent bar is this full-row rounded rect showing through
+                        // down the left edge; the actual row background is a second
+                        // rounded rect of the same radius layered on top, inset 4px
+                        // from the left (same technique as Notifications.qml's
+                        // accentBase). Sharing one radius lets their corners nest
+                        // without computing per-corner insets.
+                        color: selected ? Theme.accent : "transparent"
 
                         Rectangle {
                             anchors {
-                                left: parent.left
-                                top: parent.top
-                                bottom: parent.bottom
+                                fill: parent
+                                leftMargin: 4
                             }
-                            width: 2
                             radius: ServicePanel.rounding
-                            visible: appRow.selected
-                            color: Theme.accent
+                            color: appRow.selected ? Theme.surface : "transparent"
+                            // Two coincident-radius rects both antialiasing their
+                            // corner curve leave a 1px seam where accent bleeds
+                            // through on the sides meant to fully cover it. This
+                            // one's AA only matters on the straight left inset edge,
+                            // which doesn't need it, so turn it off here.
+                            antialiasing: false
                         }
 
                         Item {

@@ -38,8 +38,11 @@ Item {
         anchors.right: label.right
         height: 2
         radius: ServicePanel.rounding
-        visible: root.opened || mouseArea.containsMouse
+        visible: opacity > 0
+        opacity: root.opened || mouseArea.containsMouse ? 1 : 0
         color: Theme.accent
+
+        Behavior on opacity { NumberAnimation { duration: 120 } }
     }
 
     MouseArea {

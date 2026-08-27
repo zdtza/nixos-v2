@@ -289,10 +289,14 @@ Item {
                             // menuLoader.trayItem still points at the last item
                             // clicked, so the Windows menu has to be excluded here or
                             // that item lights up alongside it.
-                            visible: itemMouse.containsMouse
+                            visible: opacity > 0
+                            opacity: itemMouse.containsMouse
                                 || (root.opened && root.selectedItemIndex === entry.index)
                                 || (root.opened && !root.windowsMenuOpen && menuLoader.trayItem === entry.modelData)
+                                ? 1 : 0
                             color: Theme.accent
+
+                            Behavior on opacity { NumberAnimation { duration: 120 } }
                         }
 
                         MouseArea {
@@ -358,10 +362,14 @@ Item {
                         width: 16
                         height: 2
                         radius: ServicePanel.rounding
-                        visible: windowsMouse.containsMouse
+                        visible: opacity > 0
+                        opacity: windowsMouse.containsMouse
                             || (root.opened && root.selectedItemIndex === root.items.length)
                             || (root.opened && root.windowsMenuOpen)
+                            ? 1 : 0
                         color: Theme.accent
+
+                        Behavior on opacity { NumberAnimation { duration: 120 } }
                     }
 
                     MouseArea {

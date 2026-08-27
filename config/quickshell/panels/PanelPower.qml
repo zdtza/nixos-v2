@@ -176,6 +176,7 @@ Item {
                         Behavior on scale {
                             NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
                         }
+                        Behavior on opacity { NumberAnimation { duration: 140 } }
                     }
 
                     MouseArea {

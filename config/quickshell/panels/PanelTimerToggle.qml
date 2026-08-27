@@ -194,6 +194,7 @@ Item {
                 border.color: Utils.alpha(Theme.foreground, 0.3)
                 opacity: canStart ? 1 : 0.5
                 Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on opacity { NumberAnimation { duration: 120 } }
 
                 Text {
                     anchors.centerIn: parent
@@ -230,6 +231,8 @@ Item {
             border.width: 1
             border.color: durationInput.activeFocus ? Theme.muted
                 : Utils.alpha(Theme.foreground, 0.3)
+
+            Behavior on border.color { ColorAnimation { duration: 120 } }
 
             TextInput {
                 id: durationInput
@@ -324,6 +327,7 @@ Item {
                             border.width: timerRow.index === root.selectedTimerIndex ? 1 : 0
                             border.color: Utils.alpha(Theme.foreground, 0.25)
                             Behavior on color { ColorAnimation { duration: 120 } }
+                            Behavior on border.width { NumberAnimation { duration: 120 } }
 
                             HoverHandler {
                                 id: rowHover

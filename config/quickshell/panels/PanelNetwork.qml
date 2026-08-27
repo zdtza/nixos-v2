@@ -523,6 +523,7 @@ Item {
                                     duration: 120
                                 }
                             }
+                            Behavior on border.width { NumberAnimation { duration: 120 } }
 
                             HoverHandler {
                                 id: networkHover
@@ -667,6 +668,8 @@ Item {
                                     border.width: 1
                                     border.color: passwordInput.activeFocus ? Theme.muted : Utils.alpha(Theme.foreground, 0.4)
 
+                                    Behavior on border.color { ColorAnimation { duration: 120 } }
+
                                     Text {
                                         anchors {
                                             left: parent.left
@@ -711,6 +714,9 @@ Item {
                                     height: 32
                                     radius: ServicePanel.rounding
                                     color: connectMouse.containsMouse ? Utils.alpha(Theme.foreground, 0.18) : Utils.alpha(Theme.foreground, 0.08)
+
+                                    Behavior on color { ColorAnimation { duration: 120 } }
+
                                     border.width: 1
                                     border.color: Utils.alpha(Theme.foreground, 0.4)
                                     Text {
@@ -736,6 +742,9 @@ Item {
                                     height: 32
                                     radius: ServicePanel.rounding
                                     color: cancelMouse.containsMouse ? Utils.alpha(Theme.foreground, 0.12) : "transparent"
+
+                                    Behavior on color { ColorAnimation { duration: 120 } }
+
                                     border.width: 1
                                     border.color: Utils.alpha(Theme.foreground, 0.3)
                                     Text {

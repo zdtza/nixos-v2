@@ -126,6 +126,8 @@ Scope {
                     border.color: root.errorText.length > 0 ? Theme.urgent
                         : (passwordInput.activeFocus ? Theme.muted : Theme.border)
 
+                    Behavior on border.color { ColorAnimation { duration: 120 } }
+
                     TextInput {
                         id: passwordInput
                         anchors.fill: parent

@@ -193,7 +193,14 @@ PopupWindow {
         // grows downward starting from the row's top edge and ends up
         // covering the row itself, blocking the click needed to close the
         // submenu again.
-        rect.y: menu.submenu ? menu.anchorItem.height : 0
+        //
+        // The row's local (0,0) is inset 2px right of the parent menu's own
+        // border (Column's leftMargin below), so pull x back by that much to
+        // keep the submenu's border flush with the parent's. Push y a few px
+        // past the row's bottom edge to leave a visible gap instead of
+        // touching it.
+        rect.x: menu.submenu ? -2 : 0
+        rect.y: menu.submenu ? menu.anchorItem.height + 4 : 0
         rect.width: 1
         rect.height: 1
 

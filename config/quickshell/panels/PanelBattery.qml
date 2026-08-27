@@ -136,17 +136,16 @@ Item {
         onCleared: ServicePanel.close(root)
     }
 
-    PanelPopup {
+    PanelDrawer {
         id: panel
         anchorItem: root
         anchorWindow: root.QsWindow.window
-        visible: root.opened
+        open: root.opened
         onCloseRequested: ServicePanel.close(root)
-        borderColor: Theme.border
         contentSpacing: 14
         // Wider card gives each equal-width profile button real horizontal
         // breathing room around its icon and longest label (Power-saver).
-        implicitWidth: 420
+        implicitWidth: 420 + ServicePanel.shellRounding
         implicitHeight: panelContent.implicitHeight
             + contentTopMargin + contentBottomMargin
 

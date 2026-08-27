@@ -137,11 +137,10 @@ Item {
 
         anchorItem: root
         anchorWindow: root.QsWindow.window
-        visible: root.opened
-        freezePositionWhileVisible: true
+        open: root.opened
         onCloseRequested: ServicePanel.close(root)
-        onVisibleChanged: {
-            if (!visible)
+        onOpenChanged: {
+            if (!open)
                 return;
             root.resetInput();
             Qt.callLater(() => {
@@ -150,7 +149,6 @@ Item {
             });
         }
 
-        borderColor: Theme.border
         contentSpacing: 14
         readonly property real maximumHeight: Math.max(320,
             (root.QsWindow.window && root.QsWindow.window.screen
@@ -167,7 +165,7 @@ Item {
         readonly property real timerViewportHeight: Math.min(272,
             Math.max(52, maximumHeight - panelChromeHeight), desiredTimerHeight)
 
-        implicitWidth: 420
+        implicitWidth: 420 + ServicePanel.shellRounding * 2
         implicitHeight: Math.min(maximumHeight,
             panelChromeHeight + timerViewportHeight)
 
@@ -193,8 +191,6 @@ Item {
                 border.width: 1
                 border.color: Utils.alpha(Theme.foreground, 0.3)
                 opacity: canStart ? 1 : 0.5
-                Behavior on color { ColorAnimation { duration: 120 } }
-                Behavior on opacity { NumberAnimation { duration: 120 } }
 
                 Text {
                     anchors.centerIn: parent
@@ -232,7 +228,6 @@ Item {
             border.color: durationInput.activeFocus ? Theme.muted
                 : Utils.alpha(Theme.foreground, 0.3)
 
-            Behavior on border.color { ColorAnimation { duration: 120 } }
 
             TextInput {
                 id: durationInput
@@ -326,8 +321,6 @@ Item {
                                 : "transparent"
                             border.width: timerRow.index === root.selectedTimerIndex ? 1 : 0
                             border.color: Utils.alpha(Theme.foreground, 0.25)
-                            Behavior on color { ColorAnimation { duration: 120 } }
-                            Behavior on border.width { NumberAnimation { duration: 120 } }
 
                             HoverHandler {
                                 id: rowHover

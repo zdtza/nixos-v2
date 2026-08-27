@@ -148,8 +148,8 @@ PanelPopup {
             selectDay(keyboardDays[keyboardDayIndex].key, extendSelection);
     }
 
-    onVisibleChanged: {
-        if (!visible) {
+    onOpenChanged: {
+        if (!open) {
             clearSelection();
             return;
         }
@@ -167,7 +167,7 @@ PanelPopup {
     contentHorizontalMargins: 80
     contentTopMargin: 18
     contentSpacing: 16
-    implicitWidth: 650
+    implicitWidth: 650 + ServicePanel.shellRounding * 2
     implicitHeight: panelContent.implicitHeight
         + contentTopMargin + contentBottomMargin
 
@@ -177,67 +177,67 @@ PanelPopup {
     }
 
     Shortcut {
-        enabled: root.visible
+        enabled: root.open
         sequence: "Shift+Left"
         context: Qt.ApplicationShortcut
         onActivated: root.changeMonth(-1)
     }
     Shortcut {
-        enabled: root.visible
+        enabled: root.open
         sequence: "Shift+Right"
         context: Qt.ApplicationShortcut
         onActivated: root.changeMonth(1)
     }
     Shortcut {
-        enabled: root.visible
+        enabled: root.open
         sequence: "Left"
         context: Qt.ApplicationShortcut
         onActivated: root.moveKeyboardDay(-1)
     }
     Shortcut {
-        enabled: root.visible
+        enabled: root.open
         sequence: "Right"
         context: Qt.ApplicationShortcut
         onActivated: root.moveKeyboardDay(1)
     }
     Shortcut {
-        enabled: root.visible
+        enabled: root.open
         sequence: "Up"
         context: Qt.ApplicationShortcut
         onActivated: root.moveKeyboardDay(-7)
     }
     Shortcut {
-        enabled: root.visible
+        enabled: root.open
         sequence: "Down"
         context: Qt.ApplicationShortcut
         onActivated: root.moveKeyboardDay(7)
     }
     Shortcut {
-        enabled: root.visible
+        enabled: root.open
         sequence: "Return"
         context: Qt.ApplicationShortcut
         onActivated: root.activateKeyboardDay(false)
     }
     Shortcut {
-        enabled: root.visible
+        enabled: root.open
         sequence: "Enter"
         context: Qt.ApplicationShortcut
         onActivated: root.activateKeyboardDay(false)
     }
     Shortcut {
-        enabled: root.visible
+        enabled: root.open
         sequence: "Shift+Return"
         context: Qt.ApplicationShortcut
         onActivated: root.activateKeyboardDay(true)
     }
     Shortcut {
-        enabled: root.visible
+        enabled: root.open
         sequence: "Shift+Enter"
         context: Qt.ApplicationShortcut
         onActivated: root.activateKeyboardDay(true)
     }
     Shortcut {
-        enabled: root.visible
+        enabled: root.open
         sequence: "Delete"
         context: Qt.ApplicationShortcut
         onActivated: root.clearSelection()
@@ -387,8 +387,6 @@ PanelPopup {
                             || dayCell.keyboardSelected ? 1 : 0
                         border.color: dayCell.rangeEndpoint ? Theme.muted : Theme.border
 
-                        Behavior on color { ColorAnimation { duration: 120 } }
-                        Behavior on border.width { NumberAnimation { duration: 120 } }
                     }
 
                     Text {

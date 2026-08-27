@@ -189,19 +189,16 @@ PopupWindow {
         // Anchor rect is a 1x1 point in the anchor item's local coordinates,
         // used only as the pivot the popup grows from (the popup's actual
         // size comes from its own window geometry, not this rect). It
-        // defaults to the item's top-left corner (0,0). For submenus that
-        // needs to be the row's bottom-left corner instead, or the popup
-        // grows downward starting from the row's top edge and ends up
-        // covering the row itself, blocking the click needed to close the
-        // submenu again.
+        // defaults to the item's top-left corner (0,0).
         //
         // The row's local (0,0) is inset 2px right of the parent menu's own
         // border (Column's leftMargin below), so pull x back by that much to
-        // keep the submenu's border flush with the parent's. Push y a few px
-        // past the row's bottom edge to leave a visible gap instead of
-        // touching it.
+        // keep the submenu's border flush with the parent's. Submenus sit one
+        // row up from the triggering row (a small 5px drop from its top edge,
+        // not a full row height below it), so the top rounding is dropped
+        // below to keep that overlap looking flush.
         rect.x: menu.submenu ? -2 : 0
-        rect.y: menu.submenu ? menu.anchorItem.height + 5 : 0
+        rect.y: 0
         rect.width: 1
         rect.height: 1
 
@@ -214,8 +211,9 @@ PopupWindow {
             let point = menu.anchorWindow.contentItem.mapFromItem(
                 menu.anchorItem,
                 menu.anchorItem.width / 2 - menu.implicitWidth / 2,
-                menu.anchorItem.height + ServicePanel.barGap + ServicePanel.gapTopOffset
+                0
             );
+            point.y = ServicePanel.barHeight;
             point.x = Math.max(ServicePanel.barGap + ServicePanel.gapLeftOffset,
                 Math.min(point.x, menu.anchorWindow.width - menu.implicitWidth
                     - ServicePanel.barGap - ServicePanel.gapRightOffset));
@@ -224,7 +222,7 @@ PopupWindow {
         }
     }
 
-    implicitWidth: menu.menuWidth
+    implicitWidth: menu.menuWidth + (menu.submenu ? 0 : ServicePanel.shellRounding * 2)
     implicitHeight: Math.max(1, column.implicitHeight
         + menu.panelTopPadding + menu.panelPadding)
     visible: contentReady
@@ -270,16 +268,72 @@ PopupWindow {
         }
     }
 
-    Rectangle {
-        anchors.fill: parent
+    Item {
+        id: revealClip
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+        }
+        height: menu.contentReady ? menu.height : 0
+        clip: true
 
-        color: Theme.background
-        radius: ServicePanel.rounding
-        border.width: 1
-        border.color: Theme.border
+        // Behavior (not a one-shot animation to a fixed target) so height
+        // changes mid-reveal -- e.g. async DBus menu hydration -- retarget
+        // smoothly instead of snapping. Matches PanelPopup/PanelDrawer.
+        Behavior on height {
+            enabled: menu.contentReady
+            NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
+        }
 
-        Column {
-            id: column
+        Canvas {
+            visible: !menu.submenu
+            width: ServicePanel.shellRounding
+            height: Math.min(width, revealClip.height)
+
+            onPaint: {
+                const context = getContext("2d");
+                context.clearRect(0, 0, width, width);
+                context.fillStyle = Theme.dark_background;
+                context.beginPath();
+                context.moveTo(0, 0);
+                context.lineTo(width, 0);
+                context.lineTo(width, width);
+                context.arc(0, width, width, 0, -Math.PI / 2, true);
+                context.fill();
+            }
+        }
+
+        Canvas {
+            visible: !menu.submenu
+            width: ServicePanel.shellRounding
+            height: Math.min(width, revealClip.height)
+            x: parent.width - width
+
+            onPaint: {
+                const context = getContext("2d");
+                context.clearRect(0, 0, width, width);
+                context.fillStyle = Theme.dark_background;
+                context.beginPath();
+                context.moveTo(0, 0);
+                context.lineTo(width, 0);
+                context.arc(width, width, width, -Math.PI / 2, -Math.PI, true);
+                context.lineTo(0, 0);
+                context.fill();
+            }
+        }
+
+        Rectangle {
+            x: menu.submenu ? 0 : ServicePanel.shellRounding
+            width: parent.width - (menu.submenu ? 0 : ServicePanel.shellRounding * 2)
+            height: revealClip.height
+            color: Theme.dark_background
+            radius: ServicePanel.shellRounding
+            topLeftRadius: 0
+            topRightRadius: 0
+
+            Column {
+                id: column
 
             anchors {
                 fill: parent
@@ -377,9 +431,6 @@ PopupWindow {
                         color: menu.selectedEntryIndex === row.index
                             && row.interactive ? Theme.surface : "transparent"
 
-                        Behavior on color {
-                            ColorAnimation { duration: 120; easing.type: Easing.OutCubic }
-                        }
 
                         Text {
                             anchors {
@@ -503,5 +554,6 @@ PopupWindow {
                 implicitHeight: menu.itemAreaPadding / 2
             }
         }
+    }
     }
 }

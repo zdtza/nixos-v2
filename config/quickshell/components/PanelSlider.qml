@@ -47,7 +47,6 @@ Item {
         border.width: 2
         border.color: Theme.background
 
-        Behavior on color { ColorAnimation { duration: 120 } }
     }
 
     MouseArea {

@@ -120,6 +120,7 @@ let
 in
 {
   home.packages = [
+    pkgs.quickshell
     networkStatus
     timerAlert
   ];
@@ -134,9 +135,12 @@ in
     };
 
     Service = {
-      ExecStart = "${quickshell}/bin/quickshell";
+      Environment = [
+        "QML2_IMPORT_PATH=${stylixQmlModule}"
+        "QS_FALLBACK_APP_ICON=${pkgs.adwaita-icon-theme}/share/icons/Adwaita/symbolic/categories/applications-system-symbolic.svg"
+      ];
+      ExecStart = "${pkgs.quickshell}/bin/quickshell";
       Restart = "on-failure";
-      RestartSec = 2;
     };
 
     Install.WantedBy = [ "graphical-session.target" ];

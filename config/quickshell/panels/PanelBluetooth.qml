@@ -164,13 +164,12 @@ Item {
         onCleared: ServicePanel.close(root)
     }
 
-    PanelPopup {
+    PanelDrawer {
         id: panel
         anchorItem: root
         anchorWindow: root.QsWindow.window
-        visible: root.opened
+        open: root.opened
         onCloseRequested: ServicePanel.close(root)
-        borderColor: Theme.border
         contentSpacing: 14
         readonly property real maximumHeight: Math.max(260,
             (root.QsWindow.window && root.QsWindow.window.screen
@@ -194,7 +193,7 @@ Item {
         readonly property real deviceViewportHeight: Math.min(420,
             Math.max(80, maximumHeight - panelChromeHeight), desiredDeviceHeight)
 
-        implicitWidth: 460
+        implicitWidth: 460 + ServicePanel.shellRounding
         implicitHeight: Math.min(maximumHeight, panelChromeHeight + deviceViewportHeight)
 
         PanelHero {
@@ -335,8 +334,6 @@ Item {
             : "transparent"
         border.width: keyboardSelected ? 1 : 0
         border.color: Utils.alpha(Theme.foreground, 0.25)
-        Behavior on color { ColorAnimation { duration: 120 } }
-        Behavior on border.width { NumberAnimation { duration: 120 } }
 
         HoverHandler {
             id: rowHover

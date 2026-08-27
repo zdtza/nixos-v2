@@ -35,14 +35,16 @@ Item {
     // pixels compositor rounding/borders leave popups and notifications off
     // by. Positive pushes the panel further from that edge. This is the only
     // place panel-edge spacing should be adjusted.
-    property real gapTopOffset: 2
+    property real gapTopOffset: 0
     property real gapBottomOffset: 0
     property real gapLeftOffset: 0
     property real gapRightOffset: 0
-    // Corner rounding applied everywhere in the UI (panels, buttons, inputs,
-    // highlights, ...) except the workspace indicator. Mirrors Hyprland's
-    // decoration:rounding so the shell's corners match window corners;
-    // refreshed the same way as barGap.
+    // Outer drawer/menu corners and their concave joins. Keep separate from
+    // control rounding so every shell surface can be tuned in one place.
+    property real shellRounding: 16
+    // Shared speed for every shell slide-out reveal.
+    property int slideDuration: 150
+    // Control rounding mirrors Hyprland's decoration:rounding.
     property real rounding: 0
 
     function refreshBarGap(): void {

@@ -223,8 +223,7 @@ Item {
             }
         }
 
-        // Clipped viewport: its width animates, the icon row inside is pinned
-        // to the right edge so the icons slide out from behind the chevron.
+        // Clipped viewport keeps the icon row pinned behind the chevron.
         Item {
             id: viewport
 
@@ -237,14 +236,7 @@ Item {
 
             Behavior on implicitWidth {
                 NumberAnimation {
-                    duration: 140
-                    easing.type: Easing.OutCubic
-                }
-            }
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 140
+                    duration: ServicePanel.slideDuration
                     easing.type: Easing.OutCubic
                 }
             }

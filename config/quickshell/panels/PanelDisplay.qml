@@ -99,15 +99,14 @@ Item {
         onCleared: ServicePanel.close(root)
     }
 
-    PanelPopup {
+    PanelDrawer {
         id: panel
         anchorItem: root
         anchorWindow: root.QsWindow.window
-        visible: root.opened
+        open: root.opened
         onCloseRequested: ServicePanel.close(root)
-        borderColor: Theme.border
         contentSpacing: 14
-        implicitWidth: 460
+        implicitWidth: 460 + ServicePanel.shellRounding
         implicitHeight: panelContent.implicitHeight
             + contentTopMargin + contentBottomMargin
 
@@ -209,8 +208,6 @@ Item {
                         : "transparent"
                     border.width: focused ? 1 : 0
                     border.color: Utils.alpha(Theme.foreground, 0.25)
-                    Behavior on color { ColorAnimation { duration: 120 } }
-                    Behavior on border.width { NumberAnimation { duration: 120 } }
 
                     Text {
                         id: monitorIcon

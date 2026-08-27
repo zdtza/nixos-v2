@@ -17,7 +17,6 @@ Item {
     implicitHeight: 24
     opacity: available ? 1 : 0.5
 
-    Behavior on opacity { NumberAnimation { duration: 120 } }
 
     Rectangle {
         anchors.fill: parent
@@ -36,8 +35,6 @@ Item {
                 switchMouse.containsMouse ? 0.35 : 0.25)
             : Utils.alpha(Theme.foreground,
                 switchMouse.containsMouse ? 0.25 : 0.15)
-        Behavior on color { ColorAnimation { duration: 120 } }
-        Behavior on border.color { ColorAnimation { duration: 120 } }
 
         Rectangle {
             width: 16
@@ -46,8 +43,6 @@ Item {
             x: root.checked ? parent.width - width - 4 : 4
             radius: ServicePanel.rounding
             color: root.checked ? Theme.foreground : Theme.muted
-            Behavior on color { ColorAnimation { duration: 120 } }
-            Behavior on x { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
         }
 
         MouseArea {

@@ -121,11 +121,10 @@ Item {
 
         anchorItem: root
         anchorWindow: root.QsWindow.window
-        visible: root.opened
+        open: root.opened
         onCloseRequested: ServicePanel.close(root)
-        borderColor: Theme.border
         contentSpacing: 14
-        implicitWidth: 360
+        implicitWidth: 360 + ServicePanel.shellRounding * 2
         implicitHeight: panelContent.implicitHeight
             + contentTopMargin + contentBottomMargin
 
@@ -162,7 +161,6 @@ Item {
                         && actionButton.index === root.selectedActionIndex
                         ? Utils.alpha(Theme.foreground, 0.12)
                         : "transparent"
-                    Behavior on color { ColorAnimation { duration: 140 } }
 
                     Text {
                         anchors.centerIn: parent
@@ -173,10 +171,6 @@ Item {
                         scale: actionButton.index === root.selectedActionIndex ? 1.1 : 1
                         font.family: Theme.fontFamily
                         font.pixelSize: Utils.scaledFont(actionButton.modelData.iconSize)
-                        Behavior on scale {
-                            NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
-                        }
-                        Behavior on opacity { NumberAnimation { duration: 140 } }
                     }
 
                     MouseArea {

@@ -82,7 +82,12 @@ end
 
 -- Quickshell launcher stays mapped with an empty input region while closed.
 -- Keep layer animations disabled so opacity changes remain immediate.
-local quickshell_layers = { "quickshell:bar", "quickshell:launcher" }
+local quickshell_layers = {
+	"quickshell:bar",
+	"quickshell:launcher",
+	"quickshell:center-panel",
+	"quickshell:panel-drawer",
+}
 
 for _, namespace in ipairs(quickshell_layers) do
 	hl.layer_rule({

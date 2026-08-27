@@ -1,5 +1,5 @@
 // Optional controls beside the clock. Inactive controls collapse into the
-// clock edge and slide out when the hidden area is hovered. Active controls
+// clock edge and appear when the hidden area is hovered. Active controls
 // remain visible on the right, with inactive controls ordered to their left.
 import QtQuick
 import Quickshell.Services.Pipewire
@@ -119,12 +119,6 @@ Item {
         implicitHeight: 26
         opacity: implicitWidth > 0 ? 1 : 0
 
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 120
-                easing.type: Easing.OutCubic
-            }
-        }
 
         Item {
             id: buttons
@@ -145,7 +139,7 @@ Item {
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
                 }
 
                 PanelNightLightToggle {
@@ -164,7 +158,7 @@ Item {
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
                 }
 
                 Item {
@@ -206,7 +200,7 @@ Item {
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
                 }
 
                 PanelTimerToggle {
@@ -225,7 +219,7 @@ Item {
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
                 }
 
                 Item {
@@ -265,7 +259,7 @@ Item {
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
                 }
 
                 Item {

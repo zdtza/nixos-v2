@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 // Centered application browser matching the shell's compact panel language.
 // Right clicking an entry exposes desktop-entry actions that have no other shell UI.
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
@@ -142,7 +143,7 @@ Scope {
         // Keep the layer surface mapped. Closing only makes it transparent and
         // removes its input region, avoiding a Wayland map round trip on open.
         visible: true
-        color: root.open ? Utils.alpha(Theme.dark_background, 0.45) : "transparent"
+        color: "transparent"
         mask: Region {
             width: root.open ? window.width : 0
             height: root.open ? window.height : 0
@@ -166,12 +167,10 @@ Scope {
                 if (entry.noDisplay)
                     continue;
 
-                const subtitle = entry.comment || entry.genericName || "Application";
                 entries.push({
                     entry,
                     name: entry.name.toLowerCase(),
-                    description: `${entry.comment ?? ""} ${entry.genericName ?? ""}`.toLowerCase(),
-                    subtitle
+                    description: `${entry.comment ?? ""} ${entry.genericName ?? ""}`.toLowerCase()
                 });
             }
             return entries.sort((a, b) => a.entry.name.localeCompare(b.entry.name));
@@ -260,7 +259,15 @@ Scope {
                 appList.currentIndex = offset > 0 ? 0 : count - 1;
                 return;
             }
-            appList.currentIndex = (appList.currentIndex + offset + count) % count;
+            const target = appList.currentIndex + offset;
+            if (Math.abs(offset) === 1) {
+                const minimum = Math.floor(appList.currentIndex / appList.columns)
+                    * appList.columns;
+                const maximum = Math.min(count - 1, minimum + appList.columns - 1);
+                appList.currentIndex = Math.max(minimum, Math.min(maximum, target));
+            } else if (target >= 0 && target < count) {
+                appList.currentIndex = target;
+            }
         }
 
         function activateContextSelection(): void {
@@ -309,12 +316,27 @@ Scope {
             function onOpenChanged(): void {
                 window.closeContextMenu();
                 window.hoverSelectReady = false;
-                if (!root.open)
+                launcherSlide.stop();
+                if (!root.open) {
+                    launcherFrame.height = 0;
                     return;
+                }
+                launcherFrame.height = 0;
+                launcherSlide.restart();
                 search.text = "";
                 search.forceActiveFocus();
                 appList.currentIndex = 0;
             }
+        }
+
+        NumberAnimation {
+            id: launcherSlide
+            target: launcherFrame
+            property: "height"
+            from: 0
+            to: 480
+            duration: ServicePanel.slideDuration
+            easing.type: Easing.OutCubic
         }
 
         MouseArea {
@@ -336,13 +358,20 @@ Scope {
         Rectangle {
             id: launcherFrame
 
-            anchors.centerIn: parent
-            width: 520
-            height: 630
-            opacity: root.open ? 1 : 0
+            anchors {
+                top: parent.top
+                topMargin: ServicePanel.barHeight
+                horizontalCenter: parent.horizontalCenter
+            }
+            width: 620
+            height: 0
             enabled: root.open
-            radius: ServicePanel.rounding
+            clip: true
+            radius: ServicePanel.shellRounding
+            topLeftRadius: 0
+            topRightRadius: 0
             color: Theme.dark_background
+
 
             MouseArea {
                 anchors.fill: parent
@@ -352,18 +381,32 @@ Scope {
             ColumnLayout {
                 anchors {
                     fill: parent
-                    leftMargin: 20
-                    rightMargin: 20
-                    topMargin: 18
+                    leftMargin: 14
+                    rightMargin: 14
+                    topMargin: 14
                     bottomMargin: 14
                 }
-                spacing: 14
+                opacity: root.open ? 1 : 0
+                spacing: 20
+
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 42
-                    radius: ServicePanel.rounding
-                    color: Theme.dark_background
+                    Layout.preferredHeight: 32
+                    radius: height / 2
+                    color: Theme.surface
+
+                    Text {
+                        anchors {
+                            left: parent.left
+                            leftMargin: 14
+                            verticalCenter: parent.verticalCenter
+                        }
+                        text: "󰍉"
+                        color: Theme.muted
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Utils.scaledFont(14)
+                    }
 
                     TextInput {
                         id: search
@@ -371,11 +414,11 @@ Scope {
                         anchors {
                             left: parent.left
                             right: parent.right
-                            leftMargin: 14
+                            leftMargin: 38
                             rightMargin: 14
                             verticalCenter: parent.verticalCenter
                         }
-                        height: 28
+                        height: 22
                         verticalAlignment: TextInput.AlignVCenter
                         focus: true
                         selectByMouse: true
@@ -388,7 +431,7 @@ Scope {
 
                         cursorDelegate: Rectangle {
                             width: 1
-                            color: Theme.accent
+                            color: Theme.foreground
                         }
 
                         onTextChanged: appList.currentIndex = 0
@@ -397,7 +440,7 @@ Scope {
                             anchors.fill: parent
                             verticalAlignment: Text.AlignVCenter
                             visible: search.text === ""
-                            text: "Type to search applications…"
+                            text: "Search apps…"
                             color: Theme.muted
                             font.family: Theme.fontFamily
                             font.pixelSize: Utils.scaledFont(14)
@@ -413,18 +456,30 @@ Scope {
                             if (window.menuOpen)
                                 window.moveContextSelection(1);
                             else
-                                window.moveAppSelection(1);
+                                window.moveAppSelection(appList.columns);
                         }
                         Keys.onUpPressed: {
                             if (window.menuOpen)
                                 window.moveContextSelection(-1);
                             else
+                                window.moveAppSelection(-appList.columns);
+                        }
+                        Keys.onLeftPressed: {
+                            if (window.menuOpen)
+                                window.closeContextMenu();
+                            else
                                 window.moveAppSelection(-1);
                         }
-                        Keys.onLeftPressed: if (window.menuOpen)
-                            window.closeContextMenu()
                         Keys.onRightPressed: if (!window.menuOpen)
-                            window.openSelectedContextMenu()
+                            window.moveAppSelection(1)
+                        Keys.onPressed: event => {
+                            if (!window.menuOpen && (event.key === Qt.Key_Menu
+                                    || (event.key === Qt.Key_F10
+                                        && event.modifiers & Qt.ShiftModifier))) {
+                                window.openSelectedContextMenu();
+                                event.accepted = true;
+                            }
+                        }
                         Keys.onReturnPressed: {
                             if (window.menuOpen)
                                 window.activateContextSelection();
@@ -440,22 +495,25 @@ Scope {
                     }
                 }
 
-                ListView {
+                GridView {
                     id: appList
+
+                    readonly property int columns: 5
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
                     model: window.results
                     currentIndex: window.results.length > 0 ? 0 : -1
-                    highlightMoveDuration: 0
+                    cellWidth: width / columns
+                    cellHeight: 100
                     keyNavigationEnabled: false
                     reuseItems: true
-                    // Materialize every row while the persistent shell starts.
+                    // Materialize every tile while the persistent shell starts.
                     // This resolves desktop icons before the first invocation.
-                    cacheBuffer: Math.max(height, window.entries.length * (52 + spacing))
+                    cacheBuffer: Math.max(height,
+                        Math.ceil(window.entries.length / columns) * cellHeight)
                     boundsBehavior: Flickable.StopAtBounds
-                    spacing: 2
 
                     delegate: Rectangle {
                         id: appRow
@@ -463,101 +521,63 @@ Scope {
                         required property var modelData
                         required property int index
                         readonly property var entry: modelData.entry
-                        readonly property bool selected: ListView.isCurrentItem
+                        readonly property bool selected: GridView.isCurrentItem
 
-                        width: appList.width
-                        height: 52
-                        radius: ServicePanel.rounding
-                        // Accent bar is this full-row rounded rect showing through
-                        // down the left edge; the actual row background is a second
-                        // rounded rect of the same radius layered on top, inset 4px
-                        // from the left (same technique as Notifications.qml's
-                        // accentBase). Sharing one radius lets their corners nest
-                        // without computing per-corner insets.
-                        color: selected ? Theme.accent : "transparent"
+                        width: appList.cellWidth - 8
+                        height: appList.cellHeight - 8
+                        radius: ServicePanel.shellRounding
+                        color: selected ? Theme.surface : "transparent"
 
-                        Rectangle {
-                            anchors {
-                                fill: parent
-                                leftMargin: 4
-                            }
-                            radius: ServicePanel.rounding
-                            color: appRow.selected ? Theme.surface : "transparent"
-                            // Two coincident-radius rects both antialiasing their
-                            // corner curve leave a 1px seam where accent bleeds
-                            // through on the sides meant to fully cover it. This
-                            // one's AA only matters on the straight left inset edge,
-                            // which doesn't need it, so turn it off here.
-                            antialiasing: false
-                        }
+                        Column {
+                            anchors.centerIn: parent
+                            width: parent.width - 16
+                            spacing: 8
 
-                        Item {
-                            id: iconFrame
-                            anchors.left: parent.left
-                            anchors.leftMargin: 13
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 28
-                            height: 28
+                            Item {
+                                id: iconFrame
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: 48
+                                height: 48
 
-                            Grid {
-                                anchors.centerIn: parent
-                                columns: 2
-                                spacing: 3
-                                visible: applicationIcon.status !== Image.Ready
-
-                                Repeater {
-                                    model: 4
-                                    Rectangle {
-                                        required property int index
-                                        width: 8
-                                        height: 8
-                                        color: appRow.selected ? Theme.foreground : Theme.muted
-                                        opacity: index === 0 || index === 3 ? 1 : 0.55
+                                Image {
+                                    anchors.centerIn: parent
+                                    width: 40
+                                    height: 40
+                                    visible: applicationIcon.status !== Image.Ready
+                                    source: "file://" + Quickshell.env("QS_FALLBACK_APP_ICON")
+                                    sourceSize.width: 80
+                                    sourceSize.height: 80
+                                    smooth: true
+                                    layer.enabled: true
+                                    layer.effect: MultiEffect {
+                                        brightness: 1
+                                        colorization: 1
+                                        colorizationColor: Theme.muted
                                     }
+                                }
+
+                                Image {
+                                    id: applicationIcon
+                                    anchors.fill: parent
+                                    source: appRow.entry.icon
+                                        ? Quickshell.iconPath(appRow.entry.icon, true) : ""
+                                    sourceSize.width: 96
+                                    sourceSize.height: 96
+                                    cache: true
+                                    asynchronous: true
+                                    smooth: true
+                                    visible: status === Image.Ready
                                 }
                             }
 
-                            Image {
-                                id: applicationIcon
-                                anchors.fill: parent
-                                source: appRow.entry.icon
-                                    ? Quickshell.iconPath(appRow.entry.icon, true) : ""
-                                sourceSize.width: 56
-                                sourceSize.height: 56
-                                cache: true
-                                asynchronous: true
-                                smooth: true
-                                visible: status === Image.Ready
-                            }
-                        }
-
-                        Column {
-                            anchors {
-                                left: iconFrame.right
-                                right: parent.right
-                                leftMargin: 13
-                                rightMargin: 14
-                                verticalCenter: parent.verticalCenter
-                            }
-                            spacing: 2
-
                             Text {
                                 width: parent.width
+                                horizontalAlignment: Text.AlignHCenter
                                 text: appRow.entry.name
                                 color: Theme.foreground
                                 elide: Text.ElideRight
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Utils.scaledFont(14)
-                                font.bold: appRow.selected
-                            }
-
-                            Text {
-                                width: parent.width
-                                text: appRow.modelData.subtitle
-                                color: Qt.darker(Theme.foreground, 1.4)
-                                elide: Text.ElideRight
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Utils.scaledFont(11)
+                                font.pixelSize: Utils.scaledFont(12)
                             }
                         }
 
@@ -607,6 +627,45 @@ Scope {
             }
         }
 
+        // Concave corners blend the drawer into the underside of the bar.
+        Canvas {
+            width: ServicePanel.shellRounding
+            height: Math.min(width, launcherFrame.height)
+            x: launcherFrame.x - width
+            y: ServicePanel.barHeight
+
+            onPaint: {
+                const context = getContext("2d");
+                context.clearRect(0, 0, width, width);
+                context.fillStyle = Theme.dark_background;
+                context.beginPath();
+                context.moveTo(0, 0);
+                context.lineTo(width, 0);
+                context.lineTo(width, width);
+                context.arc(0, width, width, 0, -Math.PI / 2, true);
+                context.fill();
+            }
+        }
+
+        Canvas {
+            width: ServicePanel.shellRounding
+            height: Math.min(width, launcherFrame.height)
+            x: launcherFrame.x + launcherFrame.width
+            y: ServicePanel.barHeight
+
+            onPaint: {
+                const context = getContext("2d");
+                context.clearRect(0, 0, width, width);
+                context.fillStyle = Theme.dark_background;
+                context.beginPath();
+                context.moveTo(0, 0);
+                context.lineTo(width, 0);
+                context.arc(width, width, width, -Math.PI / 2, -Math.PI, true);
+                context.lineTo(0, 0);
+                context.fill();
+            }
+        }
+
         // Close context menu without also dismissing launcher.
         MouseArea {
             anchors.fill: parent
@@ -629,7 +688,9 @@ Scope {
             radius: ServicePanel.rounding
             x: Math.max(8, Math.min(window.menuX, window.width - width - 8))
             y: Math.max(8, Math.min(window.menuY, window.height - height - 8))
-            color: Theme.dark_background
+            color: Theme.background
+            border.width: 1
+            border.color: Theme.border
 
             MouseArea {
                 anchors.fill: parent

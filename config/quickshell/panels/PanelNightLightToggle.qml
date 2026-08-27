@@ -90,11 +90,10 @@ Item {
 
         anchorItem: root
         anchorWindow: root.QsWindow.window
-        visible: root.opened
+        open: root.opened
         onCloseRequested: ServicePanel.close(root)
-        borderColor: Theme.border
         contentSpacing: 14
-        implicitWidth: 420
+        implicitWidth: 420 + ServicePanel.shellRounding * 2
         implicitHeight: panelContent.implicitHeight
             + contentTopMargin + contentBottomMargin
 

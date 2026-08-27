@@ -192,10 +192,13 @@ Item {
         const headerHeight = Number(availableHeader?.implicitHeight || 14);
         const rowTop = index * (networkRowHeight + networkRowSpacing)
             + headerCount * (headerHeight + networkRowSpacing);
+        const rowHeight = passwordSsid === selectedSsid
+            ? passwordRowHeight : networkRowHeight;
         if (rowTop < networkList.contentY)
             networkList.contentY = rowTop;
-        else if (rowTop + networkRowHeight > networkList.contentY + networkList.height)
-            networkList.contentY = Math.min(networkList.contentHeight - networkList.height, rowTop + networkRowHeight - networkList.height);
+        else if (rowTop + rowHeight > networkList.contentY + networkList.height)
+            networkList.contentY = Math.min(networkList.contentHeight - networkList.height,
+                rowTop + rowHeight - networkList.height);
     }
 
     function activateSelectedNetwork(): void {
@@ -262,10 +265,11 @@ Item {
     }
 
     onPasswordSsidChanged: {
-        if (passwordSsid === "")
+        if (passwordSsid === "") {
             restoreNetworkListFocus();
-        else
+        } else {
             passwordFocusTimer.restart();
+        }
     }
 
     Component.onDestruction: if (opened)
@@ -352,14 +356,13 @@ Item {
         onCleared: root.close()
     }
 
-    PanelPopup {
+    PanelDrawer {
         id: panel
         anchorItem: root
         anchorWindow: root.QsWindow.window
-        visible: root.opened
+        open: root.opened
         closeOnEscape: root.passwordSsid === ""
         onCloseRequested: root.close()
-        borderColor: Theme.border
         contentSpacing: 14
         readonly property real maximumHeight: Math.max(320,
             (root.QsWindow.window && root.QsWindow.window.screen
@@ -368,9 +371,8 @@ Item {
             + contentBottomMargin + networkHero.implicitHeight
             + connectionInfo.implicitHeight + networkSeparator.height
             + contentSpacing * 3
-        // Calculate from stable row counts rather than animated delegate size.
-        // Password space exists only while editor is open, removing idle blank
-        // space without reintroducing transient intermediate popup heights.
+        // Use stable section counts instead of Column.implicitHeight. Panel
+        // follows actual content while ignoring transient delegate layouts.
         readonly property real connectedSectionHeight: root.connectedNetworks.length > 0
             ? connectedHeader.implicitHeight
                 + root.connectedNetworks.length * (root.networkRowHeight + root.networkRowSpacing)
@@ -379,15 +381,13 @@ Item {
             + (root.availableNetworks.length > 0
                 ? root.availableNetworks.length * (root.networkRowHeight + root.networkRowSpacing)
                 : root.networkRowSpacing + root.emptyStateHeight)
-        readonly property real passwordEditorHeight: root.passwordSsid !== ""
-            ? root.passwordRowHeight - root.networkRowHeight : 0
         readonly property real desiredNetworkHeight: connectedSectionHeight
-            + availableSectionHeight + passwordEditorHeight + root.networkEdgeInset
+            + availableSectionHeight + root.networkEdgeInset
             + (root.connectedNetworks.length > 0 ? root.networkSectionSpacing : 0)
         readonly property real networkViewportHeight: Math.min(420,
             Math.max(80, maximumHeight - panelChromeHeight), desiredNetworkHeight)
 
-        implicitWidth: 460
+        implicitWidth: 460 + ServicePanel.shellRounding
         implicitHeight: Math.min(maximumHeight, panelChromeHeight + networkViewportHeight)
 
         PanelHero {
@@ -508,6 +508,15 @@ Item {
                             readonly property bool passwordOpen: root.passwordSsid === String(modelData.ssid)
                             readonly property bool keyboardSelected: root.selectedSsid === String(modelData.ssid)
 
+                            onPasswordOpenChanged: if (passwordOpen) Qt.callLater(() => {
+                                const point = networkRow.mapToItem(networkList.contentItem, 0, 0);
+                                const bottom = point.y + networkRow.height;
+                                if (bottom > networkList.contentY + networkList.height)
+                                    networkList.contentY = Math.max(0, Math.min(
+                                        networkList.contentHeight - networkList.height,
+                                        bottom - networkList.height));
+                            })
+
                             width: parent.width
                             height: passwordOpen ? root.passwordRowHeight : root.networkRowHeight
                             color: rowMouse.pressed && !passwordOpen
@@ -518,12 +527,6 @@ Item {
                             border.width: networkRow.keyboardSelected && !passwordOpen ? 1 : 0
                             border.color: Utils.alpha(Theme.foreground, 0.25)
                             radius: ServicePanel.rounding
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: 120
-                                }
-                            }
-                            Behavior on border.width { NumberAnimation { duration: 120 } }
 
                             HoverHandler {
                                 id: networkHover
@@ -668,7 +671,6 @@ Item {
                                     border.width: 1
                                     border.color: passwordInput.activeFocus ? Theme.muted : Utils.alpha(Theme.foreground, 0.4)
 
-                                    Behavior on border.color { ColorAnimation { duration: 120 } }
 
                                     Text {
                                         anchors {
@@ -715,8 +717,6 @@ Item {
                                     radius: ServicePanel.rounding
                                     color: connectMouse.containsMouse ? Utils.alpha(Theme.foreground, 0.18) : Utils.alpha(Theme.foreground, 0.08)
 
-                                    Behavior on color { ColorAnimation { duration: 120 } }
-
                                     border.width: 1
                                     border.color: Utils.alpha(Theme.foreground, 0.4)
                                     Text {
@@ -742,8 +742,6 @@ Item {
                                     height: 32
                                     radius: ServicePanel.rounding
                                     color: cancelMouse.containsMouse ? Utils.alpha(Theme.foreground, 0.12) : "transparent"
-
-                                    Behavior on color { ColorAnimation { duration: 120 } }
 
                                     border.width: 1
                                     border.color: Utils.alpha(Theme.foreground, 0.3)

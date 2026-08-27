@@ -408,21 +408,24 @@ PopupWindow {
                             cursorShape: row.interactive ? Qt.PointingHandCursor : Qt.ArrowCursor
 
                             onClicked: {
-                                if (!row.interactive || row.entry.hasChildren)
+                                if (!row.interactive)
                                     return;
+
+                                if (row.entry.hasChildren) {
+                                    menu.submenuEntry = menu.submenuEntry === row.entry
+                                        ? null : row.entry;
+                                    return;
+                                }
 
                                 row.entry.triggered();
                                 menu.closeRequested();
                             }
 
-                            // Hovering a submenu row opens it; hovering any
-                            // other row closes whatever was open. Leaving the
-                            // popup entirely (into the submenu) changes nothing.
+                            // Hovering only updates the highlighted row;
+                            // submenus open on click, not hover.
                             onContainsMouseChanged: {
-                                if (containsMouse) {
+                                if (containsMouse)
                                     menu.selectEntry(row.interactive ? row.index : -1);
-                                    menu.submenuEntry = row.entry.hasChildren ? row.entry : null;
-                                }
                             }
                         }
                     }

@@ -27,6 +27,7 @@ PopupWindow {
 
     property int menuWidth: 220
     property int panelPadding: 6
+    property int panelTopPadding: 3
     property int itemAreaPadding: 6
     property string menuTitle: ""
     property string menuStatus: ""
@@ -225,7 +226,7 @@ PopupWindow {
 
     implicitWidth: menu.menuWidth
     implicitHeight: Math.max(1, column.implicitHeight
-        + menu.panelPadding * 2)
+        + menu.panelTopPadding + menu.panelPadding)
     visible: contentReady
     color: "transparent"
 
@@ -284,7 +285,7 @@ PopupWindow {
                 fill: parent
                 leftMargin: 2
                 rightMargin: 2
-                topMargin: menu.panelPadding
+                topMargin: menu.panelTopPadding
                 bottomMargin: menu.panelPadding
             }
 

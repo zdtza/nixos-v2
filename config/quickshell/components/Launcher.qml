@@ -18,7 +18,6 @@ Scope {
 
     property bool open: false
     property var terminal: ["kitty"]
-    property var targetScreen: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
     property string openedMonitorName: ""
     property string pendingLaunchName: ""
     property string pendingLaunchIcon: "application-x-executable"
@@ -57,7 +56,6 @@ Scope {
     function show(): void {
         const monitorName = String(Hyprland.focusedMonitor?.name ?? "");
         root.openedMonitorName = monitorName;
-        root.targetScreen = root.screenForMonitor(monitorName);
         ServicePanel.closeActive();
         root.open = true;
     }
@@ -139,7 +137,7 @@ Scope {
     PanelWindow {
         id: window
 
-        screen: root.targetScreen
+        screen: root.screenForMonitor(root.openedMonitorName)
 
         // Keep the layer surface mapped. Closing only makes it transparent and
         // removes its input region, avoiding a Wayland map round trip on open.
@@ -555,9 +553,9 @@ Scope {
                         Column {
                             anchors {
                                 left: iconFrame.right
-                                right: actionHint.left
+                                right: parent.right
                                 leftMargin: 13
-                                rightMargin: 12
+                                rightMargin: 14
                                 verticalCenter: parent.verticalCenter
                             }
                             spacing: 2
@@ -580,17 +578,6 @@ Scope {
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Utils.scaledFont(11)
                             }
-                        }
-
-                        Text {
-                            id: actionHint
-                            anchors.right: parent.right
-                            anchors.rightMargin: 14
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: appRow.selected ? "↵" : ""
-                            color: Theme.muted
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Utils.scaledFont(14)
                         }
 
                         MouseArea {

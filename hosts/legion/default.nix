@@ -24,8 +24,7 @@ in
     ../../modules/windows.nix
   ];
 
-  # home-manager modules for this host's user. A headless/server host would
-  # define a much shorter list here (no hyprland/kitty/quickshell etc.).
+  # home-manager modules for this host's user
   home-manager.users.${user}.imports = [
     ../../home/repo.nix
     ../../home/defaults.nix
@@ -35,7 +34,6 @@ in
     ../../home/hyprland.nix
     ../../home/hypridle.nix
     ../../home/hyprsunset.nix
-    ../../home/pi.nix
     ../../home/screen-share.nix
     ../../home/voxtype.nix
     ../../home/btop.nix

@@ -5,7 +5,17 @@
   boot.kernelParams = [ "mem_sleep_default=deep" ];
 
   # power-saver on battery, performance when plugged in
-  services.upower.enable = true;
+  services.upower = {
+    enable = true;
+    # HybridSleep (the default) requires a working resume device, which
+    # isn't configured on this host, so it silently fails and the laptop
+    # just idles down to 0% instead of doing anything. Power off cleanly
+    # once the battery hits the critical level instead.
+    criticalPowerAction = "PowerOff";
+    percentageLow = 15;
+    percentageCritical = 5;
+    percentageAction = 3;
+  };
 
   services.tlp = {
     enable = true;

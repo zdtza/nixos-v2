@@ -370,7 +370,7 @@ in
         xdg.desktopEntries.windows = {
           name = "Windows";
           genericName = "Windows 11";
-          comment = "Windows 11";
+          comment = "Windows 11 virtual machine";
           exec = lib.getExe launch;
           icon = "windows";
           categories = [ "System" ];

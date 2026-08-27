@@ -10,25 +10,27 @@ import ".."
 Scope {
     id: root
 
-    property var targetScreen: null
+    // Only the monitor *name* is cached, never a screen object -- see
+    // Notifications.qml for why caching a QuickshellScreenInfo/QScreen
+    // reference across a reload segfaults.
+    property string targetScreenName: ""
     property bool shown: false
     property string icon: ""
     property real value: 0
     property color fillColor: Theme.foreground
 
-    function focusedScreen(): var {
-        const monitorName = String(Hyprland.focusedMonitor?.name ?? "");
+    function screenForMonitor(name: string): var {
         for (const screen of Quickshell.screens) {
-            if (String(screen.name) === monitorName)
+            if (String(screen.name) === name)
                 return screen;
         }
         return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
     }
 
     function show(iconName: string, progress: real, fill: color): void {
-        targetScreen = focusedScreen();
-        if (!targetScreen)
+        if (Quickshell.screens.length === 0)
             return;
+        targetScreenName = String(Hyprland.focusedMonitor?.name ?? "");
         icon = iconName;
         value = Math.max(0, Math.min(1, Number(progress)));
         fillColor = fill;
@@ -79,8 +81,8 @@ Scope {
     PanelWindow {
         id: window
 
-        screen: root.targetScreen
-        visible: root.shown && !!root.targetScreen
+        screen: root.screenForMonitor(root.targetScreenName)
+        visible: root.shown && Quickshell.screens.length > 0
         color: "transparent"
         implicitWidth: 240
         implicitHeight: 52

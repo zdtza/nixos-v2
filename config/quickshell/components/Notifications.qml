@@ -13,15 +13,26 @@ import ".."
 Scope {
     id: root
 
-    property var targetScreen: Quickshell.screens.length > 0 ? Quickshell.screens[0] : null
+    // Only the monitor *name* is cached, never a screen object. Quickshell's
+    // reload preserves top-level property values across an engine rebuild,
+    // but QuickshellScreenInfo/QScreen objects belong to the generation that
+    // created them and get torn down on reload -- caching one directly here
+    // caused a segfault (QWindow::setScreen on a freed screen) on the next
+    // reload after any notification had arrived. Strings survive reload
+    // safely; the live screen object is re-resolved from the current
+    // generation's Quickshell.screens every time it's needed.
+    property string targetScreenName: Quickshell.screens.length > 0 ? Quickshell.screens[0].name : ""
 
-    function focusedScreen(): var {
-        const monitorName = Hyprland.focusedMonitor?.name ?? "";
+    function screenForMonitor(name: string): var {
         for (const screen of Quickshell.screens) {
-            if (screen.name === monitorName)
+            if (screen.name === name)
                 return screen;
         }
         return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
+    }
+
+    function focusedMonitorName(): string {
+        return Hyprland.focusedMonitor?.name ?? "";
     }
 
     function clearNotifications(): void {
@@ -41,7 +52,14 @@ Scope {
         persistenceSupported: false
         bodySupported: true
         bodyMarkupSupported: true
-        bodyHyperlinksSupported: false
+        // Senders (Teams in particular) check this capability before
+        // deciding how to present a link. When it's false they assume we
+        // can't render <a href>, so they fall back to appending the raw
+        // URL as plain text into the body instead. Advertising support
+        // here lets them send a real hyperlink (usually with friendly
+        // link text) instead of concatenating the URL into the
+        // description.
+        bodyHyperlinksSupported: true
         bodyImagesSupported: false
         actionsSupported: true
         actionIconsSupported: false
@@ -53,7 +71,7 @@ Scope {
                 notification.dismiss();
                 return;
             }
-            root.targetScreen = root.focusedScreen();
+            root.targetScreenName = root.focusedMonitorName();
             notification.tracked = true;
         }
     }
@@ -69,7 +87,7 @@ Scope {
     PanelWindow {
         id: window
 
-        screen: root.targetScreen
+        screen: root.screenForMonitor(root.targetScreenName)
         visible: !ServiceDoNotDisturb.enabled
             && server.trackedNotifications.values.length > 0
         color: "transparent"

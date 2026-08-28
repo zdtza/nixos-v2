@@ -9,13 +9,11 @@ import "services"
 ShellRoot {
     id: root
 
-    property bool statusBarVisible: true
-
     Variants {
         model: Quickshell.screens
 
         Bar {
-            visible: root.statusBarVisible
+            visible: ServicePanel.barVisible
         }
     }
 
@@ -31,15 +29,15 @@ ShellRoot {
         target: "bar"
 
         function toggle(): void {
-            root.statusBarVisible = !root.statusBarVisible;
+            ServicePanel.barVisible = !ServicePanel.barVisible;
         }
 
         function hide(): void {
-            root.statusBarVisible = false;
+            ServicePanel.barVisible = false;
         }
 
         function show(): void {
-            root.statusBarVisible = true;
+            ServicePanel.barVisible = true;
         }
     }
 

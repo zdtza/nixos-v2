@@ -41,7 +41,6 @@ Item {
     readonly property int networkRowHeight: 48
     readonly property int passwordRowHeight: 96
     readonly property int networkRowSpacing: 8
-    readonly property int networkSectionSpacing: 14
     readonly property int emptyStateHeight: 52
     // One pixel lets the final row's antialiased border render inside the
     // clipped viewport without adding visible panel padding.
@@ -186,12 +185,14 @@ Item {
         else
             index = Math.max(0, Math.min(networks.length - 1, index + delta));
         selectedSsid = networks[index].ssid;
-        let headerCount = connectedNetworks.length > 0 ? 1 : 0;
-        if (index >= connectedNetworks.length)
-            headerCount++;
-        const headerHeight = Number(availableHeader?.implicitHeight || 14);
-        const rowTop = index * (networkRowHeight + networkRowSpacing)
-            + headerCount * (headerHeight + networkRowSpacing);
+
+        // Connected networks are pinned above the scrollable area and are
+        // always visible, so only available-network selections need scrolling.
+        if (index < connectedNetworks.length)
+            return;
+
+        const availableIndex = index - connectedNetworks.length;
+        const rowTop = availableIndex * (networkRowHeight + networkRowSpacing);
         const rowHeight = passwordSsid === selectedSsid
             ? passwordRowHeight : networkRowHeight;
         if (rowTop < networkList.contentY)
@@ -364,28 +365,29 @@ Item {
         closeOnEscape: root.passwordSsid === ""
         onCloseRequested: root.close()
         contentSpacing: 14
+        contentBottomMargin: 12
         readonly property real maximumHeight: Math.max(320,
             (root.QsWindow.window && root.QsWindow.window.screen
                 ? root.QsWindow.window.screen.height : 800) - 45)
+        // Connected networks and the "AVAILABLE" header are pinned
+        // (non-scrolling), so they count toward chrome height rather than
+        // the scrollable viewport.
         readonly property real panelChromeHeight: contentTopMargin
             + contentBottomMargin + networkHero.implicitHeight
             + connectionInfo.implicitHeight + networkSeparator.height
-            + contentSpacing * 3
+            + connectedSectionHeight + availableHeader.implicitHeight
+            + contentSpacing * (root.connectedNetworks.length > 0 ? 5 : 4)
         // Use stable section counts instead of Column.implicitHeight. Panel
         // follows actual content while ignoring transient delegate layouts.
         readonly property real connectedSectionHeight: root.connectedNetworks.length > 0
             ? connectedHeader.implicitHeight
                 + root.connectedNetworks.length * (root.networkRowHeight + root.networkRowSpacing)
             : 0
-        readonly property real availableSectionHeight: availableHeader.implicitHeight
-            + (root.availableNetworks.length > 0
-                ? root.availableNetworks.length * (root.networkRowHeight + root.networkRowSpacing)
-                : root.networkRowSpacing + root.emptyStateHeight)
-        readonly property real desiredNetworkHeight: connectedSectionHeight
-            + availableSectionHeight + root.networkEdgeInset
-            + (root.connectedNetworks.length > 0 ? root.networkSectionSpacing : 0)
+        readonly property real availableSectionHeight: root.availableNetworks.length > 0
+            ? root.availableNetworks.length * (root.networkRowHeight + root.networkRowSpacing)
+            : root.networkRowSpacing + root.emptyStateHeight
         readonly property real networkViewportHeight: Math.min(420,
-            Math.max(80, maximumHeight - panelChromeHeight), desiredNetworkHeight)
+            Math.max(80, maximumHeight - panelChromeHeight), availableSectionHeight + root.networkEdgeInset)
 
         implicitWidth: 460 + ServicePanel.shellRounding
         implicitHeight: Math.min(maximumHeight, panelChromeHeight + networkViewportHeight)
@@ -474,35 +476,10 @@ Item {
 
         PanelSeparator { id: networkSeparator }
 
-        Item {
-            width: parent.width
-            height: panel.networkViewportHeight
-            clip: true
+        Component {
+            id: networkRowComponent
 
-            Flickable {
-                id: networkList
-                anchors.fill: parent
-                contentHeight: networkColumn.implicitHeight + root.networkEdgeInset
-                clip: true
-                interactive: contentHeight > height
-                boundsBehavior: Flickable.StopAtBounds
-                flickableDirection: Flickable.VerticalFlick
-                activeFocusOnTab: true
-
-                HoverHandler {
-                    onHoveredChanged: if (hovered && root.passwordSsid === "")
-                        networkList.forceActiveFocus()
-                }
-
-                Column {
-                    id: networkColumn
-                    width: networkList.width
-                    spacing: root.networkSectionSpacing
-
-                    Component {
-                        id: networkRowComponent
-
-                        Rectangle {
+            Rectangle {
                             id: networkRow
                             required property var modelData
                             readonly property bool passwordOpen: root.passwordSsid === String(modelData.ssid)
@@ -764,53 +741,74 @@ Item {
                         }
                     }
 
-                    Column {
+        Column {
+            id: connectedSection
+            width: parent.width
+            spacing: root.networkRowSpacing
+            visible: root.connectedNetworks.length > 0
+
+            PanelSectionHeader {
+                id: connectedHeader
+                width: parent.width
+                title: "CONNECTED"
+                detail: root.connectedNetworks.length > 1
+                    ? root.connectedNetworks.length + " NETWORKS" : ""
+            }
+
+            Repeater {
+                model: root.connectedNetworks
+                delegate: networkRowComponent
+            }
+        }
+
+        PanelSectionHeader {
+            id: availableHeader
+            width: parent.width
+            title: "AVAILABLE"
+            detail: ServiceNetwork.wifiEnabled ? "SCANNING" : "WI-FI OFF"
+        }
+
+        Item {
+            width: parent.width
+            height: panel.networkViewportHeight
+            clip: true
+
+            Flickable {
+                id: networkList
+                anchors.fill: parent
+                contentHeight: networkColumn.implicitHeight + root.networkEdgeInset
+                clip: true
+                interactive: contentHeight > height
+                boundsBehavior: Flickable.StopAtBounds
+                flickableDirection: Flickable.VerticalFlick
+                activeFocusOnTab: true
+
+                HoverHandler {
+                    onHoveredChanged: if (hovered && root.passwordSsid === "")
+                        networkList.forceActiveFocus()
+                }
+
+                Column {
+                    id: networkColumn
+                    width: networkList.width
+                    spacing: root.networkRowSpacing
+
+                    Text {
                         width: parent.width
-                        spacing: root.networkRowSpacing
-                        visible: root.connectedNetworks.length > 0
-
-                        PanelSectionHeader {
-                            id: connectedHeader
-                            width: parent.width
-                            title: "CONNECTED"
-                            detail: root.connectedNetworks.length > 1
-                                ? root.connectedNetworks.length + " NETWORKS" : ""
-                        }
-
-                        Repeater {
-                            model: root.connectedNetworks
-                            delegate: networkRowComponent
-                        }
+                        height: root.emptyStateHeight
+                        visible: root.availableNetworks.length === 0
+                        text: ServiceNetwork.wifiEnabled
+                            ? "No available networks" : "Wi-Fi is turned off"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        color: Theme.muted
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Utils.scaledFont(12)
                     }
 
-                    Column {
-                        width: parent.width
-                        spacing: root.networkRowSpacing
-
-                        PanelSectionHeader {
-                            id: availableHeader
-                            width: parent.width
-                            title: "AVAILABLE"
-                            detail: ServiceNetwork.wifiEnabled ? "SCANNING" : "WI-FI OFF"
-                        }
-
-                        Text {
-                            width: parent.width
-                            height: root.emptyStateHeight
-                            visible: root.availableNetworks.length === 0
-                            text: ServiceNetwork.wifiEnabled
-                                ? "No available networks" : "Wi-Fi is turned off"
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            color: Theme.muted
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Utils.scaledFont(12)
-                        }
-
-                        Repeater {
-                            model: root.availableNetworks
-                            delegate: networkRowComponent
-                        }
+                    Repeater {
+                        model: root.availableNetworks
+                        delegate: networkRowComponent
                     }
                 }
             }

@@ -30,6 +30,19 @@
   services.udisks2.enable = true;
   services.gvfs.enable = true;
 
+  # TUI login manager, launches Hyprland through UWSM on login.
+  # Wrapped in a script: greetd's TOML parser chokes on the multi-line
+  # string the generic toml generator emits once the raw command line
+  # gets long, so keep the command itself to one short script path.
+  services.greetd = {
+    enable = true;
+    settings.default_session.command = lib.getExe (
+      pkgs.writeShellScriptBin "tuigreet-session" ''
+        exec ${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-user-session --cmd "uwsm start hyprland-uwsm.desktop"
+      ''
+    );
+  };
+
   xdg.portal = {
     enable = true;
     # Hyprland's NixOS module adds GTK automatically; force exact backends for terminal file picker.

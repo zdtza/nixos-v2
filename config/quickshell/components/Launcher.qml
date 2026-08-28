@@ -221,6 +221,10 @@ Scope {
         // stationary cursor synthesizes a hover-enter on whatever row/action
         // ends up beneath it, silently overriding the default selection.
         property bool hoverSelectReady: false
+        // Cursor position observed the first time it's seen after opening.
+        // Compared against later positions to detect real movement, since a
+        // stationary cursor still reports a position once input starts.
+        property var armPosition: null
 
         property var menuEntry: null
         property real menuX: 0
@@ -316,6 +320,7 @@ Scope {
             function onOpenChanged(): void {
                 window.closeContextMenu();
                 window.hoverSelectReady = false;
+                window.armPosition = null;
                 launcherSlide.stop();
                 if (!root.open) {
                     launcherFrame.height = 0;
@@ -346,13 +351,21 @@ Scope {
         }
 
         // Arms hover-select once the pointer genuinely moves (as opposed to
-        // the launcher merely appearing underneath it).
-        MouseArea {
-            anchors.fill: parent
+        // the launcher merely appearing underneath it). A HoverHandler on
+        // this top-level Item sees every pointer move within the window
+        // regardless of which child is topmost, unlike a plain MouseArea
+        // which only gets events when nothing else covers it.
+        HoverHandler {
             enabled: root.open && !window.hoverSelectReady
-            hoverEnabled: true
-            acceptedButtons: Qt.NoButton
-            onPositionChanged: window.hoverSelectReady = true
+            acceptedDevices: PointerDevice.AllDevices
+            onPointChanged: {
+                if (window.armPosition === null) {
+                    window.armPosition = Qt.point(point.position.x, point.position.y);
+                } else if (point.position.x !== window.armPosition.x
+                        || point.position.y !== window.armPosition.y) {
+                    window.hoverSelectReady = true;
+                }
+            }
         }
 
         Rectangle {
@@ -360,7 +373,9 @@ Scope {
 
             anchors {
                 top: parent.top
-                topMargin: ServicePanel.barHeight
+                // Flush against the bar when it's shown; falls back to the
+                // bare screen edge when it's hidden.
+                topMargin: ServicePanel.barVisible ? ServicePanel.barHeight : 0
                 horizontalCenter: parent.horizontalCenter
             }
             width: 620
@@ -368,6 +383,8 @@ Scope {
             enabled: root.open
             clip: true
             radius: ServicePanel.shellRounding
+            // Square against the top edge whether that's the bar's
+            // underside or the bare screen top.
             topLeftRadius: 0
             topRightRadius: 0
             color: Theme.dark_background
@@ -539,11 +556,23 @@ Scope {
                                 width: 48
                                 height: 48
 
+                                // Loading: unresolved icon path is still being decoded.
+                                // Fallback icon only once the load actually failed/has no icon.
+                                Text {
+                                    anchors.centerIn: parent
+                                    visible: applicationIcon.status === Image.Loading
+                                    text: "…"
+                                    color: Theme.muted
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Utils.scaledFont(18)
+                                }
+
                                 Image {
                                     anchors.centerIn: parent
                                     width: 40
                                     height: 40
-                                    visible: applicationIcon.status !== Image.Ready
+                                    visible: applicationIcon.status === Image.Error
+                                        || applicationIcon.status === Image.Null
                                     source: "file://" + Quickshell.env("QS_FALLBACK_APP_ICON")
                                     sourceSize.width: 80
                                     sourceSize.height: 80
@@ -599,9 +628,36 @@ Scope {
                         }
                     }
 
+                    // Desktop entries load asynchronously; without this, opening
+                    // the launcher before they arrive briefly shows "no matching
+                    // applications" instead of a loading state.
                     Column {
                         anchors.centerIn: parent
-                        visible: window.results.length === 0
+                        visible: window.entries.length === 0
+                        spacing: 10
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "…"
+                            color: Theme.muted
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Utils.scaledFont(28)
+                        }
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "LOADING APPLICATIONS"
+                            color: Theme.muted
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Utils.scaledFont(11)
+                            font.bold: true
+                            font.letterSpacing: 1
+                        }
+                    }
+
+                    Column {
+                        anchors.centerIn: parent
+                        visible: window.entries.length > 0 && window.results.length === 0
                         spacing: 10
 
                         Text {
@@ -628,7 +684,9 @@ Scope {
         }
 
         // Concave corners blend the drawer into the underside of the bar.
+        // Only makes sense when the bar is actually there to blend into.
         Canvas {
+            visible: ServicePanel.barVisible
             width: ServicePanel.shellRounding
             height: Math.min(width, launcherFrame.height)
             x: launcherFrame.x - width
@@ -648,6 +706,7 @@ Scope {
         }
 
         Canvas {
+            visible: ServicePanel.barVisible
             width: ServicePanel.shellRounding
             height: Math.min(width, launcherFrame.height)
             x: launcherFrame.x + launcherFrame.width

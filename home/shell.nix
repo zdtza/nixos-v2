@@ -48,21 +48,22 @@
       # repo), so this works unmodified on any machine this repo manages.
       set -l flake_target "$repo#"(command hostname)
 
-      printf 'Rebuilding NixOS (%s)...\n' "$flake_target"
+      # Pipe through nom for live progress while still capturing a plain
+      # log for the error extraction below; --option warn-dirty false
+      # silences nix's dirty-tree warning caused by the staging above.
+      # nixos-rebuild/nom already report the flake target and result, so
+      # no extra banner is printed here.
       command sudo nixos-rebuild switch --flake "$flake_target" $argv \
-        >"$log_file" 2>&1
-      set -l rebuild_status $status
+        --option warn-dirty false 2>&1 \
+        | command tee "$log_file" | command nom
+      set -l rebuild_status $pipestatus[1]
 
       if test $rebuild_status -eq 0
         set -l profile (command readlink /nix/var/nix/profiles/system)
         set -l generation (string replace -r \
           '^system-([0-9]+)-link$' '$1' (path basename "$profile"))
-        # `$version` is Fish's read-only version variable; use distinct name.
-        set -l nixos_version (string trim \
-          (command cat /run/current-system/nixos-version))
-        set -l commit_message "NixOS generation $generation ($nixos_version)"
 
-        printf 'Rebuild complete: %s\n' "$commit_message"
+        printf 'Rebuild Complete: NixOS generation %s\n' "$generation"
         return 0
       end
 

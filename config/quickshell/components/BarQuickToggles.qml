@@ -13,7 +13,7 @@ Item {
 
     readonly property bool expanded: hover.hovered || nightLightToggle.opened
         || timerToggle.opened
-    readonly property real fullTrayWidth: 28 * 4 + (recordingActive ? 28 : 0)
+    readonly property real fullTrayWidth: 28 * 5 + (recordingActive ? 28 : 0)
     readonly property var nightLightPanel: nightLightToggle
     readonly property var timerPanel: timerToggle
     // XDPH creates one of these PipeWire sources per active portal capture.
@@ -41,7 +41,8 @@ Item {
 
     function initializeToggleOrder(): void {
         const states = [ServiceNightLight.enabled, ServiceStayAwake.enabled,
-            ServiceTimer.running, ServiceDoNotDisturb.enabled, recordingActive];
+            ServiceTimer.running, ServiceDoNotDisturb.enabled, recordingActive,
+            ServiceVoiceDictation.active];
         const nextActive = [];
         const nextInactive = [];
 
@@ -59,7 +60,7 @@ Item {
     function toggleX(index: int): real {
         const order = inactiveOrder.concat(activeOrder);
         const slots = [nightLightSlot, stayAwakeSlot, timerSlot, dndSlot,
-            recordingSlot];
+            recordingSlot, dictationSlot];
         let x = 0;
 
         for (let position = 0; position < order.indexOf(index); ++position)
@@ -99,6 +100,13 @@ Item {
         }
     }
 
+    Connections {
+        target: ServiceVoiceDictation
+        function onActiveChanged() {
+            root.moveToggle(5, ServiceVoiceDictation.active);
+        }
+    }
+
     // Reserve hover space for every toggle, including collapsed controls, so
     // entering anywhere the expanded tray occupies reveals the full tray.
     implicitWidth: root.fullTrayWidth
@@ -128,6 +136,7 @@ Item {
             height: 26
             implicitWidth: nightLightSlot.width + stayAwakeSlot.width
                 + timerSlot.width + dndSlot.width + recordingSlot.width
+                + dictationSlot.width
 
             Item {
                 id: nightLightSlot
@@ -270,10 +279,50 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         anchors.verticalCenterOffset: -1
-                        text: ""
+                        text: ""
                         color: Theme.foreground
                         font.family: Theme.fontFamily
                         font.pixelSize: Utils.scaledFont(14)
+                    }
+                }
+            }
+
+            Item {
+                id: dictationSlot
+
+                x: root.toggleX(5)
+                width: implicitWidth
+                implicitWidth: root.expanded || ServiceVoiceDictation.active ? 28 : 0
+                implicitHeight: 26
+                clip: true
+
+                Behavior on implicitWidth {
+                    NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
+                }
+
+                Item {
+                    width: 28
+                    height: 26
+                    anchors.right: parent.right
+
+                    Text {
+                        anchors.centerIn: parent
+                        anchors.verticalCenterOffset: -1
+                        text: ""
+                        color: ServiceVoiceDictation.active
+                            ? Theme.foreground : Theme.muted
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Utils.scaledFont(14)
+
+                        Behavior on color { ColorAnimation { duration: 120 } }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: ServiceVoiceDictation.toggle()
                     }
                 }
             }

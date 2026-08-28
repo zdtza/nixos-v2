@@ -15,7 +15,7 @@ PanelWindow {
     property real contentMargins: 20
     property real contentHorizontalMargins: contentMargins
     property real contentTopMargin: contentMargins
-    readonly property real contentBottomMargin: contentMargins
+    property real contentBottomMargin: contentMargins
     property real contentSpacing: 14
     readonly property real cornerSize: ServicePanel.shellRounding
     default property alias panelChildren: contentColumn.data

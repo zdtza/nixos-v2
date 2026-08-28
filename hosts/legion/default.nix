@@ -105,6 +105,7 @@ in
     git
     grim
     claude-code
+    nix-output-monitor
     wl-clipboard
     hyprpicker
     hyprpaper

@@ -13,6 +13,11 @@ Item {
     property int handoffGeneration: 0
     property var registeredPanels: ({})
 
+    // Whether the status bar is currently shown (toggled via `qs ipc call
+    // bar toggle/hide/show`). Anything anchored to the bar's edge, like the
+    // launcher, checks this to fall back to the screen edge when it's hidden.
+    property bool barVisible: true
+
     // Shared top-bar geometry keeps standalone panels aligned with popups.
     property real barHeight: 30
     // Height of every panel-backed bar icon (BarButton, and the few

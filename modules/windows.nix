@@ -199,7 +199,7 @@ in
             notify-send \
               --app-name='Windows' \
               --icon=windows \
-              --expire-time=2000 \
+              --expire-time=2500 \
               "$@" || true
           }
 

@@ -104,6 +104,7 @@ end
 local picker_windows = {
 	{ class = "xdg-desktop-portal-gtk" },
 	{ title = "termfilechooser" },
+	{ class = "1password" },
 }
 
 for _, window in ipairs(picker_windows) do

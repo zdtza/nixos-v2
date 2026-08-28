@@ -137,6 +137,7 @@ in
     nixfmt
     nixd
     teams-for-linux
+    gnome-disk-utility
   ];
 
   networking = {

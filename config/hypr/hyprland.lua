@@ -336,6 +336,12 @@ local screenshot_command =
 	'mkdir -p ~/Screenshots && file="$HOME/Screenshots/screenshot-$(date +%Y%m%d-%H%M%S).png" && grim -g "$(slurp)" "$file" && wl-copy --type image/png < "$file"'
 
 -- =============================================================================
+-- GESTURES
+-- =============================================================================
+
+hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
+
+-- =============================================================================
 -- KEYBINDS: SYSTEM
 -- =============================================================================
 

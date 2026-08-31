@@ -33,6 +33,8 @@ PopupWindow {
     property string menuStatus: ""
 
     readonly property bool staticEntries: !handle
+    readonly property real cornerSize: !submenu && ServicePanel.barVisible
+        ? ServicePanel.shellRounding : 0
     property bool contentReady: staticEntries
     property var selectedEntry: null
     property int selectedEntryIndex: -1
@@ -185,7 +187,10 @@ PopupWindow {
 
         edges: menu.submenu ? Edges.Bottom | Edges.Left : Edges.Top | Edges.Left
         gravity: Edges.Bottom | Edges.Right
-        adjustment: PopupAdjustment.Slide
+        // Vertical sliding honors compositor outer gaps. Disable it at bare
+        // screen edge or menu gets pushed down despite its zero-y anchor.
+        adjustment: !menu.submenu && !ServicePanel.barVisible
+            ? PopupAdjustment.SlideX : PopupAdjustment.Slide
         // Anchor rect is a 1x1 point in the anchor item's local coordinates,
         // used only as the pivot the popup grows from (the popup's actual
         // size comes from its own window geometry, not this rect). It
@@ -198,9 +203,12 @@ PopupWindow {
         // not a full row height below it), so the top rounding is dropped
         // below to keep that overlap looking flush.
         rect.x: menu.submenu ? -2 : 0
-        rect.y: 0
+        rect.y: menu.submenu ? 0
+            : (ServicePanel.barVisible ? ServicePanel.barHeight : 0)
         rect.width: 1
-        rect.height: 1
+        // Top-level menu starts at anchor y; one-pixel height would place it
+        // one pixel below screen/bar edge with Bottom gravity.
+        rect.height: menu.submenu ? 1 : 0
 
         // Match PanelPopup positioning: center under bar item, then leave same
         // compositor-gap-sized offset below bar.
@@ -213,16 +221,14 @@ PopupWindow {
                 menu.anchorItem.width / 2 - menu.implicitWidth / 2,
                 0
             );
-            point.y = ServicePanel.barHeight;
             point.x = Math.max(ServicePanel.barGap + ServicePanel.gapLeftOffset,
                 Math.min(point.x, menu.anchorWindow.width - menu.implicitWidth
                     - ServicePanel.barGap - ServicePanel.gapRightOffset));
             popupAnchor.rect.x = Math.round(point.x);
-            popupAnchor.rect.y = Math.round(point.y);
         }
     }
 
-    implicitWidth: menu.menuWidth + (menu.submenu ? 0 : ServicePanel.shellRounding * 2)
+    implicitWidth: menu.menuWidth + menu.cornerSize * 2
     implicitHeight: Math.max(1, column.implicitHeight
         + menu.panelTopPadding + menu.panelPadding)
     visible: contentReady
@@ -287,8 +293,8 @@ PopupWindow {
         }
 
         Canvas {
-            visible: !menu.submenu
-            width: ServicePanel.shellRounding
+            visible: menu.cornerSize > 0
+            width: menu.cornerSize
             height: Math.min(width, revealClip.height)
 
             onPaint: {
@@ -305,8 +311,8 @@ PopupWindow {
         }
 
         Canvas {
-            visible: !menu.submenu
-            width: ServicePanel.shellRounding
+            visible: menu.cornerSize > 0
+            width: menu.cornerSize
             height: Math.min(width, revealClip.height)
             x: parent.width - width
 
@@ -324,8 +330,8 @@ PopupWindow {
         }
 
         Rectangle {
-            x: menu.submenu ? 0 : ServicePanel.shellRounding
-            width: parent.width - (menu.submenu ? 0 : ServicePanel.shellRounding * 2)
+            x: menu.cornerSize
+            width: parent.width - menu.cornerSize * 2
             height: revealClip.height
             color: Theme.dark_background
             radius: ServicePanel.shellRounding

@@ -41,8 +41,16 @@ PanelWindow {
     Component.onDestruction: unregisterPanels()
 
     screen: modelData
-    color: Theme.dark_background
-    implicitHeight: ServicePanel.barHeight
+    // Layer-shell surfaces cannot stay mapped at zero height. Keep a
+    // non-exclusive transparent pixel while hidden so popup anchors survive.
+    color: ServicePanel.barVisible ? Theme.dark_background : "transparent"
+    implicitHeight: ServicePanel.barVisible ? ServicePanel.barHeight : 1
+    exclusionMode: ServicePanel.barVisible ? ExclusionMode.Auto : ExclusionMode.Ignore
+
+    mask: Region {
+        width: ServicePanel.barVisible ? bar.width : 0
+        height: ServicePanel.barVisible ? bar.height : 0
+    }
 
     WlrLayershell.namespace: "quickshell:bar"
     WlrLayershell.keyboardFocus: ServicePanel.activePanel?.requiresKeyboardFocus

@@ -12,9 +12,7 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        Bar {
-            visible: ServicePanel.barVisible
-        }
+        Bar {}
     }
 
     IpcHandler {

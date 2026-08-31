@@ -17,7 +17,8 @@ PanelWindow {
     property real contentTopMargin: contentMargins
     readonly property real contentBottomMargin: contentMargins
     property real contentSpacing: 14
-    readonly property real cornerSize: ServicePanel.shellRounding
+    readonly property real cornerSize: ServicePanel.barVisible
+        ? ServicePanel.shellRounding : 0
     default property alias panelChildren: contentColumn.data
     readonly property alias panelContent: contentColumn
 
@@ -35,7 +36,7 @@ PanelWindow {
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
     anchors.top: true
-    margins.top: ServicePanel.barHeight
+    margins.top: ServicePanel.barVisible ? ServicePanel.barHeight : 0
 
     mask: Region {
         width: drawerClip.height > 0 ? root.width : 0

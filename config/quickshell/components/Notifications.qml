@@ -150,7 +150,7 @@ Scope {
             if (notification.urgency === NotificationUrgency.Critical)
                 return Theme.urgent;
             else
-                return Theme.muted;
+                return Theme.foreground;
         }
 
         function normalizedIdentity(value: string): string {

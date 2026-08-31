@@ -138,6 +138,7 @@ in
     nixd
     teams-for-linux
     gnome-disk-utility
+    libreoffice
   ];
 
   networking = {

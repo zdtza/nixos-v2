@@ -68,6 +68,8 @@ PanelWindow {
         }
         height: root.open ? root.height : 0
         clip: true
+        layer.enabled: true
+        layer.effect: ShellShadow {}
 
         // Behavior (not a one-shot animation to a fixed target) so a growing
         // height while open -- e.g. network scan results hydrating in --

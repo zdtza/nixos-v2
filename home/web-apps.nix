@@ -71,6 +71,12 @@ let
       url = "https://claude.ai/new";
       isolated = false;
     }
+    {
+      id = "onshape";
+      name = "Onshape";
+      url = "https://cad.onshape.com/documents?resourceType=resourceuserowner&nodeId=64b5b94853a57c4809702d57";
+      isolated = false;
+    }
     # WEBAPPS
   ];
 

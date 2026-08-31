@@ -108,8 +108,7 @@ Scope {
         }
 
         margins {
-            top: (ServicePanel.barHeight + ServicePanel.barIconHeight) / 2
-                + ServicePanel.barGap + ServicePanel.gapTopOffset
+            top: (ServicePanel.barVisible ? ServicePanel.barHeight : 0) + 8
             right: ServicePanel.barGap + ServicePanel.gapRightOffset
         }
 
@@ -229,6 +228,8 @@ Scope {
             anchors.fill: parent
             radius: ServicePanel.rounding
             color: card.urgencyColor()
+            layer.enabled: true
+            layer.effect: ShellShadow {}
 
             Rectangle {
                 anchors {

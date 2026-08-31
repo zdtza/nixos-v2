@@ -279,8 +279,8 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         anchors.verticalCenterOffset: -1
-                        text: ""
-                        color: Theme.foreground
+                        text: ""
+                        color: Theme.urgent
                         font.family: Theme.fontFamily
                         font.pixelSize: Utils.scaledFont(14)
                     }

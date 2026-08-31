@@ -84,6 +84,7 @@ end
 -- Keep layer animations disabled so opacity changes remain immediate.
 local quickshell_layers = {
 	"quickshell:bar",
+	"quickshell:bar-shadow",
 	"quickshell:launcher",
 	"quickshell:center-panel",
 	"quickshell:panel-drawer",

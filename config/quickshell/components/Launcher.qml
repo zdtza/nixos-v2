@@ -388,7 +388,8 @@ Scope {
             topLeftRadius: 0
             topRightRadius: 0
             color: Theme.dark_background
-
+            layer.enabled: true
+            layer.effect: ShellShadow {}
 
             MouseArea {
                 anchors.fill: parent
@@ -750,6 +751,8 @@ Scope {
             color: Theme.background
             border.width: 1
             border.color: Theme.border
+            layer.enabled: true
+            layer.effect: ShellShadow {}
 
             MouseArea {
                 anchors.fill: parent

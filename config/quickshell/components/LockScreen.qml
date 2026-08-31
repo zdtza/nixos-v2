@@ -125,6 +125,8 @@ Scope {
                     border.width: 2
                     border.color: root.errorText.length > 0 ? Theme.urgent
                         : (passwordInput.activeFocus ? Theme.muted : Theme.border)
+                    layer.enabled: true
+                    layer.effect: ShellShadow {}
 
                     Behavior on border.color { ColorAnimation { duration: 120 } }
 

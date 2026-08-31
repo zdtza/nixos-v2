@@ -98,6 +98,8 @@ Scope {
             anchors.fill: parent
             color: Theme.dark_background
             radius: ServicePanel.rounding
+            layer.enabled: true
+            layer.effect: ShellShadow {}
 
             Row {
                 anchors {

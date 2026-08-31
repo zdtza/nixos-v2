@@ -283,6 +283,8 @@ PopupWindow {
         }
         height: menu.contentReady ? menu.height : 0
         clip: true
+        layer.enabled: true
+        layer.effect: ShellShadow {}
 
         // Behavior (not a one-shot animation to a fixed target) so height
         // changes mid-reveal -- e.g. async DBus menu hydration -- retarget

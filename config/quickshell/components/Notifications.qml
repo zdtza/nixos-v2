@@ -149,7 +149,7 @@ Scope {
             if (notification.urgency === NotificationUrgency.Critical)
                 return Theme.urgent;
             else
-                return Theme.foreground;
+                return Utils.alpha(Theme.accent, 0.9);
         }
 
         function normalizedIdentity(value: string): string {
@@ -268,7 +268,7 @@ Scope {
                     elide: Text.ElideRight
                     maximumLineCount: 2
                     font.family: Theme.fontFamily
-                    font.pixelSize: Utils.scaledFont(14)
+                    font.pixelSize: 14
                     font.weight: Font.Bold
                 }
 
@@ -276,14 +276,14 @@ Scope {
                     width: parent.width
                     text: card.notification.body
                     visible: text !== ""
-                    color: Utils.alpha(Theme.foreground, 0.75)
+                    color: Utils.alpha(Theme.foreground, 0.8)
                     textFormat: Text.StyledText
                     wrapMode: Text.Wrap
                     elide: Text.ElideRight
                     maximumLineCount: 4
                     font.family: Theme.fontFamily
-                    font.pixelSize: Utils.scaledFont(12)
-                    lineHeight: 1.35
+                    font.pixelSize: 12
+                    lineHeight: 1.2
                 }
             }
         }

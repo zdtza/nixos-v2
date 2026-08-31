@@ -38,8 +38,7 @@ hl.config({
 	layout = { single_window_aspect_ratio = { 16, 9 } },
 
 	dwindle = {
-		preserve_split = true,
-		smart_split = false,
+		-- preserve_split = true,
 	},
 	misc = {
 		disable_hyprland_logo = true,
@@ -65,10 +64,10 @@ hl.curve("fast", {
 })
 
 local animations = {
-	{ enabled = false, leaf = "workspaces", speed = 0.1, spring = "spring" },
+	{ enabled = true, leaf = "workspaces", speed = 1.5, bezier = "fast" },
 	{ enabled = true, leaf = "windows", speed = 0.1, spring = "spring" },
-	{ enabled = false, leaf = "windowsOut", speed = 0.1, spring = "spring" },
-	{ enabled = false, leaf = "specialWorkspace", speed = 1.5, bezier = "fast", style = "slidevert" },
+	{ enabled = true, leaf = "windowsOut", speed = 0.1, spring = "spring" },
+	{ enabled = true, leaf = "specialWorkspace", speed = 1.5, bezier = "fast", style = "slidevert" },
 	{ enabled = true, leaf = "fade", speed = 4, bezier = "fast" },
 }
 
@@ -132,8 +131,8 @@ hl.window_rule({
 		class = "^teams-for-linux$",
 		title = "^Teams for Linux - Screen is being shared$",
 	},
-    workspace = "special:hidden silent", -- Route silently to background scratchpad
-    no_focus = true, -- Do not steal focus on launch
+	workspace = "special:hidden silent", -- Route silently to background scratchpad
+	no_focus = true, -- Do not steal focus on launch
 })
 
 hl.window_rule({

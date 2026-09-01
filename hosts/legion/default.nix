@@ -17,8 +17,8 @@ in
     ./hardware-configuration.nix
 
     # feature modules this host uses
-    ../../modules/core.nix
-    ../../modules/desktop.nix
+    ../../modules/base.nix
+    ../../modules/wayland.nix
     ../../modules/laptop.nix
     ../../modules/gpu-nvidia.nix
     ../../modules/windows.nix
@@ -107,7 +107,6 @@ in
     git
     grim
     claude-code
-    nix-output-monitor
     wl-clipboard
     hyprpicker
     hyprpaper

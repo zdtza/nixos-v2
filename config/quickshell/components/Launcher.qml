@@ -325,7 +325,6 @@ Scope {
             anchors.fill: parent
             color: Theme.overlay
             opacity: root.open ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: ServicePanel.slideDuration } }
         }
 
         MouseArea {
@@ -363,14 +362,6 @@ Scope {
             radius: ServicePanel.rounding
             color: Theme.dark_background
             opacity: root.open ? 1 : 0
-            scale: root.open ? 1 : 0.96
-            Behavior on opacity { NumberAnimation { duration: ServicePanel.slideDuration } }
-            Behavior on scale {
-                NumberAnimation {
-                    duration: ServicePanel.slideDuration
-                    easing.type: Easing.OutCubic
-                }
-            }
             layer.enabled: true
             layer.effect: ShellShadow {}
 

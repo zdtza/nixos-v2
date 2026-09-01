@@ -26,86 +26,8 @@
     '';
 
     functions.rb = ''
-      set -l state_home "$XDG_STATE_HOME"
-      if test -z "$state_home"
-        set state_home "$HOME/.local/state"
-      end
-
-      set -l repo "$HOME/.src/nixos"
-      set -l log_dir "$state_home/nixos-rebuild"
-      set -l log_file "$log_dir/latest.log"
-      command mkdir -p "$log_dir"
-
-      # Stage every tracked and untracked change so the flake sees the exact
-      # contents being rebuilt.
-      printf 'Staging changes...\n'
-      command git -C "$repo" add --all; or return $status
-
-      # Authenticate before redirecting output so sudo's prompt stays visible.
-      command sudo -v; or return $status
-
-      # Flake attr per host is its unix hostname (see hosts/<name> in the
-      # repo), so this works unmodified on any machine this repo manages.
-      set -l flake_target "$repo#"(command hostname)
-
-      # Pipe through nom for live progress while still capturing a plain
-      # log for the error extraction below; --option warn-dirty false
-      # silences nix's dirty-tree warning caused by the staging above.
-      # nixos-rebuild/nom already report the flake target and result, so
-      # no extra banner is printed here.
-      command sudo nixos-rebuild switch --flake "$flake_target" $argv \
-        --option warn-dirty false 2>&1 \
-        | command tee "$log_file" | command nom
-      set -l rebuild_status $pipestatus[1]
-
-      if test $rebuild_status -eq 0
-        set -l profile (command readlink /nix/var/nix/profiles/system)
-        set -l generation (string replace -r \
-          '^system-([0-9]+)-link$' '$1' (path basename "$profile"))
-
-        printf 'Rebuild Complete: NixOS generation %s\n' "$generation"
-        return 0
-      end
-
-      # Nix puts actionable error after evaluation trace as final `error:`
-      # block. Extract that complete block, omitting duplicate nested tag and
-      # nixos-rebuild's trailing command-failed summary.
-      set -l error_file "$log_dir/error.log"
-      command sed -E 's/\x1B\[[0-9;]*[mK]//g' "$log_file" | command awk '
-        { lines[NR] = $0 }
-        /^[[:space:]]*error:/ { start = NR }
-        END {
-          if (!start)
-            exit 1
-
-          finish = NR
-          for (i = start + 1; i <= NR; i++) {
-            if (lines[i] ~ /^Command .*returned non-zero exit status/ ) {
-              finish = i - 1
-              break
-            }
-          }
-          while (finish > start && lines[finish] ~ /^[[:space:]]*$/)
-            finish--
-
-          sub(/^[[:space:]]*error:[[:space:]]*/, "", lines[start])
-          print lines[start]
-          for (i = start + 1; i <= finish; i++)
-            print lines[i]
-        }
-      ' >"$error_file"
-
-      printf '\n'
-      if test -s "$error_file"
-        set_color --bold red
-        printf 'error:'
-        set_color normal
-        printf '\n'
-        command cat "$error_file"
-      else
-        printf 'Rebuild failed; no error block found.\n'
-      end
-      return $rebuild_status
+      command git -C "$HOME/.src/nixos" add --all; or return $status
+      command sudo nixos-rebuild switch --flake "$HOME/.src/nixos#"(hostname) $argv
     '';
 
     # aliases for the shell
@@ -116,6 +38,7 @@
       lta = "lt -a";
 
       startw = "uwsm start hyprland-uwsm.desktop";
+      sw = "nix build \"$HOME/.src/nixos#nixosConfigurations.\"(hostname)\".config.home-manager.users.$USER.home.activationPackage\" --option warn-dirty false && ./result/activate";
       ff = "fastfetch";
     };
   };

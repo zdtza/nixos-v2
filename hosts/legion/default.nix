@@ -25,28 +25,30 @@ in
   ];
 
   # home-manager modules for this host's user
-  home-manager.users.${user}.imports = [
-    ../../home/repo.nix
-    ../../home/defaults.nix
-    ../../home/appearance.nix
-    ../../home/kitty.nix
-    ../../home/shell.nix
-    ../../home/hyprland.nix
-    ../../home/hypridle.nix
-    ../../home/hyprsunset.nix
-    ../../home/screen-share.nix
-    ../../home/voxtype.nix
-    ../../home/btop.nix
-    ../../home/nvim.nix
-    ../../home/git.nix
-    ../../home/web-apps.nix
-    ../../home/fzf.nix
-    ../../home/polkit-agent.nix
-    ../../home/yazi.nix
-    ../../home/npm.nix
-    ../../home/quickshell.nix
-    ../../home/lazydocker.nix
-  ];
+  home-manager.users.${user} = {
+    home.stateVersion = "26.05";
+    imports = [
+      ../../home/defaults.nix
+      ../../home/appearance.nix
+      ../../home/kitty.nix
+      ../../home/shell.nix
+      ../../home/hyprland.nix
+      ../../home/hypridle.nix
+      ../../home/hyprsunset.nix
+      ../../home/screen-share.nix
+      ../../home/voxtype.nix
+      ../../home/btop.nix
+      ../../home/nvim.nix
+      ../../home/git.nix
+      ../../home/web-apps.nix
+      ../../home/fzf.nix
+      ../../home/polkit-agent.nix
+      ../../home/yazi.nix
+      ../../home/npm.nix
+      ../../home/quickshell.nix
+      ../../home/lazydocker.nix
+    ];
+  };
 
   networking.hostName = "legion"; # Lenovo Legion Y540
 

@@ -2,16 +2,9 @@
 # Remove a Chromium web app entry from home-manager/web-apps.nix.
 set -euo pipefail
 
-# Located relative to this script (symlinks resolved), never the working
-# directory, so the script runs correctly from anywhere.
-script_path=$(readlink -f -- "${BASH_SOURCE[0]}")
-repo_dir=$(cd -- "$(dirname -- "$script_path")/.." && pwd)
+repo_dir=$HOME/.src/nixos
 apps_file="$repo_dir/home/web-apps.nix"
 icons_dir="$repo_dir/assets/icons"
-[[ -f "$apps_file" ]] || {
-  printf 'Missing %s\n' "$apps_file" >&2
-  exit 1
-}
 
 mapfile -t entries < <(
   python3 - "$apps_file" <<'PY'

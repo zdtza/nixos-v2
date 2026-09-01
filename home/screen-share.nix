@@ -2,7 +2,6 @@
   config,
   inputs,
   lib,
-  repoFile,
   pkgs,
   ...
 }:
@@ -29,7 +28,7 @@ in
   '';
 
   home.file.".config/hyprland-preview-share-picker/config.yaml".source =
-    repoFile "config/screensharepicker/config.yaml";
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.src/nixos/config/screensharepicker/config.yaml";
 
   # style.css has to be generated so it follows the system-wide stylix theme
   # instead of hardcoding colors.

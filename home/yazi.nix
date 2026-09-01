@@ -24,7 +24,7 @@ in
   xdg = {
     configFile."yazi/theme.toml".text = ''
       [mgr]
-      cwd             = { fg = "${colors.base0D}" }
+      cwd             = { fg = "${colors.base0B}" }
       find_keyword    = { fg = "${colors.base0A}", bold = true, underline = true }
       find_position   = { fg = "${colors.base09}", bg = "reset", bold = true }
       marker_copied   = { fg = "${colors.base0B}",  bg = "${colors.base0B}" }

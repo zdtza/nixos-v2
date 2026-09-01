@@ -23,11 +23,6 @@
       ...
     }:
     let
-      # One user across every host this repo manages. Parametrize this too
-      # if that ever stops being true.
-      user = "zdtza";
-      homeStateVersion = "26.05";
-
       # Every host's default.nix imports whichever ./modules/*.nix files it
       # needs directly and sets its own home-manager.users.<user>.imports.
       # Add a new machine by dropping a directory in ./hosts and its name
@@ -49,7 +44,6 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.extraSpecialArgs = { inherit inputs self; };
-              home-manager.users.${user}.home.stateVersion = homeStateVersion;
             }
           ];
         };

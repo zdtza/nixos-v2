@@ -54,11 +54,11 @@ windows.user = "you";
 nix-shell -p git neovim
 ```
 
-2. Clone repo anywhere:
+2. Clone repo to its fixed path:
 
 ```sh
-git clone https://github.com/zdtza/nixos-v2 ~/src/nixos-v2
-cd ~/src/nixos-v2
+git clone https://github.com/zdtza/nixos-v2 ~/.src/nixos
+cd ~/.src/nixos
 ```
 
 3. Add the host per "Adding a new host" above (or reuse an existing

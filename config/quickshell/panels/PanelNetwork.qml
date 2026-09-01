@@ -6,7 +6,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Io
 import Stylix
 import "../components"
 import "../services"
@@ -23,16 +22,6 @@ Item {
     property string failureText: ""
     property int phraseIndex: 0
     property string selectedSsid: ""
-    property var info: ({})
-    property real previousRxBytes: 0
-    property real previousTxBytes: 0
-    property real previousSampleTime: 0
-    property string previousInterface: ""
-    property real downloadRate: 0
-    property real uploadRate: 0
-    property var pingSamples: []
-    property real pingLatency: -1
-    property int packetLoss: 0
 
     readonly property bool available: ServiceNetwork.backendAvailable
     readonly property var connectedNetworks: ServiceNetwork.wifiNetworks.filter(network => network.connected)
@@ -58,61 +47,6 @@ Item {
     implicitWidth: available ? label.implicitWidth : 0
     implicitHeight: label.implicitHeight
 
-    function parseDetails(raw: string): var {
-        const values = {};
-        for (const line of String(raw || "").split("\n")) {
-            const separator = line.indexOf("\t");
-            if (separator > 0)
-                values[line.substring(0, separator)] = line.substring(separator + 1).trim();
-        }
-        return values;
-    }
-
-    function updateDetails(raw: string): void {
-        const next = parseDetails(raw);
-        if (!next.iface)
-            return;
-
-        const now = Date.now() / 1000;
-        const rx = Number(next.rx_bytes || 0);
-        const tx = Number(next.tx_bytes || 0);
-        if (previousInterface === next.iface && previousSampleTime > 0) {
-            const elapsed = now - previousSampleTime;
-            if (elapsed > 0) {
-                downloadRate = Math.max(0, (rx - previousRxBytes) / elapsed);
-                uploadRate = Math.max(0, (tx - previousTxBytes) / elapsed);
-            }
-        } else {
-            downloadRate = 0;
-            uploadRate = 0;
-            pingSamples = [];
-        }
-        previousInterface = next.iface;
-        previousRxBytes = rx;
-        previousTxBytes = tx;
-        previousSampleTime = now;
-
-        const pingRaw = next.internet_ping_ms;
-        const sample = pingRaw !== undefined && pingRaw !== "" ? Number(pingRaw) : NaN;
-        const samples = pingSamples.slice();
-        samples.push(Number.isFinite(sample) && sample >= 0 ? sample : null);
-        while (samples.length > 24)
-            samples.shift();
-        pingSamples = samples;
-
-        let total = 0;
-        let count = 0;
-        for (let index = Math.max(0, samples.length - 5); index < samples.length; index++) {
-            if (samples[index] === null)
-                continue;
-            total += samples[index];
-            count++;
-        }
-        pingLatency = count > 0 ? total / count : -1;
-        packetLoss = samples.length > 0 ? Math.round(samples.filter(value => value === null).length / samples.length * 100) : 0;
-        info = next;
-    }
-
     function formatBytes(bytes: real): string {
         let value = Number(bytes);
         if (!Number.isFinite(value) || value < 0)
@@ -131,11 +65,11 @@ Item {
     }
 
     function formatPing(): string {
-        if (pingSamples.length === 0)
+        if (ServiceNetwork.pingSamples.length === 0)
             return "--";
-        if (pingLatency < 0)
+        if (ServiceNetwork.pingLatency < 0)
             return "Timeout";
-        return pingLatency.toFixed(pingLatency > 0 && pingLatency < 10 ? 1 : 0) + " ms";
+        return ServiceNetwork.pingLatency.toFixed(ServiceNetwork.pingLatency < 10 ? 1 : 0) + " ms";
     }
 
     function copyValue(value: string): void {
@@ -238,18 +172,14 @@ Item {
     onOpenedChanged: {
         if (opened) {
             phraseIndex = 0;
-            previousSampleTime = 0;
-            downloadRate = 0;
-            uploadRate = 0;
-            pingSamples = [];
             ServiceNetwork.acquireScanner();
+            ServiceNetwork.acquireDetails();
             if (networks.length > 0)
                 selectedSsid = networks[0].ssid;
             Qt.callLater(() => networkList.forceActiveFocus());
-            if (!detailsProcess.running)
-                detailsProcess.running = true;
         } else {
             ServiceNetwork.releaseScanner();
+            ServiceNetwork.releaseDetails();
         }
     }
 
@@ -273,31 +203,16 @@ Item {
         }
     }
 
-    Component.onDestruction: if (opened)
-        ServiceNetwork.releaseScanner()
+    Component.onDestruction: if (opened) {
+        ServiceNetwork.releaseScanner();
+        ServiceNetwork.releaseDetails();
+    }
 
     Timer {
         id: passwordFocusTimer
         interval: 0
         repeat: false
         onTriggered: root.restorePasswordFocus()
-    }
-
-    Process {
-        id: detailsProcess
-        command: ["qs-network-status"]
-        stdout: StdioCollector {
-            waitForEnd: true
-            onStreamFinished: root.updateDetails(text)
-        }
-    }
-
-    Timer {
-        interval: 1500
-        running: root.opened
-        repeat: true
-        onTriggered: if (!detailsProcess.running)
-            detailsProcess.running = true
     }
 
     PanelStatusRotator {
@@ -422,55 +337,55 @@ Item {
             }
             DetailValue {
                 text: root.formatPing()
-                valueColor: root.packetLoss > 0 ? Theme.urgent : Theme.foreground
+                valueColor: ServiceNetwork.packetLoss > 0 ? Theme.urgent : Theme.foreground
             }
             InfoLabel {
                 text: "Packet Loss"
             }
             DetailValue {
-                text: root.pingSamples.length > 0 ? root.packetLoss + "%" : "--"
-                valueColor: root.packetLoss > 0 ? Theme.urgent : Theme.foreground
+                text: ServiceNetwork.pingSamples.length > 0 ? ServiceNetwork.packetLoss + "%" : "--"
+                valueColor: ServiceNetwork.packetLoss > 0 ? Theme.urgent : Theme.foreground
             }
 
             InfoLabel {
                 text: "Receiving"
             }
             DetailValue {
-                text: root.info.rx_bytes !== undefined ? root.formatRate(root.downloadRate) : "--"
+                text: ServiceNetwork.info.rx_bytes !== undefined ? root.formatRate(ServiceNetwork.downloadRate) : "--"
             }
             InfoLabel {
                 text: "Sending"
             }
             DetailValue {
-                text: root.info.tx_bytes !== undefined ? root.formatRate(root.uploadRate) : "--"
+                text: ServiceNetwork.info.tx_bytes !== undefined ? root.formatRate(ServiceNetwork.uploadRate) : "--"
             }
 
             InfoLabel {
                 text: "Downloaded"
             }
             DetailValue {
-                text: root.info.rx_bytes !== undefined ? root.formatBytes(Number(root.info.rx_bytes)) : "--"
+                text: ServiceNetwork.info.rx_bytes !== undefined ? root.formatBytes(Number(ServiceNetwork.info.rx_bytes)) : "--"
             }
             InfoLabel {
                 text: "Uploaded"
             }
             DetailValue {
-                text: root.info.tx_bytes !== undefined ? root.formatBytes(Number(root.info.tx_bytes)) : "--"
+                text: ServiceNetwork.info.tx_bytes !== undefined ? root.formatBytes(Number(ServiceNetwork.info.tx_bytes)) : "--"
             }
 
             InfoLabel {
                 text: "IP Address"
             }
             DetailValue {
-                text: root.info.ip || "--"
-                copyable: !!root.info.ip
+                text: ServiceNetwork.info.ip || "--"
+                copyable: !!ServiceNetwork.info.ip
             }
             InfoLabel {
                 text: "Gateway"
             }
             DetailValue {
-                text: root.info.gateway || "--"
-                copyable: !!root.info.gateway
+                text: ServiceNetwork.info.gateway || "--"
+                copyable: !!ServiceNetwork.info.gateway
             }
         }
 

@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  repoPath,
   ...
 }:
 
@@ -85,15 +84,8 @@ let
   mkWebappCommand =
     command:
     pkgs.writeShellScriptBin command ''
-      # Resolved from repo.nix rather than the working directory, so the command
-      # works from anywhere instead of only inside the flake checkout.
-      script="${repoPath}/scripts/${command}.sh"
-      [[ -f "$script" ]] || {
-        echo "Missing $script. Is the config repo checked out at ${repoPath}?" >&2
-        exit 1
-      }
       export WEBAPP_MAGICK=${lib.getExe pkgs.imagemagick}
-      exec ${lib.getExe pkgs.bash} "$script" "$@"
+      exec ${lib.getExe pkgs.bash} ${config.home.homeDirectory}/.src/nixos/scripts/${command}.sh "$@"
     '';
   webappInstall = mkWebappCommand "webapp-install";
   webappRemove = mkWebappCommand "webapp-remove";

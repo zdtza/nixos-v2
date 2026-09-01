@@ -276,7 +276,7 @@ Scope {
                     width: parent.width
                     text: card.notification.body
                     visible: text !== ""
-                    color: Utils.alpha(Theme.foreground, 0.8)
+                    color: Theme.foreground
                     textFormat: Text.StyledText
                     wrapMode: Text.Wrap
                     elide: Text.ElideRight

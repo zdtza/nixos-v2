@@ -2,6 +2,7 @@ pragma Singleton
 
 // Shared NetworkManager state and actions for every per-screen network widget.
 import QtQuick
+import Quickshell.Io
 import Quickshell.Networking
 
 Item {
@@ -28,6 +29,56 @@ Item {
     readonly property var wifiNetworks: snapshotNetworks()
 
     property int scannerUsers: 0
+    property int detailsUsers: 0
+    property var info: ({})
+    property real previousRxBytes: 0
+    property real previousTxBytes: 0
+    property real previousSampleTime: 0
+    property string previousInterface: ""
+    property real downloadRate: 0
+    property real uploadRate: 0
+    property var pingSamples: []
+    property real pingLatency: -1
+    property int packetLoss: 0
+
+    readonly property string detailsCommand: `
+probe=1.1.1.1
+route_json="$(ip -j route get "$probe" 2>/dev/null || true)"
+[[ -n "$route_json" ]] || exit 0
+
+iface="$(jq -r '.[0].dev // ""' <<<"$route_json")"
+gateway="$(jq -r '.[0].gateway // ""' <<<"$route_json")"
+address="$(jq -r '.[0].prefsrc // ""' <<<"$route_json")"
+[[ -n "$iface" ]] || exit 0
+
+prefix="$(ip -j addr show "$iface" | jq -r '.[0].addr_info[]? | select(.family == "inet") | .prefixlen // ""' | head -n1)"
+printf 'iface\\t%s\\n' "$iface"
+printf 'ip\\t%s\\n' "$address"
+printf 'prefix\\t%s\\n' "$prefix"
+printf 'gateway\\t%s\\n' "$gateway"
+
+[[ -r "/sys/class/net/$iface/statistics/rx_bytes" ]] && printf 'rx_bytes\\t%s\\n' "$(<"/sys/class/net/$iface/statistics/rx_bytes")"
+[[ -r "/sys/class/net/$iface/statistics/tx_bytes" ]] && printf 'tx_bytes\\t%s\\n' "$(<"/sys/class/net/$iface/statistics/tx_bytes")"
+
+if [[ -d "/sys/class/net/$iface/wireless" ]]; then
+    printf 'type\\twifi\\n'
+    link="$(iw dev "$iface" link 2>/dev/null || true)"
+    [[ -n "$link" ]] && {
+        printf 'ssid\\t%s\\n' "$(awk '/SSID:/ { sub(/.*SSID: /, ""); print; exit }' <<<"$link")"
+        printf 'freq\\t%s\\n' "$(awk '/freq:/ { print $2; exit }' <<<"$link")"
+        printf 'bitrate\\t%s %s\\n' "$(awk '/tx bitrate:/ { print $3; exit }' <<<"$link")" "$(awk '/tx bitrate:/ { print $4; exit }' <<<"$link")"
+    }
+else
+    printf 'type\\tethernet\\n'
+    [[ -r "/sys/class/net/$iface/speed" ]] && printf 'speed\\t%s\\n' "$(<"/sys/class/net/$iface/speed")"
+fi
+
+ping_ms() {
+    LC_ALL=C ping -n -c 1 -W 1 "$1" 2>/dev/null | awk -F'time[=<]' '/time[=<]/ { split($2, p, " "); print p[1]; exit }'
+}
+[[ -n "$gateway" ]] && printf 'router_ping_ms\\t%s\\n' "$(ping_ms "$gateway")"
+printf 'internet_ping_ms\\t%s\\n' "$(ping_ms "$probe")"
+`
 
     function findDevice(type: int): var {
         let fallback = null;
@@ -123,6 +174,73 @@ Item {
         if (network) network.forget();
     }
 
+    function parseDetails(raw: string): var {
+        const values = {};
+        for (const line of String(raw || "").split("\n")) {
+            const separator = line.indexOf("\t");
+            if (separator > 0)
+                values[line.substring(0, separator)] = line.substring(separator + 1).trim();
+        }
+        return values;
+    }
+
+    function updateDetails(raw: string): void {
+        const next = parseDetails(raw);
+        if (!next.iface) return;
+
+        const now = Date.now() / 1000;
+        const rx = Number(next.rx_bytes || 0);
+        const tx = Number(next.tx_bytes || 0);
+        if (previousInterface === next.iface && previousSampleTime > 0) {
+            const elapsed = now - previousSampleTime;
+            if (elapsed > 0) {
+                downloadRate = Math.max(0, (rx - previousRxBytes) / elapsed);
+                uploadRate = Math.max(0, (tx - previousTxBytes) / elapsed);
+            }
+        } else {
+            downloadRate = 0;
+            uploadRate = 0;
+            pingSamples = [];
+        }
+        previousInterface = next.iface;
+        previousRxBytes = rx;
+        previousTxBytes = tx;
+        previousSampleTime = now;
+
+        const sample = next.internet_ping_ms !== undefined && next.internet_ping_ms !== ""
+            ? Number(next.internet_ping_ms) : NaN;
+        const samples = pingSamples.slice();
+        samples.push(Number.isFinite(sample) && sample >= 0 ? sample : null);
+        while (samples.length > 24) samples.shift();
+        pingSamples = samples;
+
+        let total = 0;
+        let count = 0;
+        for (let index = Math.max(0, samples.length - 5); index < samples.length; index++) {
+            if (samples[index] === null) continue;
+            total += samples[index];
+            count++;
+        }
+        pingLatency = count > 0 ? total / count : -1;
+        packetLoss = samples.length > 0
+            ? Math.round(samples.filter(value => value === null).length / samples.length * 100) : 0;
+        info = next;
+    }
+
+    function acquireDetails(): void {
+        if (detailsUsers++ === 0) {
+            previousSampleTime = 0;
+            downloadRate = 0;
+            uploadRate = 0;
+            pingSamples = [];
+            if (!detailsProcess.running) detailsProcess.running = true;
+        }
+    }
+
+    function releaseDetails(): void {
+        detailsUsers = Math.max(0, detailsUsers - 1);
+    }
+
     function acquireScanner(): void {
         scannerUsers++;
         updateScanner();
@@ -138,4 +256,20 @@ Item {
     }
 
     onWifiDeviceChanged: updateScanner()
+
+    Process {
+        id: detailsProcess
+        command: ["bash", "-c", root.detailsCommand]
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: root.updateDetails(text)
+        }
+    }
+
+    Timer {
+        interval: 1500
+        running: root.detailsUsers > 0
+        repeat: true
+        onTriggered: if (!detailsProcess.running) detailsProcess.running = true
+    }
 }

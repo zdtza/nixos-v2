@@ -158,13 +158,16 @@ in
     };
 
     security.polkit.extraConfig = ''
-      var windowsUnits = ["docker-windows.service", "windows-wipe.service"];
       polkit.addRule(function(action, subject) {
-        if (action.id == "org.freedesktop.systemd1.manage-units" &&
-            windowsUnits.indexOf(action.lookup("unit")) >= 0 &&
-            subject.user == "${cfg.user}") {
+        if (action.id != "org.freedesktop.systemd1.manage-units" ||
+            subject.user != "${cfg.user}")
+          return;
+
+        var unit = action.lookup("unit");
+        if (unit == "docker-windows.service")
           return polkit.Result.YES;
-        }
+        if (unit == "windows-wipe.service")
+          return polkit.Result.AUTH_ADMIN;
       });
     '';
 

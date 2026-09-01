@@ -57,7 +57,7 @@ Item {
 
     function run(command: var): void {
         Quickshell.execDetached({
-            command
+            command: ["uwsm", "app", "--", ...command]
         });
         // Starting or stopping takes a moment to land; re-probe ahead of the
         // regular poll so the icon does not lag behind the click.

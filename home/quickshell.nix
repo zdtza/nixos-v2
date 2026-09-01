@@ -96,9 +96,6 @@ in
       ];
       ExecStart = "${pkgs.quickshell}/bin/quickshell";
       Restart = "on-failure";
-      # execDetached'd apps (e.g. launcher) share quickshell's cgroup; without
-      # this, systemd's default control-group KillMode kills them too on reload.
-      KillMode = "process";
     };
 
     Install.WantedBy = [ "graphical-session.target" ];

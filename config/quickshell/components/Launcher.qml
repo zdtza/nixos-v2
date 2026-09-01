@@ -275,7 +275,7 @@ Scope {
             const action = menuActions[menuActionIndex - 1];
             if (!action)
                 return;
-            action.execute();
+            launchDetached(action.command, entry.workingDirectory);
             closeContextMenu();
             root.open = false;
         }
@@ -287,19 +287,21 @@ Scope {
             openContextMenu(item.entry, item, item.width - 10, item.height / 2);
         }
 
+        function launchDetached(command: var, workingDirectory: string): void {
+            Quickshell.execDetached({
+                command: ["uwsm", "app", "--", ...command],
+                workingDirectory: workingDirectory || Quickshell.env("HOME")
+            });
+        }
+
         function launch(entry: DesktopEntry): void {
             if (!entry)
                 return;
 
             root.beginLaunchTracking(entry);
-            if (entry.runInTerminal) {
-                Quickshell.execDetached({
-                    command: [...root.terminal, "--", ...entry.command],
-                    workingDirectory: entry.workingDirectory || Quickshell.env("HOME")
-                });
-            } else {
-                entry.execute();
-            }
+            launchDetached(entry.runInTerminal
+                ? [...root.terminal, "--", ...entry.command]
+                : entry.command, entry.workingDirectory);
             root.open = false;
         }
 
@@ -814,7 +816,8 @@ Scope {
                                 window.menuActionIndex = actionRow.index + 1
                             onClicked: {
                                 window.menuActionIndex = actionRow.index + 1;
-                                actionRow.modelData.execute();
+                                window.launchDetached(actionRow.modelData.command,
+                                    window.menuEntry?.workingDirectory ?? "");
                                 window.closeContextMenu();
                                 root.open = false;
                             }

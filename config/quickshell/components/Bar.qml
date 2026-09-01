@@ -42,7 +42,7 @@ PanelWindow {
 
     screen: modelData
     // Layer-shell surfaces cannot stay mapped at zero height. Keep a
-    // non-exclusive transparent pixel while hidden so popup anchors survive.
+    // non-exclusive transparent pixel above the output so popup anchors survive.
     color: ServicePanel.barVisible ? Theme.dark_background : "transparent"
     implicitHeight: ServicePanel.barVisible ? ServicePanel.barHeight : 1
     exclusionMode: ServicePanel.barVisible ? ExclusionMode.Auto : ExclusionMode.Ignore
@@ -61,6 +61,7 @@ PanelWindow {
         left: true
         right: true
     }
+    margins.top: ServicePanel.barVisible ? 0 : -1
 
     PanelWindow {
         screen: bar.screen

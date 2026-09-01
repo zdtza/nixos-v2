@@ -38,7 +38,7 @@ hl.config({
 	layout = { single_window_aspect_ratio = { 16, 9 } },
 
 	dwindle = {
-		-- preserve_split = true,
+		preserve_split = true,
 	},
 	misc = {
 		disable_hyprland_logo = true,

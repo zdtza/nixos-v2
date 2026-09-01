@@ -30,6 +30,18 @@
       command pkexec --disable-internal-agent /run/current-system/sw/bin/nixos-rebuild switch --flake "$HOME/.src/nixos#"(hostname) --option warn-dirty false $argv
     '';
 
+    functions.sw = ''
+      command git -C "$HOME/.src/nixos" add --all; or return $status
+      set -l activation (command nix build "$HOME/.src/nixos#nixosConfigurations."(hostname)".config.home-manager.users.$USER.home.activationPackage" --no-link --print-out-paths --option warn-dirty false); or return $status
+      "$activation/activate"
+    '';
+
+    functions.up = ''
+      command git -C "$HOME/.src/nixos" add --all; or return $status
+      command nix flake update --flake "$HOME/.src/nixos" --option warn-dirty false; or return $status
+      rb
+    '';
+
     # aliases for the shell
     shellAliases = {
       ls = "eza -l --group-directories-first --icons=auto";
@@ -38,7 +50,6 @@
       lta = "lt -a";
 
       startw = "uwsm start hyprland-uwsm.desktop";
-      sw = "nix build \"$HOME/.src/nixos#nixosConfigurations.\"(hostname)\".config.home-manager.users.$USER.home.activationPackage\" --option warn-dirty false && ./result/activate";
       ff = "fastfetch";
     };
   };

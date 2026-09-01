@@ -62,6 +62,12 @@ let
   };
 in
 {
+  home.sessionVariables = {
+    QML2_IMPORT_PATH = stylixQmlModule;
+    QS_FALLBACK_APP_ICON = "${pkgs.adwaita-icon-theme}/share/icons/Adwaita/symbolic/categories/applications-system-symbolic.svg";
+    TZDIR = "/etc/zoneinfo";
+  };
+
   home.packages = with pkgs; [
     quickshell
     gawk
@@ -86,6 +92,7 @@ in
       Environment = [
         "QML2_IMPORT_PATH=${stylixQmlModule}"
         "QS_FALLBACK_APP_ICON=${pkgs.adwaita-icon-theme}/share/icons/Adwaita/symbolic/categories/applications-system-symbolic.svg"
+        "TZDIR=${config.home.sessionVariables.TZDIR}"
       ];
       ExecStart = "${pkgs.quickshell}/bin/quickshell";
       Restart = "on-failure";

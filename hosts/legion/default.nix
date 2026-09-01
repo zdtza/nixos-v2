@@ -139,6 +139,7 @@ in
     teams-for-linux
     gnome-disk-utility
     libreoffice
+    gh
   ];
 
   networking = {

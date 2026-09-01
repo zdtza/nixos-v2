@@ -355,7 +355,7 @@ Scope {
 
             anchors.centerIn: parent
             width: Math.min(640, parent.width - 32)
-            height: Math.min(460, parent.height - 64)
+            height: Math.min(522, parent.height - 64)
             enabled: root.open
             clip: true
             radius: ServicePanel.rounding

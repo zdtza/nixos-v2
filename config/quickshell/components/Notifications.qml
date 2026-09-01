@@ -246,45 +246,45 @@ Scope {
 
                 Behavior on color { ColorAnimation { duration: 120 } }
             }
+        }
 
-            Column {
-                id: textContent
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    top: parent.top
-                    leftMargin: 24
-                    rightMargin: 20
-                    topMargin: 14
-                }
-                spacing: 10
+        Column {
+            id: textContent
+            anchors {
+                left: parent.left
+                right: parent.right
+                top: parent.top
+                leftMargin: 24
+                rightMargin: 20
+                topMargin: 14
+            }
+            spacing: 10
 
-                Text {
-                    width: parent.width
-                    text: card.notification.summary
-                    visible: text !== ""
-                    color: Theme.foreground
-                    wrapMode: Text.Wrap
-                    elide: Text.ElideRight
-                    maximumLineCount: 2
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 14
-                    font.weight: Font.Bold
-                }
+            Text {
+                width: parent.width
+                text: card.notification.summary
+                visible: text !== ""
+                color: Theme.foreground
+                wrapMode: Text.Wrap
+                elide: Text.ElideRight
+                maximumLineCount: 2
+                font.family: Theme.fontFamily
+                font.pixelSize: 14
+                font.weight: Font.Bold
+            }
 
-                Text {
-                    width: parent.width
-                    text: card.notification.body
-                    visible: text !== ""
-                    color: Theme.foreground
-                    textFormat: Text.StyledText
-                    wrapMode: Text.Wrap
-                    elide: Text.ElideRight
-                    maximumLineCount: 4
-                    font.family: Theme.fontFamily
-                    font.pixelSize: 12
-                    lineHeight: 1.2
-                }
+            Text {
+                width: parent.width
+                text: card.notification.body
+                visible: text !== ""
+                color: Theme.foreground
+                textFormat: Text.StyledText
+                wrapMode: Text.Wrap
+                elide: Text.ElideRight
+                maximumLineCount: 4
+                font.family: Theme.fontFamily
+                font.pixelSize: 12
+                lineHeight: 1.2
             }
         }
 

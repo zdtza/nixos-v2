@@ -3,14 +3,12 @@ pragma ComponentBehavior: Bound
 // Secure Wayland session lock. Compositor-owned lock surfaces cover every
 // output, so shell failure cannot expose applications underneath.
 import QtQuick
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Pam
 import Quickshell.Wayland
 import Stylix
 import "../services"
-import ".."
 
 Scope {
     id: root
@@ -95,70 +93,24 @@ Scope {
             color: Theme.background
 
             onVisibleChanged: if (visible)
-                Qt.callLater(() => passwordInput.forceActiveFocus())
+                Qt.callLater(() => prompt.input.forceActiveFocus())
 
-            Image {
-                id: wallpaper
+            AuthPrompt {
+                id: prompt
                 anchors.fill: parent
-                source: Theme.wallpaper
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                cache: true
-                layer.enabled: true
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                color: Utils.alpha(Theme.background, 0.45)
-            }
-
-            Column {
-                anchors.centerIn: parent
-                width: Math.min(360, parent.width - 48)
-                spacing: 10
-
-                Rectangle {
-                    width: parent.width
-                    height: 48
-                    radius: ServicePanel.rounding
-                    color: Utils.alpha(Theme.dark_background, 0.88)
-                    border.width: 2
-                    border.color: root.errorText.length > 0 ? Theme.urgent
-                        : (passwordInput.activeFocus ? Theme.muted : Theme.border)
-                    layer.enabled: true
-                    layer.effect: ShellShadow {}
-
-                    Behavior on border.color { ColorAnimation { duration: 120 } }
-
-                    TextInput {
-                        id: passwordInput
-                        anchors.fill: parent
-                        anchors.leftMargin: 16
-                        anchors.rightMargin: 16
-                        horizontalAlignment: TextInput.AlignHCenter
-                        verticalAlignment: TextInput.AlignVCenter
-                        enabled: !root.authenticating
-                        echoMode: TextInput.Password
-                        passwordCharacter: "●"
-                        color: Theme.foreground
-                        selectionColor: Theme.surface
-                        selectedTextColor: Theme.foreground
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Utils.scaledFont(22)
-                        font.letterSpacing: 2
-                        text: root.password
-                        onTextChanged: root.password = text
-                        onAccepted: root.submit()
-                        Keys.onPressed: event => {
-                            const clearInput = event.key === Qt.Key_Escape
-                                || (event.key === Qt.Key_C
-                                    && (event.modifiers & Qt.ControlModifier) !== 0);
-                            if (clearInput) {
-                                root.password = "";
-                                root.errorText = "";
-                                event.accepted = true;
-                            }
-                        }
+                error: root.errorText.length > 0
+                inputEnabled: !root.authenticating
+                text: root.password
+                onTextChanged: root.password = text
+                onAccepted: root.submit()
+                onKeyPressed: event => {
+                    const clearInput = event.key === Qt.Key_Escape
+                        || (event.key === Qt.Key_C
+                            && (event.modifiers & Qt.ControlModifier) !== 0);
+                    if (clearInput) {
+                        root.password = "";
+                        root.errorText = "";
+                        event.accepted = true;
                     }
                 }
             }

@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 
-// Centered application browser matching the shell's compact panel language.
+// Spotlight-style application search matching the shell's compact panel language.
 // Right clicking an entry exposes desktop-entry actions that have no other shell UI.
 import QtQuick
 import QtQuick.Effects
@@ -254,24 +254,13 @@ Scope {
         }
 
         function moveAppSelection(offset: int): void {
-            const count = results.length;
-            if (count === 0) {
+            if (results.length === 0) {
                 appList.currentIndex = -1;
                 return;
             }
-            if (appList.currentIndex < 0) {
-                appList.currentIndex = offset > 0 ? 0 : count - 1;
-                return;
-            }
-            const target = appList.currentIndex + offset;
-            if (Math.abs(offset) === 1) {
-                const minimum = Math.floor(appList.currentIndex / appList.columns)
-                    * appList.columns;
-                const maximum = Math.min(count - 1, minimum + appList.columns - 1);
-                appList.currentIndex = Math.max(minimum, Math.min(maximum, target));
-            } else if (target >= 0 && target < count) {
-                appList.currentIndex = target;
-            }
+            appList.currentIndex = Math.max(0, Math.min(results.length - 1,
+                (appList.currentIndex < 0 ? 0 : appList.currentIndex) + offset));
+            appList.positionViewAtIndex(appList.currentIndex, ListView.Contain);
         }
 
         function activateContextSelection(): void {
@@ -321,27 +310,20 @@ Scope {
                 window.closeContextMenu();
                 window.hoverSelectReady = false;
                 window.armPosition = null;
-                launcherSlide.stop();
-                if (!root.open) {
-                    launcherFrame.height = 0;
+                if (!root.open)
                     return;
-                }
-                launcherFrame.height = 0;
-                launcherSlide.restart();
                 search.text = "";
                 search.forceActiveFocus();
                 appList.currentIndex = 0;
+                appList.positionViewAtBeginning();
             }
         }
 
-        NumberAnimation {
-            id: launcherSlide
-            target: launcherFrame
-            property: "height"
-            from: 0
-            to: 480
-            duration: ServicePanel.slideDuration
-            easing.type: Easing.OutCubic
+        Rectangle {
+            anchors.fill: parent
+            color: Theme.overlay
+            opacity: root.open ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: ServicePanel.slideDuration } }
         }
 
         MouseArea {
@@ -371,23 +353,22 @@ Scope {
         Rectangle {
             id: launcherFrame
 
-            anchors {
-                top: parent.top
-                // Flush against the bar when it's shown; falls back to the
-                // bare screen edge when it's hidden.
-                topMargin: ServicePanel.barVisible ? ServicePanel.barHeight : 0
-                horizontalCenter: parent.horizontalCenter
-            }
-            width: 620
-            height: 0
+            anchors.centerIn: parent
+            width: Math.min(640, parent.width - 32)
+            height: Math.min(460, parent.height - 64)
             enabled: root.open
             clip: true
-            radius: ServicePanel.shellRounding
-            // Square against the top edge whether that's the bar's
-            // underside or the bare screen top.
-            topLeftRadius: 0
-            topRightRadius: 0
+            radius: ServicePanel.rounding
             color: Theme.dark_background
+            opacity: root.open ? 1 : 0
+            scale: root.open ? 1 : 0.96
+            Behavior on opacity { NumberAnimation { duration: ServicePanel.slideDuration } }
+            Behavior on scale {
+                NumberAnimation {
+                    duration: ServicePanel.slideDuration
+                    easing.type: Easing.OutCubic
+                }
+            }
             layer.enabled: true
             layer.effect: ShellShadow {}
 
@@ -399,25 +380,24 @@ Scope {
             ColumnLayout {
                 anchors {
                     fill: parent
-                    leftMargin: 14
-                    rightMargin: 14
-                    topMargin: 14
-                    bottomMargin: 14
+                    leftMargin: 12
+                    rightMargin: 12
+                    topMargin: 12
+                    bottomMargin: 12
                 }
                 opacity: root.open ? 1 : 0
-                spacing: 20
-
+                spacing: 10
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 32
-                    radius: height / 2
+                    Layout.preferredHeight: 48
+                    radius: ServicePanel.rounding
                     color: Theme.surface
 
                     Text {
                         anchors {
                             left: parent.left
-                            leftMargin: 14
+                            leftMargin: 16
                             verticalCenter: parent.verticalCenter
                         }
                         text: "󰍉"
@@ -432,11 +412,11 @@ Scope {
                         anchors {
                             left: parent.left
                             right: parent.right
-                            leftMargin: 38
-                            rightMargin: 14
+                            leftMargin: 46
+                            rightMargin: 16
                             verticalCenter: parent.verticalCenter
                         }
-                        height: 22
+                        height: 30
                         verticalAlignment: TextInput.AlignVCenter
                         focus: true
                         selectByMouse: true
@@ -474,22 +454,16 @@ Scope {
                             if (window.menuOpen)
                                 window.moveContextSelection(1);
                             else
-                                window.moveAppSelection(appList.columns);
+                                window.moveAppSelection(1);
                         }
                         Keys.onUpPressed: {
                             if (window.menuOpen)
                                 window.moveContextSelection(-1);
                             else
-                                window.moveAppSelection(-appList.columns);
-                        }
-                        Keys.onLeftPressed: {
-                            if (window.menuOpen)
-                                window.closeContextMenu();
-                            else
                                 window.moveAppSelection(-1);
                         }
-                        Keys.onRightPressed: if (!window.menuOpen)
-                            window.moveAppSelection(1)
+                        Keys.onLeftPressed: if (window.menuOpen)
+                            window.closeContextMenu()
                         Keys.onPressed: event => {
                             if (!window.menuOpen && (event.key === Qt.Key_Menu
                                     || (event.key === Qt.Key_F10
@@ -513,24 +487,18 @@ Scope {
                     }
                 }
 
-                GridView {
+                ListView {
                     id: appList
-
-                    readonly property int columns: 5
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
+                    spacing: 4
                     model: window.results
                     currentIndex: window.results.length > 0 ? 0 : -1
-                    cellWidth: width / columns
-                    cellHeight: 100
                     keyNavigationEnabled: false
                     reuseItems: true
-                    // Materialize every tile while the persistent shell starts.
-                    // This resolves desktop icons before the first invocation.
-                    cacheBuffer: Math.max(height,
-                        Math.ceil(window.entries.length / columns) * cellHeight)
+                    cacheBuffer: height
                     boundsBehavior: Flickable.StopAtBounds
 
                     delegate: Rectangle {
@@ -539,80 +507,107 @@ Scope {
                         required property var modelData
                         required property int index
                         readonly property var entry: modelData.entry
-                        readonly property bool selected: GridView.isCurrentItem
+                        readonly property bool selected: ListView.isCurrentItem
 
-                        width: appList.cellWidth - 8
-                        height: appList.cellHeight - 8
-                        radius: ServicePanel.shellRounding
+                        width: appList.width
+                        height: 58
+                        radius: ServicePanel.rounding
                         color: selected ? Theme.surface : "transparent"
 
-                        Column {
-                            anchors.centerIn: parent
-                            width: parent.width - 16
-                            spacing: 8
+                        Rectangle {
+                            anchors {
+                                left: parent.left
+                                verticalCenter: parent.verticalCenter
+                            }
+                            width: 3
+                            height: 30
+                            radius: width / 2
+                            color: Theme.accent
+                            visible: appRow.selected
+                        }
 
-                            Item {
-                                id: iconFrame
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                width: 48
-                                height: 48
+                        Item {
+                            id: iconFrame
+                            anchors {
+                                left: parent.left
+                                leftMargin: 14
+                                verticalCenter: parent.verticalCenter
+                            }
+                            width: 38
+                            height: 38
 
-                                // Loading: unresolved icon path is still being decoded.
-                                // Fallback icon only once the load actually failed/has no icon.
-                                Text {
-                                    anchors.centerIn: parent
-                                    visible: applicationIcon.status === Image.Loading
-                                    text: "…"
-                                    color: Theme.muted
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Utils.scaledFont(18)
-                                }
+                            Text {
+                                anchors.centerIn: parent
+                                visible: applicationIcon.status === Image.Loading
+                                text: "…"
+                                color: Theme.muted
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Utils.scaledFont(16)
+                            }
 
-                                Image {
-                                    anchors.centerIn: parent
-                                    width: 40
-                                    height: 40
-                                    visible: applicationIcon.status === Image.Error
-                                        || applicationIcon.status === Image.Null
-                                    source: "file://" + Quickshell.env("QS_FALLBACK_APP_ICON")
-                                    sourceSize.width: 80
-                                    sourceSize.height: 80
-                                    smooth: true
-                                    layer.enabled: true
-                                    layer.effect: MultiEffect {
-                                        brightness: 1
-                                        colorization: 1
-                                        colorizationColor: Theme.muted
-                                    }
-                                }
-
-                                Image {
-                                    id: applicationIcon
-                                    anchors.fill: parent
-                                    source: appRow.entry.icon
-                                        ? Quickshell.iconPath(appRow.entry.icon, true) : ""
-                                    sourceSize.width: 96
-                                    sourceSize.height: 96
-                                    cache: true
-                                    asynchronous: true
-                                    smooth: true
-                                    visible: status === Image.Ready
+                            Image {
+                                anchors.centerIn: parent
+                                width: 32
+                                height: 32
+                                visible: applicationIcon.status === Image.Error
+                                    || applicationIcon.status === Image.Null
+                                source: "file://" + Quickshell.env("QS_FALLBACK_APP_ICON")
+                                sourceSize.width: 64
+                                sourceSize.height: 64
+                                smooth: true
+                                layer.enabled: true
+                                layer.effect: MultiEffect {
+                                    brightness: 1
+                                    colorization: 1
+                                    colorizationColor: Theme.muted
                                 }
                             }
 
+                            Image {
+                                id: applicationIcon
+                                anchors.fill: parent
+                                source: appRow.entry.icon
+                                    ? Quickshell.iconPath(appRow.entry.icon, true) : ""
+                                sourceSize.width: 76
+                                sourceSize.height: 76
+                                cache: true
+                                asynchronous: true
+                                smooth: true
+                                visible: status === Image.Ready
+                            }
+                        }
+
+                        Column {
+                            anchors {
+                                left: iconFrame.right
+                                right: parent.right
+                                leftMargin: 14
+                                rightMargin: 14
+                                verticalCenter: parent.verticalCenter
+                            }
+                            spacing: 2
+
                             Text {
                                 width: parent.width
-                                horizontalAlignment: Text.AlignHCenter
                                 text: appRow.entry.name
                                 color: Theme.foreground
                                 elide: Text.ElideRight
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Utils.scaledFont(12)
+                                font.pixelSize: Utils.scaledFont(14)
+                                font.bold: appRow.selected
+                            }
+
+                            Text {
+                                width: parent.width
+                                text: appRow.entry.comment || appRow.entry.genericName || "Application"
+                                color: Theme.muted
+                                elide: Text.ElideRight
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Utils.scaledFont(11)
                             }
                         }
 
                         MouseArea {
-                            id: rowMouse
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
@@ -684,47 +679,6 @@ Scope {
             }
         }
 
-        // Concave corners blend the drawer into the underside of the bar.
-        // Only makes sense when the bar is actually there to blend into.
-        Canvas {
-            visible: ServicePanel.barVisible
-            width: ServicePanel.shellRounding
-            height: Math.min(width, launcherFrame.height)
-            x: launcherFrame.x - width
-            y: ServicePanel.barHeight
-
-            onPaint: {
-                const context = getContext("2d");
-                context.clearRect(0, 0, width, width);
-                context.fillStyle = Theme.dark_background;
-                context.beginPath();
-                context.moveTo(0, 0);
-                context.lineTo(width, 0);
-                context.lineTo(width, width);
-                context.arc(0, width, width, 0, -Math.PI / 2, true);
-                context.fill();
-            }
-        }
-
-        Canvas {
-            visible: ServicePanel.barVisible
-            width: ServicePanel.shellRounding
-            height: Math.min(width, launcherFrame.height)
-            x: launcherFrame.x + launcherFrame.width
-            y: ServicePanel.barHeight
-
-            onPaint: {
-                const context = getContext("2d");
-                context.clearRect(0, 0, width, width);
-                context.fillStyle = Theme.dark_background;
-                context.beginPath();
-                context.moveTo(0, 0);
-                context.lineTo(width, 0);
-                context.arc(width, width, width, -Math.PI / 2, -Math.PI, true);
-                context.lineTo(0, 0);
-                context.fill();
-            }
-        }
 
         // Close context menu without also dismissing launcher.
         MouseArea {

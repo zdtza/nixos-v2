@@ -46,6 +46,8 @@ ShellRoot {
     // Secure compositor session lock: `qs ipc call lock activate`
     LockScreen {}
 
+    Polkit {}
+
     // Single instance, toggled over IPC: `qs ipc call launcher toggle`
     Launcher {}
 }

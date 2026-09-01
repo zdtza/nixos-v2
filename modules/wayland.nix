@@ -19,6 +19,10 @@
   };
 
   security.rtkit.enable = true;
+  security.polkit = {
+    enable = true;
+    enablePkexecWrapper = true;
+  };
 
   services.pipewire = {
     enable = true;
@@ -29,6 +33,9 @@
 
   services.udisks2.enable = true;
   services.gvfs.enable = true;
+
+  # Secret Service backend used by GVFS/Nautilus for mount credentials.
+  services.gnome.gnome-keyring.enable = true;
 
   # TUI login manager, launches Hyprland through UWSM on login.
   # Wrapped in a script: greetd's TOML parser chokes on the multi-line
@@ -42,6 +49,7 @@
       ''
     );
   };
+  security.pam.services.greetd.enableGnomeKeyring = true;
 
   xdg.portal = {
     enable = true;

@@ -157,7 +157,6 @@ in
       };
     };
 
-    security.polkit.enable = true;
     security.polkit.extraConfig = ''
       var windowsUnits = ["docker-windows.service", "windows-wipe.service"];
       polkit.addRule(function(action, subject) {

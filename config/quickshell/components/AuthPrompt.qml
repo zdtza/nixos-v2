@@ -37,7 +37,7 @@ Item {
         width: Math.min(360, parent.width - 48)
         height: 48
         radius: ServicePanel.rounding
-        color: Utils.alpha(Theme.dark_background, 0.88)
+        color: Utils.alpha(Theme.dark_background, 0.95)
         border.width: 2
         border.color: root.error ? Theme.urgent
             : (passwordInput.activeFocus ? Theme.muted : Theme.border)

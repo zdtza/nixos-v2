@@ -27,7 +27,7 @@
 
     functions.rb = ''
       command git -C "$HOME/.src/nixos" add --all; or return $status
-      command pkexec --disable-internal-agent /run/current-system/sw/bin/nixos-rebuild switch --flake "$HOME/.src/nixos#"(hostname) $argv
+      command pkexec --disable-internal-agent /run/current-system/sw/bin/nixos-rebuild switch --flake "$HOME/.src/nixos#"(hostname) --option warn-dirty false $argv
     '';
 
     # aliases for the shell

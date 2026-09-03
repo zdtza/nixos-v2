@@ -1,18 +1,13 @@
 { ... }:
 
 {
-  # Home Manager's stylix fish target sources base16-fish and re-applies it
-  # on every interactive shell start via OSC escape sequences. Those
-  # sequences also recolor the real Linux virtual console (tty), not just
-  # terminal emulators, so disable it here (mirrors targets.console.enable
-  # = false / targets.fish.enable = false in modules/desktop.nix, which
-  # only cover the NixOS-level stylix instance, not this per-user one).
+  # disabling stylix's fish target, its OSC sequences also recolor the tty console
   stylix.targets.fish.enable = false;
 
   programs.fish = {
     enable = true;
 
-    # Load secrets from stable per-user path, independent of flake checkout/cwd.
+    # loading secrets from a stable per-user path, independent of flake checkout/cwd
     interactiveShellInit = ''
       set -g fish_greeting
       set -l env_file "$XDG_CONFIG_HOME/environment/secrets.env"
@@ -25,6 +20,7 @@
       end
     '';
 
+    # nixos aliases for faster rebuilds, updates and home manager switching
     functions.rb = ''
       command git -C "$HOME/.src/nixos" add --all; or return $status
       command pkexec --disable-internal-agent /run/current-system/sw/bin/nixos-rebuild switch --flake "$HOME/.src/nixos#"(hostname) --option warn-dirty false $argv
@@ -63,7 +59,7 @@
     ];
   };
 
-  # custom pointer
+  # shell prompt
   programs.starship = {
     enable = true;
     settings = {

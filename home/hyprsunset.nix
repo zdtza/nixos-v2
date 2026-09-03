@@ -1,13 +1,9 @@
 { pkgs, ... }:
 
-let
-  package = pkgs.hyprsunset;
-in
 {
-  home.packages = [ package ];
+  home.packages = [ pkgs.hyprsunset ];
 
-  # Keep hyprsunset available as an identity transform. Quickshell restores
-  # persisted enablement and color temperature through Hyprland IPC.
+  # starting hyprsunset as an identity transform, quickshell drives it over hyprland ipc
   systemd.user.services.hyprsunset = {
     Unit = {
       Description = "Hyprland blue-light filter";
@@ -16,7 +12,7 @@ in
     };
 
     Service = {
-      ExecStart = "${package}/bin/hyprsunset --identity";
+      ExecStart = "${pkgs.hyprsunset}/bin/hyprsunset --identity";
       Restart = "on-failure";
       RestartSec = 2;
     };

@@ -8,7 +8,7 @@ import "../services"
 import ".."
 
 // Current-year calendar shown from clock in bar.
-PanelPopup {
+Popup {
     id: root
 
     property int shownMonth: clock.date.getMonth()
@@ -167,7 +167,7 @@ PanelPopup {
     contentHorizontalMargins: 80
     contentTopMargin: 18
     contentSpacing: 16
-    implicitWidth: 650 + ServicePanel.shellRounding * 2
+    implicitWidth: 650 + PanelService.shellRounding * 2
     implicitHeight: panelContent.implicitHeight
         + contentTopMargin + contentBottomMargin
 
@@ -254,8 +254,8 @@ PanelPopup {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "󰃭"
-                color: Theme.foreground
-                font.family: Theme.fontFamily
+                color: Theme.base05
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(50)
                 font.bold: true
             }
@@ -263,8 +263,8 @@ PanelPopup {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.monthNames[clock.date.getMonth()] + " " + clock.date.getDate()
-                color: Theme.foreground
-                font.family: Theme.fontFamily
+                color: Theme.base05
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(48)
                 font.weight: Font.Bold
             }
@@ -281,8 +281,8 @@ PanelPopup {
             width: 44
             anchors.verticalCenter: parent.verticalCenter
             text: root.currentYear
-            color: Theme.muted
-            font.family: Theme.fontFamily
+            color: Theme.base04
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(12)
             font.letterSpacing: 1
         }
@@ -294,8 +294,8 @@ PanelPopup {
 
             Rectangle {
                 anchors.fill: parent
-                radius: ServicePanel.rounding
-                color: Theme.surface
+                radius: PanelService.rounding
+                color: Theme.base02
             }
 
             Rectangle {
@@ -303,8 +303,8 @@ PanelPopup {
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 width: parent.width * root.yearCompletePercent / 100
-                radius: ServicePanel.rounding
-                color: Theme.foreground
+                radius: PanelService.rounding
+                color: Theme.base05
             }
         }
 
@@ -313,8 +313,8 @@ PanelPopup {
             anchors.verticalCenter: parent.verticalCenter
             horizontalAlignment: Text.AlignRight
             text: root.yearCompletePercent + "%"
-            color: Theme.foreground
-            font.family: Theme.fontFamily
+            color: Theme.base05
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(12)
             font.letterSpacing: 1
         }
@@ -334,8 +334,8 @@ PanelPopup {
                 width: index === 0 ? root.weekColumnWidth : root.dayColumnWidth
                 horizontalAlignment: Text.AlignHCenter
                 text: modelData
-                color: Theme.muted
-                font.family: Theme.fontFamily
+                color: Theme.base04
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(11)
                 font.weight: Font.Medium
                 font.letterSpacing: 1
@@ -377,15 +377,15 @@ PanelPopup {
                         anchors.centerIn: parent
                         width: dayCell.modelData.weekNumber ? 0 : root.dayColumnWidth - 8
                         height: 36
-                        radius: ServicePanel.rounding
+                        radius: PanelService.rounding
                         visible: !dayCell.modelData.weekNumber
                             && (dayCell.marked || dayCell.modelData.today
                                 || dayCell.keyboardSelected)
                         color: dayCell.marked || dayCell.keyboardSelected
-                            ? Theme.surface : "transparent"
+                            ? Theme.base02 : "transparent"
                         border.width: dayCell.rangeEndpoint || dayCell.modelData.today
                             || dayCell.keyboardSelected ? 1 : 0
-                        border.color: dayCell.rangeEndpoint ? Theme.muted : Theme.border
+                        border.color: dayCell.rangeEndpoint ? Theme.base04 : Theme.base03
 
                     }
 
@@ -393,8 +393,8 @@ PanelPopup {
                         anchors.centerIn: parent
                         text: dayCell.modelData.label
                         color: dayCell.modelData.weekNumber || !dayCell.modelData.inMonth
-                            ? Theme.border : Theme.foreground
-                        font.family: Theme.fontFamily
+                            ? Theme.base03 : Theme.base05
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(dayCell.modelData.weekNumber ? 10 : 13)
                         font.weight: dayCell.marked ? Font.Medium : Font.Normal
                     }
@@ -425,7 +425,7 @@ PanelPopup {
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             width: 1
-            color: Theme.border
+            color: Theme.base03
             opacity: 0.45
         }
     }
@@ -446,8 +446,8 @@ PanelPopup {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 text: "‹"
-                color: Theme.foreground
-                font.family: Theme.fontFamily
+                color: Theme.base05
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(18)
             }
 
@@ -467,8 +467,8 @@ PanelPopup {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: (root.monthNames[root.shownMonth] + " " + root.currentYear).toUpperCase()
-                color: Theme.foreground
-                font.family: Theme.fontFamily
+                color: Theme.base05
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(11)
                 font.weight: Font.Medium
                 font.letterSpacing: 1.4
@@ -478,8 +478,8 @@ PanelPopup {
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: root.selectedDayCount > 0
                 text: root.selectedDayCount + " DAYS SELECTED"
-                color: Theme.muted
-                font.family: Theme.fontFamily
+                color: Theme.base04
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(9)
                 font.letterSpacing: 1
             }
@@ -497,8 +497,8 @@ PanelPopup {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 text: "›"
-                color: Theme.foreground
-                font.family: Theme.fontFamily
+                color: Theme.base05
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(18)
             }
 

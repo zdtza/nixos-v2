@@ -9,7 +9,7 @@ Item {
 
     property real value: 0
     property bool enabled: true
-    property color fillColor: Theme.foreground
+    property color fillColor: Theme.base05
 
     signal valueEdited(real value)
 
@@ -27,7 +27,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         height: 5
         radius: height / 2
-        color: Utils.alpha(Theme.foreground, 0.12)
+        color: Utils.alpha(Theme.base05, 0.12)
 
         Rectangle {
             width: parent.width * Math.max(0, Math.min(1, root.value))
@@ -43,9 +43,9 @@ Item {
         width: 14
         height: 14
         radius: width / 2
-        color: root.enabled ? Theme.foreground : Theme.muted
+        color: root.enabled ? Theme.base05 : Theme.base04
         border.width: 2
-        border.color: Theme.background
+        border.color: Theme.base00
 
     }
 

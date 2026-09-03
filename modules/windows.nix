@@ -5,12 +5,9 @@
   ...
 }:
 
-# Windows 11 in a container (dockurr/windows: KVM + QEMU inside Docker),
-# reachable over RDP. Self-contained: import this file into any host's
-# `imports` alongside home-manager's NixOS module, set `windows.user`, done
-# — the launcher, desktop entry and icon for `cfg.user` come along with it
-# (below, under `home-manager.users`), no separate home-manager module to
-# wire up.
+# windows 11 in a container (dockurr/windows: kvm + qemu inside docker), over rdp
+# self-contained: import this file, set windows.user, the home-manager launcher
+# and desktop entry come along with it, no separate home-manager module needed
 let
   cfg = config.windows;
   container = config.virtualisation.oci-containers.containers.windows;
@@ -127,14 +124,13 @@ in
 
     systemd.tmpfiles.rules = [ "d ${cfg.storagePath} 0700 root root -" ];
 
-    # Erases every trace of Windows: container, disk image, and pulled image.
-    # Runs as a unit rather than through sudo so the launcher can trigger it
-    # via the polkit rule below, instead of an unanswerable password prompt.
+    # erasing every trace of windows: container, disk image, pulled image
+    # a unit rather than sudo, so the launcher can trigger it via the polkit rule below
     systemd.services.windows-wipe = {
       description = "Erase Windows and its container image";
       serviceConfig = {
         Type = "oneshot";
-        # Stopping Windows alone can use the full 300s shutdown budget.
+        # stopping windows alone can use the full 300s shutdown budget
         TimeoutStartSec = 600;
         ExecStart =
           let
@@ -146,10 +142,10 @@ in
 
             systemctl stop docker-windows.service || true
 
-            # Normally a no-op, since the container runs with --rm.
+            # normally a no-op, the container runs with --rm
             ${docker} rm -f windows >/dev/null 2>&1 || true
 
-            # Contents only: the directory keeps its 0700 root ownership.
+            # contents only, the directory keeps its 0700 root ownership
             find ${cfg.storagePath} -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
 
             ${docker} image rm -f ${image} >/dev/null 2>&1 || true
@@ -171,11 +167,9 @@ in
       });
     '';
 
-    # Front end for the container above, installed for cfg.user via
-    # home-manager. Four separate commands rather than one with flags:
-    # nothing in windows-launch, windows-install or windows-stop can reach
-    # the code that deletes the disk image. Only windows-remove touches it,
-    # and the deletion itself lives in the root-owned unit above.
+    # front end for the container above, installed for cfg.user via home-manager
+    # four separate commands rather than flags, only windows-remove can reach
+    # the disk image, and the deletion itself lives in the root-owned unit above
     home-manager.users.${cfg.user} =
       {
         config,
@@ -190,10 +184,8 @@ in
         rdpPort = toString cfg.ports.rdp;
         webUrl = "http://127.0.0.1:${toString cfg.ports.web}";
 
-        # Written once Windows genuinely answers RDP, and removed by
-        # windows-remove. Only ever a cache: a live RDP handshake outranks
-        # it, so a stale or missing marker can never block a working
-        # Windows instance.
+        # marking install done once rdp answers, removed by windows-remove
+        # only ever a cache, a live rdp handshake always outranks it
         marker = "${config.xdg.stateHome}/windows-vm/installed";
 
         helpers = ''
@@ -214,11 +206,9 @@ in
             touch ${marker}
           }
 
-          # A published docker port accepts TCP as soon as the container starts,
-          # even with nothing listening inside the guest, so a plain connect
-          # test reports "ready" for the entire install. Send an X.224
-          # connection request and require a TPKT reply (version byte 3)
-          # instead.
+          # a plain tcp connect reports ready for the whole install, since the
+          # docker port accepts before anything's listening, so send an x.224
+          # request and require a real tpkt reply instead
           rdp_ready() {
             reply=$(timeout 3 bash -c "
               exec 3<>/dev/tcp/${host}/${rdpPort} || exit 1
@@ -237,8 +227,7 @@ in
           systemd
         ];
 
-        # Connect to Windows, starting it first if needed. No install, no
-        # delete path.
+        # connecting to windows, starting it first if needed, no install/delete path
         launch = pkgs.writeShellApplication {
           name = "windows-launch";
           runtimeInputs = runtimeInputs ++ [ pkgs.freerdp ];
@@ -258,7 +247,7 @@ in
               sleep 2
             done
 
-            # Answering RDP proves it is installed, whatever the marker said.
+            # answering rdp proves it's installed, whatever the marker said
             mark_installed
 
             exec xfreerdp \
@@ -275,9 +264,8 @@ in
           '';
         };
 
-        # First-time setup. Starts the container and points at the web
-        # viewer; the install itself is unattended and watched in the
-        # browser, not here.
+        # first-time setup, starts the container and points at the web viewer,
+        # the install itself is unattended and watched in the browser
         install = pkgs.writeShellApplication {
           name = "windows-install";
           inherit runtimeInputs;
@@ -297,8 +285,7 @@ in
           '';
         };
 
-        # Shut Windows down. Refuses while Setup looks unfinished, because
-        # stopping then throws the whole install away.
+        # shutting windows down, refuses mid-setup since stopping then throws the install away
         stop = pkgs.writeShellApplication {
           name = "windows-stop";
           inherit runtimeInputs;
@@ -310,10 +297,8 @@ in
               exit 0
             fi
 
-            # Nothing answering RDP and no install ever recorded is what an
-            # in-progress Setup looks like. Until it finishes, dockur keeps
-            # the install ISO first in the boot order, so a stop restarts it
-            # from scratch.
+            # no rdp and no marker looks like an in-progress setup, dockur keeps the
+            # install iso first in boot order, so stopping now restarts it from scratch
             if ! rdp_ready && [[ ! -f ${marker} ]]; then
               notify 'Windows Setup is still running' 'Refusing to stop: it would restart the install.'
               exit 1
@@ -324,9 +309,7 @@ in
           '';
         };
 
-        # The only command that destroys anything, and the only one that
-        # cannot be triggered from a menu: it requires a terminal so the
-        # confirmation is real.
+        # the only command that destroys anything, terminal-only so the confirmation is real
         remove = pkgs.writeShellApplication {
           name = "windows-remove";
           inherit runtimeInputs;
@@ -348,8 +331,7 @@ in
         };
       in
       {
-        # Inlined rather than a sibling file, so the module is one
-        # self-contained file when imported by another flake.
+        # inlined rather than a sibling file, keeps the module self-contained
         home.file.".local/share/icons/hicolor/scalable/apps/windows.svg".source =
           pkgs.writeText "windows.svg" ''
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
@@ -380,7 +362,7 @@ in
           type = "Application";
           settings.StartupWMClass = "windows";
 
-          # No erase action: windows-remove is terminal-only by design.
+          # no erase action here, windows-remove is terminal-only by design
           actions = {
             install = {
               name = "Install Windows";

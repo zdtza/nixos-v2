@@ -55,7 +55,7 @@ let
       name = "NixOS Packages";
       url = "https://search.nixos.org/packages?channel=unstable";
       isolated = false;
-      # Match nixos-manual.desktop exactly and let current icon theme resolve it.
+      # matching nixos-manual.desktop exactly so the icon theme resolves it
       iconName = "nix-snowflake";
     }
     {
@@ -81,6 +81,7 @@ let
 
   iconDir = ../assets/icons;
 
+  # importing the custom install / remove scripts
   mkWebappCommand =
     command:
     pkgs.writeShellScriptBin command ''
@@ -90,6 +91,7 @@ let
   webappInstall = mkWebappCommand "webapp-install";
   webappRemove = mkWebappCommand "webapp-remove";
 
+  # generating the desktop entries for the web apps
   mkEntry =
     app:
     let

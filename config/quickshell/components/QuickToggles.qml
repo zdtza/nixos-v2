@@ -40,9 +40,9 @@ Item {
     }
 
     function initializeToggleOrder(): void {
-        const states = [ServiceNightLight.enabled, ServiceStayAwake.enabled,
-            ServiceTimer.running, ServiceDoNotDisturb.enabled, recordingActive,
-            ServiceVoiceDictation.active];
+        const states = [NightLightService.enabled, StayAwakeService.enabled,
+            TimerService.running, DoNotDisturbService.enabled, recordingActive,
+            VoiceDictationService.active];
         const nextActive = [];
         const nextInactive = [];
 
@@ -73,37 +73,37 @@ Item {
     onRecordingActiveChanged: moveToggle(4, recordingActive)
 
     Connections {
-        target: ServiceNightLight
+        target: NightLightService
         function onEnabledChanged() {
-            root.moveToggle(0, ServiceNightLight.enabled);
+            root.moveToggle(0, NightLightService.enabled);
         }
     }
 
     Connections {
-        target: ServiceStayAwake
+        target: StayAwakeService
         function onEnabledChanged() {
-            root.moveToggle(1, ServiceStayAwake.enabled);
+            root.moveToggle(1, StayAwakeService.enabled);
         }
     }
 
     Connections {
-        target: ServiceTimer
+        target: TimerService
         function onRunningChanged() {
-            root.moveToggle(2, ServiceTimer.running);
+            root.moveToggle(2, TimerService.running);
         }
     }
 
     Connections {
-        target: ServiceDoNotDisturb
+        target: DoNotDisturbService
         function onEnabledChanged() {
-            root.moveToggle(3, ServiceDoNotDisturb.enabled);
+            root.moveToggle(3, DoNotDisturbService.enabled);
         }
     }
 
     Connections {
-        target: ServiceVoiceDictation
+        target: VoiceDictationService
         function onActiveChanged() {
-            root.moveToggle(5, ServiceVoiceDictation.active);
+            root.moveToggle(5, VoiceDictationService.active);
         }
     }
 
@@ -143,15 +143,15 @@ Item {
 
                 x: root.toggleX(0)
                 width: implicitWidth
-                implicitWidth: root.expanded || ServiceNightLight.enabled ? 28 : 0
+                implicitWidth: root.expanded || NightLightService.enabled ? 28 : 0
                 implicitHeight: 26
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
                 }
 
-                PanelNightLightToggle {
+                NightLightTogglePanel {
                     id: nightLightToggle
                     anchors.right: parent.right
                 }
@@ -162,12 +162,12 @@ Item {
 
                 x: root.toggleX(1)
                 width: implicitWidth
-                implicitWidth: root.expanded || ServiceStayAwake.enabled ? 28 : 0
+                implicitWidth: root.expanded || StayAwakeService.enabled ? 28 : 0
                 implicitHeight: 26
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
                 }
 
                 Item {
@@ -179,8 +179,8 @@ Item {
                         anchors.centerIn: parent
                         anchors.verticalCenterOffset: -1
                         text: "󰅶"
-                        color: ServiceStayAwake.enabled ? Theme.foreground : Theme.muted
-                        font.family: Theme.fontFamily
+                        color: StayAwakeService.enabled ? Theme.base05 : Theme.base04
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(14)
 
                         Behavior on color { ColorAnimation { duration: 120 } }
@@ -191,7 +191,7 @@ Item {
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: ServiceStayAwake.toggle()
+                        onClicked: StayAwakeService.toggle()
                     }
                 }
             }
@@ -209,10 +209,10 @@ Item {
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
                 }
 
-                PanelTimerToggle {
+                TimerTogglePanel {
                     id: timerToggle
                     anchors.right: parent.right
                 }
@@ -223,12 +223,12 @@ Item {
 
                 x: root.toggleX(3)
                 width: implicitWidth
-                implicitWidth: root.expanded || ServiceDoNotDisturb.enabled ? 28 : 0
+                implicitWidth: root.expanded || DoNotDisturbService.enabled ? 28 : 0
                 implicitHeight: 26
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
                 }
 
                 Item {
@@ -240,9 +240,9 @@ Item {
                         anchors.centerIn: parent
                         anchors.verticalCenterOffset: -1
                         text: "󰂛"
-                        color: ServiceDoNotDisturb.enabled
-                            ? Theme.foreground : Theme.muted
-                        font.family: Theme.fontFamily
+                        color: DoNotDisturbService.enabled
+                            ? Theme.base05 : Theme.base04
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(14)
 
                         Behavior on color { ColorAnimation { duration: 120 } }
@@ -253,7 +253,7 @@ Item {
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: ServiceDoNotDisturb.toggle()
+                        onClicked: DoNotDisturbService.toggle()
                     }
                 }
             }
@@ -268,7 +268,7 @@ Item {
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
                 }
 
                 Item {
@@ -280,8 +280,8 @@ Item {
                         anchors.centerIn: parent
                         anchors.verticalCenterOffset: -1
                         text: ""
-                        color: Theme.urgent
-                        font.family: Theme.fontFamily
+                        color: Theme.base08
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(14)
                     }
                 }
@@ -292,12 +292,12 @@ Item {
 
                 x: root.toggleX(5)
                 width: implicitWidth
-                implicitWidth: root.expanded || ServiceVoiceDictation.active ? 28 : 0
+                implicitWidth: root.expanded || VoiceDictationService.active ? 28 : 0
                 implicitHeight: 26
                 clip: true
 
                 Behavior on implicitWidth {
-                    NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
                 }
 
                 Item {
@@ -309,9 +309,9 @@ Item {
                         anchors.centerIn: parent
                         anchors.verticalCenterOffset: -1
                         text: ""
-                        color: ServiceVoiceDictation.active
-                            ? Theme.foreground : Theme.muted
-                        font.family: Theme.fontFamily
+                        color: VoiceDictationService.active
+                            ? Theme.base05 : Theme.base04
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(14)
 
                         Behavior on color { ColorAnimation { duration: 120 } }
@@ -322,7 +322,7 @@ Item {
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: ServiceVoiceDictation.toggle()
+                        onClicked: VoiceDictationService.toggle()
                     }
                 }
             }

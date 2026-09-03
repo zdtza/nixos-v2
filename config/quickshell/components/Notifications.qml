@@ -41,7 +41,7 @@ Scope {
     }
 
     Component.onCompleted: {
-        if (ServiceDoNotDisturb.enabled)
+        if (DoNotDisturbService.enabled)
             Qt.callLater(root.clearNotifications);
     }
 
@@ -67,7 +67,7 @@ Scope {
         inlineReplySupported: false
 
         onNotification: notification => {
-            if (ServiceDoNotDisturb.enabled) {
+            if (DoNotDisturbService.enabled) {
                 notification.dismiss();
                 return;
             }
@@ -77,9 +77,9 @@ Scope {
     }
 
     Connections {
-        target: ServiceDoNotDisturb
+        target: DoNotDisturbService
         function onEnabledChanged(): void {
-            if (ServiceDoNotDisturb.enabled)
+            if (DoNotDisturbService.enabled)
                 root.clearNotifications();
         }
     }
@@ -88,7 +88,7 @@ Scope {
         id: window
 
         screen: root.screenForMonitor(root.targetScreenName)
-        visible: !ServiceDoNotDisturb.enabled
+        visible: !DoNotDisturbService.enabled
             && server.trackedNotifications.values.length > 0
         color: "transparent"
         implicitWidth: 450
@@ -108,8 +108,8 @@ Scope {
         }
 
         margins {
-            top: (ServicePanel.barVisible ? ServicePanel.barHeight : 0) + 8
-            right: ServicePanel.barGap + ServicePanel.gapRightOffset
+            top: (PanelService.barVisible ? PanelService.barHeight : 0) + 8
+            right: PanelService.barGap + PanelService.gapRightOffset
         }
 
         Column {
@@ -147,9 +147,9 @@ Scope {
 
         function urgencyColor(): color {
             if (notification.urgency === NotificationUrgency.Critical)
-                return Theme.urgent;
+                return Theme.base08;
             else
-                return Utils.alpha(Theme.accent, 0.9);
+                return Utils.alpha(Theme.base0D, 0.9);
         }
 
         function normalizedIdentity(value: string): string {
@@ -226,7 +226,7 @@ Scope {
         Rectangle {
             id: accentBase
             anchors.fill: parent
-            radius: ServicePanel.rounding
+            radius: PanelService.rounding
             color: card.urgencyColor()
             layer.enabled: true
             layer.effect: ShellShadow {}
@@ -236,8 +236,8 @@ Scope {
                     fill: parent
                     leftMargin: 4
                 }
-                radius: ServicePanel.rounding
-                color: notificationMouse.containsMouse ? Theme.background : Theme.dark_background
+                radius: PanelService.rounding
+                color: notificationMouse.containsMouse ? Theme.base00 : Theme.base01
                 // Two coincident-radius rects both antialiasing their corner curve
                 // leave a 1px seam where the accent bar bleeds through on the sides
                 // meant to fully cover it. This one's AA only matters on the
@@ -264,11 +264,11 @@ Scope {
                 width: parent.width
                 text: card.notification.summary
                 visible: text !== ""
-                color: Theme.foreground
+                color: Theme.base05
                 wrapMode: Text.Wrap
                 elide: Text.ElideRight
                 maximumLineCount: 2
-                font.family: Theme.fontFamily
+                font.family: Theme.sansSerif
                 font.pixelSize: 14
                 font.weight: Font.Bold
             }
@@ -277,12 +277,12 @@ Scope {
                 width: parent.width
                 text: card.notification.body
                 visible: text !== ""
-                color: Theme.foreground
+                color: Theme.base05
                 textFormat: Text.StyledText
                 wrapMode: Text.Wrap
                 elide: Text.ElideRight
                 maximumLineCount: 4
-                font.family: Theme.fontFamily
+                font.family: Theme.sansSerif
                 font.pixelSize: 12
                 lineHeight: 1.2
             }

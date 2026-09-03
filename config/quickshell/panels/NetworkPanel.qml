@@ -14,7 +14,7 @@ import ".."
 Item {
     id: root
 
-    readonly property bool opened: ServicePanel.activePanel === root
+    readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
 
     property string passwordSsid: ""
@@ -23,9 +23,9 @@ Item {
     property int phraseIndex: 0
     property string selectedSsid: ""
 
-    readonly property bool available: ServiceNetwork.backendAvailable
-    readonly property var connectedNetworks: ServiceNetwork.wifiNetworks.filter(network => network.connected)
-    readonly property var availableNetworks: ServiceNetwork.wifiNetworks.filter(network => !network.connected)
+    readonly property bool available: NetworkService.backendAvailable
+    readonly property var connectedNetworks: NetworkService.wifiNetworks.filter(network => network.connected)
+    readonly property var availableNetworks: NetworkService.wifiNetworks.filter(network => !network.connected)
     readonly property var networks: connectedNetworks.concat(availableNetworks)
     readonly property int networkRowHeight: 48
     readonly property int passwordRowHeight: 96
@@ -38,7 +38,7 @@ Item {
         "Wiring bits", "Handling packets", "Sorting frames", "Hauling bytes",
         "Routing crumbs", "Counting collisions", "Bending light"
     ]
-    readonly property string statusText: ServiceNetwork.kind === "disconnected"
+    readonly property string statusText: NetworkService.kind === "disconnected"
         ? "NOT CONNECTED" : phrases[phraseIndex % phrases.length].toUpperCase()
 
     signal restorePasswordFocus
@@ -65,11 +65,11 @@ Item {
     }
 
     function formatPing(): string {
-        if (ServiceNetwork.pingSamples.length === 0)
+        if (NetworkService.pingSamples.length === 0)
             return "--";
-        if (ServiceNetwork.pingLatency < 0)
+        if (NetworkService.pingLatency < 0)
             return "Timeout";
-        return ServiceNetwork.pingLatency.toFixed(ServiceNetwork.pingLatency < 10 ? 1 : 0) + " ms";
+        return NetworkService.pingLatency.toFixed(NetworkService.pingLatency < 10 ? 1 : 0) + " ms";
     }
 
     function copyValue(value: string): void {
@@ -78,7 +78,7 @@ Item {
     }
 
     function close(): void {
-        ServicePanel.close(root);
+        PanelService.close(root);
         passwordSsid = "";
         passwordText = "";
         failureText = "";
@@ -92,7 +92,7 @@ Item {
     }
 
     function toggle(): void {
-        ServicePanel.toggle(root);
+        PanelService.toggle(root);
     }
 
     function activateNetwork(network: var): void {
@@ -100,12 +100,12 @@ Item {
         failureText = "";
         if (network.connected)
             return;
-        if (ServiceNetwork.securityRequiresPassword(network.security) && !network.known) {
+        if (NetworkService.securityRequiresPassword(network.security) && !network.known) {
             passwordSsid = network.ssid;
             passwordText = "";
             return;
         }
-        ServiceNetwork.connect(network.ssid, "");
+        NetworkService.connect(network.ssid, "");
     }
 
     function selectNetwork(delta: int): void {
@@ -141,7 +141,7 @@ Item {
         if (!network)
             return;
         if (network.connected)
-            ServiceNetwork.disconnect(String(network.ssid));
+            NetworkService.disconnect(String(network.ssid));
         else
             activateNetwork(network);
     }
@@ -149,7 +149,7 @@ Item {
     function forgetSelectedNetwork(): void {
         const network = networks.find(candidate => candidate.ssid === selectedSsid);
         if (network && (network.known || network.connected))
-            ServiceNetwork.forget(String(network.ssid));
+            NetworkService.forget(String(network.ssid));
     }
 
     function restoreNetworkListFocus(): void {
@@ -160,7 +160,7 @@ Item {
     function submitPassword(): void {
         if (passwordSsid === "" || passwordText === "")
             return;
-        if (ServiceNetwork.connect(passwordSsid, passwordText)) {
+        if (NetworkService.connect(passwordSsid, passwordText)) {
             passwordSsid = "";
             passwordText = "";
             restoreNetworkListFocus();
@@ -172,14 +172,14 @@ Item {
     onOpenedChanged: {
         if (opened) {
             phraseIndex = 0;
-            ServiceNetwork.acquireScanner();
-            ServiceNetwork.acquireDetails();
+            NetworkService.acquireScanner();
+            NetworkService.acquireDetails();
             if (networks.length > 0)
                 selectedSsid = networks[0].ssid;
             Qt.callLater(() => networkList.forceActiveFocus());
         } else {
-            ServiceNetwork.releaseScanner();
-            ServiceNetwork.releaseDetails();
+            NetworkService.releaseScanner();
+            NetworkService.releaseDetails();
         }
     }
 
@@ -204,8 +204,8 @@ Item {
     }
 
     Component.onDestruction: if (opened) {
-        ServiceNetwork.releaseScanner();
-        ServiceNetwork.releaseDetails();
+        NetworkService.releaseScanner();
+        NetworkService.releaseDetails();
     }
 
     Timer {
@@ -215,9 +215,9 @@ Item {
         onTriggered: root.restorePasswordFocus()
     }
 
-    PanelStatusRotator {
+    StatusRotator {
         target: networkHero.statusLabel
-        running: root.opened && ServiceNetwork.kind !== "disconnected"
+        running: root.opened && NetworkService.kind !== "disconnected"
         onAdvance: root.phraseIndex = (root.phraseIndex + 1) % root.phrases.length
     }
 
@@ -255,14 +255,14 @@ Item {
         enabled: root.opened && root.passwordSsid === ""
         sequence: "Space"
         context: Qt.ApplicationShortcut
-        onActivated: ServiceNetwork.toggleWifi()
+        onActivated: NetworkService.toggleWifi()
     }
 
-    BarButton {
+    Button {
         id: label
         anchors.centerIn: parent
         panel: root
-        text: ServiceNetwork.icon
+        text: NetworkService.icon
         onClicked: root.toggle()
     }
 
@@ -272,7 +272,7 @@ Item {
         onCleared: root.close()
     }
 
-    PanelDrawer {
+    Drawer {
         id: panel
         anchorItem: root
         anchorWindow: root.QsWindow.window
@@ -304,22 +304,22 @@ Item {
         readonly property real networkViewportHeight: Math.min(420,
             Math.max(80, maximumHeight - panelChromeHeight), availableSectionHeight + root.networkEdgeInset)
 
-        implicitWidth: 460 + ServicePanel.shellRounding
+        implicitWidth: 460 + PanelService.shellRounding
         implicitHeight: Math.min(maximumHeight, panelChromeHeight + networkViewportHeight)
 
-        PanelHero {
+        Hero {
             id: networkHero
             width: parent.width
-            icon: ServiceNetwork.icon
-            title: ServiceNetwork.connectionName
+            icon: NetworkService.icon
+            title: NetworkService.connectionName
             status: root.statusText
             trailingWidth: 44
             trailingHeight: 24
 
-            PanelToggleSwitch {
+            ToggleSwitch {
                 anchors.fill: parent
-                checked: ServiceNetwork.wifiEnabled
-                onToggled: ServiceNetwork.toggleWifi()
+                checked: NetworkService.wifiEnabled
+                onToggled: NetworkService.toggleWifi()
             }
         }
 
@@ -337,59 +337,59 @@ Item {
             }
             DetailValue {
                 text: root.formatPing()
-                valueColor: ServiceNetwork.packetLoss > 0 ? Theme.urgent : Theme.foreground
+                valueColor: NetworkService.packetLoss > 0 ? Theme.base08 : Theme.base05
             }
             InfoLabel {
                 text: "Packet Loss"
             }
             DetailValue {
-                text: ServiceNetwork.pingSamples.length > 0 ? ServiceNetwork.packetLoss + "%" : "--"
-                valueColor: ServiceNetwork.packetLoss > 0 ? Theme.urgent : Theme.foreground
+                text: NetworkService.pingSamples.length > 0 ? NetworkService.packetLoss + "%" : "--"
+                valueColor: NetworkService.packetLoss > 0 ? Theme.base08 : Theme.base05
             }
 
             InfoLabel {
                 text: "Receiving"
             }
             DetailValue {
-                text: ServiceNetwork.info.rx_bytes !== undefined ? root.formatRate(ServiceNetwork.downloadRate) : "--"
+                text: NetworkService.info.rx_bytes !== undefined ? root.formatRate(NetworkService.downloadRate) : "--"
             }
             InfoLabel {
                 text: "Sending"
             }
             DetailValue {
-                text: ServiceNetwork.info.tx_bytes !== undefined ? root.formatRate(ServiceNetwork.uploadRate) : "--"
+                text: NetworkService.info.tx_bytes !== undefined ? root.formatRate(NetworkService.uploadRate) : "--"
             }
 
             InfoLabel {
                 text: "Downloaded"
             }
             DetailValue {
-                text: ServiceNetwork.info.rx_bytes !== undefined ? root.formatBytes(Number(ServiceNetwork.info.rx_bytes)) : "--"
+                text: NetworkService.info.rx_bytes !== undefined ? root.formatBytes(Number(NetworkService.info.rx_bytes)) : "--"
             }
             InfoLabel {
                 text: "Uploaded"
             }
             DetailValue {
-                text: ServiceNetwork.info.tx_bytes !== undefined ? root.formatBytes(Number(ServiceNetwork.info.tx_bytes)) : "--"
+                text: NetworkService.info.tx_bytes !== undefined ? root.formatBytes(Number(NetworkService.info.tx_bytes)) : "--"
             }
 
             InfoLabel {
                 text: "IP Address"
             }
             DetailValue {
-                text: ServiceNetwork.info.ip || "--"
-                copyable: !!ServiceNetwork.info.ip
+                text: NetworkService.info.ip || "--"
+                copyable: !!NetworkService.info.ip
             }
             InfoLabel {
                 text: "Gateway"
             }
             DetailValue {
-                text: ServiceNetwork.info.gateway || "--"
-                copyable: !!ServiceNetwork.info.gateway
+                text: NetworkService.info.gateway || "--"
+                copyable: !!NetworkService.info.gateway
             }
         }
 
-        PanelSeparator { id: networkSeparator }
+        Separator { id: networkSeparator }
 
         Component {
             id: networkRowComponent
@@ -412,13 +412,13 @@ Item {
                             width: parent.width
                             height: passwordOpen ? root.passwordRowHeight : root.networkRowHeight
                             color: rowMouse.pressed && !passwordOpen
-                                ? Utils.alpha(Theme.foreground, 0.22)
+                                ? Utils.alpha(Theme.base05, 0.22)
                                 : networkRow.keyboardSelected && !passwordOpen
-                                    ? Utils.alpha(Theme.foreground, 0.08)
+                                    ? Utils.alpha(Theme.base05, 0.08)
                                     : "transparent"
                             border.width: networkRow.keyboardSelected && !passwordOpen ? 1 : 0
-                            border.color: Utils.alpha(Theme.foreground, 0.25)
-                            radius: ServicePanel.rounding
+                            border.color: Utils.alpha(Theme.base05, 0.25)
+                            radius: PanelService.rounding
 
                             HoverHandler {
                                 id: networkHover
@@ -427,9 +427,9 @@ Item {
                             }
 
                             Connections {
-                                target: ServiceNetwork.networkForSsid(String(networkRow.modelData.ssid))
+                                target: NetworkService.networkForSsid(String(networkRow.modelData.ssid))
                                 function onConnectionFailed(reason): void {
-                                    if (!ServiceNetwork.securityRequiresPassword(networkRow.modelData.security))
+                                    if (!NetworkService.securityRequiresPassword(networkRow.modelData.security))
                                         return;
                                     root.passwordSsid = String(networkRow.modelData.ssid);
                                     root.passwordText = "";
@@ -458,9 +458,9 @@ Item {
                                     anchors.left: parent.left
                                     anchors.leftMargin: 10
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: ServiceNetwork.wifiIcon(networkRow.modelData.signal)
-                                    color: Theme.foreground
-                                    font.family: Theme.fontFamily
+                                    text: NetworkService.wifiIcon(networkRow.modelData.signal)
+                                    color: Theme.base05
+                                    font.family: Theme.monospace
                                     font.pixelSize: Utils.scaledFont(16)
                                 }
                                 Column {
@@ -474,8 +474,8 @@ Item {
                                     Text {
                                         width: parent.width
                                         text: networkRow.modelData.ssid
-                                        color: Theme.foreground
-                                        font.family: Theme.fontFamily
+                                        color: Theme.base05
+                                        font.family: Theme.monospace
                                         font.pixelSize: Utils.scaledFont(12)
                                         elide: Text.ElideRight
                                     }
@@ -484,9 +484,9 @@ Item {
                                         text: networkRow.modelData.stateChanging ? "Connecting…"
                                             : networkRow.modelData.connected ? "Connected"
                                             : networkRow.modelData.known ? "Known network"
-                                            : ServiceNetwork.securityLabel(networkRow.modelData.security)
-                                        color: Theme.muted
-                                        font.family: Theme.fontFamily
+                                            : NetworkService.securityLabel(networkRow.modelData.security)
+                                        color: Theme.base04
+                                        font.family: Theme.monospace
                                         font.pixelSize: Utils.scaledFont(11)
                                         elide: Text.ElideRight
                                     }
@@ -502,16 +502,16 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: 8
 
-                                    PanelRowActionButton {
+                                    RowActionButton {
                                         visible: networkRow.modelData.connected
                                         icon: "󰅖"
-                                        onClicked: ServiceNetwork.disconnect(String(networkRow.modelData.ssid))
+                                        onClicked: NetworkService.disconnect(String(networkRow.modelData.ssid))
                                     }
 
-                                    PanelRowActionButton {
+                                    RowActionButton {
                                         visible: networkRow.modelData.known || networkRow.modelData.connected
                                         icon: "󰆴"
-                                        onClicked: ServiceNetwork.forget(String(networkRow.modelData.ssid))
+                                        onClicked: NetworkService.forget(String(networkRow.modelData.ssid))
                                     }
                                 }
 
@@ -520,9 +520,9 @@ Item {
                                     anchors.right: parent.right
                                     anchors.rightMargin: 10
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: ServiceNetwork.securityRequiresPassword(networkRow.modelData.security) ? "󰌾" : ""
-                                    color: Theme.muted
-                                    font.family: Theme.fontFamily
+                                    text: NetworkService.securityRequiresPassword(networkRow.modelData.security) ? "󰌾" : ""
+                                    color: Theme.base04
+                                    font.family: Theme.monospace
                                     font.pixelSize: Utils.scaledFont(12)
                                 }
 
@@ -558,10 +558,10 @@ Item {
                                 Rectangle {
                                     width: parent.width - connectButton.width - cancelButton.width - parent.spacing * 2
                                     height: 32
-                                    radius: ServicePanel.rounding
-                                    color: Utils.alpha(Theme.foreground, 0.04)
+                                    radius: PanelService.rounding
+                                    color: Utils.alpha(Theme.base05, 0.04)
                                     border.width: 1
-                                    border.color: passwordInput.activeFocus ? Theme.muted : Utils.alpha(Theme.foreground, 0.4)
+                                    border.color: passwordInput.activeFocus ? Theme.base04 : Utils.alpha(Theme.base05, 0.4)
 
 
                                     Text {
@@ -572,8 +572,8 @@ Item {
                                         }
                                         visible: passwordInput.text === ""
                                         text: root.failureText !== "" ? root.failureText : "Password"
-                                        color: root.failureText !== "" ? Theme.urgent : Theme.muted
-                                        font.family: Theme.fontFamily
+                                        color: root.failureText !== "" ? Theme.base08 : Theme.base04
+                                        font.family: Theme.monospace
                                         font.pixelSize: Utils.scaledFont(12)
                                     }
 
@@ -586,10 +586,10 @@ Item {
                                         text: root.passwordText
                                         onTextChanged: root.passwordText = text
                                         echoMode: TextInput.Password
-                                        color: Theme.foreground
-                                        selectionColor: Theme.muted
-                                        selectedTextColor: Theme.background
-                                        font.family: Theme.fontFamily
+                                        color: Theme.base05
+                                        selectionColor: Theme.base04
+                                        selectedTextColor: Theme.base00
+                                        font.family: Theme.monospace
                                         font.pixelSize: Utils.scaledFont(12)
                                         font.letterSpacing: 2
                                         clip: true
@@ -606,16 +606,16 @@ Item {
                                     id: connectButton
                                     width: 72
                                     height: 32
-                                    radius: ServicePanel.rounding
-                                    color: connectMouse.containsMouse ? Utils.alpha(Theme.foreground, 0.18) : Utils.alpha(Theme.foreground, 0.08)
+                                    radius: PanelService.rounding
+                                    color: connectMouse.containsMouse ? Utils.alpha(Theme.base05, 0.18) : Utils.alpha(Theme.base05, 0.08)
 
                                     border.width: 1
-                                    border.color: Utils.alpha(Theme.foreground, 0.4)
+                                    border.color: Utils.alpha(Theme.base05, 0.4)
                                     Text {
                                         anchors.centerIn: parent
                                         text: "Connect"
-                                        color: Theme.foreground
-                                        font.family: Theme.fontFamily
+                                        color: Theme.base05
+                                        font.family: Theme.monospace
                                         font.pixelSize: Utils.scaledFont(11)
                                         font.bold: true
                                     }
@@ -632,16 +632,16 @@ Item {
                                     id: cancelButton
                                     width: 32
                                     height: 32
-                                    radius: ServicePanel.rounding
-                                    color: cancelMouse.containsMouse ? Utils.alpha(Theme.foreground, 0.12) : "transparent"
+                                    radius: PanelService.rounding
+                                    color: cancelMouse.containsMouse ? Utils.alpha(Theme.base05, 0.12) : "transparent"
 
                                     border.width: 1
-                                    border.color: Utils.alpha(Theme.foreground, 0.3)
+                                    border.color: Utils.alpha(Theme.base05, 0.3)
                                     Text {
                                         anchors.centerIn: parent
                                         text: "󰅖"
-                                        color: Theme.foreground
-                                        font.family: Theme.fontFamily
+                                        color: Theme.base05
+                                        font.family: Theme.monospace
                                         font.pixelSize: Utils.scaledFont(12)
                                     }
                                     MouseArea {
@@ -662,7 +662,7 @@ Item {
             spacing: root.networkRowSpacing
             visible: root.connectedNetworks.length > 0
 
-            PanelSectionHeader {
+            SectionHeader {
                 id: connectedHeader
                 width: parent.width
                 title: "CONNECTED"
@@ -676,11 +676,11 @@ Item {
             }
         }
 
-        PanelSectionHeader {
+        SectionHeader {
             id: availableHeader
             width: parent.width
             title: "AVAILABLE"
-            detail: ServiceNetwork.wifiEnabled ? "SCANNING" : "WI-FI OFF"
+            detail: NetworkService.wifiEnabled ? "SCANNING" : "WI-FI OFF"
         }
 
         Item {
@@ -712,12 +712,12 @@ Item {
                         width: parent.width
                         height: root.emptyStateHeight
                         visible: root.availableNetworks.length === 0
-                        text: ServiceNetwork.wifiEnabled
+                        text: NetworkService.wifiEnabled
                             ? "No available networks" : "Wi-Fi is turned off"
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-                        color: Theme.muted
-                        font.family: Theme.fontFamily
+                        color: Theme.base04
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(12)
                     }
 
@@ -731,20 +731,20 @@ Item {
     }
 
     component InfoLabel: Text {
-        color: Theme.foreground
+        color: Theme.base05
         opacity: 0.6
-        font.family: Theme.fontFamily
+        font.family: Theme.monospace
         font.pixelSize: Utils.scaledFont(12)
     }
 
     component DetailValue: Text {
         property bool copyable: false
-        property color valueColor: Theme.foreground
+        property color valueColor: Theme.base05
 
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignRight
         color: valueColor
-        font.family: Theme.fontFamily
+        font.family: Theme.monospace
         font.pixelSize: Utils.scaledFont(12)
         elide: Text.ElideRight
 

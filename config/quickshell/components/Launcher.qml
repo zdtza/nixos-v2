@@ -57,7 +57,7 @@ Scope {
     function show(): void {
         const monitorName = String(Hyprland.focusedMonitor?.name ?? "");
         root.openedMonitorName = monitorName;
-        ServicePanel.closeActive();
+        PanelService.closeActive();
         root.open = true;
     }
 
@@ -323,7 +323,7 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
-            color: Theme.overlay
+            color: Utils.alpha(Theme.base00, 0.7)
             opacity: root.open ? 1 : 0
         }
 
@@ -359,8 +359,8 @@ Scope {
             height: Math.min(522, parent.height - 64)
             enabled: root.open
             clip: true
-            radius: ServicePanel.rounding
-            color: Theme.dark_background
+            radius: PanelService.rounding
+            color: Theme.base01
             opacity: root.open ? 1 : 0
             layer.enabled: true
             layer.effect: ShellShadow {}
@@ -384,8 +384,8 @@ Scope {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 48
-                    radius: ServicePanel.rounding
-                    color: Theme.surface
+                    radius: PanelService.rounding
+                    color: Theme.base02
 
                     Text {
                         anchors {
@@ -394,8 +394,8 @@ Scope {
                             verticalCenter: parent.verticalCenter
                         }
                         text: "󰍉"
-                        color: Theme.muted
-                        font.family: Theme.fontFamily
+                        color: Theme.base04
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(14)
                     }
 
@@ -414,15 +414,15 @@ Scope {
                         focus: true
                         selectByMouse: true
                         clip: true
-                        color: Theme.foreground
-                        selectionColor: Theme.surface
-                        selectedTextColor: Theme.foreground
-                        font.family: Theme.fontFamily
+                        color: Theme.base05
+                        selectionColor: Theme.base02
+                        selectedTextColor: Theme.base05
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(14)
 
                         cursorDelegate: Rectangle {
                             width: 1
-                            color: Theme.foreground
+                            color: Theme.base05
                         }
 
                         onTextChanged: appList.currentIndex = 0
@@ -432,8 +432,8 @@ Scope {
                             verticalAlignment: Text.AlignVCenter
                             visible: search.text === ""
                             text: "Search apps…"
-                            color: Theme.muted
-                            font.family: Theme.fontFamily
+                            color: Theme.base04
+                            font.family: Theme.monospace
                             font.pixelSize: Utils.scaledFont(14)
                         }
 
@@ -504,8 +504,8 @@ Scope {
 
                         width: appList.width
                         height: 58
-                        radius: ServicePanel.rounding
-                        color: selected ? Theme.surface : "transparent"
+                        radius: PanelService.rounding
+                        color: selected ? Theme.base02 : "transparent"
 
                         Rectangle {
                             anchors {
@@ -515,7 +515,7 @@ Scope {
                             width: 3
                             height: 30
                             radius: width / 2
-                            color: Theme.accent
+                            color: Theme.base0D
                             visible: appRow.selected
                         }
 
@@ -533,8 +533,8 @@ Scope {
                                 anchors.centerIn: parent
                                 visible: applicationIcon.status === Image.Loading
                                 text: "…"
-                                color: Theme.muted
-                                font.family: Theme.fontFamily
+                                color: Theme.base04
+                                font.family: Theme.monospace
                                 font.pixelSize: Utils.scaledFont(16)
                             }
 
@@ -552,7 +552,7 @@ Scope {
                                 layer.effect: MultiEffect {
                                     brightness: 1
                                     colorization: 1
-                                    colorizationColor: Theme.muted
+                                    colorizationColor: Theme.base04
                                 }
                             }
 
@@ -583,9 +583,9 @@ Scope {
                             Text {
                                 width: parent.width
                                 text: appRow.entry.name
-                                color: Theme.foreground
+                                color: Theme.base05
                                 elide: Text.ElideRight
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monospace
                                 font.pixelSize: Utils.scaledFont(14)
                                 font.bold: appRow.selected
                             }
@@ -593,9 +593,9 @@ Scope {
                             Text {
                                 width: parent.width
                                 text: appRow.entry.comment || appRow.entry.genericName || "Application"
-                                color: Theme.muted
+                                color: Theme.base04
                                 elide: Text.ElideRight
-                                font.family: Theme.fontFamily
+                                font.family: Theme.monospace
                                 font.pixelSize: Utils.scaledFont(11)
                             }
                         }
@@ -628,16 +628,16 @@ Scope {
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: "…"
-                            color: Theme.muted
-                            font.family: Theme.fontFamily
+                            color: Theme.base04
+                            font.family: Theme.monospace
                             font.pixelSize: Utils.scaledFont(28)
                         }
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: "LOADING APPLICATIONS"
-                            color: Theme.muted
-                            font.family: Theme.fontFamily
+                            color: Theme.base04
+                            font.family: Theme.monospace
                             font.pixelSize: Utils.scaledFont(11)
                             font.bold: true
                             font.letterSpacing: 1
@@ -652,16 +652,16 @@ Scope {
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: "󰈉"
-                            color: Theme.muted
-                            font.family: Theme.fontFamily
+                            color: Theme.base04
+                            font.family: Theme.monospace
                             font.pixelSize: Utils.scaledFont(28)
                         }
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: "NO MATCHING APPLICATIONS"
-                            color: Theme.muted
-                            font.family: Theme.fontFamily
+                            color: Theme.base04
+                            font.family: Theme.monospace
                             font.pixelSize: Utils.scaledFont(11)
                             font.bold: true
                             font.letterSpacing: 1
@@ -692,12 +692,12 @@ Scope {
             z: 11
             width: 250
             height: contextColumn.implicitHeight + 24
-            radius: ServicePanel.rounding
+            radius: PanelService.rounding
             x: Math.max(8, Math.min(window.menuX, window.width - width - 8))
             y: Math.max(8, Math.min(window.menuY, window.height - height - 8))
-            color: Theme.background
+            color: Theme.base00
             border.width: 1
-            border.color: Theme.border
+            border.color: Theme.base03
             layer.enabled: true
             layer.effect: ShellShadow {}
 
@@ -717,7 +717,7 @@ Scope {
                 }
                 spacing: 2
 
-                PanelSectionHeader {
+                SectionHeader {
                     width: contextColumn.width
                     title: "APPLICATION ACTIONS"
                 }
@@ -727,8 +727,8 @@ Scope {
                 Rectangle {
                     width: contextColumn.width
                     height: 34
-                    radius: ServicePanel.rounding
-                    color: window.menuActionIndex === 0 ? Theme.surface : "transparent"
+                    radius: PanelService.rounding
+                    color: window.menuActionIndex === 0 ? Theme.base02 : "transparent"
 
                     Text {
                         anchors {
@@ -737,8 +737,8 @@ Scope {
                             verticalCenter: parent.verticalCenter
                         }
                         text: "Launch"
-                        color: Theme.foreground
-                        font.family: Theme.fontFamily
+                        color: Theme.base05
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(13)
                         font.bold: true
                     }
@@ -750,8 +750,8 @@ Scope {
                             verticalCenter: parent.verticalCenter
                         }
                         text: "↵"
-                        color: Theme.muted
-                        font.family: Theme.fontFamily
+                        color: Theme.base04
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(12)
                     }
 
@@ -779,9 +779,9 @@ Scope {
                         required property int index
                         width: contextColumn.width
                         height: 34
-                        radius: ServicePanel.rounding
+                        radius: PanelService.rounding
                         color: window.menuActionIndex === actionRow.index + 1
-                            ? Theme.surface : "transparent"
+                            ? Theme.base02 : "transparent"
 
                         Text {
                             anchors {
@@ -792,9 +792,9 @@ Scope {
                                 verticalCenter: parent.verticalCenter
                             }
                             text: actionRow.modelData.name
-                            color: Theme.muted
+                            color: Theme.base04
                             elide: Text.ElideRight
-                            font.family: Theme.fontFamily
+                            font.family: Theme.monospace
                             font.pixelSize: Utils.scaledFont(13)
                         }
 

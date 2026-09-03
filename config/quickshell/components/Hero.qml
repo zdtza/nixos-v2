@@ -22,8 +22,8 @@ Item {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         text: root.icon
-        color: Theme.foreground
-        font.family: Theme.fontFamily
+        color: Theme.base05
+        font.family: Theme.monospace
         font.pixelSize: Utils.scaledFont(26)
     }
 
@@ -39,8 +39,8 @@ Item {
         Text {
             width: parent.width
             text: root.title
-            color: Theme.foreground
-            font.family: Theme.fontFamily
+            color: Theme.base05
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(15)
             font.bold: true
             elide: Text.ElideRight
@@ -50,8 +50,8 @@ Item {
             id: statusText
             width: parent.width
             text: root.status
-            color: Qt.darker(Theme.foreground, 1.4)
-            font.family: Theme.fontFamily
+            color: Qt.darker(Theme.base05, 1.4)
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(11)
             font.bold: true
             font.letterSpacing: 1.2

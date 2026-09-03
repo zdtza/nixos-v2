@@ -14,7 +14,7 @@ QtObject {
     }
 
     // Theme color with an overridden alpha, e.g. a faint hover fill derived
-    // from Theme.foreground.
+    // from Theme.base05.
     function alpha(base: color, a: real): color {
         return Qt.rgba(base.r, base.g, base.b, a);
     }

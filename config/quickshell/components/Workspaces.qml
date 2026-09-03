@@ -66,15 +66,15 @@ Item {
                 radius: 4
 
                 border.width: workspaceItem.isActive ? 1 : 0
-                border.color: Theme.foreground
+                border.color: Theme.base05
 
                 Text {
                     id: workspaceNumber
 
                     anchors.centerIn: parent
                     text: workspaceItem.workspaceId
-                    color: workspaceItem.isActive || workspaceItem.isOccupied ? Theme.foreground : Theme.muted
-                    font.family: Theme.fontFamily
+                    color: workspaceItem.isActive || workspaceItem.isOccupied ? Theme.base05 : Theme.base04
+                    font.family: Theme.monospace
                     font.pixelSize: Utils.scaledFont(Theme.fontSize)
                 }
 
@@ -88,7 +88,7 @@ Item {
                     // The lua config backend takes lua expressions, not the
                     // classic `workspace N` dispatcher string.
                     onClicked: {
-                        ServicePanel.closeActive();
+                        PanelService.closeActive();
                         Hyprland.dispatch(Hyprland.usingLua ? `hl.dsp.focus({ workspace = ${workspaceItem.workspaceId} })` : `workspace ${workspaceItem.workspaceId}`);
                     }
                 }

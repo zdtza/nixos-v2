@@ -4,6 +4,7 @@ let
   colors = config.lib.stylix.colors.withHashtag;
 in
 {
+  # disabling stylix in favour of custom styling
   stylix.targets.fzf.enable = false;
 
   programs.fzf = {
@@ -14,18 +15,17 @@ in
       "bg+" = colors.base01;
       "fg" = colors.base05;
       "fg+" = colors.base07;
-      "header" = colors.base0D;
-      "hl" = colors.base0D;
-      "hl+" = colors.base0D;
-      "info" = colors.base0D;
-      "marker" = colors.base0D;
-      "pointer" = colors.base0D;
-      "prompt" = colors.base0D;
-      "spinner" = colors.base0D;
+      "header" = colors.base0E;
+      "hl" = colors.base0E;
+      "hl+" = colors.base0E;
+      "info" = colors.base0E;
+      "marker" = colors.base0E;
+      "pointer" = colors.base0E;
+      "prompt" = colors.base0E;
+      "spinner" = colors.base0E;
     };
   };
 
-  # session variables inherited by UWSM don't change during activation;
-  # re-export so a rebuild's new FZF_DEFAULT_OPTS reaches the running session
+  # re-exporting so a rebuild's fzf options reach the running uwsm session
   systemd.user.sessionVariables.FZF_DEFAULT_OPTS = config.home.sessionVariables.FZF_DEFAULT_OPTS;
 }

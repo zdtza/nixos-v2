@@ -1,8 +1,6 @@
 { pkgs, ... }:
 
 let
-  package = pkgs.hypridle;
-
   configFile = pkgs.writeText "hypridle.conf" ''
     general {
         ignore_dbus_inhibit = false
@@ -24,9 +22,10 @@ let
 in
 {
   home.packages = [
-    package
+    pkgs.hypridle
   ];
 
+  # starting the hypridle service on boot with systemd
   systemd.user.services.hypridle = {
     Unit = {
       Description = "Hyprland idle manager";
@@ -35,7 +34,7 @@ in
     };
 
     Service = {
-      ExecStart = "${package}/bin/hypridle --config ${configFile}";
+      ExecStart = "${pkgs.hypridle}/bin/hypridle --config ${configFile}";
       Restart = "on-failure";
       RestartSec = 2;
     };

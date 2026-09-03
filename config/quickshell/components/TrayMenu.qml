@@ -33,8 +33,8 @@ PopupWindow {
     property string menuStatus: ""
 
     readonly property bool staticEntries: !handle
-    readonly property real cornerSize: !submenu && ServicePanel.barVisible
-        ? ServicePanel.shellRounding : 0
+    readonly property real cornerSize: !submenu && PanelService.barVisible
+        ? PanelService.shellRounding : 0
     property bool contentReady: staticEntries
     property var selectedEntry: null
     property int selectedEntryIndex: -1
@@ -53,7 +53,7 @@ PopupWindow {
     // Currently open child menu, if any.
     property var activeSubmenu: null
 
-    // This window plus every open descendant, for the focus grab in PanelTray.qml:
+    // This window plus every open descendant, for the focus grab in Tray.qml:
     // clicking inside any of them must not dismiss the menu.
     readonly property var openWindows: [menu].concat(activeSubmenu ? activeSubmenu.openWindows : [])
 
@@ -189,7 +189,7 @@ PopupWindow {
         gravity: Edges.Bottom | Edges.Right
         // Vertical sliding honors compositor outer gaps. Disable it at bare
         // screen edge or menu gets pushed down despite its zero-y anchor.
-        adjustment: !menu.submenu && !ServicePanel.barVisible
+        adjustment: !menu.submenu && !PanelService.barVisible
             ? PopupAdjustment.SlideX : PopupAdjustment.Slide
         // Anchor rect is a 1x1 point in the anchor item's local coordinates,
         // used only as the pivot the popup grows from (the popup's actual
@@ -204,13 +204,13 @@ PopupWindow {
         // below to keep that overlap looking flush.
         rect.x: menu.submenu ? -2 : 0
         rect.y: menu.submenu ? 0
-            : (ServicePanel.barVisible ? ServicePanel.barHeight : 0)
+            : (PanelService.barVisible ? PanelService.barHeight : 0)
         rect.width: 1
         // Top-level menu starts at anchor y; one-pixel height would place it
         // one pixel below screen/bar edge with Bottom gravity.
         rect.height: menu.submenu ? 1 : 0
 
-        // Match PanelPopup positioning: center under bar item, then leave same
+        // Match Popup positioning: center under bar item, then leave same
         // compositor-gap-sized offset below bar.
         onAnchoring: {
             if (menu.submenu || !menu.anchorWindow)
@@ -221,9 +221,9 @@ PopupWindow {
                 menu.anchorItem.width / 2 - menu.implicitWidth / 2,
                 0
             );
-            point.x = Math.max(ServicePanel.barGap + ServicePanel.gapLeftOffset,
+            point.x = Math.max(PanelService.barGap + PanelService.gapLeftOffset,
                 Math.min(point.x, menu.anchorWindow.width - menu.implicitWidth
-                    - ServicePanel.barGap - ServicePanel.gapRightOffset));
+                    - PanelService.barGap - PanelService.gapRightOffset));
             popupAnchor.rect.x = Math.round(point.x);
         }
     }
@@ -288,10 +288,10 @@ PopupWindow {
 
         // Behavior (not a one-shot animation to a fixed target) so height
         // changes mid-reveal -- e.g. async DBus menu hydration -- retarget
-        // smoothly instead of snapping. Matches PanelPopup/PanelDrawer.
+        // smoothly instead of snapping. Matches Popup/Drawer.
         Behavior on height {
             enabled: menu.contentReady
-            NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
         }
 
         Canvas {
@@ -302,7 +302,7 @@ PopupWindow {
             onPaint: {
                 const context = getContext("2d");
                 context.clearRect(0, 0, width, width);
-                context.fillStyle = Theme.dark_background;
+                context.fillStyle = Theme.base01;
                 context.beginPath();
                 context.moveTo(0, 0);
                 context.lineTo(width, 0);
@@ -321,7 +321,7 @@ PopupWindow {
             onPaint: {
                 const context = getContext("2d");
                 context.clearRect(0, 0, width, width);
-                context.fillStyle = Theme.dark_background;
+                context.fillStyle = Theme.base01;
                 context.beginPath();
                 context.moveTo(0, 0);
                 context.lineTo(width, 0);
@@ -335,8 +335,8 @@ PopupWindow {
             x: menu.cornerSize
             width: parent.width - menu.cornerSize * 2
             height: revealClip.height
-            color: Theme.dark_background
-            radius: ServicePanel.shellRounding
+            color: Theme.base01
+            radius: PanelService.shellRounding
             topLeftRadius: 0
             topRightRadius: 0
 
@@ -364,9 +364,9 @@ PopupWindow {
                     anchors.top: parent.top
                     anchors.topMargin: 6
                     text: menu.menuTitle
-                    color: Theme.foreground
+                    color: Theme.base05
                     elide: Text.ElideRight
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monospace
                     font.pixelSize: Utils.scaledFont(14)
                     font.weight: Font.Medium
                     font.letterSpacing: 0.1
@@ -381,9 +381,9 @@ PopupWindow {
                     anchors.topMargin: 26
                     visible: menu.menuStatus !== ""
                     text: menu.menuStatus.toUpperCase()
-                    color: Theme.muted
+                    color: Theme.base04
                     elide: Text.ElideRight
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monospace
                     font.pixelSize: Utils.scaledFont(9)
                     font.weight: Font.Medium
                     font.letterSpacing: 1.8
@@ -394,7 +394,7 @@ PopupWindow {
                 width: column.width
                 implicitHeight: menu.menuTitle === "" ? 0 : 1
                 visible: implicitHeight > 0
-                color: Theme.border
+                color: Theme.base03
             }
 
             Item {
@@ -424,7 +424,7 @@ PopupWindow {
                         anchors.centerIn: parent
                         width: parent.width
                         height: 1
-                        color: Theme.border
+                        color: Theme.base03
                     }
 
                     // --- entry or section heading ---
@@ -435,9 +435,9 @@ PopupWindow {
                             leftMargin: 6
                             rightMargin: 6
                         }
-                        radius: ServicePanel.rounding
+                        radius: PanelService.rounding
                         color: menu.selectedEntryIndex === row.index
-                            && row.interactive ? Theme.surface : "transparent"
+                            && row.interactive ? Theme.base02 : "transparent"
 
 
                         Text {
@@ -451,8 +451,8 @@ PopupWindow {
 
                             text: row.sectionLabel ? row.entry.text.toUpperCase() : row.entry.text
                             elide: Text.ElideRight
-                            color: row.sectionLabel ? Theme.border : (row.interactive ? Theme.foreground : Theme.muted)
-                            font.family: Theme.fontFamily
+                            color: row.sectionLabel ? Theme.base03 : (row.interactive ? Theme.base05 : Theme.base04)
+                            font.family: Theme.monospace
                             font.pixelSize: Utils.scaledFont(row.sectionLabel ? 9 : 12)
                             font.weight: row.sectionLabel ? Font.Medium : Font.Normal
                             font.letterSpacing: row.sectionLabel ? 1.8 : 0.1
@@ -475,8 +475,8 @@ PopupWindow {
                                     return "󰄬";
                                 return "";
                             }
-                            color: Theme.muted
-                            font.family: Theme.fontFamily
+                            color: Theme.base04
+                            font.family: Theme.monospace
                             font.pixelSize: Utils.scaledFont(Theme.fontSize)
                         }
 
@@ -531,7 +531,7 @@ PopupWindow {
                                 return;
                             }
 
-                            setSource("PanelTrayMenu.qml", {
+                            setSource("TrayMenu.qml", {
                                 handle: row.entry,
                                 anchorItem: row,
                                 anchorWindow: menu.anchorWindow,

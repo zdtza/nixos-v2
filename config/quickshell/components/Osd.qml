@@ -17,7 +17,7 @@ Scope {
     property bool shown: false
     property string icon: ""
     property real value: 0
-    property color fillColor: Theme.foreground
+    property color fillColor: Theme.base05
 
     function screenForMonitor(name: string): var {
         for (const screen of Quickshell.screens) {
@@ -39,11 +39,11 @@ Scope {
     }
 
     function outputIcon(): string {
-        if (ServiceAudio.outputMuted)
+        if (AudioService.outputMuted)
             return "󰝟";
-        if (ServiceAudio.outputVolume >= 0.6)
+        if (AudioService.outputVolume >= 0.6)
             return "󰕾";
-        if (ServiceAudio.outputVolume >= 0.2)
+        if (AudioService.outputVolume >= 0.2)
             return "󰖀";
         return "󰕿";
     }
@@ -55,26 +55,26 @@ Scope {
     }
 
     Connections {
-        target: ServiceAudio
+        target: AudioService
 
         function onVolumeIpcInvoked(input: bool): void {
             if (input) {
-                root.show(ServiceAudio.inputMuted ? "󰍭" : "󰍬",
-                    ServiceAudio.inputVolume / ServiceAudio.maximumVolume,
-                    ServiceAudio.inputMuted ? Theme.muted : Theme.foreground);
+                root.show(AudioService.inputMuted ? "󰍭" : "󰍬",
+                    AudioService.inputVolume / AudioService.maximumVolume,
+                    AudioService.inputMuted ? Theme.base04 : Theme.base05);
             } else {
                 root.show(root.outputIcon(),
-                    ServiceAudio.outputVolume / ServiceAudio.maximumVolume,
-                    ServiceAudio.outputMuted ? Theme.muted : Theme.foreground);
+                    AudioService.outputVolume / AudioService.maximumVolume,
+                    AudioService.outputMuted ? Theme.base04 : Theme.base05);
             }
         }
     }
 
     Connections {
-        target: ServiceDisplay
+        target: DisplayService
 
         function onBrightnessIpcInvoked(): void {
-            root.show("󰍹", ServiceDisplay.brightnessPercent / 100, Theme.foreground);
+            root.show("󰍹", DisplayService.brightnessPercent / 100, Theme.base05);
         }
     }
 
@@ -92,12 +92,12 @@ Scope {
         WlrLayershell.layer: WlrLayer.Overlay
 
         anchors.bottom: true
-        margins.bottom: ServicePanel.barGap + ServicePanel.gapBottomOffset
+        margins.bottom: PanelService.barGap + PanelService.gapBottomOffset
 
         Rectangle {
             anchors.fill: parent
-            color: Theme.dark_background
-            radius: ServicePanel.rounding
+            color: Theme.base01
+            radius: PanelService.rounding
             layer.enabled: true
             layer.effect: ShellShadow {}
 
@@ -113,10 +113,10 @@ Scope {
                     width: 18
                     height: parent.height
                     text: root.icon
-                    color: Theme.foreground
+                    color: Theme.base05
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
-                    font.family: Theme.fontFamily
+                    font.family: Theme.monospace
                     font.pixelSize: Utils.scaledFont(16)
                 }
 
@@ -130,7 +130,7 @@ Scope {
                         anchors.verticalCenter: parent.verticalCenter
                         height: 5
                         radius: height / 2
-                        color: Utils.alpha(Theme.foreground, 0.12)
+                        color: Utils.alpha(Theme.base05, 0.12)
 
                         Rectangle {
                             width: parent.width * root.value

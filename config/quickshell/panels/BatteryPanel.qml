@@ -12,18 +12,18 @@ import ".."
 Item {
     id: root
 
-    readonly property bool available: ServiceBattery.available
-    readonly property real fraction: ServiceBattery.fraction
-    readonly property int percent: ServiceBattery.chargePercent
-    readonly property bool discharging: ServiceBattery.isDischarging
-    readonly property bool thresholdActive: ServiceBattery.thresholdActive
-    readonly property bool fullyCharged: ServiceBattery.fullyCharged && !thresholdActive
-    readonly property bool charging: ServiceBattery.isCharging && !thresholdActive
+    readonly property bool available: BatteryService.available
+    readonly property real fraction: BatteryService.fraction
+    readonly property int percent: BatteryService.chargePercent
+    readonly property bool discharging: BatteryService.isDischarging
+    readonly property bool thresholdActive: BatteryService.thresholdActive
+    readonly property bool fullyCharged: BatteryService.fullyCharged && !thresholdActive
+    readonly property bool charging: BatteryService.isCharging && !thresholdActive
     readonly property bool low: discharging && percent <= 20
-    readonly property var profiles: ServiceBattery.availableProfiles
-    readonly property string activeProfile: ServiceBattery.powerProfile
+    readonly property var profiles: BatteryService.availableProfiles
+    readonly property string activeProfile: BatteryService.powerProfile
 
-    readonly property bool opened: ServicePanel.activePanel === root
+    readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     property int phraseIndex: 0
     property int selectedProfileIndex: 0
@@ -48,7 +48,7 @@ Item {
     implicitHeight: label.implicitHeight
 
     function batteryIcon(): string {
-        return available ? ServiceBattery.batteryIcon : "";
+        return available ? BatteryService.batteryIcon : "";
     }
 
     function profileIcon(profile: string): string {
@@ -62,7 +62,7 @@ Item {
     }
 
     function setProfile(profile: string): void {
-        ServiceBattery.setPowerProfile(profile);
+        BatteryService.setPowerProfile(profile);
     }
 
     onOpenedChanged: if (opened) {
@@ -71,7 +71,7 @@ Item {
             profiles.findIndex(profile => String(profile) === activeProfile));
     }
     onAvailableChanged: if (!available)
-        ServicePanel.close(root)
+        PanelService.close(root)
 
     Shortcut {
         enabled: root.opened
@@ -112,7 +112,7 @@ Item {
         onActivated: root.setProfile(String(root.profiles[root.selectedProfileIndex]))
     }
 
-    PanelStatusRotator {
+    StatusRotator {
         target: batteryHero.statusLabel
         running: root.opened && root.activePhrases.length > 0
         onAdvance: {
@@ -121,35 +121,35 @@ Item {
         }
     }
 
-    BarButton {
+    Button {
         id: label
         anchors.centerIn: parent
         panel: root
         text: root.batteryIcon()
-        textColor: root.low ? Theme.urgent : Theme.foreground
-        onClicked: ServicePanel.toggle(root)
+        textColor: root.low ? Theme.base08 : Theme.base05
+        onClicked: PanelService.toggle(root)
     }
 
     HyprlandFocusGrab {
         active: root.opened
         windows: [panel, root.QsWindow.window]
-        onCleared: ServicePanel.close(root)
+        onCleared: PanelService.close(root)
     }
 
-    PanelDrawer {
+    Drawer {
         id: panel
         anchorItem: root
         anchorWindow: root.QsWindow.window
         open: root.opened
-        onCloseRequested: ServicePanel.close(root)
+        onCloseRequested: PanelService.close(root)
         contentSpacing: 14
         // Wider card gives each equal-width profile button real horizontal
         // breathing room around its icon and longest label (Power-saver).
-        implicitWidth: 420 + ServicePanel.shellRounding
+        implicitWidth: 420 + PanelService.shellRounding
         implicitHeight: panelContent.implicitHeight
             + contentTopMargin + contentBottomMargin
 
-        PanelHero {
+        Hero {
             id: batteryHero
             width: parent.width
             icon: root.batteryIcon()
@@ -163,8 +163,8 @@ Item {
                 id: heroPercent
                 anchors.centerIn: parent
                 text: root.percent + "%"
-                color: Theme.foreground
-                font.family: Theme.fontFamily
+                color: Theme.base05
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(30)
                 font.bold: true
             }
@@ -178,7 +178,7 @@ Item {
                 id: chargeTrack
                 anchors.fill: parent
                 radius: height / 2
-                color: Utils.alpha(Theme.foreground, 0.12)
+                color: Utils.alpha(Theme.base05, 0.12)
             }
             Rectangle {
                 anchors.left: chargeTrack.left
@@ -186,7 +186,7 @@ Item {
                 height: chargeTrack.height
                 width: Math.max(height, chargeTrack.width * root.fraction)
                 radius: height / 2
-                color: Theme.foreground
+                color: Theme.base05
                 Behavior on width {
                     NumberAnimation {
                         duration: 320
@@ -222,13 +222,13 @@ Item {
                 spacing: 12
                 InfoPair {
                     labelText: "Battery size"
-                    valueText: ServiceBattery.batterySizeWh > 0
-                        ? Math.round(ServiceBattery.batterySizeWh) + "Wh" : "—"
+                    valueText: BatteryService.batterySizeWh > 0
+                        ? Math.round(BatteryService.batterySizeWh) + "Wh" : "—"
                 }
                 InfoPair {
                     labelText: "Charge cycles"
-                    valueText: ServiceBattery.chargeCycles >= 0
-                        ? String(ServiceBattery.chargeCycles) : "—"
+                    valueText: BatteryService.chargeCycles >= 0
+                        ? String(BatteryService.chargeCycles) : "—"
                 }
             }
             Column {
@@ -237,28 +237,28 @@ Item {
                 InfoPair {
                     labelText: root.thresholdActive ? "Charge limit"
                         : (root.discharging ? "Time left" : "Time to full")
-                    valueText: root.thresholdActive ? (ServiceBattery.chargeThreshold || "—")
+                    valueText: root.thresholdActive ? (BatteryService.chargeThreshold || "—")
                         : (root.fullyCharged ? "—"
-                            : ServiceBattery.formatDuration(ServiceBattery.secondsRemaining))
+                            : BatteryService.formatDuration(BatteryService.secondsRemaining))
                 }
                 InfoPair {
                     labelText: root.thresholdActive ? "Battery state"
                         : (root.discharging ? "Discharging" : "Charging")
                     valueText: root.thresholdActive ? "Holding"
                         : (root.fullyCharged ? "—"
-                            : (ServiceBattery.changeRate > 0
-                                ? ServiceBattery.changeRate.toFixed(1).replace(/\\.0$/, "") + "W" : "—"))
+                            : (BatteryService.changeRate > 0
+                                ? BatteryService.changeRate.toFixed(1).replace(/\\.0$/, "") + "W" : "—"))
                 }
             }
         }
 
-        PanelSeparator {}
+        Separator {}
 
         Column {
             width: parent.width
             spacing: 10
 
-            PanelSectionHeader {
+            SectionHeader {
                 title: "POWER PROFILE"
             }
 
@@ -271,7 +271,7 @@ Item {
 
                 Repeater {
                     model: root.profiles
-                    PanelOptionButton {
+                    OptionButton {
                         id: profileButton
                         required property var modelData
                         required property int index
@@ -294,16 +294,16 @@ Item {
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: root.profileIcon(String(profileButton.modelData))
-                                color: Theme.foreground
-                                font.family: Theme.fontFamily
+                                color: Theme.base05
+                                font.family: Theme.monospace
                                 font.pixelSize: Utils.scaledFont(15)
                             }
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: String(profileButton.modelData) === "PowerSaver"
                                     ? "Power-saver" : String(profileButton.modelData)
-                                color: Theme.foreground
-                                font.family: Theme.fontFamily
+                                color: Theme.base05
+                                font.family: Theme.monospace
                                 font.pixelSize: Utils.scaledFont(12)
                             }
                         }
@@ -321,9 +321,9 @@ Item {
 
         Text {
             text: parent.labelText
-            color: Theme.foreground
+            color: Theme.base05
             opacity: 0.6
-            font.family: Theme.fontFamily
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(12)
         }
         Item {
@@ -333,8 +333,8 @@ Item {
         }
         Text {
             text: parent.valueText
-            color: Theme.foreground
-            font.family: Theme.fontFamily
+            color: Theme.base05
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(12)
         }
     }

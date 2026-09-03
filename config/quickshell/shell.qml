@@ -19,7 +19,7 @@ ShellRoot {
         target: "panels"
 
         function toggle(name: string): bool {
-            return ServicePanel.toggleNamed(name);
+            return PanelService.toggleNamed(name);
         }
     }
 
@@ -27,15 +27,15 @@ ShellRoot {
         target: "bar"
 
         function toggle(): void {
-            ServicePanel.barVisible = !ServicePanel.barVisible;
+            PanelService.barVisible = !PanelService.barVisible;
         }
 
         function hide(): void {
-            ServicePanel.barVisible = false;
+            PanelService.barVisible = false;
         }
 
         function show(): void {
-            ServicePanel.barVisible = true;
+            PanelService.barVisible = true;
         }
     }
 

@@ -15,18 +15,18 @@ Rectangle {
 
     width: visible ? 28 : 0
     height: 28
-    radius: ServicePanel.rounding
-    color: mouseArea.containsMouse ? Utils.alpha(Theme.foreground, 0.12) : "transparent"
+    radius: PanelService.rounding
+    color: mouseArea.containsMouse ? Utils.alpha(Theme.base05, 0.12) : "transparent"
 
 
     border.width: 1
-    border.color: Utils.alpha(Theme.foreground, 0.3)
+    border.color: Utils.alpha(Theme.base05, 0.3)
 
     Text {
         anchors.centerIn: parent
         text: root.icon
-        color: Theme.foreground
-        font.family: Theme.fontFamily
+        color: Theme.base05
+        font.family: Theme.monospace
         font.pixelSize: Utils.scaledFont(12)
     }
 

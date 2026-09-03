@@ -10,6 +10,8 @@ let
   picker = inputs.hyprland-preview-share-picker.packages.${pkgs.stdenv.hostPlatform.system}.default;
   colors = config.lib.stylix.colors.withHashtag;
   font = config.stylix.fonts.monospace.name;
+
+  yamlFormat = pkgs.formats.yaml { };
 in
 {
   home.packages = [
@@ -17,9 +19,7 @@ in
     pkgs.slurp
   ];
 
-  # Points hyprland's screencopy portal at the picker binary. This has to stay
-  # generated because it embeds a Nix store path, not something that can live
-  # in a plain dotfile.
+  # enabling the custom screen share picker for hyprland
   xdg.configFile."hypr/xdph.conf".text = ''
     screencopy {
       custom_picker_binary = ${lib.getExe' picker "hyprland-preview-share-picker"}
@@ -27,11 +27,55 @@ in
     }
   '';
 
-  home.file.".config/hyprland-preview-share-picker/config.yaml".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.src/nixos/config/screensharepicker/config.yaml";
+  # yaml config for the screen picker
+  xdg.configFile."hyprland-preview-share-picker/config.yaml".source = yamlFormat.generate "screensharepicker-config.yaml" {
+    stylesheets = [ "style.css" ];
+    default_page = "outputs";
 
-  # style.css has to be generated so it follows the system-wide stylix theme
-  # instead of hardcoding colors.
+    window = {
+      height = 500;
+      width = 1000;
+    };
+
+    image = {
+      resize_size = 500;
+      widget_size = 150;
+    };
+
+    classes = {
+      window = "window";
+      image_card = "card";
+      image_card_loading = "card-loading";
+      image = "image";
+      image_label = "image-label";
+      notebook = "notebook";
+      tab_label = "tab-label";
+      notebook_page = "page";
+      region_button = "region-button";
+      restore_button = "restore-button";
+    };
+
+    windows = {
+      min_per_row = 3;
+      max_per_row = 999;
+      clicks = 1;
+      spacing = 12;
+    };
+
+    outputs = {
+      clicks = 1;
+      spacing = 6;
+      show_label = false;
+      respect_output_scaling = true;
+    };
+
+    region.command = "slurp -f '%o@%x,%y,%w,%h'";
+
+    hide_token_restore = true;
+    debug = false;
+  };
+
+  # styling the screen share picker to match the rest of the system
   xdg.configFile."hyprland-preview-share-picker/style.css".text = ''
     @define-color foreground ${colors.base05};
     @define-color background ${colors.base00};

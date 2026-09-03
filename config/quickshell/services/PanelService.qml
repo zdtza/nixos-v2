@@ -20,10 +20,10 @@ Item {
 
     // Shared top-bar geometry keeps standalone panels aligned with popups.
     property real barHeight: 30
-    // Height of every panel-backed bar icon (BarButton, and the few
+    // Height of every panel-backed bar icon (Button, and the few
     // fixed-size items that match it). Bar icons are vertically centered in
     // the bar, so their real bottom edge sits (barHeight - barIconHeight) / 2
-    // above the bar's bottom edge. PanelPopup/PanelTrayMenu anchor directly
+    // above the bar's bottom edge. Popup/TrayMenu anchor directly
     // to their bar icon and don't need this, but Notifications has no icon
     // to anchor to, so it approximates the same edge from these two.
     property real barIconHeight: 26

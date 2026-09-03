@@ -20,20 +20,20 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: ServicePanel.rounding
+        radius: PanelService.rounding
         color: switchMouse.pressed
-            ? Utils.alpha(Theme.foreground, 0.16)
+            ? Utils.alpha(Theme.base05, 0.16)
             : root.checked
-                ? Utils.alpha(Theme.foreground,
+                ? Utils.alpha(Theme.base05,
                     switchMouse.containsMouse ? 0.12 : 0.08)
                 : switchMouse.containsMouse
-                    ? Utils.alpha(Theme.foreground, 0.04)
+                    ? Utils.alpha(Theme.base05, 0.04)
                     : "transparent"
         border.width: 1
         border.color: root.checked
-            ? Utils.alpha(Theme.foreground,
+            ? Utils.alpha(Theme.base05,
                 switchMouse.containsMouse ? 0.35 : 0.25)
-            : Utils.alpha(Theme.foreground,
+            : Utils.alpha(Theme.base05,
                 switchMouse.containsMouse ? 0.25 : 0.15)
 
         Rectangle {
@@ -41,8 +41,8 @@ Item {
             height: 16
             y: 4
             x: root.checked ? parent.width - width - 4 : 4
-            radius: ServicePanel.rounding
-            color: root.checked ? Theme.foreground : Theme.muted
+            radius: PanelService.rounding
+            color: root.checked ? Theme.base05 : Theme.base04
         }
 
         MouseArea {

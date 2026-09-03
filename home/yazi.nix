@@ -7,6 +7,7 @@ in
   # custom theme.toml below renders semantic colors directly
   stylix.targets.yazi.enable = false;
 
+  # custom yazi settings
   programs.yazi = {
     enable = true;
     settings = {
@@ -21,6 +22,7 @@ in
     };
   };
 
+  # custom yazi theme
   xdg = {
     configFile."yazi/theme.toml".text = ''
       [mgr]
@@ -116,14 +118,8 @@ in
       title    = { fg = "${colors.base09}" }
       tbl_cell = { fg = "${colors.base05}", bg = "${colors.base02}" }
 
-      # Yazi's bundled default theme ships its own `exts`/`conds` icon tables
-      # with hard-coded Material/devicon hex colors (e.g. PDF is always
-      # #b30b00, webm is always #fd971f) that are completely independent of
-      # the base16 scheme. Stylix's `filetype` colors only reach the filename
-      # text, not the icon glyph, so leaving `exts`/`conds` on defaults is what
-      # made file rows clash with the rest of the theme. Overriding them here
-      # (same glyphs, base16 fg) is what actually fixes it -- the old
-      # `prepend_conds` key below was a no-op (not a real yazi icon field).
+      # overriding icon colors, yazi's default exts/conds table hard-codes its own
+      # hex colors per filetype, ignoring the base16 scheme entirely
       [icon]
       dirs = []
       prepend_conds = [

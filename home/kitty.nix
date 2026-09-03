@@ -1,31 +1,14 @@
 { pkgs, ... }:
 
 let
-  # Prints the cwd of the active window's terminal so a new terminal can be
-  # opened in the same scope. Prefers kitty's remote-control socket (exact
-  # cwd of the focused tab); falls back to walking /proc for non-kitty
-  # shells, validated against /etc/shells so cwd isn't guessed from an
-  # arbitrary child process.
+  # printing the focused kitty window's cwd via its remote-control socket
   terminalCwd = pkgs.writeShellScriptBin "terminal-cwd" ''
     #!/usr/bin/env bash
     set -uo pipefail
 
     terminal_pid=$(hyprctl activewindow -j | ${pkgs.jq}/bin/jq -r '.pid')
-    kitty_socket="$XDG_RUNTIME_DIR/kitty-$terminal_pid"
-    cwd=""
-
-    if [[ -S $kitty_socket ]]; then
-      cwd=$(${pkgs.kitty}/bin/kitten @ --to "unix:$kitty_socket" ls --match "state:focused" 2>/dev/null |
-        ${pkgs.jq}/bin/jq -r '.[].tabs[].windows[].cwd // empty')
-    else
-      shell_pid=$(${pkgs.procps}/bin/pgrep -P "$terminal_pid" | tail -n1)
-
-      if [[ -n $shell_pid ]]; then
-        cwd=$(readlink -f "/proc/$shell_pid/cwd" 2>/dev/null)
-        shell=$(readlink -f "/proc/$shell_pid/exe" 2>/dev/null)
-        grep -Fqsx "$shell" /etc/shells || cwd=""
-      fi
-    fi
+    cwd=$(${pkgs.kitty}/bin/kitten @ --to "unix:$XDG_RUNTIME_DIR/kitty-$terminal_pid" ls --match "state:focused" 2>/dev/null |
+      ${pkgs.jq}/bin/jq -r '.[].tabs[].windows[].cwd // empty')
 
     if [[ -d $cwd ]]; then
       echo "$cwd"
@@ -34,7 +17,7 @@ let
     fi
   '';
 
-  # Launches a new terminal in the same cwd as the focused one.
+  # launching a new terminal in the same cwd as the focused one
   launchTerminal = pkgs.writeShellScriptBin "launch-terminal-cwd" ''
     #!/usr/bin/env bash
     exec ${pkgs.kitty}/bin/kitty --directory "$(${terminalCwd}/bin/terminal-cwd)" "$@"
@@ -57,9 +40,7 @@ in
       cursor_trail_decay = "0.08 0.25";
       cursor_trail_start_threshold = 2;
 
-      # Per-instance remote-control socket, named by kitty's own pid, so
-      # terminal-cwd can query the exact focused tab's cwd instead of
-      # guessing from /proc.
+      # per-instance remote-control socket, lets terminal-cwd query the exact focused tab
       allow_remote_control = true;
       listen_on = "unix:\${XDG_RUNTIME_DIR}/kitty-{kitty_pid}";
     };

@@ -10,8 +10,8 @@ Item {
 
     property var panelTarget: null
 
-    readonly property bool active: ServiceTimer.running
-    readonly property string display: ServiceTimer.formatDuration(ServiceTimer.remainingSeconds)
+    readonly property bool active: TimerService.running
+    readonly property string display: TimerService.formatDuration(TimerService.remainingSeconds)
 
     implicitWidth: active ? content.implicitWidth + 16 : 0
     implicitHeight: 20
@@ -29,9 +29,9 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: height / 2
-        color: Utils.alpha(Theme.foreground, 0.1)
+        color: Utils.alpha(Theme.base05, 0.1)
         border.width: 1
-        border.color: Utils.alpha(Theme.foreground, 0.3)
+        border.color: Utils.alpha(Theme.base05, 0.3)
     }
 
     Row {
@@ -42,16 +42,16 @@ Item {
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: "󱎫"
-            color: Theme.foreground
-            font.family: Theme.fontFamily
+            color: Theme.base05
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(11)
         }
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: root.display
-            color: Theme.foreground
-            font.family: Theme.fontFamily
+            color: Theme.base05
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(11)
             font.weight: Font.Medium
         }
@@ -62,6 +62,6 @@ Item {
         enabled: root.active && root.panelTarget !== null
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: ServicePanel.toggle(root.panelTarget)
+        onClicked: PanelService.toggle(root.panelTarget)
     }
 }

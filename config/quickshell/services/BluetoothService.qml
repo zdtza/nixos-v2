@@ -1,6 +1,6 @@
 pragma Singleton
 
-// Shared BlueZ state and actions for every per-screen PanelBluetooth panel.
+// Shared BlueZ state and actions for every per-screen BluetoothPanel panel.
 import QtQuick
 import Quickshell.Bluetooth
 import Quickshell.Io

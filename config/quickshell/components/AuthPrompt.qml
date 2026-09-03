@@ -29,18 +29,18 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: Utils.alpha(Theme.background, root.showWallpaper ? 0.35 : 0.55)
+        color: Utils.alpha(Theme.base00, root.showWallpaper ? 0.35 : 0.55)
     }
 
     Rectangle {
         anchors.centerIn: parent
         width: Math.min(360, parent.width - 48)
         height: 48
-        radius: ServicePanel.rounding
-        color: Utils.alpha(Theme.dark_background, 0.95)
+        radius: PanelService.rounding
+        color: Utils.alpha(Theme.base01, 0.95)
         border.width: 2
-        border.color: root.error ? Theme.urgent
-            : (passwordInput.activeFocus ? Theme.muted : Theme.border)
+        border.color: root.error ? Theme.base08
+            : (passwordInput.activeFocus ? Theme.base04 : Theme.base03)
         layer.enabled: true
         layer.effect: ShellShadow {}
 
@@ -56,10 +56,10 @@ Item {
             enabled: root.inputEnabled
             echoMode: root.responseVisible ? TextInput.Normal : TextInput.Password
             passwordCharacter: "●"
-            color: Theme.foreground
-            selectionColor: Theme.surface
-            selectedTextColor: Theme.foreground
-            font.family: Theme.fontFamily
+            color: Theme.base05
+            selectionColor: Theme.base02
+            selectedTextColor: Theme.base05
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(22)
             font.letterSpacing: 2
             onAccepted: root.accepted()

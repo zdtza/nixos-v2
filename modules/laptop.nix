@@ -1,5 +1,4 @@
-# Battery/suspend/bluetooth tuning that only makes sense on a laptop. Don't
-# import into a desktop or server host.
+# battery/suspend/bluetooth tuning, only makes sense on a laptop
 { pkgs, ... }:
 {
   boot.kernelParams = [ "mem_sleep_default=deep" ];
@@ -7,10 +6,8 @@
   # power-saver on battery, performance when plugged in
   services.upower = {
     enable = true;
-    # HybridSleep (the default) requires a working resume device, which
-    # isn't configured on this host, so it silently fails and the laptop
-    # just idles down to 0% instead of doing anything. Power off cleanly
-    # once the battery hits the critical level instead.
+    # default HybridSleep needs a resume device this host doesn't have and fails
+    # silently, power off cleanly at the critical level instead
     criticalPowerAction = "PowerOff";
     percentageLow = 15;
     percentageCritical = 5;
@@ -19,10 +16,7 @@
 
   services.tlp = {
     enable = true;
-    # Expose TLP through the power-profiles D-Bus API. This keeps TLP as
-    # the single power manager while allowing Quickshell's native
-    # PowerProfiles service to select performance, balanced, and
-    # power-saver profiles.
+    # exposing tlp via power-profiles d-bus, so quickshell can switch profiles
     pd.enable = true;
     settings = {
       CPU_SCALING_GOVERNOR_ON_AC = "performance";
@@ -41,9 +35,8 @@
     powerOnBoot = true;
   };
 
-  # systemd-rfkill can persist a previous soft-blocked Bluetooth state.
-  # Force-unblock the controller before bluetoothd starts so powerOnBoot
-  # can reliably turn it on after rebuilds/reboots.
+  # force-unblocking bluetooth before bluetoothd starts, systemd-rfkill can
+  # persist a soft-blocked state across rebuilds/reboots
   systemd.services.bluetooth-unblock = {
     description = "Unblock Bluetooth rfkill before bluetoothd starts";
     wantedBy = [ "multi-user.target" ];

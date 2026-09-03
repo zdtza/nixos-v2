@@ -1,8 +1,7 @@
 { pkgs, ... }:
 
 let
-  # This host's one user. Referenced below instead of repeating the
-  # literal name everywhere.
+  # this host's one user, referenced below instead of repeating it everywhere
   user = "zdtza";
 
   localHosts = [
@@ -12,6 +11,9 @@ let
   ];
 in
 {
+  # windows 11 in a container (dockurr/windows: kvm + qemu inside docker)
+  windows.user = user;
+
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -27,34 +29,15 @@ in
   # home-manager modules for this host's user
   home-manager.users.${user} = {
     home.stateVersion = "26.05";
-    imports = [
-      ../../home/defaults.nix
-      ../../home/appearance.nix
-      ../../home/kitty.nix
-      ../../home/shell.nix
-      ../../home/hyprland.nix
-      ../../home/hypridle.nix
-      ../../home/hyprsunset.nix
-      ../../home/screen-share.nix
-      ../../home/voxtype.nix
-      ../../home/btop.nix
-      ../../home/nvim.nix
-      ../../home/git.nix
-      ../../home/web-apps.nix
-      ../../home/fzf.nix
-      ../../home/yazi.nix
-      ../../home/npm.nix
-      ../../home/quickshell.nix
-      ../../home/lazydocker.nix
-    ];
+    imports = [ ../../home ];
   };
 
-  networking.hostName = "legion"; # Lenovo Legion Y540
+  networking.hostName = "legion"; # lenovo legion y540
 
-  # Set your time zone.
+  # time zone
   time.timeZone = "Africa/Johannesburg";
 
-  # Select internationalisation properties.
+  # locale
   i18n.defaultLocale = "en_ZA.UTF-8";
 
   users.users.${user} = {
@@ -68,19 +51,16 @@ in
       "audio"
       "onepassword"
       "onepassword-cli"
-      # kvm/docker needed for the windows module, imported above
       "kvm"
       "docker"
     ];
   };
 
-  # PAM policy used by Quickshell's secure Wayland session lock.
+  # pam policy for quickshell's secure wayland session lock
   security.pam.services.quickshell = { };
 
-  # trust locally-issued mkcert dev certs (e.g. pmis management-portal) system-wide
-  # so Chromium-based webapps (WhatsApp, etc.) and Firefox accept them without warnings.
-  # This host's own CA (mkcert generates a distinct one per machine) — regenerate
-  # by copying ~/.local/share/mkcert/rootCA.pem here if this host's CA ever rotates.
+  # trusting local mkcert dev certs system-wide, so chromium webapps and firefox
+  # accept them; regenerate from ~/.local/share/mkcert/rootCA.pem if this host's CA rotates
   security.pki.certificateFiles = [ ./rootCA.pem ];
 
   programs._1password.enable = true;
@@ -89,57 +69,54 @@ in
     polkitPolicyOwners = [ user ];
   };
 
-  # Windows 11 in a container (dockurr/windows: KVM + QEMU inside Docker).
-  windows.user = user;
-
+ 
   environment.systemPackages = with pkgs; [
-    # general apps
-    nautilus
-    firefox
-    hyprland
-    fzf
-    eza
-    yazi
-    slurp
-    brightnessctl
-    vscode
-    git
-    grim
-    claude-code
-    wl-clipboard
-    hyprpicker
-    hyprpaper
-    bluetui
-    localsend
-    pi-coding-agent
-    wiremix
-    btop
-    impala
-    chromium
-    python3
-    file
-    font-awesome
-    fastfetch
-    audacity
-    dotnet-sdk_10
-    mkcert
-    steam
-    gnome-calculator
-    libnotify
-    mpv
-    imv
-    ripgrep
-    fd
-    gcc
-    unzip
-    lazygit
-    nodejs
-    nixfmt
-    nixd
-    teams-for-linux
-    gnome-disk-utility
-    libreoffice
-    gh
+    nautilus # file manager
+    firefox # web browser
+    fzf # fuzzy finder
+    eza # better ls
+    yazi # file manager
+    slurp # screenshot selection tool
+    brightnessctl # adjust screen brightness
+    vscode # code editor
+    git # version control
+    grim # screenshot tool
+    claude-code # AI code assistant
+    wl-clipboard # clipboard manager
+    hyprpicker # color picker
+    hyprpaper # wallpaper manager
+    bluetui # bluetooth manager
+    localsend # local file sharing
+    pi-coding-agent # AI coding assistant
+    wiremix # audio mixer
+    btop # system monitor
+    chromium # web browser
+    python3 # programming language
+    file # file type identification
+    font-awesome # icon fonts
+    fastfetch # system info tool
+    audacity # audio editor
+    dotnet-sdk_10 # .NET SDK
+    mkcert # local dev certs
+    steam # gaming platform
+    gnome-calculator # calculator
+    libnotify # desktop notifications
+    mpv # media player
+    imv # image viewer
+    ripgrep # search tool
+    fd # file search tool
+    gcc # C/C++ compiler
+    unzip # unzip utility
+    lazygit # git UI
+    nodejs # JavaScript runtime
+    nixfmt # Nix formatter
+    nixd # Nix daemon
+    teams-for-linux # Microsoft Teams client
+    gnome-disk-utility # disk management
+    libreoffice # office suite
+    gh # GitHub CLI
+    gdu # disk usage analyzer
+    lazydocker # Docker UI
   ];
 
   networking = {

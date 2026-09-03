@@ -1,9 +1,8 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 
 {
-
-  # global color scheme for GTK apps (need to align with stylix polarity later)
-  gtk.colorScheme = "dark";
+  # global color scheme for GTK apps, follows stylix polarity
+  gtk.colorScheme = if config.stylix.polarity == "light" then "light" else "dark";
 
   # global icon theme
   gtk.iconTheme = {

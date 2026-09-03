@@ -4,7 +4,7 @@ import Quickshell.Wayland
 import Stylix
 import "../services"
 
-// Centered launcher-style drawer used by clock and quick-toggle panels.
+// Screen-edge drawer used by right-side system panels.
 PanelWindow {
     id: root
 
@@ -15,10 +15,10 @@ PanelWindow {
     property real contentMargins: 20
     property real contentHorizontalMargins: contentMargins
     property real contentTopMargin: contentMargins
-    readonly property real contentBottomMargin: contentMargins
+    property real contentBottomMargin: contentMargins
     property real contentSpacing: 14
-    readonly property real cornerSize: ServicePanel.barVisible
-        ? ServicePanel.shellRounding : 0
+    readonly property real cornerSize: PanelService.barVisible
+        ? PanelService.shellRounding : 0
     default property alias panelChildren: contentColumn.data
     readonly property alias panelContent: contentColumn
 
@@ -30,13 +30,16 @@ PanelWindow {
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
 
-    WlrLayershell.namespace: "quickshell:center-panel"
+    WlrLayershell.namespace: "quickshell:panel-drawer"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: root.open
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
-    anchors.top: true
-    margins.top: ServicePanel.barVisible ? ServicePanel.barHeight : 0
+    anchors {
+        top: true
+        right: true
+    }
+    margins.top: PanelService.barVisible ? PanelService.barHeight : 0
 
     mask: Region {
         width: drawerClip.height > 0 ? root.width : 0
@@ -69,11 +72,11 @@ PanelWindow {
         layer.effect: ShellShadow {}
 
         // Behavior (not a one-shot animation to a fixed target) so a growing
-        // height while open retargets smoothly instead of snapping once the
-        // old target is hit.
+        // height while open -- e.g. network scan results hydrating in --
+        // retargets smoothly instead of snapping once the old target is hit.
         Behavior on height {
             enabled: root.open
-            NumberAnimation { duration: ServicePanel.slideDuration; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
         }
 
         Canvas {
@@ -83,7 +86,7 @@ PanelWindow {
             onPaint: {
                 const context = getContext("2d");
                 context.clearRect(0, 0, width, width);
-                context.fillStyle = Theme.dark_background;
+                context.fillStyle = Theme.base01;
                 context.beginPath();
                 context.moveTo(0, 0);
                 context.lineTo(width, 0);
@@ -93,33 +96,16 @@ PanelWindow {
             }
         }
 
-        Canvas {
-            width: root.cornerSize
-            height: Math.min(width, drawerClip.height)
-            x: parent.width - width
-
-            onPaint: {
-                const context = getContext("2d");
-                context.clearRect(0, 0, width, width);
-                context.fillStyle = Theme.dark_background;
-                context.beginPath();
-                context.moveTo(0, 0);
-                context.lineTo(width, 0);
-                context.arc(width, width, width, -Math.PI / 2, -Math.PI, true);
-                context.lineTo(0, 0);
-                context.fill();
-            }
-        }
-
         Rectangle {
             x: root.cornerSize
-            width: parent.width - root.cornerSize * 2
+            width: parent.width - x
             height: drawerClip.height
             enabled: root.open
-            color: Theme.dark_background
-            radius: ServicePanel.shellRounding
+            color: Theme.base01
+            radius: PanelService.shellRounding
             topLeftRadius: 0
             topRightRadius: 0
+            bottomRightRadius: 0
 
             MouseArea {
                 anchors.fill: parent

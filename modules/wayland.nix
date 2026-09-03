@@ -1,6 +1,4 @@
-# Hyprland/Wayland desktop stack. Nothing GPU-vendor or form-factor specific
-# lives here (see hardware.nvidia / services.tlp in the host file for that).
-# Import directly into a host's `imports` to use.
+# hyprland/wayland desktop stack, no gpu-vendor or form-factor config here
 {
   pkgs,
   lib,
@@ -34,13 +32,11 @@
   services.udisks2.enable = true;
   services.gvfs.enable = true;
 
-  # Secret Service backend used by GVFS/Nautilus for mount credentials.
+  # secret service backend for gvfs/nautilus mount credentials
   services.gnome.gnome-keyring.enable = true;
 
-  # TUI login manager, launches Hyprland through UWSM on login.
-  # Wrapped in a script: greetd's TOML parser chokes on the multi-line
-  # string the generic toml generator emits once the raw command line
-  # gets long, so keep the command itself to one short script path.
+  # tui login manager, launches hyprland through uwsm on login
+  # wrapped in a script, greetd's toml parser chokes on a long inline command
   services.greetd = {
     enable = true;
     settings.default_session.command = lib.getExe (
@@ -53,7 +49,7 @@
 
   xdg.portal = {
     enable = true;
-    # Hyprland's NixOS module adds GTK automatically; force exact backends for terminal file picker.
+    # hyprland's module adds gtk automatically, forcing exact backends for the terminal file picker
     extraPortals = lib.mkForce (
       with pkgs;
       [
@@ -72,7 +68,7 @@
     polarity = "dark";
     image = ../assets/wallpapers/winding-road.jpg;
 
-    # Keep boot and virtual consoles on their default palette.
+    # keeping boot and virtual consoles on their default palette
     targets.console.enable = false;
     targets.fish.enable = false;
 

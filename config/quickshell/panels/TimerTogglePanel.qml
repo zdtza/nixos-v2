@@ -12,7 +12,7 @@ import ".."
 Item {
     id: root
 
-    readonly property bool opened: ServicePanel.activePanel === root
+    readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     readonly property int timerRowHeight: 48
     readonly property int timerRowSpacing: 8
@@ -48,43 +48,43 @@ Item {
     }
 
     function resetInput(): void {
-        setInputText(ServiceTimer.formatDuration(ServiceTimer.lastDurationSeconds));
+        setInputText(TimerService.formatDuration(TimerService.lastDurationSeconds));
     }
 
     function startTimer(): void {
         const seconds = parseDuration(durationInput.text);
-        if (ServiceTimer.start(seconds)) {
-            setInputText(ServiceTimer.formatDuration(seconds));
+        if (TimerService.start(seconds)) {
+            setInputText(TimerService.formatDuration(seconds));
             durationInput.forceActiveFocus();
             durationInput.selectAll();
         }
     }
 
     function startSavedTimer(): void {
-        ServiceTimer.start(ServiceTimer.lastDurationSeconds);
+        TimerService.start(TimerService.lastDurationSeconds);
     }
 
     function selectTimer(offset: int): void {
-        if (ServiceTimer.timers.length === 0) {
+        if (TimerService.timers.length === 0) {
             selectedTimerIndex = -1;
             return;
         }
         if (selectedTimerIndex < 0) {
-            selectedTimerIndex = offset > 0 ? 0 : ServiceTimer.timers.length - 1;
+            selectedTimerIndex = offset > 0 ? 0 : TimerService.timers.length - 1;
         } else if (selectedTimerIndex === 0 && offset < 0) {
             selectedTimerIndex = -1;
             durationInput.forceActiveFocus();
             durationInput.selectAll();
         } else {
             selectedTimerIndex = Math.max(0,
-                Math.min(ServiceTimer.timers.length - 1, selectedTimerIndex + offset));
+                Math.min(TimerService.timers.length - 1, selectedTimerIndex + offset));
         }
     }
 
     function removeSelectedTimer(): void {
-        const timer = ServiceTimer.timers[selectedTimerIndex];
+        const timer = TimerService.timers[selectedTimerIndex];
         if (timer)
-            ServiceTimer.removeTimer(timer.id);
+            TimerService.removeTimer(timer.id);
     }
 
     function focusTimerList(): void {
@@ -95,14 +95,14 @@ Item {
 
     onOpenedChanged: if (!opened)
         selectedTimerIndex = -1
-    onSelectedTimerIndexChanged: if (selectedTimerIndex >= ServiceTimer.timers.length)
-        selectedTimerIndex = ServiceTimer.timers.length - 1
+    onSelectedTimerIndexChanged: if (selectedTimerIndex >= TimerService.timers.length)
+        selectedTimerIndex = TimerService.timers.length - 1
 
     Connections {
-        target: ServiceTimer
+        target: TimerService
         function onTimersChanged(): void {
-            if (root.selectedTimerIndex >= ServiceTimer.timers.length)
-                root.selectedTimerIndex = ServiceTimer.timers.length - 1;
+            if (root.selectedTimerIndex >= TimerService.timers.length)
+                root.selectedTimerIndex = TimerService.timers.length - 1;
             if (root.opened && root.selectedTimerIndex < 0) {
                 durationInput.forceActiveFocus();
                 durationInput.selectAll();
@@ -112,33 +112,33 @@ Item {
 
     Component.onCompleted: inputReady = true
 
-    BarButton {
+    Button {
         anchors.centerIn: parent
         panel: root
         text: "󱎫"
-        textColor: ServiceTimer.running ? Theme.foreground : Theme.muted
+        textColor: TimerService.running ? Theme.base05 : Theme.base04
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton)
                 root.startSavedTimer();
             else
-                ServicePanel.toggle(root);
+                PanelService.toggle(root);
         }
     }
 
     HyprlandFocusGrab {
         active: root.opened
         windows: [panel, root.QsWindow.window]
-        onCleared: ServicePanel.close(root)
+        onCleared: PanelService.close(root)
     }
 
-    PanelPopup {
+    Popup {
         id: panel
 
         anchorItem: root
         anchorWindow: root.QsWindow.window
         open: root.opened
-        onCloseRequested: ServicePanel.close(root)
+        onCloseRequested: PanelService.close(root)
         onOpenChanged: {
             if (!open)
                 return;
@@ -158,24 +158,24 @@ Item {
         readonly property real panelChromeHeight: contentTopMargin
             + contentBottomMargin + timerHero.implicitHeight + durationHeader.implicitHeight
             + timersHeader.implicitHeight + 76 + contentSpacing * 6
-        readonly property real desiredTimerHeight: ServiceTimer.timers.length > 0
-            ? ServiceTimer.timers.length * root.timerRowHeight
-                + Math.max(0, ServiceTimer.timers.length - 1) * root.timerRowSpacing
+        readonly property real desiredTimerHeight: TimerService.timers.length > 0
+            ? TimerService.timers.length * root.timerRowHeight
+                + Math.max(0, TimerService.timers.length - 1) * root.timerRowSpacing
             : 52
         readonly property real timerViewportHeight: Math.min(272,
             Math.max(52, maximumHeight - panelChromeHeight), desiredTimerHeight)
 
-        implicitWidth: 420 + ServicePanel.shellRounding * 2
+        implicitWidth: 420 + PanelService.shellRounding * 2
         implicitHeight: Math.min(maximumHeight,
             panelChromeHeight + timerViewportHeight)
 
-        PanelHero {
+        Hero {
             id: timerHero
             width: parent.width
             icon: "󱎫"
             title: "Timer"
-            status: ServiceTimer.timers.length > 0
-                ? ServiceTimer.timers.length + (ServiceTimer.timers.length === 1
+            status: TimerService.timers.length > 0
+                ? TimerService.timers.length + (TimerService.timers.length === 1
                     ? " TIMER RUNNING" : " TIMERS RUNNING")
                 : "READY"
             trailingWidth: 32
@@ -184,19 +184,19 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 readonly property bool canStart: root.parseDuration(durationInput.text) > 0
-                radius: ServicePanel.rounding
+                radius: PanelService.rounding
                 color: addMouse.containsMouse
-                    ? Utils.alpha(Theme.foreground, 0.12)
+                    ? Utils.alpha(Theme.base05, 0.12)
                     : "transparent"
                 border.width: 1
-                border.color: Utils.alpha(Theme.foreground, 0.3)
+                border.color: Utils.alpha(Theme.base05, 0.3)
                 opacity: canStart ? 1 : 0.5
 
                 Text {
                     anchors.centerIn: parent
                     text: "󰐕"
-                    color: Theme.foreground
-                    font.family: Theme.fontFamily
+                    color: Theme.base05
+                    font.family: Theme.monospace
                     font.pixelSize: Utils.scaledFont(14)
                 }
 
@@ -211,9 +211,9 @@ Item {
             }
         }
 
-        PanelSeparator {}
+        Separator {}
 
-        PanelSectionHeader {
+        SectionHeader {
             id: durationHeader
             title: "DURATION"
             detail: "MM : SS"
@@ -222,11 +222,11 @@ Item {
         Rectangle {
             width: parent.width
             height: 74
-            radius: ServicePanel.rounding
-            color: Theme.dark_background
+            radius: PanelService.rounding
+            color: Theme.base01
             border.width: 1
-            border.color: durationInput.activeFocus ? Theme.muted
-                : Utils.alpha(Theme.foreground, 0.3)
+            border.color: durationInput.activeFocus ? Theme.base04
+                : Utils.alpha(Theme.base05, 0.3)
 
 
             TextInput {
@@ -242,12 +242,12 @@ Item {
                 text: "00:00"
                 onTextChanged: {
                     if (root.inputReady && !root.updatingInput && root.durationParts(text))
-                        ServiceTimer.rememberDuration(root.parseDuration(text));
+                        TimerService.rememberDuration(root.parseDuration(text));
                 }
-                color: Theme.foreground
-                selectionColor: Theme.surface
-                selectedTextColor: Theme.foreground
-                font.family: Theme.fontFamily
+                color: Theme.base05
+                selectionColor: Theme.base02
+                selectedTextColor: Theme.base05
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(36)
                 font.weight: Font.Medium
                 font.letterSpacing: 3
@@ -255,17 +255,17 @@ Item {
                 Keys.onReturnPressed: root.startTimer()
                 Keys.onEnterPressed: root.startTimer()
                 Keys.onDownPressed: root.focusTimerList()
-                Keys.onEscapePressed: ServicePanel.close(root)
+                Keys.onEscapePressed: PanelService.close(root)
             }
         }
 
-        PanelSeparator {}
+        Separator {}
 
-        PanelSectionHeader {
+        SectionHeader {
             id: timersHeader
             title: "CURRENT TIMERS"
-            detail: ServiceTimer.timers.length === 0 ? "NONE"
-                : String(ServiceTimer.timers.length)
+            detail: TimerService.timers.length === 0 ? "NONE"
+                : String(TimerService.timers.length)
         }
 
         Item {
@@ -275,19 +275,19 @@ Item {
 
             Text {
                 anchors.fill: parent
-                visible: ServiceTimer.timers.length === 0
+                visible: TimerService.timers.length === 0
                 text: "No running timers"
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                color: Theme.muted
-                font.family: Theme.fontFamily
+                color: Theme.base04
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(12)
             }
 
             Flickable {
                 id: timerList
                 anchors.fill: parent
-                visible: ServiceTimer.timers.length > 0
+                visible: TimerService.timers.length > 0
                 contentHeight: timerColumn.implicitHeight
                 clip: true
                 interactive: contentHeight > height
@@ -298,7 +298,7 @@ Item {
                 Keys.onUpPressed: root.selectTimer(-1)
                 Keys.onDownPressed: root.selectTimer(1)
                 Keys.onDeletePressed: root.removeSelectedTimer()
-                Keys.onEscapePressed: ServicePanel.close(root)
+                Keys.onEscapePressed: PanelService.close(root)
 
                 Column {
                     id: timerColumn
@@ -306,7 +306,7 @@ Item {
                     spacing: root.timerRowSpacing
 
                     Repeater {
-                        model: ServiceTimer.timers
+                        model: TimerService.timers
 
                         Rectangle {
                             id: timerRow
@@ -315,12 +315,12 @@ Item {
 
                             width: timerColumn.width
                             height: root.timerRowHeight
-                            radius: ServicePanel.rounding
+                            radius: PanelService.rounding
                             color: timerRow.index === root.selectedTimerIndex
-                                ? Utils.alpha(Theme.foreground, 0.08)
+                                ? Utils.alpha(Theme.base05, 0.08)
                                 : "transparent"
                             border.width: timerRow.index === root.selectedTimerIndex ? 1 : 0
-                            border.color: Utils.alpha(Theme.foreground, 0.25)
+                            border.color: Utils.alpha(Theme.base05, 0.25)
 
                             HoverHandler {
                                 id: rowHover
@@ -334,8 +334,8 @@ Item {
                                 anchors.leftMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "󱎫"
-                                color: Theme.foreground
-                                font.family: Theme.fontFamily
+                                color: Theme.base05
+                                font.family: Theme.monospace
                                 font.pixelSize: Utils.scaledFont(16)
                             }
 
@@ -346,16 +346,16 @@ Item {
                                     ? deleteButton.left : parent.right
                                 anchors.rightMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: ServiceTimer.formatDuration(Math.max(0,
+                                text: TimerService.formatDuration(Math.max(0,
                                     Math.ceil((timerRow.modelData.deadlineMs
-                                        - ServiceTimer.nowMs) / 1000)))
-                                color: Theme.foreground
-                                font.family: Theme.fontFamily
+                                        - TimerService.nowMs) / 1000)))
+                                color: Theme.base05
+                                font.family: Theme.monospace
                                 font.pixelSize: Utils.scaledFont(24)
                                 font.weight: Font.Medium
                             }
 
-                            PanelRowActionButton {
+                            RowActionButton {
                                 id: deleteButton
                                 z: 2
                                 visible: timerRow.index === root.selectedTimerIndex
@@ -365,7 +365,7 @@ Item {
                                 icon: "󰆴"
                                 onClicked: {
                                     root.selectedTimerIndex = timerRow.index;
-                                    ServiceTimer.removeTimer(timerRow.modelData.id);
+                                    TimerService.removeTimer(timerRow.modelData.id);
                                 }
                             }
                         }

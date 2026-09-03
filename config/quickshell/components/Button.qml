@@ -9,11 +9,11 @@ Item {
 
     required property var panel
     property string text: ""
-    property color textColor: Theme.foreground
+    property color textColor: Theme.base05
     property int acceptedButtons: Qt.LeftButton
     property bool showPanelIndicator: true
 
-    readonly property bool panelOpen: ServicePanel.activePanel === root.panel
+    readonly property bool panelOpen: PanelService.activePanel === root.panel
 
     signal clicked(var mouse)
     signal wheeled(var wheel)
@@ -27,7 +27,7 @@ Item {
         anchors.verticalCenterOffset: -1
         text: root.text
         color: root.textColor
-        font.family: Theme.fontFamily
+        font.family: Theme.monospace
         font.pixelSize: Utils.scaledFont(14)
     }
 
@@ -36,10 +36,10 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         width: 16
         height: 2
-        radius: ServicePanel.rounding
+        radius: PanelService.rounding
         visible: opacity > 0
         opacity: root.showPanelIndicator && (root.panelOpen || mouseArea.containsMouse) ? 1 : 0
-        color: Theme.accent
+        color: Theme.base0D
 
         Behavior on opacity { NumberAnimation { duration: 120 } }
     }

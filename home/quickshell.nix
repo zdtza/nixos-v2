@@ -6,45 +6,38 @@
 
 let
   colors = config.lib.stylix.colors.withHashtag;
-  rawColors = config.lib.stylix.colors;
   fonts = config.stylix.fonts;
 
-  # Stylix-derived values can't live in the editable config dir, so they are
-  # generated as a standalone QML module (`import Stylix` -> `Theme.*`) that is
-  # put on QML2_IMPORT_PATH. Palette changes need a rebuild; everything else in
-  # config/quickshell is hot-reloaded by quickshell itself.
-  stylixQmlModule = pkgs.runCommand "quickshell-stylix-qml-module" { } ''
-    mkdir -p $out/Stylix
-    cat > $out/Stylix/Theme.qml <<'EOF'
-    pragma Singleton
+  # stylix to quickshell bridge for colors and fonts
+  stylixQmlModule = pkgs.linkFarm "quickshell-stylix-qml-module" {
+    "Stylix/Theme.qml" = builtins.toFile "Theme.qml" ''
+      pragma Singleton
 
-    import QtQuick
+      import QtQuick
 
-    QtObject {
-        readonly property color background: "${colors.base00}"
-        readonly property color dark_background: "${colors.base01}"
-        // Dim wash painted over the screen behind popups (#AARRGGBB).
-        readonly property color overlay: "#b3${rawColors.base00}"
-        readonly property color surface: "${colors.base02}"
-        readonly property color border: "${colors.base03}"
-        readonly property color muted: "${colors.base04}"
-        readonly property color foreground: "${colors.base05}"
-        readonly property color accent: "${colors.base0D}"
-        readonly property color urgent: "${colors.base08}"
-        readonly property color warning: "${colors.base0A}"
-        readonly property color success: "${colors.base0B}"
-        readonly property url wallpaper: "file://${config.stylix.image}"
+      QtObject {
+          readonly property color base00: "${colors.base00}"
+          readonly property color base01: "${colors.base01}"
+          readonly property color base02: "${colors.base02}"
+          readonly property color base03: "${colors.base03}"
+          readonly property color base04: "${colors.base04}"
+          readonly property color base05: "${colors.base05}"
+          readonly property color base0D: "${colors.base0D}"
+          readonly property color base08: "${colors.base08}"
+          readonly property url wallpaper: "file://${config.stylix.image}"
 
-        readonly property string fontFamily: "${fonts.monospace.name}"
-        readonly property int fontSize: 13
-    }
-    EOF
-    cat > $out/Stylix/qmldir <<'EOF'
-    module Stylix
-    singleton Theme 1.0 Theme.qml
-    EOF
-  '';
+          readonly property string monospace: "${fonts.monospace.name}"
+          readonly property string sansSerif: "${fonts.sansSerif.name}"
+          readonly property int fontSize: 13
+      }
+    '';
+    "Stylix/qmldir" = builtins.toFile "qmldir" ''
+      module Stylix
+      singleton Theme 1.0 Theme.qml
+    '';
+  };
 
+  # notification for timer completion
   timerAlert = pkgs.writeShellApplication {
     name = "qs-timer-alert";
     text = ''
@@ -63,11 +56,15 @@ let
 in
 {
   home.sessionVariables = {
+    # set the shell env so we can run qs from any terminal for debugging
     QML2_IMPORT_PATH = stylixQmlModule;
+    # default icon for legacy apps
     QS_FALLBACK_APP_ICON = "${pkgs.adwaita-icon-theme}/share/icons/Adwaita/symbolic/categories/applications-system-symbolic.svg";
+    # passing quickshell the system time zone
     TZDIR = "/etc/zoneinfo";
   };
 
+  # dependencies for the quickshell (mostly for the network panel stats)
   home.packages = with pkgs; [
     quickshell
     gawk
@@ -78,9 +75,11 @@ in
     timerAlert
   ];
 
+  # symlinking the quickshell folder
   home.file.".config/quickshell".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.src/nixos/config/quickshell";
 
+  # starting the quickshell service on login after graphical session
   systemd.user.services.quickshell = {
     Unit = {
       Description = "Quickshell desktop shell";

@@ -28,7 +28,7 @@ Scope {
         pendingPassword = "";
         errorText = "";
         authenticating = false;
-        ServicePanel.closeActive();
+        PanelService.closeActive();
         sessionLock.locked = true;
     }
 
@@ -90,7 +90,7 @@ Scope {
 
         WlSessionLockSurface {
             id: lockSurface
-            color: Theme.background
+            color: Theme.base00
 
             onVisibleChanged: if (visible)
                 Qt.callLater(() => prompt.input.forceActiveFocus())

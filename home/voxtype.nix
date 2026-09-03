@@ -2,12 +2,12 @@
 
 let
   package = pkgs.voxtype-vulkan;
-  # other models are too slow to be useful
+  # fetching a medium sized model for voice recognition, other models are too slow
   model = pkgs.fetchurl {
     url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin";
     hash = "sha256-oDd5yG3zMjB19eeWyyzlAp8A7Ihp7uP9+4l6/jbG0AI=";
   };
-  # needs to be generated as model is inserted at runtime based on above selection
+  # defining config for voice to text as toml
   configFile = (pkgs.formats.toml { }).generate "voxtype-config.toml" {
     state_file = "auto";
     hotkey.enabled = false;
@@ -15,7 +15,7 @@ let
     audio = {
       device = "default";
       sample_rate = 16000;
-      max_duration_secs = 60;
+      max_duration_secs = 120;
       pause_media = true;
       feedback = {
         enabled = true;

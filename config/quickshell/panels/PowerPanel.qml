@@ -10,7 +10,7 @@ import ".."
 Item {
     id: root
 
-    readonly property bool opened: ServicePanel.activePanel === root
+    readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     property int phraseIndex: 0
     property int selectedActionIndex: 0
@@ -90,45 +90,45 @@ Item {
     function runAction(action: string): void {
         if (!action)
             return;
-        ServicePanel.close(root);
+        PanelService.close(root);
         if (action === "lock")
             Quickshell.execDetached(["qs", "ipc", "call", "lock", "activate"]);
         else
             Quickshell.execDetached(["systemctl", action]);
     }
 
-    PanelStatusRotator {
+    StatusRotator {
         target: powerHero.statusLabel
         running: root.opened
         onAdvance: root.phraseIndex = (root.phraseIndex + 1) % root.phrases.length
     }
 
-    BarButton {
+    Button {
         anchors.centerIn: parent
         panel: root
         text: ""
-        onClicked: ServicePanel.toggle(root)
+        onClicked: PanelService.toggle(root)
     }
 
     HyprlandFocusGrab {
         active: root.opened
         windows: [panel, root.QsWindow.window]
-        onCleared: ServicePanel.close(root)
+        onCleared: PanelService.close(root)
     }
 
-    PanelPopup {
+    Popup {
         id: panel
 
         anchorItem: root
         anchorWindow: root.QsWindow.window
         open: root.opened
-        onCloseRequested: ServicePanel.close(root)
+        onCloseRequested: PanelService.close(root)
         contentSpacing: 14
-        implicitWidth: 360 + ServicePanel.shellRounding * 2
+        implicitWidth: 360 + PanelService.shellRounding * 2
         implicitHeight: panelContent.implicitHeight
             + contentTopMargin + contentBottomMargin
 
-        PanelHero {
+        Hero {
             id: powerHero
             width: parent.width
             icon: ""
@@ -136,7 +136,7 @@ Item {
             status: root.phrases[root.phraseIndex % root.phrases.length].toUpperCase()
         }
 
-        PanelSeparator {}
+        Separator {}
 
         Grid {
             id: actionGrid
@@ -156,20 +156,20 @@ Item {
 
                     width: actionGrid.cellWidth
                     height: 50
-                    radius: ServicePanel.rounding
+                    radius: PanelService.rounding
                     color: modelData.available
                         && actionButton.index === root.selectedActionIndex
-                        ? Utils.alpha(Theme.foreground, 0.12)
+                        ? Utils.alpha(Theme.base05, 0.12)
                         : "transparent"
 
                     Text {
                         anchors.centerIn: parent
                         text: actionButton.modelData.icon
                         color: actionButton.modelData.available
-                            ? Theme.foreground : Theme.muted
+                            ? Theme.base05 : Theme.base04
                         opacity: actionButton.modelData.available ? 1 : 0.45
                         scale: actionButton.index === root.selectedActionIndex ? 1.1 : 1
-                        font.family: Theme.fontFamily
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(actionButton.modelData.iconSize)
                     }
 

@@ -33,7 +33,7 @@ Scope {
 
         onAuthenticationRequestStarted: {
             root.openedMonitorName = String(Hyprland.focusedMonitor?.name ?? "");
-            ServicePanel.closeActive();
+            PanelService.closeActive();
             Qt.callLater(() => prompt.input.forceActiveFocus());
         }
     }

@@ -20,17 +20,17 @@ Rectangle {
     signal activated()
 
     implicitHeight: 32
-    radius: ServicePanel.rounding
+    radius: PanelService.rounding
     opacity: root.enabled ? 1 : 0.5
     color: mouseArea.pressed
-        ? Utils.alpha(Theme.foreground, 0.22)
+        ? Utils.alpha(Theme.base05, 0.22)
         : root.highlighted
-            ? Utils.alpha(Theme.foreground, 0.12)
+            ? Utils.alpha(Theme.base05, 0.12)
             : root.active
-                ? Utils.alpha(Theme.foreground, 0.08)
+                ? Utils.alpha(Theme.base05, 0.08)
                 : "transparent"
     border.width: root.active || root.highlighted ? 1 : 0
-    border.color: Utils.alpha(Theme.foreground,
+    border.color: Utils.alpha(Theme.base05,
         root.highlighted ? 0.35 : 0.25)
 
     MouseArea {

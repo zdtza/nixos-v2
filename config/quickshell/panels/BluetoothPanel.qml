@@ -13,14 +13,14 @@ import ".."
 Item {
     id: root
 
-    readonly property bool available: ServiceBluetooth.available
-    readonly property bool opened: ServicePanel.activePanel === root
+    readonly property bool available: BluetoothService.available
+    readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
-    readonly property var devices: ServiceBluetooth.devices
-    readonly property var connectedDevices: ServiceBluetooth.enabled
-        ? devices.filter(device => ServiceBluetooth.isConnected(device)) : []
-    readonly property var availableDevices: ServiceBluetooth.enabled
-        ? devices.filter(device => !ServiceBluetooth.isConnected(device)) : []
+    readonly property var devices: BluetoothService.devices
+    readonly property var connectedDevices: BluetoothService.enabled
+        ? devices.filter(device => BluetoothService.isConnected(device)) : []
+    readonly property var availableDevices: BluetoothService.enabled
+        ? devices.filter(device => !BluetoothService.isConnected(device)) : []
     readonly property int deviceRowHeight: 48
     readonly property int deviceRowSpacing: 8
     readonly property int deviceSectionSpacing: 14
@@ -30,7 +30,7 @@ Item {
         "MOVING THROUGH THE AIR", "TALKING WIRELESSLY"
     ]
     readonly property string statusText: {
-        if (!ServiceBluetooth.enabled) return "BLUETOOTH OFF";
+        if (!BluetoothService.enabled) return "BLUETOOTH OFF";
         for (const device of devices) {
             if (device.pairing) return "PAIRING";
             if (device.state === BluetoothDeviceState.Connecting) return "CONNECTING";
@@ -38,7 +38,7 @@ Item {
         }
         if (connectedDevices.length > 0)
             return phrases[phraseIndex % phrases.length];
-        return ServiceBluetooth.adapter && ServiceBluetooth.adapter.discovering
+        return BluetoothService.adapter && BluetoothService.adapter.discovering
             ? "SCANNING" : "READY TO CONNECT";
     }
 
@@ -75,24 +75,24 @@ Item {
     function activateSelectedDevice(): void {
         if (!selectedDevice)
             return;
-        if (ServiceBluetooth.isConnected(selectedDevice))
-            ServiceBluetooth.disconnect(selectedDevice);
+        if (BluetoothService.isConnected(selectedDevice))
+            BluetoothService.disconnect(selectedDevice);
         else
-            ServiceBluetooth.activate(selectedDevice);
+            BluetoothService.activate(selectedDevice);
     }
 
     function forgetSelectedDevice(): void {
         if (selectedDevice && selectedDevice.paired)
-            ServiceBluetooth.forget(selectedDevice);
+            BluetoothService.forget(selectedDevice);
     }
 
     onOpenedChanged: {
         if (opened) {
             phraseIndex = 0;
             selectedDevice = keyboardDevices.length > 0 ? keyboardDevices[0] : null;
-            ServiceBluetooth.acquireScanner();
+            BluetoothService.acquireScanner();
         } else {
-            ServiceBluetooth.releaseScanner();
+            BluetoothService.releaseScanner();
         }
     }
     onKeyboardDevicesChanged: {
@@ -102,9 +102,9 @@ Item {
             selectedDevice = keyboardDevices[0];
     }
     onAvailableChanged: if (!available)
-        ServicePanel.close(root)
+        PanelService.close(root)
     Component.onDestruction: if (opened)
-        ServiceBluetooth.releaseScanner()
+        BluetoothService.releaseScanner()
 
     Shortcut {
         enabled: root.opened
@@ -134,7 +134,7 @@ Item {
         enabled: root.opened
         sequence: "Space"
         context: Qt.ApplicationShortcut
-        onActivated: ServiceBluetooth.toggle()
+        onActivated: BluetoothService.toggle()
     }
     Shortcut {
         enabled: root.opened
@@ -143,33 +143,33 @@ Item {
         onActivated: root.forgetSelectedDevice()
     }
 
-    PanelStatusRotator {
+    StatusRotator {
         target: bluetoothHero.statusLabel
-        running: root.opened && ServiceBluetooth.enabled
+        running: root.opened && BluetoothService.enabled
             && root.connectedDevices.length > 0
         onAdvance: root.phraseIndex = (root.phraseIndex + 1) % root.phrases.length
     }
 
-    BarButton {
+    Button {
         id: indicator
         anchors.centerIn: parent
         panel: root
-        text: ServiceBluetooth.icon
-        onClicked: ServicePanel.toggle(root)
+        text: BluetoothService.icon
+        onClicked: PanelService.toggle(root)
     }
 
     HyprlandFocusGrab {
         active: root.opened
         windows: [panel, root.QsWindow.window]
-        onCleared: ServicePanel.close(root)
+        onCleared: PanelService.close(root)
     }
 
-    PanelDrawer {
+    Drawer {
         id: panel
         anchorItem: root
         anchorWindow: root.QsWindow.window
         open: root.opened
-        onCloseRequested: ServicePanel.close(root)
+        onCloseRequested: PanelService.close(root)
         contentSpacing: 14
         readonly property real maximumHeight: Math.max(260,
             (root.QsWindow.window && root.QsWindow.window.screen
@@ -193,26 +193,26 @@ Item {
         readonly property real deviceViewportHeight: Math.min(420,
             Math.max(80, maximumHeight - panelChromeHeight), desiredDeviceHeight)
 
-        implicitWidth: 460 + ServicePanel.shellRounding
+        implicitWidth: 460 + PanelService.shellRounding
         implicitHeight: Math.min(maximumHeight, panelChromeHeight + deviceViewportHeight)
 
-        PanelHero {
+        Hero {
             id: bluetoothHero
             width: parent.width
-            icon: ServiceBluetooth.icon
+            icon: BluetoothService.icon
             title: "Bluetooth"
             status: root.statusText
             trailingWidth: 44
             trailingHeight: 24
 
-            PanelToggleSwitch {
+            ToggleSwitch {
                 anchors.fill: parent
-                checked: ServiceBluetooth.enabled
-                onToggled: ServiceBluetooth.toggle()
+                checked: BluetoothService.enabled
+                onToggled: BluetoothService.toggle()
             }
         }
 
-        PanelSeparator { id: bluetoothSeparator }
+        Separator { id: bluetoothSeparator }
 
         Item {
             width: parent.width
@@ -238,7 +238,7 @@ Item {
                         spacing: root.deviceRowSpacing
                         visible: root.connectedDevices.length > 0
 
-                        PanelSectionHeader {
+                        SectionHeader {
                             id: connectedHeader
                             title: "CONNECTED"
                             detail: root.connectedDevices.length > 1
@@ -258,8 +258,8 @@ Item {
                                 secondaryActionIcon: "󰆴"
                                 secondaryActionVisible: true
                                 secondaryActionLabel: "Forget"
-                                onActionTriggered: ServiceBluetooth.disconnect(modelData)
-                                onSecondaryActionTriggered: ServiceBluetooth.forget(modelData)
+                                onActionTriggered: BluetoothService.disconnect(modelData)
+                                onSecondaryActionTriggered: BluetoothService.forget(modelData)
                             }
                         }
                     }
@@ -268,10 +268,10 @@ Item {
                         width: parent.width
                         spacing: root.deviceRowSpacing
 
-                        PanelSectionHeader {
+                        SectionHeader {
                             id: availableHeader
                             title: "AVAILABLE"
-                            detail: ServiceBluetooth.adapter && ServiceBluetooth.adapter.discovering
+                            detail: BluetoothService.adapter && BluetoothService.adapter.discovering
                                 ? "SCANNING" : "READY"
                         }
 
@@ -279,12 +279,12 @@ Item {
                             width: parent.width
                             height: root.emptyStateHeight
                             visible: root.availableDevices.length === 0
-                            text: ServiceBluetooth.enabled
+                            text: BluetoothService.enabled
                                 ? "No available devices" : "Bluetooth is turned off"
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
-                            color: Theme.muted
-                            font.family: Theme.fontFamily
+                            color: Theme.base04
+                            font.family: Theme.monospace
                             font.pixelSize: Utils.scaledFont(12)
                         }
 
@@ -299,8 +299,8 @@ Item {
                                 actionVisible: modelData.paired
                                 actionLabel: "Forget"
                                 keyboardSelected: root.selectedDevice === modelData
-                                onActivated: ServiceBluetooth.activate(modelData)
-                                onActionTriggered: ServiceBluetooth.forget(modelData)
+                                onActivated: BluetoothService.activate(modelData)
+                                onActionTriggered: BluetoothService.forget(modelData)
                             }
                         }
                     }
@@ -328,12 +328,12 @@ Item {
 
         width: parent.width
         height: root.deviceRowHeight
-        radius: ServicePanel.rounding
+        radius: PanelService.rounding
         color: keyboardSelected
-            ? Utils.alpha(Theme.foreground, 0.08)
+            ? Utils.alpha(Theme.base05, 0.08)
             : "transparent"
         border.width: keyboardSelected ? 1 : 0
-        border.color: Utils.alpha(Theme.foreground, 0.25)
+        border.color: Utils.alpha(Theme.base05, 0.25)
 
         HoverHandler {
             id: rowHover
@@ -346,9 +346,9 @@ Item {
             anchors.left: parent.left
             anchors.leftMargin: 10
             anchors.verticalCenter: parent.verticalCenter
-            text: ServiceBluetooth.deviceIcon(deviceRow.device)
-            color: Theme.foreground
-            font.family: Theme.fontFamily
+            text: BluetoothService.deviceIcon(deviceRow.device)
+            color: Theme.base05
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(16)
         }
 
@@ -362,9 +362,9 @@ Item {
 
             Text {
                 width: parent.width
-                text: ServiceBluetooth.deviceLabel(deviceRow.device)
-                color: Theme.foreground
-                font.family: Theme.fontFamily
+                text: BluetoothService.deviceLabel(deviceRow.device)
+                color: Theme.base05
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(12)
                 elide: Text.ElideRight
             }
@@ -377,15 +377,15 @@ Item {
                         return "Connecting…";
                     if (deviceRow.device.state === BluetoothDeviceState.Disconnecting)
                         return "Disconnecting…";
-                    if (ServiceBluetooth.isConnected(deviceRow.device)) {
+                    if (BluetoothService.isConnected(deviceRow.device)) {
                         if (deviceRow.device.batteryAvailable)
                             return "Connected · " + Math.round(Number(deviceRow.device.battery) * 100) + "%";
                         return "Connected";
                     }
                     return deviceRow.device.paired ? "Paired" : "Available";
                 }
-                color: Theme.muted
-                font.family: Theme.fontFamily
+                color: Theme.base04
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(11)
                 elide: Text.ElideRight
             }
@@ -401,13 +401,13 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 8
 
-            PanelRowActionButton {
+            RowActionButton {
                 visible: deviceRow.actionVisible
                 icon: deviceRow.actionIcon
                 onClicked: deviceRow.actionTriggered()
             }
 
-            PanelRowActionButton {
+            RowActionButton {
                 visible: deviceRow.secondaryActionVisible
                 icon: deviceRow.secondaryActionIcon
                 onClicked: deviceRow.secondaryActionTriggered()
@@ -419,10 +419,10 @@ Item {
             anchors.right: parent.right
             anchors.rightMargin: 10
             anchors.verticalCenter: parent.verticalCenter
-            text: ServiceBluetooth.isConnected(deviceRow.device) ? "󰂱"
+            text: BluetoothService.isConnected(deviceRow.device) ? "󰂱"
                 : (deviceRow.device.paired ? "󰌾" : "")
-            color: Theme.muted
-            font.family: Theme.fontFamily
+            color: Theme.base04
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(12)
         }
 

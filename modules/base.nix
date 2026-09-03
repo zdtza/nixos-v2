@@ -1,6 +1,4 @@
-# Headless-safe defaults: applies to any NixOS box regardless of GUI or
-# hardware. No GPU/laptop/desktop assumptions live here. Import directly
-# into a host's `imports` to use.
+# headless-safe defaults, no gpu/laptop/desktop assumptions live here
 { ... }:
 {
   nix.settings.experimental-features = [

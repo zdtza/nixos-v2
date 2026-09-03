@@ -6,10 +6,10 @@ pragma ComponentBehavior: Bound
 // so nothing is rebuilt on every hover.
 //
 // Left click activates an item, right click opens its menu, rendered by
-// PanelTrayMenu so it follows the system palette instead of the Qt default.
+// TrayMenu so it follows the system palette instead of the Qt default.
 //
 // Windows is appended as a synthetic entry: it exports no StatusNotifierItem,
-// so ServiceWindows polls systemd for it instead.
+// so WindowsService polls systemd for it instead.
 import QtQuick
 import Quickshell
 import Stylix
@@ -21,17 +21,17 @@ Item {
     id: root
 
     readonly property var items: SystemTray.items.values
-    readonly property bool opened: ServicePanel.activePanel === root
+    readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     property bool pinned: false
     property bool openedFromIpc: false
     property int selectedItemIndex: 0
-    readonly property int keyboardItemCount: items.length + (ServiceWindows.running ? 1 : 0)
+    readonly property int keyboardItemCount: items.length + (WindowsService.running ? 1 : 0)
     readonly property bool expanded: root.pinned || hover.hovered || root.opened
 
     // Normalizes Windows' plain action list to the same shape as a
-    // real DBus menu's entries, so PanelTrayMenu can render either.
-    readonly property var windowsMenuEntries: ServiceWindows.actions.map(action => ({
+    // real DBus menu's entries, so TrayMenu can render either.
+    readonly property var windowsMenuEntries: WindowsService.actions.map(action => ({
         text: action.label,
         isSeparator: false,
         enabled: true,
@@ -64,10 +64,10 @@ Item {
     }
 
     function toggleFromIpc(): void {
-        const closing = ServicePanel.activePanel === root
-            || ServicePanel.pendingPanel === root;
+        const closing = PanelService.activePanel === root
+            || PanelService.pendingPanel === root;
         openedFromIpc = true;
-        ServicePanel.toggle(root);
+        PanelService.toggle(root);
         if (!closing && keyboardItemCount > 0) {
             selectedItemIndex = 0;
             cycleSelection(0);
@@ -84,7 +84,7 @@ Item {
     function collapseTray(): void {
         pinned = false;
         dismissMenu();
-        ServicePanel.close(root);
+        PanelService.close(root);
     }
 
     function moveSelection(offset: int): void {
@@ -128,17 +128,17 @@ Item {
                 windowsMenuOpen = false;
                 menuLoader.trayItem = item;
                 menuLoader.anchorItem = entry;
-                ServicePanel.open(root);
+                PanelService.open(root);
             } else if (!item.onlyMenu) {
                 item.activate();
-                ServicePanel.close(root);
+                PanelService.close(root);
             }
             return;
         }
-        if (ServiceWindows.running) {
+        if (WindowsService.running) {
             windowsMenuOpen = true;
             windowsMenuLoader.anchorItem = windowsEntry;
-            ServicePanel.open(root);
+            PanelService.open(root);
         }
     }
 
@@ -196,7 +196,7 @@ Item {
         return "Active";
     }
 
-    visible: items.length > 0 || ServiceWindows.running
+    visible: items.length > 0 || WindowsService.running
     implicitWidth: row.implicitWidth
     implicitHeight: 25
 
@@ -210,7 +210,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 0
 
-        BarButton {
+        Button {
             id: chevron
 
             panel: root
@@ -219,7 +219,7 @@ Item {
             onClicked: {
                 root.pinned = !root.pinned;
                 if (!root.pinned)
-                    ServicePanel.close(root);
+                    PanelService.close(root);
             }
         }
 
@@ -236,7 +236,7 @@ Item {
 
             Behavior on implicitWidth {
                 NumberAnimation {
-                    duration: ServicePanel.slideDuration
+                    duration: PanelService.slideDuration
                     easing.type: Easing.OutCubic
                 }
             }
@@ -277,7 +277,7 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             width: 16
                             height: 2
-                            radius: ServicePanel.rounding
+                            radius: PanelService.rounding
                             // menuLoader.trayItem still points at the last item
                             // clicked, so the Windows menu has to be excluded here or
                             // that item lights up alongside it.
@@ -286,7 +286,7 @@ Item {
                                 || (root.opened && root.selectedItemIndex === entry.index)
                                 || (root.opened && !root.windowsMenuOpen && menuLoader.trayItem === entry.modelData)
                                 ? 1 : 0
-                            color: Theme.accent
+                            color: Theme.base0D
 
                             Behavior on opacity { NumberAnimation { duration: 120 } }
                         }
@@ -306,21 +306,21 @@ Item {
                                 if (entry.modelData.hasMenu) {
                                     // Same item toggles; another item transfers menu ownership.
                                     if (root.opened && !root.windowsMenuOpen && menuLoader.trayItem === entry.modelData) {
-                                        ServicePanel.close(root);
+                                        PanelService.close(root);
                                         return;
                                     }
 
                                     root.windowsMenuOpen = false;
                                     menuLoader.trayItem = entry.modelData;
                                     menuLoader.anchorItem = entry;
-                                    ServicePanel.open(root);
+                                    PanelService.open(root);
                                     return;
                                 }
 
                                 // Fall back to activation only when no menu exists.
                                 if (mouse.button === Qt.LeftButton && !entry.modelData.onlyMenu) {
                                     entry.modelData.activate();
-                                    ServicePanel.close(root);
+                                    PanelService.close(root);
                                 }
                             }
                         }
@@ -332,7 +332,7 @@ Item {
                 Item {
                     id: windowsEntry
 
-                    visible: ServiceWindows.running
+                    visible: WindowsService.running
                     implicitWidth: visible ? 30 : 0
                     implicitHeight: 25
 
@@ -353,13 +353,13 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: 16
                         height: 2
-                        radius: ServicePanel.rounding
+                        radius: PanelService.rounding
                         visible: opacity > 0
                         opacity: windowsMouse.containsMouse
                             || (root.opened && root.selectedItemIndex === root.items.length)
                             || (root.opened && root.windowsMenuOpen)
                             ? 1 : 0
-                        color: Theme.accent
+                        color: Theme.base0D
 
                         Behavior on opacity { NumberAnimation { duration: 120 } }
                     }
@@ -377,13 +377,13 @@ Item {
                             root.openedFromIpc = false;
                             root.selectedItemIndex = root.items.length;
                             if (root.opened && root.windowsMenuOpen) {
-                                ServicePanel.close(root);
+                                PanelService.close(root);
                                 return;
                             }
 
                             root.windowsMenuOpen = true;
                             windowsMenuLoader.anchorItem = windowsEntry;
-                            ServicePanel.open(root);
+                            PanelService.open(root);
                         }
                     }
                 }
@@ -401,7 +401,7 @@ Item {
             .concat(menuLoader.item?.openWindows ?? [])
             .concat(windowsMenuLoader.item?.openWindows ?? [])
 
-        onCleared: ServicePanel.close(root)
+        onCleared: PanelService.close(root)
     }
 
     Loader {
@@ -412,7 +412,7 @@ Item {
 
         active: root.opened && !root.windowsMenuOpen && !!trayItem
 
-        sourceComponent: PanelTrayMenu {
+        sourceComponent: TrayMenu {
             handle: menuLoader.trayItem?.menu ?? null
             anchorItem: menuLoader.anchorItem
             anchorWindow: root.QsWindow.window
@@ -420,7 +420,7 @@ Item {
             menuStatus: root.menuStatus(menuLoader.trayItem)
 
             onDismissRequested: root.dismissMenuFromEscape()
-            onCloseRequested: ServicePanel.close(root)
+            onCloseRequested: PanelService.close(root)
         }
     }
 
@@ -431,15 +431,15 @@ Item {
 
         active: root.opened && root.windowsMenuOpen
 
-        sourceComponent: PanelTrayMenu {
+        sourceComponent: TrayMenu {
             entries: root.windowsMenuEntries
             anchorItem: windowsMenuLoader.anchorItem
             anchorWindow: root.QsWindow.window
             menuTitle: "Windows"
-            menuStatus: ServiceWindows.running ? "Running" : "Stopped"
+            menuStatus: WindowsService.running ? "Running" : "Stopped"
 
             onDismissRequested: root.dismissMenuFromEscape()
-            onCloseRequested: ServicePanel.close(root)
+            onCloseRequested: PanelService.close(root)
         }
     }
 }

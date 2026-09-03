@@ -13,8 +13,8 @@ Item {
     id: root
 
     required property var screen
-    readonly property bool available: ServiceDisplay.available || ServiceDisplay.monitors.length > 0
-    readonly property bool opened: ServicePanel.activePanel === root
+    readonly property bool available: DisplayService.available || DisplayService.monitors.length > 0
+    readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     readonly property var scales: [1, 1.33, 1.6, 2, 3.13, 4]
     property int selectedScaleIndex: 0
@@ -24,8 +24,8 @@ Item {
     implicitHeight: indicator.implicitHeight
 
     function brightnessStatus(): string {
-        if (!ServiceDisplay.available) return "DISPLAY READY";
-        const value = ServiceDisplay.brightnessPercent;
+        if (!DisplayService.available) return "DISPLAY READY";
+        const value = DisplayService.brightnessPercent;
         if (value <= 10) return "THE GLOAMING";
         if (value <= 30) return "MOONLIGHT HAZE";
         if (value <= 50) return "SOFT MORNING";
@@ -39,8 +39,8 @@ Item {
             .replace(/0$/, "") + "x";
     }
 
-    onOpenedChanged: if (opened && ServiceDisplay.focusedMonitor) {
-        const currentScale = Number(ServiceDisplay.focusedMonitor.scale);
+    onOpenedChanged: if (opened && DisplayService.focusedMonitor) {
+        const currentScale = Number(DisplayService.focusedMonitor.scale);
         const index = scales.findIndex(scale => Math.abs(Number(scale) - currentScale) < 0.01);
         selectedScaleIndex = Math.max(0, index);
     }
@@ -49,13 +49,13 @@ Item {
         enabled: root.opened
         sequence: "Up"
         context: Qt.ApplicationShortcut
-        onActivated: ServiceDisplay.adjustBrightness(ServiceDisplay.brightnessStep)
+        onActivated: DisplayService.adjustBrightness(DisplayService.brightnessStep)
     }
     Shortcut {
         enabled: root.opened
         sequence: "Down"
         context: Qt.ApplicationShortcut
-        onActivated: ServiceDisplay.adjustBrightness(-ServiceDisplay.brightnessStep)
+        onActivated: DisplayService.adjustBrightness(-DisplayService.brightnessStep)
     }
     Shortcut {
         enabled: root.opened
@@ -71,73 +71,73 @@ Item {
             root.selectedScaleIndex + 1)
     }
     Shortcut {
-        enabled: root.opened && !!ServiceDisplay.focusedMonitor
+        enabled: root.opened && !!DisplayService.focusedMonitor
         sequence: "Return"
         context: Qt.ApplicationShortcut
-        onActivated: ServiceDisplay.setScale(Number(root.scales[root.selectedScaleIndex]))
+        onActivated: DisplayService.setScale(Number(root.scales[root.selectedScaleIndex]))
     }
     Shortcut {
-        enabled: root.opened && !!ServiceDisplay.focusedMonitor
+        enabled: root.opened && !!DisplayService.focusedMonitor
         sequence: "Enter"
         context: Qt.ApplicationShortcut
-        onActivated: ServiceDisplay.setScale(Number(root.scales[root.selectedScaleIndex]))
+        onActivated: DisplayService.setScale(Number(root.scales[root.selectedScaleIndex]))
     }
 
-    BarButton {
+    Button {
         id: indicator
         anchors.centerIn: parent
         panel: root
         text: "󰍹"
-        onClicked: ServicePanel.toggle(root)
-        onWheeled: wheel => ServiceDisplay.adjustBrightness(
-            wheel.angleDelta.y > 0 ? ServiceDisplay.brightnessStep : -ServiceDisplay.brightnessStep)
+        onClicked: PanelService.toggle(root)
+        onWheeled: wheel => DisplayService.adjustBrightness(
+            wheel.angleDelta.y > 0 ? DisplayService.brightnessStep : -DisplayService.brightnessStep)
     }
 
     HyprlandFocusGrab {
         active: root.opened
         windows: [panel, root.QsWindow.window]
-        onCleared: ServicePanel.close(root)
+        onCleared: PanelService.close(root)
     }
 
-    PanelDrawer {
+    Drawer {
         id: panel
         anchorItem: root
         anchorWindow: root.QsWindow.window
         open: root.opened
-        onCloseRequested: ServicePanel.close(root)
+        onCloseRequested: PanelService.close(root)
         contentSpacing: 14
-        implicitWidth: 460 + ServicePanel.shellRounding
+        implicitWidth: 460 + PanelService.shellRounding
         implicitHeight: panelContent.implicitHeight
             + contentTopMargin + contentBottomMargin
 
-        PanelHero {
+        Hero {
             width: parent.width
             icon: "󰍹"
             title: "Display"
             status: root.brightnessStatus()
         }
 
-        PanelSeparator {}
+        Separator {}
 
-        PanelSectionHeader {
+        SectionHeader {
             title: "BRIGHTNESS"
-            detail: ServiceDisplay.available
-                ? ServiceDisplay.brightnessPercent + "%" : "UNAVAILABLE"
+            detail: DisplayService.available
+                ? DisplayService.brightnessPercent + "%" : "UNAVAILABLE"
         }
 
-        PanelSlider {
+        Slider {
             width: parent.width
-            enabled: ServiceDisplay.available
-            value: ServiceDisplay.brightnessPercent / 100
-            onValueEdited: value => ServiceDisplay.setBrightness(Math.round(value * 100))
+            enabled: DisplayService.available
+            value: DisplayService.brightnessPercent / 100
+            onValueEdited: value => DisplayService.setBrightness(Math.round(value * 100))
         }
 
-        PanelSeparator {}
+        Separator {}
 
-        PanelSectionHeader {
+        SectionHeader {
             title: "SCALE"
-            detail: ServiceDisplay.focusedMonitor
-                ? root.scaleLabel(ServiceDisplay.focusedMonitor.scale) : "—"
+            detail: DisplayService.focusedMonitor
+                ? root.scaleLabel(DisplayService.focusedMonitor.scale) : "—"
         }
 
         Row {
@@ -150,42 +150,42 @@ Item {
             Repeater {
                 model: root.scales
 
-                PanelOptionButton {
+                OptionButton {
                     id: scaleButton
                     required property var modelData
                     required property int index
-                    readonly property bool selected: ServiceDisplay.focusedMonitor
-                        && Math.abs(Number(ServiceDisplay.focusedMonitor.scale)
+                    readonly property bool selected: DisplayService.focusedMonitor
+                        && Math.abs(Number(DisplayService.focusedMonitor.scale)
                             - Number(modelData)) < 0.01
 
                     width: scaleRow.cellWidth
                     active: selected
                     keyboardFocused: scaleButton.index === root.selectedScaleIndex
-                    enabled: !!ServiceDisplay.focusedMonitor
+                    enabled: !!DisplayService.focusedMonitor
                     onHoveredChanged: if (hovered)
                         root.selectedScaleIndex = scaleButton.index
                     onActivated: {
                         root.selectedScaleIndex = scaleButton.index;
-                        ServiceDisplay.setScale(Number(scaleButton.modelData));
+                        DisplayService.setScale(Number(scaleButton.modelData));
                     }
 
                     Text {
                         anchors.centerIn: parent
                         text: root.scaleLabel(Number(scaleButton.modelData))
-                        color: Theme.foreground
-                        font.family: Theme.fontFamily
+                        color: Theme.base05
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(12)
                     }
                 }
             }
         }
 
-        PanelSeparator {}
+        Separator {}
 
-        PanelSectionHeader {
+        SectionHeader {
             title: "DISPLAYS"
-            detail: ServiceDisplay.monitors.length > 1
-                ? ServiceDisplay.monitors.length + " ACTIVE" : ""
+            detail: DisplayService.monitors.length > 1
+                ? DisplayService.monitors.length + " ACTIVE" : ""
         }
 
         Column {
@@ -193,21 +193,21 @@ Item {
             spacing: 4
 
             Repeater {
-                model: ServiceDisplay.monitors
+                model: DisplayService.monitors
 
                 Rectangle {
                     id: monitorRow
                     required property var modelData
-                    readonly property bool focused: ServiceDisplay.focusedMonitor === modelData
+                    readonly property bool focused: DisplayService.focusedMonitor === modelData
 
                     width: parent.width
                     height: 36
-                    radius: ServicePanel.rounding
+                    radius: PanelService.rounding
                     color: focused
-                        ? Utils.alpha(Theme.foreground, 0.08)
+                        ? Utils.alpha(Theme.base05, 0.08)
                         : "transparent"
                     border.width: focused ? 1 : 0
-                    border.color: Utils.alpha(Theme.foreground, 0.25)
+                    border.color: Utils.alpha(Theme.base05, 0.25)
 
                     Text {
                         id: monitorIcon
@@ -215,8 +215,8 @@ Item {
                         anchors.leftMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
                         text: "󰍹"
-                        color: Theme.foreground
-                        font.family: Theme.fontFamily
+                        color: Theme.base05
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(14)
                     }
 
@@ -227,8 +227,8 @@ Item {
                         anchors.rightMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
                         text: String(monitorRow.modelData.name)
-                        color: Theme.foreground
-                        font.family: Theme.fontFamily
+                        color: Theme.base05
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(12)
                         elide: Text.ElideRight
                     }
@@ -240,8 +240,8 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: monitorRow.focused
                         text: "󰄬"
-                        color: Theme.foreground
-                        font.family: Theme.fontFamily
+                        color: Theme.base05
+                        font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(12)
                     }
                 }

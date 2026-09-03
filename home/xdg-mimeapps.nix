@@ -7,7 +7,9 @@
       "text/html" = "firefox.desktop";
       "x-scheme-handler/http" = "firefox.desktop";
       "x-scheme-handler/https" = "firefox.desktop";
+      "x-scheme-handler/file" = "code.desktop";
       "application/pdf" = "firefox.desktop";
+      "inode/directory" = "org.gnome.Nautilus.desktop";
 
       "image/png" = "imv.desktop";
       "image/jpeg" = "imv.desktop";
@@ -30,21 +32,21 @@
 
       "application/x-code-workspace" = "code.desktop";
 
-      "text/english" = "nvim.desktop";
-      "text/plain" = "nvim.desktop";
-      "text/x-makefile" = "nvim.desktop";
-      "text/x-c++hdr" = "nvim.desktop";
-      "text/x-c++src" = "nvim.desktop";
-      "text/x-chdr" = "nvim.desktop";
-      "text/x-csrc" = "nvim.desktop";
-      "text/x-java" = "nvim.desktop";
-      "text/x-moc" = "nvim.desktop";
-      "text/x-pascal" = "nvim.desktop";
-      "text/x-tcl" = "nvim.desktop";
-      "text/x-tex" = "nvim.desktop";
-      "text/x-c" = "nvim.desktop";
-      "text/x-c++" = "nvim.desktop";
-      "application/x-shellscript" = "nvim.desktop";
+      "text/english" = "code.desktop";
+      "text/plain" = "code.desktop";
+      "text/x-makefile" = "code.desktop";
+      "text/x-c++hdr" = "code.desktop";
+      "text/x-c++src" = "code.desktop";
+      "text/x-chdr" = "code.desktop";
+      "text/x-csrc" = "code.desktop";
+      "text/x-java" = "code.desktop";
+      "text/x-moc" = "code.desktop";
+      "text/x-pascal" = "code.desktop";
+      "text/x-tcl" = "code.desktop";
+      "text/x-tex" = "code.desktop";
+      "text/x-c" = "code.desktop";
+      "text/x-c++" = "code.desktop";
+      "application/x-shellscript" = "code.desktop";
     };
   };
 }

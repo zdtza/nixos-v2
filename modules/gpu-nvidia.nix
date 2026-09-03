@@ -1,12 +1,9 @@
-# Proprietary NVIDIA driver stack. Mutually exclusive with gpu-amd.nix on a
-# given host — import one or the other, not both.
+# proprietary nvidia driver stack, mutually exclusive with gpu-amd.nix
 { config, ... }:
 {
   services.xserver.videoDrivers = [ "nvidia" ];
 
-  # Load nvidia KMS in initrd so the console (and greetd/tuigreet) has a
-  # mode-set display ready before userspace starts, instead of a black
-  # screen until Xorg/Wayland later grabs the GPU.
+  # loading nvidia kms in initrd, avoids a black screen before greetd grabs the gpu
   boot.initrd.kernelModules = [ "nvidia" ];
   hardware.nvidia = {
     modesetting.enable = true;

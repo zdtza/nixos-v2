@@ -29,12 +29,12 @@ PanelWindow {
 
     function registerPanels(): void {
         for (const entry of panelEntries())
-            ServicePanel.registerPanel(entry[0], entry[1], bar.screen);
+            PanelService.registerPanel(entry[0], entry[1], bar.screen);
     }
 
     function unregisterPanels(): void {
         for (const entry of panelEntries())
-            ServicePanel.unregisterPanel(entry[0], entry[1]);
+            PanelService.unregisterPanel(entry[0], entry[1]);
     }
 
     Component.onCompleted: registerPanels()
@@ -43,17 +43,17 @@ PanelWindow {
     screen: modelData
     // Layer-shell surfaces cannot stay mapped at zero height. Keep a
     // non-exclusive transparent pixel above the output so popup anchors survive.
-    color: ServicePanel.barVisible ? Theme.dark_background : "transparent"
-    implicitHeight: ServicePanel.barVisible ? ServicePanel.barHeight : 1
-    exclusionMode: ServicePanel.barVisible ? ExclusionMode.Auto : ExclusionMode.Ignore
+    color: PanelService.barVisible ? Theme.base01 : "transparent"
+    implicitHeight: PanelService.barVisible ? PanelService.barHeight : 1
+    exclusionMode: PanelService.barVisible ? ExclusionMode.Auto : ExclusionMode.Ignore
 
     mask: Region {
-        width: ServicePanel.barVisible ? bar.width : 0
-        height: ServicePanel.barVisible ? bar.height : 0
+        width: PanelService.barVisible ? bar.width : 0
+        height: PanelService.barVisible ? bar.height : 0
     }
 
     WlrLayershell.namespace: "quickshell:bar"
-    WlrLayershell.keyboardFocus: ServicePanel.activePanel?.requiresKeyboardFocus
+    WlrLayershell.keyboardFocus: PanelService.activePanel?.requiresKeyboardFocus
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
     anchors {
@@ -61,11 +61,11 @@ PanelWindow {
         left: true
         right: true
     }
-    margins.top: ServicePanel.barVisible ? 0 : -1
+    margins.top: PanelService.barVisible ? 0 : -1
 
     PanelWindow {
         screen: bar.screen
-        visible: ServicePanel.barVisible
+        visible: PanelService.barVisible
         color: "transparent"
         implicitHeight: 36
         exclusionMode: ExclusionMode.Ignore
@@ -78,15 +78,15 @@ PanelWindow {
             left: true
             right: true
         }
-        margins.top: ServicePanel.barHeight
+        margins.top: PanelService.barHeight
 
         mask: Region { width: 0; height: 0 }
 
         Rectangle {
-            y: -ServicePanel.barHeight
+            y: -PanelService.barHeight
             width: parent.width
-            height: ServicePanel.barHeight
-            color: Theme.dark_background
+            height: PanelService.barHeight
+            color: Theme.base01
             layer.enabled: true
             layer.effect: ShellShadow {}
         }
@@ -96,7 +96,7 @@ PanelWindow {
     // This background target dismisses active popup when unused bar area is hit.
     MouseArea {
         anchors.fill: parent
-        onClicked: ServicePanel.closeActive()
+        onClicked: PanelService.closeActive()
     }
 
     // Keep keyboard focus on bar without intercepting pointer input. Popup
@@ -106,10 +106,10 @@ PanelWindow {
         width: 1
         height: 1
         opacity: 0
-        focus: !!ServicePanel.activePanel
-            && ServicePanel.activePanel !== quickToggles.timerPanel
-            && !(ServicePanel.activePanel === network && network.passwordSsid !== "")
-            && !!ServicePanel.activePanel.requiresKeyboardFocus
+        focus: !!PanelService.activePanel
+            && PanelService.activePanel !== quickToggles.timerPanel
+            && !(PanelService.activePanel === network && network.passwordSsid !== "")
+            && !!PanelService.activePanel.requiresKeyboardFocus
     }
 
     TextInput {
@@ -119,7 +119,7 @@ PanelWindow {
         width: 1
         height: 1
         opacity: 0
-        enabled: ServicePanel.activePanel === quickToggles.timerPanel
+        enabled: PanelService.activePanel === quickToggles.timerPanel
         focus: enabled
         inputMask: "00:00"
         text: quickToggles.timerPanel?.keyboardInputText ?? "00:00"
@@ -134,7 +134,7 @@ PanelWindow {
         Keys.onUpPressed: quickToggles.timerPanel.selectTimer(-1)
         Keys.onDeletePressed: if (quickToggles.timerPanel.selectedTimerIndex >= 0)
             quickToggles.timerPanel.removeSelectedTimer()
-        Keys.onEscapePressed: ServicePanel.close(quickToggles.timerPanel)
+        Keys.onEscapePressed: PanelService.close(quickToggles.timerPanel)
     }
 
     TextInput {
@@ -144,7 +144,7 @@ PanelWindow {
         width: 1
         height: 1
         opacity: 0
-        enabled: ServicePanel.activePanel === network && network.passwordSsid !== ""
+        enabled: PanelService.activePanel === network && network.passwordSsid !== ""
         focus: enabled
         echoMode: TextInput.Password
         text: network.passwordText
@@ -160,35 +160,35 @@ PanelWindow {
 
     // --- left ---
     RowLayout {
-        spacing: ServicePanel.barSpacing
+        spacing: PanelService.barSpacing
         anchors {
             leftMargin: 6
             left: parent.left
             verticalCenter: parent.verticalCenter
         }
 
-        BarWorkspaces {
+        Workspaces {
             screen: bar.screen
         }
     }
 
     // --- center ---
-    BarClock {
+    Clock {
         id: clock
         anchors.centerIn: parent
     }
 
-    BarTimerBadge {
+    TimerBadge {
         id: timerBadge
         anchors {
             left: clock.right
-            leftMargin: ServicePanel.barSpacing
+            leftMargin: PanelService.barSpacing
             verticalCenter: clock.verticalCenter
         }
         panelTarget: quickToggles.timerPanel
     }
 
-    BarQuickToggles {
+    QuickToggles {
         id: quickToggles
 
         anchors {
@@ -196,39 +196,39 @@ PanelWindow {
             // Clock and toggle slots both include transparent horizontal
             // padding. Pull their bounds together so visible content keeps
             // the same compact gap as neighboring bar icons.
-            rightMargin: ServicePanel.barSpacing - 8
+            rightMargin: PanelService.barSpacing - 8
             verticalCenter: clock.verticalCenter
         }
     }
 
     // --- right ---
     RowLayout {
-        spacing: ServicePanel.barSpacing
+        spacing: PanelService.barSpacing
         anchors {
             right: parent.right
             rightMargin: 12
             verticalCenter: parent.verticalCenter
         }
 
-        PanelTray { id: tray }
+        Tray { id: tray }
 
-        PanelVolume {
+        VolumePanel {
             id: volume
             screen: bar.screen
         }
 
-        PanelBluetooth { id: bluetooth }
+        BluetoothPanel { id: bluetooth }
 
-        PanelDisplay {
+        DisplayPanel {
             id: display
             screen: bar.screen
         }
 
-        PanelNetwork { id: network }
+        NetworkPanel { id: network }
 
-        PanelBattery { id: battery }
+        BatteryPanel { id: battery }
 
-        // PanelPower {
+        // PowerPanel {
         //     id: power
         // }
     }

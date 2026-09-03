@@ -14,12 +14,12 @@ Item {
     id: root
 
     required property var screen
-    readonly property bool available: !!ServiceAudio.output
-    readonly property bool opened: ServicePanel.activePanel === root
+    readonly property bool available: !!AudioService.output
+    readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
-    readonly property int outputPercent: Math.round(ServiceAudio.outputVolume * 100)
-    readonly property int inputPercent: Math.round(ServiceAudio.inputVolume * 100)
-    readonly property var keyboardDevices: ServiceAudio.outputs.concat(ServiceAudio.inputs)
+    readonly property int outputPercent: Math.round(AudioService.outputVolume * 100)
+    readonly property int inputPercent: Math.round(AudioService.inputVolume * 100)
+    readonly property var keyboardDevices: AudioService.outputs.concat(AudioService.inputs)
     property int selectedDeviceIndex: 0
 
     visible: available
@@ -37,25 +37,25 @@ Item {
         const device = keyboardDevices[selectedDeviceIndex];
         if (!device)
             return;
-        if (selectedDeviceIndex < ServiceAudio.outputs.length)
-            ServiceAudio.selectOutput(device);
+        if (selectedDeviceIndex < AudioService.outputs.length)
+            AudioService.selectOutput(device);
         else
-            ServiceAudio.selectInput(device);
+            AudioService.selectInput(device);
     }
 
     function adjustSelectedVolume(offset: real): void {
-        if (selectedDeviceIndex < ServiceAudio.outputs.length)
-            ServiceAudio.adjustOutputVolume(offset * ServiceAudio.outputStep);
+        if (selectedDeviceIndex < AudioService.outputs.length)
+            AudioService.adjustOutputVolume(offset * AudioService.outputStep);
         else
-            ServiceAudio.adjustInputVolume(offset * ServiceAudio.inputStep);
+            AudioService.adjustInputVolume(offset * AudioService.inputStep);
     }
 
     function outputIcon(): string {
-        if (ServiceAudio.outputMuted)
+        if (AudioService.outputMuted)
             return "󰝟";
-        if (ServiceAudio.outputVolume >= 0.6)
+        if (AudioService.outputVolume >= 0.6)
             return "󰕾";
-        if (ServiceAudio.outputVolume >= 0.2)
+        if (AudioService.outputVolume >= 0.2)
             return "󰖀";
         return "󰕿";
     }
@@ -67,24 +67,24 @@ Item {
     }
 
     function volumeStatus(): string {
-        if (ServiceAudio.outputMuted)
+        if (AudioService.outputMuted)
             return "MUTED";
-        if (ServiceAudio.outputVolume <= 0)
+        if (AudioService.outputVolume <= 0)
             return "SILENT";
-        if (ServiceAudio.outputVolume < 0.2)
+        if (AudioService.outputVolume < 0.2)
             return "WHISPER QUIET";
-        if (ServiceAudio.outputVolume < 0.5)
+        if (AudioService.outputVolume < 0.5)
             return "EASY LISTENING";
-        if (ServiceAudio.outputVolume < 0.8)
+        if (AudioService.outputVolume < 0.8)
             return "LOUD AND CLEAR";
-        if (ServiceAudio.outputVolume <= 1)
+        if (AudioService.outputVolume <= 1)
             return "TURNED UP";
         return "OVERDRIVE";
     }
 
     onOpenedChanged: if (opened)
         selectedDeviceIndex = Math.max(0,
-            ServiceAudio.outputs.indexOf(ServiceAudio.output));
+            AudioService.outputs.indexOf(AudioService.output));
 
     Shortcut {
         enabled: root.opened
@@ -126,15 +126,15 @@ Item {
         enabled: root.opened
         sequence: "Space"
         context: Qt.ApplicationShortcut
-        onActivated: ServiceAudio.toggleOutputMute()
+        onActivated: AudioService.toggleOutputMute()
     }
     PwNodePeakMonitor {
         id: inputPeak
-        node: ServiceAudio.input
-        enabled: root.opened && !!node && !ServiceAudio.inputMuted
+        node: AudioService.input
+        enabled: root.opened && !!node && !AudioService.inputMuted
     }
 
-    BarButton {
+    Button {
         id: indicator
         anchors.centerIn: parent
         panel: root
@@ -142,32 +142,32 @@ Item {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton)
-                ServiceAudio.toggleOutputMute();
+                AudioService.toggleOutputMute();
             else
-                ServicePanel.toggle(root);
+                PanelService.toggle(root);
         }
-        onWheeled: wheel => ServiceAudio.adjustOutputVolume(
-            wheel.angleDelta.y > 0 ? ServiceAudio.outputStep : -ServiceAudio.outputStep)
+        onWheeled: wheel => AudioService.adjustOutputVolume(
+            wheel.angleDelta.y > 0 ? AudioService.outputStep : -AudioService.outputStep)
     }
 
     HyprlandFocusGrab {
         active: root.opened
         windows: [panel, root.QsWindow.window]
-        onCleared: ServicePanel.close(root)
+        onCleared: PanelService.close(root)
     }
 
-    PanelDrawer {
+    Drawer {
         id: panel
         anchorItem: root
         anchorWindow: root.QsWindow.window
         open: root.opened
-        onCloseRequested: ServicePanel.close(root)
+        onCloseRequested: PanelService.close(root)
         contentSpacing: 14
-        implicitWidth: 420 + ServicePanel.shellRounding
+        implicitWidth: 420 + PanelService.shellRounding
         implicitHeight: panelContent.implicitHeight
             + contentTopMargin + contentBottomMargin
 
-        PanelHero {
+        Hero {
             width: parent.width
             icon: root.outputIcon()
             title: "Audio"
@@ -175,25 +175,25 @@ Item {
             trailingWidth: 44
             trailingHeight: 24
 
-            PanelToggleSwitch {
+            ToggleSwitch {
                 anchors.fill: parent
-                checked: !ServiceAudio.outputMuted
-                onToggled: ServiceAudio.toggleOutputMute()
+                checked: !AudioService.outputMuted
+                onToggled: AudioService.toggleOutputMute()
             }
         }
 
-        PanelSeparator {}
+        Separator {}
 
-        PanelSectionHeader {
+        SectionHeader {
             title: "OUTPUT"
             detail: root.outputPercent + "%"
         }
 
-        PanelSlider {
+        Slider {
             width: parent.width
-            value: ServiceAudio.outputVolume / ServiceAudio.maximumVolume
-            fillColor: ServiceAudio.outputMuted ? Theme.muted : Theme.foreground
-            onValueEdited: value => ServiceAudio.setOutputVolume(value * ServiceAudio.maximumVolume)
+            value: AudioService.outputVolume / AudioService.maximumVolume
+            fillColor: AudioService.outputMuted ? Theme.base04 : Theme.base05
+            onValueEdited: value => AudioService.setOutputVolume(value * AudioService.maximumVolume)
         }
 
         Column {
@@ -202,16 +202,16 @@ Item {
 
             Text {
                 width: parent.width
-                height: ServiceAudio.outputs.length === 0 ? implicitHeight : 0
-                visible: ServiceAudio.outputs.length === 0
+                height: AudioService.outputs.length === 0 ? implicitHeight : 0
+                visible: AudioService.outputs.length === 0
                 text: "No audio outputs"
-                color: Theme.muted
-                font.family: Theme.fontFamily
+                color: Theme.base04
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(12)
             }
 
             Repeater {
-                model: ServiceAudio.outputs
+                model: AudioService.outputs
 
                 DeviceRow {
                     id: outputDeviceRow
@@ -219,29 +219,29 @@ Item {
                     required property int index
                     node: modelData
                     icon: "󰓃"
-                    selected: ServiceAudio.output === modelData
+                    selected: AudioService.output === modelData
                     keyboardSelected: outputDeviceRow.index === root.selectedDeviceIndex
                     onActivated: {
                         root.selectedDeviceIndex = outputDeviceRow.index;
-                        ServiceAudio.selectOutput(modelData);
+                        AudioService.selectOutput(modelData);
                     }
                 }
             }
         }
 
-        PanelSeparator {}
+        Separator {}
 
-        PanelSectionHeader {
+        SectionHeader {
             title: "INPUT"
-            detail: ServiceAudio.inputMuted ? "MUTED" : root.inputPercent + "%"
+            detail: AudioService.inputMuted ? "MUTED" : root.inputPercent + "%"
         }
 
-        PanelSlider {
+        Slider {
             width: parent.width
-            enabled: !!ServiceAudio.input
-            value: ServiceAudio.inputVolume / ServiceAudio.maximumVolume
-            fillColor: ServiceAudio.inputMuted ? Theme.muted : Theme.foreground
-            onValueEdited: value => ServiceAudio.setInputVolume(value * ServiceAudio.maximumVolume)
+            enabled: !!AudioService.input
+            value: AudioService.inputVolume / AudioService.maximumVolume
+            fillColor: AudioService.inputMuted ? Theme.base04 : Theme.base05
+            onValueEdited: value => AudioService.setInputVolume(value * AudioService.maximumVolume)
         }
 
         Item {
@@ -257,16 +257,16 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                radius: ServicePanel.rounding
-                color: Utils.alpha(Theme.foreground, 0.12)
+                radius: PanelService.rounding
+                color: Utils.alpha(Theme.base05, 0.12)
 
                 Rectangle {
                     height: parent.height
                     width: parent.width * Math.max(0,
                         Math.min(1, inputLevelMeter.level))
-                    radius: ServicePanel.rounding
-                    color: ServiceAudio.inputMuted
-                        ? Theme.muted : Theme.foreground
+                    radius: PanelService.rounding
+                    color: AudioService.inputMuted
+                        ? Theme.base04 : Theme.base05
                     Behavior on width { NumberAnimation { duration: 55 } }
                 }
             }
@@ -278,16 +278,16 @@ Item {
 
             Text {
                 width: parent.width
-                height: ServiceAudio.inputs.length === 0 ? implicitHeight : 0
-                visible: ServiceAudio.inputs.length === 0
+                height: AudioService.inputs.length === 0 ? implicitHeight : 0
+                visible: AudioService.inputs.length === 0
                 text: "No audio inputs"
-                color: Theme.muted
-                font.family: Theme.fontFamily
+                color: Theme.base04
+                font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(12)
             }
 
             Repeater {
-                model: ServiceAudio.inputs
+                model: AudioService.inputs
 
                 DeviceRow {
                     id: inputDeviceRow
@@ -295,13 +295,13 @@ Item {
                     required property int index
                     node: modelData
                     icon: "󰍬"
-                    selected: ServiceAudio.input === modelData
-                    keyboardSelected: ServiceAudio.outputs.length + inputDeviceRow.index
+                    selected: AudioService.input === modelData
+                    keyboardSelected: AudioService.outputs.length + inputDeviceRow.index
                         === root.selectedDeviceIndex
                     onActivated: {
-                        root.selectedDeviceIndex = ServiceAudio.outputs.length
+                        root.selectedDeviceIndex = AudioService.outputs.length
                             + inputDeviceRow.index;
-                        ServiceAudio.selectInput(modelData);
+                        AudioService.selectInput(modelData);
                     }
                 }
             }
@@ -320,12 +320,12 @@ Item {
 
         width: parent.width
         height: 36
-        radius: ServicePanel.rounding
+        radius: PanelService.rounding
         color: keyboardSelected
-            ? Utils.alpha(Theme.foreground, 0.08)
+            ? Utils.alpha(Theme.base05, 0.08)
             : "transparent"
         border.width: keyboardSelected ? 1 : 0
-        border.color: Utils.alpha(Theme.foreground, 0.25)
+        border.color: Utils.alpha(Theme.base05, 0.25)
 
         Text {
             id: deviceIcon
@@ -333,8 +333,8 @@ Item {
             anchors.leftMargin: 10
             anchors.verticalCenter: parent.verticalCenter
             text: deviceRow.icon
-            color: Theme.foreground
-            font.family: Theme.fontFamily
+            color: Theme.base05
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(14)
         }
 
@@ -345,8 +345,8 @@ Item {
             anchors.rightMargin: 10
             anchors.verticalCenter: parent.verticalCenter
             text: root.nodeLabel(deviceRow.node)
-            color: Theme.foreground
-            font.family: Theme.fontFamily
+            color: Theme.base05
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(12)
             elide: Text.ElideRight
         }
@@ -358,8 +358,8 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             visible: deviceRow.selected
             text: "󰄬"
-            color: Theme.foreground
-            font.family: Theme.fontFamily
+            color: Theme.base05
+            font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(12)
         }
 
@@ -369,10 +369,10 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onContainsMouseChanged: if (containsMouse) {
-                const index = ServiceAudio.outputs.indexOf(deviceRow.node);
+                const index = AudioService.outputs.indexOf(deviceRow.node);
                 root.selectedDeviceIndex = index >= 0 ? index
-                    : ServiceAudio.outputs.length
-                        + ServiceAudio.inputs.indexOf(deviceRow.node);
+                    : AudioService.outputs.length
+                        + AudioService.inputs.indexOf(deviceRow.node);
             }
             onClicked: deviceRow.activated()
         }

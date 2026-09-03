@@ -17,8 +17,8 @@ Item {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         text: root.title
-        color: Qt.darker(Theme.foreground, 1.4)
-        font.family: Theme.fontFamily
+        color: Qt.darker(Theme.base05, 1.4)
+        font.family: Theme.monospace
         font.pixelSize: Utils.scaledFont(11)
         font.bold: true
         font.letterSpacing: 1
@@ -30,8 +30,8 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: root.detail
         visible: text !== ""
-        color: Theme.muted
-        font.family: Theme.fontFamily
+        color: Theme.base04
+        font.family: Theme.monospace
         font.pixelSize: Utils.scaledFont(11)
         font.bold: true
         font.letterSpacing: 1

@@ -92,7 +92,7 @@
       base09 = "#eb927b"; # orange
       base0A = "#e0af68"; # yellow
       base0B = "#9ece6a"; # green
-      base0C = "#449dab"; # cyan
+      base0C = "#0db9d7"; # cyan
       base0D = "#7aa2f7"; # blue
       base0E = "#ad8ee6"; # magenta
       base0F = "#75493d"; # brown

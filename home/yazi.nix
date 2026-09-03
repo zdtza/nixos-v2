@@ -26,7 +26,7 @@ in
   xdg = {
     configFile."yazi/theme.toml".text = ''
       [mgr]
-      cwd             = { fg = "${colors.base0B}" }
+      cwd             = { fg = "${colors.base0A}" }
       find_keyword    = { fg = "${colors.base0A}", bold = true, underline = true }
       find_position   = { fg = "${colors.base09}", bg = "reset", bold = true }
       marker_copied   = { fg = "${colors.base0B}",  bg = "${colors.base0B}" }
@@ -123,8 +123,8 @@ in
       [icon]
       dirs = []
       prepend_conds = [
-        { if = "dir & hovered", text = "󰝰", fg = "${colors.base0E}" },
-        { if = "dir",           text = "󰉋", fg = "${colors.base0E}" },
+        { if = "dir & hovered", text = "󰝰", fg = "${colors.base0C}" },
+        { if = "dir",           text = "󰉋", fg = "${colors.base0C}" },
       ]
 
       [filetype]
@@ -135,8 +135,8 @@ in
         { mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "${colors.base0A}" },
         { mime = "application/{pdf,doc,rtf}", fg = "${colors.base05}" },
         { mime = "vfs/{absent,stale}", fg = "${colors.base04}" },
-        { url = "*/", fg = "${colors.base05}" },
-        { url = "*", fg = "${colors.base05}" },
+        { url = "*/", fg = "${colors.base0D}" },
+        { url = "*", fg = "${colors.base07}" },
       ]
     '';
   };

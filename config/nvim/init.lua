@@ -28,11 +28,20 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 	end,
 })
 
+-- colorscheme: comes from the home-manager-selected theme (modules/themes.nix)
+-- via NVIM_THEME_LUA, so this stays in sync with the rest of the desktop.
+-- Falls back to tokyonight so this file still works stand-alone (no Nix).
+local theme = { plugin = "https://github.com/folke/tokyonight.nvim", colorscheme = "tokyonight-night", lualine = "tokyonight", setup = function() end }
+if vim.env.NVIM_THEME_LUA then
+	local ok, loaded = pcall(dofile, vim.env.NVIM_THEME_LUA)
+	if ok then theme = loaded end
+end
+
 -- plugins: keep this list short. add a url, run :Pack sync.
 vim.pack.add({
 	"https://github.com/nvim-treesitter/nvim-treesitter",
 	"https://github.com/neovim/nvim-lspconfig",
-	"https://github.com/folke/tokyonight.nvim",
+	theme.plugin,
 	"https://github.com/folke/snacks.nvim",
 	"https://github.com/echasnovski/mini.icons",
 	"https://github.com/MagicDuck/grug-far.nvim",
@@ -43,7 +52,8 @@ vim.pack.add({
 	"https://github.com/nvim-lualine/lualine.nvim",
 })
 
-vim.cmd.colorscheme("tokyonight-night")
+theme.setup()
+vim.cmd.colorscheme(theme.colorscheme)
 
 -- treesitter: highlight only, install parsers on demand
 require("nvim-treesitter").install({ "lua", "vim", "vimdoc", "nix", "bash", "markdown" })
@@ -214,7 +224,7 @@ require("noice").setup({
 vim.opt.laststatus = 3
 require("lualine").setup({
 	options = {
-		theme = "tokyonight",
+		theme = theme.lualine,
 		globalstatus = true,
 		component_separators = "",
 		section_separators = "",

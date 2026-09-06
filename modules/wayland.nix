@@ -7,6 +7,10 @@
 }:
 let
   cfg = config.wayland-desktop;
+  # NixOS-level stylix requires *some* scheme/image; home-manager's
+  # theme.name (home/theme.nix) overrides both for the real, switchable
+  # selection, this is only the fixed pre-login/system-level fallback
+  fallbackTheme = (import ../home/themes/list.nix).tokyo-night;
 in
 {
   options.wayland-desktop.autoLoginUser = lib.mkOption {
@@ -87,7 +91,8 @@ in
   stylix = {
     enable = true;
     polarity = "dark";
-    image = ../assets/wallpapers/winding-road.jpg;
+    base16Scheme = fallbackTheme.colors;
+    image = fallbackTheme.wallpaper;
 
     # keeping boot and virtual consoles on their default palette
     targets.console.enable = false;
@@ -99,25 +104,8 @@ in
       size = 24;
     };
 
-    # default tokyo night theme
-    base16Scheme = {
-      base00 = "#1a1b26"; # background
-      base01 = "#13141c"; # dark_background
-      base02 = "#292e42"; # selection
-      base03 = "#414868"; # muted
-      base04 = "#565f89"; # dark_foreground
-      base05 = "#a9b1d6"; # foreground
-      base06 = "#b4bee6"; # light_foreground
-      base07 = "#c0caf5"; # bright_foreground
-      base08 = "#f7768e"; # red
-      base09 = "#eb927b"; # orange
-      base0A = "#e0af68"; # yellow
-      base0B = "#9ece6a"; # green
-      base0C = "#3dcce5"; # cyan
-      base0D = "#7aa2f7"; # blue
-      base0E = "#ad8ee6"; # magenta
-      base0F = "#75493d"; # brown
-    };
+    # base16Scheme and image come from home-manager's theme.name (home/theme.nix),
+    # which overrides these NixOS-level defaults -- see stylix's mkDefault forwarding
 
     fonts = {
       sizes = {

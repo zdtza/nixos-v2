@@ -1,6 +1,13 @@
 # headless-safe defaults, no gpu/laptop/desktop assumptions live here
 { ... }:
 {
+  # automatic garbage collection of old generations, and prune the store weekly
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 7d";
+  };
+
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"

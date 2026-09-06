@@ -38,7 +38,7 @@ in
     # picks stylix.base16Scheme + wallpaper from home/themes/list.nix;
     # change and run `sw` (no sudo, no nixos-rebuild -- see home/shell.nix),
     # or run scripts/theme-select.sh
-    theme.name = "gruvbox-dark";
+    theme.name = "tokyo-night";
   };
 
   networking.hostName = "legion"; # lenovo legion y540

@@ -29,7 +29,12 @@
     functions.sw = ''
       command git -C "$HOME/.src/nixos" add --all; or return $status
       set -l activation (command nix build "$HOME/.src/nixos#nixosConfigurations."(hostname)".config.home-manager.users.$USER.home.activationPackage" --no-link --print-out-paths --option warn-dirty false); or return $status
-      "$activation/activate"
+      "$activation/activate"; or return $status
+      # yazi/gtk/qt read their config files fresh on every launch, already themed.
+      # nvim/fzf bake theme values into env vars sourced once at shell startup
+      # (NVIM_THEME_LUA, FZF_DEFAULT_OPTS) -- re-source config.fish so *this*
+      # shell picks up the new values too, not just shells opened after `sw`.
+      source "$HOME/.config/fish/config.fish"
     '';
 
     functions.up = ''

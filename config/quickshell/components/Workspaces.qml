@@ -10,7 +10,6 @@ pragma ComponentBehavior: Bound
 // active or occupied, muted otherwise.
 import QtQuick
 import Quickshell
-import Stylix
 import Quickshell.Hyprland
 import "../services"
 import ".."

@@ -6,7 +6,6 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Services.Notifications
 import Quickshell.Wayland
-import Stylix
 import "../services"
 import ".."
 

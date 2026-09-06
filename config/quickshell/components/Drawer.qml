@@ -1,7 +1,6 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import Stylix
 import "../services"
 
 // Screen-edge drawer used by right-side system panels.

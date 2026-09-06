@@ -3,7 +3,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
-import Stylix
 import "../services"
 import ".."
 

@@ -2,7 +2,7 @@
   imports = [
     ./xdg-mimeapps.nix
     ./appearance.nix
-    ./theme.nix
+    (import ./theme.nix).homeModule
     ./kitty.nix
     ./shell.nix
     ./hyprland.nix

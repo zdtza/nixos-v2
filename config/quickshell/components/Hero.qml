@@ -1,5 +1,5 @@
 import QtQuick
-import Stylix
+import "../services"
 import ".."
 
 // Shared panel heading: icon, title/status labels, optional trailing control.

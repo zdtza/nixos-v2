@@ -10,7 +10,6 @@ pragma ComponentBehavior: Bound
 // { text, isSeparator, enabled, hasChildren, checkState, triggered() }.
 import QtQuick
 import Quickshell
-import Stylix
 import "../services"
 import ".."
 

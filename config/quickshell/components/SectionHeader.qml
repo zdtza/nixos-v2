@@ -1,5 +1,5 @@
 import QtQuick
-import Stylix
+import "../services"
 import ".."
 
 // Shared uppercase section heading with optional right-aligned status.

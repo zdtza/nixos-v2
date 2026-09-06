@@ -12,7 +12,6 @@ pragma ComponentBehavior: Bound
 // so WindowsService polls systemd for it instead.
 import QtQuick
 import Quickshell
-import Stylix
 import Quickshell.Hyprland
 import Quickshell.Services.SystemTray
 import "../services"

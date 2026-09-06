@@ -6,7 +6,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
-import Stylix
 import "../components"
 import "../services"
 import ".."

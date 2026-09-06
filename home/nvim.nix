@@ -6,7 +6,7 @@
 
 let
   # same theme.name selected in home/theme.nix
-  nvimTheme = (import ./themes/list.nix).${config.theme.name}.neovim;
+  nvimTheme = (import ./theme.nix).themes.${config.theme.name}.neovim;
 
   themeLua = pkgs.writeText "nvim-theme.lua" ''
     return {

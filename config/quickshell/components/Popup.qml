@@ -1,7 +1,6 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import Stylix
 import "../services"
 
 // Centered launcher-style drawer used by clock and quick-toggle panels.

@@ -3,7 +3,6 @@
 // remain visible on the right, with inactive controls ordered to their left.
 import QtQuick
 import Quickshell.Services.Pipewire
-import Stylix
 import "../panels"
 import "../services"
 import ".."

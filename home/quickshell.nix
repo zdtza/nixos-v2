@@ -1,6 +1,7 @@
 {
   pkgs,
   config,
+  lib,
   ...
 }:
 
@@ -8,42 +9,40 @@ let
   colors = config.lib.stylix.colors.withHashtag;
   fonts = config.stylix.fonts;
 
-  # stylix to quickshell bridge for colors and fonts
-  stylixQmlModule = pkgs.linkFarm "quickshell-stylix-qml-module" {
-    "Stylix/Theme.qml" = builtins.toFile "Theme.qml" ''
-      pragma Singleton
-
-      import QtQuick
-
-      QtObject {
-          readonly property color base00: "${colors.base00}"
-          readonly property color base01: "${colors.base01}"
-          readonly property color base02: "${colors.base02}"
-          readonly property color base03: "${colors.base03}"
-          readonly property color base04: "${colors.base04}"
-          readonly property color base05: "${colors.base05}"
-          readonly property color base06: "${colors.base06}"
-          readonly property color base07: "${colors.base07}"
-          readonly property color base08: "${colors.base08}"
-          readonly property color base09: "${colors.base09}"
-          readonly property color base0A: "${colors.base0A}"
-          readonly property color base0B: "${colors.base0B}"
-          readonly property color base0C: "${colors.base0C}"
-          readonly property color base0D: "${colors.base0D}"
-          readonly property color base0E: "${colors.base0E}"
-          readonly property color base0F: "${colors.base0F}"
-          readonly property url wallpaper: "file://${config.stylix.image}"
-
-          readonly property string monospace: "${fonts.monospace.name}"
-          readonly property string sansSerif: "${fonts.sansSerif.name}"
-          readonly property int fontSize: 13
-      }
-    '';
-    "Stylix/qmldir" = builtins.toFile "qmldir" ''
-      module Stylix
-      singleton Theme 1.0 Theme.qml
-    '';
-  };
+  # theme data for Quickshell, read at runtime by services/Theme.qml. Plain
+  # JSON on purpose, not a generated QML module imported via QML2_IMPORT_PATH:
+  # that path was a Nix store path that changed every theme switch, which
+  # either forced a full quickshell respawn (re-triggering the lock screen's
+  # autolock) or, pointed at through a stable symlink instead, silently never
+  # reloaded at all -- a swapped symlink target isn't visible to a file
+  # watcher watching the file that was actually opened. This file is
+  # rewritten *in place* by the activation script below (same inode, real
+  # IN_MODIFY), which a FileView{watchChanges:true} does actually pick up.
+  themeJson = pkgs.writeText "quickshell-theme.json" (
+    builtins.toJSON {
+      inherit (colors)
+        base00
+        base01
+        base02
+        base03
+        base04
+        base05
+        base06
+        base07
+        base08
+        base09
+        base0A
+        base0B
+        base0C
+        base0D
+        base0E
+        base0F
+        ;
+      wallpaper = "${config.stylix.image}";
+      monospace = fonts.monospace.name;
+      sansSerif = fonts.sansSerif.name;
+    }
+  );
 
   # notification for timer completion
   timerAlert = pkgs.writeShellApplication {
@@ -63,9 +62,19 @@ let
   };
 in
 {
+  # `cp` (no --remove-destination) overwrites the destination's content in
+  # place instead of unlink+recreate, so its inode -- and any inotify watch
+  # on it -- survives across `sw`.
+  home.activation.quickshellTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run mkdir -p "$HOME/.cache/quickshell"
+    # first cp ever creates the file inheriting the Nix store source's
+    # read-only mode -- force it writable before every copy, in place
+    run touch "$HOME/.cache/quickshell/theme.json"
+    run chmod u+w "$HOME/.cache/quickshell/theme.json"
+    run cp ${themeJson} "$HOME/.cache/quickshell/theme.json"
+  '';
+
   home.sessionVariables = {
-    # set the shell env so we can run qs from any terminal for debugging
-    QML2_IMPORT_PATH = stylixQmlModule;
     # default icon for legacy apps
     QS_FALLBACK_APP_ICON = "${pkgs.adwaita-icon-theme}/share/icons/Adwaita/symbolic/categories/applications-system-symbolic.svg";
     # passing quickshell the system time zone
@@ -97,7 +106,6 @@ in
 
     Service = {
       Environment = [
-        "QML2_IMPORT_PATH=${stylixQmlModule}"
         "QS_FALLBACK_APP_ICON=${pkgs.adwaita-icon-theme}/share/icons/Adwaita/symbolic/categories/applications-system-symbolic.svg"
         "TZDIR=${config.home.sessionVariables.TZDIR}"
         # locks in-process on startup (cold boot autologin, greeter login, or

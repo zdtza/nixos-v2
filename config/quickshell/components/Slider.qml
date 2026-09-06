@@ -1,5 +1,5 @@
 import QtQuick
-import Stylix
+import "../services"
 import ".."
 
 // Square value slider shared by panel controls (volume, brightness, color

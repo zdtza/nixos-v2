@@ -5,7 +5,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Services.Pipewire
-import Stylix
 import "../components"
 import "../services"
 import ".."

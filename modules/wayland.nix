@@ -10,7 +10,7 @@ let
   # NixOS-level stylix requires *some* scheme/image; home-manager's
   # theme.name (home/theme.nix) overrides both for the real, switchable
   # selection, this is only the fixed pre-login/system-level fallback
-  fallbackTheme = (import ../home/themes/list.nix).tokyo-night;
+  fallbackTheme = (import ../home/theme.nix).themes.tokyo-night;
 in
 {
   options.wayland-desktop.autoLoginUser = lib.mkOption {
@@ -49,6 +49,11 @@ in
 
   # secret service backend for gvfs/nautilus mount credentials
   services.gnome.gnome-keyring.enable = true;
+
+  # dconf/gsettings: GTK3+/libadwaita apps watch these live over D-Bus, so
+  # mirroring theme.name here (home/appearance.nix) re-themes already-open
+  # GTK apps on `sw`, not just ones launched afterward
+  programs.dconf.enable = true;
 
   # tui login manager, launches hyprland through uwsm on login
   # wrapped in a script, greetd's toml parser chokes on a long inline command

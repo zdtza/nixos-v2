@@ -5,7 +5,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Bluetooth
 import Quickshell.Hyprland
-import Stylix
 import "../components"
 import "../services"
 import ".."

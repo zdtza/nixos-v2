@@ -48,7 +48,7 @@ in
   xdg = {
     configFile."yazi/theme.toml".text = ''
       [mgr]
-      cwd             = { fg = "${colors.base0A}" }
+      cwd             = { fg = "${colors.base0B}" }
       find_keyword    = { fg = "${colors.base0A}", bold = true, underline = true }
       find_position   = { fg = "${colors.base09}", bg = "reset", bold = true }
       marker_copied   = { fg = "${colors.base0B}",  bg = "${colors.base0B}" }
@@ -59,7 +59,7 @@ in
       count_cut       = { bg = "${colors.base08}" }
       count_selected  = { bg = "${colors.base0A}" }
       border_symbol   = "│"
-      border_style    = { fg = "${colors.base0E}" }
+      border_style    = { fg = "${colors.base02}" }
 
       [indicator]
       parent  = { fg = "${colors.base07}", bg = "${colors.base02}" }
@@ -68,17 +68,17 @@ in
       padding = { open = "▐", close = "▌" }
 
       [tabs]
-      active    = { fg = "${colors.base02}", bg = "${colors.base0E}", bold = true }
+      active    = { fg = "${colors.base00}", bg = "${colors.base0E}", bold = true }
       inactive  = { fg = "${colors.base0E}", bg = "${colors.base02}" }
       sep_inner = { open = " ", close = " " }
       sep_outer = { open = " ", close = " " }
 
       [mode]
-      normal_main = { fg = "${colors.base02}", bg = "${colors.base0D}", bold = true }
-      normal_alt  = { fg = "${colors.base0D}", bg = "${colors.base02}" }
-      select_main = { fg = "${colors.base02}", bg = "${colors.base0C}", bold = true }
+      normal_main = { fg = "${colors.base00}", bg = "${colors.base0C}", bold = true }
+      normal_alt  = { fg = "${colors.base0C}", bg = "${colors.base02}" }
+      select_main = { fg = "${colors.base00}", bg = "${colors.base0C}", bold = true }
       select_alt  = { fg = "${colors.base0C}", bg = "${colors.base02}" }
-      unset_main  = { fg = "${colors.base02}", bg = "${colors.base09}", bold = true }
+      unset_main  = { fg = "${colors.base00}", bg = "${colors.base09}", bold = true }
       unset_alt   = { fg = "${colors.base09}", bg = "${colors.base02}" }
 
       [status]
@@ -114,7 +114,7 @@ in
 
       [cmp]
       border   = { fg = "${colors.base0F}" }
-      active   = { fg = "${colors.base02}", bg = "${colors.base0F}" }
+      active   = { fg = "${colors.base00}", bg = "${colors.base0F}" }
       inactive = { fg = "${colors.base05}" }
 
       [tasks]
@@ -133,7 +133,7 @@ in
       on      = { fg = "${colors.base0C}" }
       run     = { fg = "${colors.base05}" }
       hovered = { reversed = true, bold = true }
-      footer  = { fg = "${colors.base02}", bg = "${colors.base0D}" }
+      footer  = { fg = "${colors.base00}", bg = "${colors.base0D}" }
 
       [spot]
       border   = { fg = "${colors.base09}" }

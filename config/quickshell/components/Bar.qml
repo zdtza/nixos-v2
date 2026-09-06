@@ -3,7 +3,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Stylix
 import Quickshell.Wayland
 import "../panels"
 import "../services"

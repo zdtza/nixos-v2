@@ -18,8 +18,9 @@ o.undofile = true
 o.clipboard = "unnamedplus"
 o.splitright = true
 o.splitbelow = true
-o.scrolloff = 8
+o.scrolloff = 0
 o.termguicolors = true
+o.cursorline = true
 
 vim.api.nvim_create_autocmd("TextYankPost", {
 	callback = function()
@@ -63,6 +64,18 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		vim.keymap.set("n", "K", vim.lsp.buf.hover, bufopts)
 		vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, bufopts)
 		vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, bufopts)
+
+		local client = vim.lsp.get_client_by_id(args.data.client_id)
+		if client and client:supports_method("textDocument/completion") then
+			vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
+		end
+	end,
+})
+
+-- format with whatever LSP server is attached, before the write hits disk
+vim.api.nvim_create_autocmd("BufWritePre", {
+	callback = function(args)
+		vim.lsp.buf.format({ bufnr = args.buf, timeout_ms = 2000 })
 	end,
 })
 
@@ -80,26 +93,11 @@ require("which-key").add({
 -- snacks: file picker, file explorer (replaces netrw by default), lazygit
 require("snacks").setup({
 	explorer = {}, -- enables snacks explorer as netrw replacement
-	picker = {
-		sources = {
-			explorer = { layout = { preview = "main" } },
-		},
-	},
+	scroll = {}, -- animates <C-f>/<C-b>/<C-d>/<C-u>/etc, no extra keymaps needed
 })
 vim.keymap.set("n", "<leader><leader>", function() Snacks.picker.files() end, { desc = "Find files" })
 vim.keymap.set("n", "<leader>fg", function() Snacks.picker.grep() end, { desc = "Grep" })
 vim.keymap.set("n", "<leader>fb", function() Snacks.picker.buffers() end, { desc = "Buffers" })
--- preview ("main") needs some other window to render into; if the explorer
--- is the only window left, open one so refocusing can still show a preview
-local function ensure_main_window()
-	for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-		local ft = vim.bo[vim.api.nvim_win_get_buf(w)].filetype
-		if not ft:match("^snacks") then
-			return
-		end
-	end
-	vim.cmd("vsplit")
-end
 
 -- explorer and grug-far are mutually exclusive; only one may be open
 local function close_grug_far()
@@ -113,17 +111,15 @@ end
 vim.keymap.set("n", "<leader>e", function()
 	local explorer = Snacks.picker.get({ source = "explorer" })[1]
 	if explorer then
-		ensure_main_window()
-		explorer:focus()
-		explorer:show_preview()
+		if explorer:is_focused() then
+			explorer:close()
+		else
+			explorer:focus()
+		end
 	else
 		close_grug_far()
 		Snacks.explorer()
 	end
-end, { desc = "Focus explorer" })
-vim.keymap.set("n", "<leader>E", function()
-	close_grug_far()
-	Snacks.explorer()
 end, { desc = "Toggle explorer" })
 vim.keymap.set("n", "<leader>gg", function() Snacks.lazygit() end, { desc = "LazyGit" })
 
@@ -225,10 +221,22 @@ require("lualine").setup({
 	},
 	sections = {
 		lualine_a = { "mode" },
-		lualine_b = { "branch", "diff" },
-		lualine_c = { "diagnostics", { "filetype", icon_only = true }, { "filename", path = 1 } },
-		lualine_x = {},
+		lualine_b = { "branch" },
+		lualine_c = {
+			{
+				"diagnostics",
+				symbols = { error = " ", warn = " ", info = " ", hint = " " },
+			},
+			{ "filetype", icon_only = true },
+			{ "filename", path = 1 },
+		},
+		lualine_x = {
+			{
+				"diff",
+				symbols = { added = " ", modified = " ", removed = " " },
+			},
+		},
 		lualine_y = { "progress" },
-		lualine_z = { "location" },
+		lualine_z = { "location", { function() return os.date("%R") end, icon = "" } },
 	},
 })

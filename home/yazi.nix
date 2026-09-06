@@ -19,6 +19,28 @@ in
         ];
         show_hidden = false;
       };
+
+      # default "*/" open rule uses the "edit" opener ($EDITOR, i.e. nvim);
+      # spawn a nested yazi instead so folders opened via the opener path
+      # (symlinked dirs, chooser, etc.) behave like entering a directory
+      opener = {
+        folder = [
+          {
+            run = "kitty -d %s -e yazi";
+            desc = "Open in new Yazi";
+            orphan = true;
+            for = "unix";
+          }
+        ];
+      };
+      open = {
+        prepend_rules = [
+          {
+            url = "*/";
+            use = "folder";
+          }
+        ];
+      };
     };
   };
 

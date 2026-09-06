@@ -14,6 +14,10 @@ in
   # windows 11 in a container (dockurr/windows: kvm + qemu inside docker)
   windows.user = user;
 
+  # cold boot straight into hyprland, skipping the tuigreet prompt;
+  # quickshell locks the session on startup so the screen isn't exposed
+  wayland-desktop.autoLoginUser = user;
+
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -57,7 +61,10 @@ in
   };
 
   # pam policy for quickshell's secure wayland session lock
-  security.pam.services.quickshell = { };
+  # enableGnomeKeyring: without it, unlocking the screen doesn't re-feed the
+  # password to gnome-keyring, so it can end up locked/stale and apps like
+  # the WhatsApp webapp prompt for a password again
+  security.pam.services.quickshell.enableGnomeKeyring = true;
 
   # trusting local mkcert dev certs system-wide, so chromium webapps and firefox
   # accept them; regenerate from ~/.local/share/mkcert/rootCA.pem if this host's CA rotates
@@ -75,7 +82,6 @@ in
     firefox # web browser
     fzf # fuzzy finder
     eza # better ls
-    yazi # file manager
     slurp # screenshot selection tool
     brightnessctl # adjust screen brightness
     vscode # code editor
@@ -117,6 +123,7 @@ in
     gh # GitHub CLI
     gdu # disk usage analyzer
     lazydocker # Docker UI
+    obsidian # note-taking app
   ];
 
   networking = {

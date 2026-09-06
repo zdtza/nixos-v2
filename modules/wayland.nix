@@ -2,9 +2,20 @@
 {
   pkgs,
   lib,
+  config,
   ...
 }:
+let
+  cfg = config.wayland-desktop;
+in
 {
+  options.wayland-desktop.autoLoginUser = lib.mkOption {
+    type = lib.types.nullOr lib.types.str;
+    default = null;
+    description = "User to auto-login as on cold boot, straight into hyprland (bypassing the greeter). Session still starts locked.";
+  };
+
+  config = {
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
@@ -39,11 +50,21 @@
   # wrapped in a script, greetd's toml parser chokes on a long inline command
   services.greetd = {
     enable = true;
-    settings.default_session.command = lib.getExe (
-      pkgs.writeShellScriptBin "tuigreet-session" ''
-        exec ${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-user-session --cmd "uwsm start hyprland-uwsm.desktop"
-      ''
-    );
+    settings = {
+      default_session.command = lib.getExe (
+        pkgs.writeShellScriptBin "tuigreet-session" ''
+          exec ${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-user-session --cmd "uwsm start hyprland-uwsm.desktop"
+        ''
+      );
+    } // lib.optionalAttrs (cfg.autoLoginUser != null) {
+      # cold-boot straight into hyprland, no greeter; quickshell locks the
+      # session on startup (see home/quickshell.nix) so nothing's exposed.
+      # falls back to default_session (the greeter) if this session ever exits.
+      initial_session = {
+        command = "uwsm start hyprland-uwsm.desktop";
+        user = cfg.autoLoginUser;
+      };
+    };
   };
   security.pam.services.greetd.enableGnomeKeyring = true;
 
@@ -92,7 +113,7 @@
       base09 = "#eb927b"; # orange
       base0A = "#e0af68"; # yellow
       base0B = "#9ece6a"; # green
-      base0C = "#0db9d7"; # cyan
+      base0C = "#3dcce5"; # cyan
       base0D = "#7aa2f7"; # blue
       base0E = "#ad8ee6"; # magenta
       base0F = "#75493d"; # brown
@@ -107,13 +128,13 @@
       };
 
       serif = {
-        package = pkgs.dejavu_fonts;
-        name = "Dejavu Serif";
+        package = pkgs.source-serif-pro;
+        name = "Source Serif Pro";
       };
 
       sansSerif = {
-        package = pkgs.dejavu_fonts;
-        name = "Dejavu Sans";
+        package = pkgs.inter;
+        name = "Inter";
       };
 
       monospace = {
@@ -126,5 +147,6 @@
         name = "Noto Color Emoji";
       };
     };
+  };
   };
 }

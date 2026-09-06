@@ -94,9 +94,19 @@ Scope {
         implicitWidth: 450
         exclusionMode: ExclusionMode.Ignore
 
-        // Keep layer surface height stable while cards are removed. Resizing
-        // layer surface during model destruction stretches final card frame.
-        mask: Region { item: notificationColumn }
+        readonly property int panelPadding: 10
+        readonly property real panelHeight: notificationColumn.implicitHeight > 0
+            ? notificationColumn.implicitHeight + panelPadding * 2 : 0
+        // Same top-left corner treatment as Drawer/BatteryPanel: this stays
+        // square (radius 0) and a same-colour Canvas carves the concave
+        // curve next to it, so the panel reads as continuing the bar's
+        // rounded corner inward instead of having its own convex corner.
+        readonly property real cornerSize: PanelService.barVisible ? PanelService.shellRounding : 0
+
+        // Bounding box for the whole row (corner notch + panel), not just
+        // the panel rect -- keeps the layer surface height stable while
+        // entries are removed instead of stretching the final entry frame.
+        mask: Region { width: window.panelHeight > 0 ? window.width : 0; height: window.panelHeight }
 
         WlrLayershell.namespace: "quickshell:notifications"
         WlrLayershell.layer: WlrLayer.Overlay
@@ -107,30 +117,98 @@ Scope {
             bottom: true
         }
 
-        margins {
-            top: (PanelService.barVisible ? PanelService.barHeight : 0) + 8
-            right: PanelService.barGap + PanelService.gapRightOffset
+        // Flush against the bar's underside and the screen's right edge,
+        // same as every other system panel (Drawer/BatteryPanel), instead
+        // of floating with a gap on either side.
+        margins.top: PanelService.barVisible ? PanelService.barHeight : 0
+
+        Canvas {
+            id: cornerCanvas
+            width: window.cornerSize
+            height: Math.min(width, window.panelHeight)
+
+            onPaint: {
+                const context = getContext("2d");
+                context.clearRect(0, 0, width, width);
+                context.fillStyle = Theme.base01;
+                context.beginPath();
+                context.moveTo(0, 0);
+                context.lineTo(width, 0);
+                context.lineTo(width, width);
+                context.arc(0, width, width, 0, -Math.PI / 2, true);
+                context.fill();
+            }
         }
 
-        Column {
-            id: notificationColumn
+        // Shadow-only copy behind the visible panel. The MultiEffect shader
+        // softens the *whole* layered texture including the source rect's
+        // own edges (not just the cast shadow), which put a 1px translucent
+        // fringe along the flush top edge even with clip: true. Keeping the
+        // effect on an invisible twin behind the real fill means only the
+        // shadow (which spills outside the rect on the right/bottom, where
+        // it's supposed to) is soft -- the opaque fill on top stays crisp.
+        Rectangle {
+            x: panelBg.x
+            width: panelBg.width
+            height: panelBg.height
+            color: Theme.base01
+            radius: panelBg.radius
+            topLeftRadius: 0
+            topRightRadius: 0
+            bottomRightRadius: 0
+            layer.enabled: true
+            layer.effect: ShellShadow {}
+        }
 
-            width: parent.width
-            spacing: 8
+        // One shared panel background behind the whole stack -- same fill
+        // and corner radius as the rest of the system panels -- instead of
+        // each notification being its own separately-rounded floating card.
+        Rectangle {
+            id: panelBg
 
-            Repeater {
-                model: server.trackedNotifications
+            x: window.cornerSize
+            width: window.width - window.cornerSize
+            height: window.panelHeight
+            color: Theme.base01
+            radius: PanelService.shellRounding
+            topLeftRadius: 0
+            topRightRadius: 0
+            // Right edge sits flush against the screen edge top to bottom,
+            // so it stays a straight line -- only the left side (the one
+            // that floats clear of the screen edge) keeps a rounded corner.
+            bottomRightRadius: 0
 
-                NotificationCard {
-                    required property Notification modelData
-                    notification: modelData
+            Column {
+                id: notificationColumn
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                    right: parent.right
+                    margins: window.panelPadding
+                }
+                spacing: 4
+
+                Repeater {
+                    model: server.trackedNotifications
+
+                    Column {
+                        id: rowWrapper
+                        required property Notification modelData
+                        required property int index
+                        width: notificationColumn.width
+                        spacing: 4
+
+                        Separator { visible: rowWrapper.index > 0 }
+
+                        NotificationCard { notification: rowWrapper.modelData }
+                    }
                 }
             }
         }
     }
 
-    // Single transient notification styled after the shell's square panel
-    // cards. Only ever instantiated by the Repeater above.
+    // Single transient notification row, one entry in the shared panel
+    // above. Only ever instantiated by the Repeater above.
     component NotificationCard: Item {
         id: card
 
@@ -143,13 +221,6 @@ Scope {
             if (notification.expireTimeout > 0)
                 return Math.round(notification.expireTimeout);
             return notification.urgency === NotificationUrgency.Critical ? 10000 : 6000;
-        }
-
-        function urgencyColor(): color {
-            if (notification.urgency === NotificationUrgency.Critical)
-                return Theme.base08;
-            else
-                return Utils.alpha(Theme.base0D, 0.9);
         }
 
         function normalizedIdentity(value: string): string {
@@ -206,8 +277,8 @@ Scope {
                 notification.dismiss();
         }
 
-        width: 450
-        implicitHeight: textContent.implicitHeight + 22
+        width: notificationColumn.width
+        implicitHeight: textContent.implicitHeight + 16
         height: implicitHeight
 
         Timer {
@@ -216,36 +287,14 @@ Scope {
             onTriggered: card.close(true)
         }
 
-        // Accent bar is this full-card rounded rect showing through down
-        // the left edge; the actual background is a second rounded rect of
-        // the same radius layered on top, inset 4px from the left. Sharing
-        // one radius lets their corners nest without computing per-corner
-        // insets, and both are solid fills (no Rectangle.border), which is
-        // what actually caused the old top/right/bottom strips to visibly
-        // smear for a frame when the layer-surface mask resizes on close.
+        // Plain hover highlight, same treatment as rows in the other
+        // panels (e.g. network list entries), no per-card background.
         Rectangle {
-            id: accentBase
             anchors.fill: parent
-            radius: PanelService.rounding
-            color: card.urgencyColor()
-            layer.enabled: true
-            layer.effect: ShellShadow {}
+            radius: PanelService.shellRounding
+            color: notificationMouse.containsMouse ? Utils.alpha(Theme.base05, 0.08) : "transparent"
 
-            Rectangle {
-                anchors {
-                    fill: parent
-                    leftMargin: 4
-                }
-                radius: PanelService.rounding
-                color: notificationMouse.containsMouse ? Theme.base00 : Theme.base01
-                // Two coincident-radius rects both antialiasing their corner curve
-                // leave a 1px seam where the accent bar bleeds through on the sides
-                // meant to fully cover it. This one's AA only matters on the
-                // straight left inset edge, which doesn't need it, so turn it off.
-                antialiasing: false
-
-                Behavior on color { ColorAnimation { duration: 120 } }
-            }
+            Behavior on color { ColorAnimation { duration: 120 } }
         }
 
         Column {
@@ -254,9 +303,9 @@ Scope {
                 left: parent.left
                 right: parent.right
                 top: parent.top
-                leftMargin: 24
-                rightMargin: 20
-                topMargin: 14
+                leftMargin: 12
+                rightMargin: 12
+                topMargin: 8
             }
             spacing: 10
 
@@ -268,9 +317,9 @@ Scope {
                 wrapMode: Text.Wrap
                 elide: Text.ElideRight
                 maximumLineCount: 2
-                font.family: Theme.sansSerif
-                font.pixelSize: 14
-                font.weight: Font.Bold
+                font.family: Theme.monospace
+                font.pixelSize: 13
+                font.weight: Font.DemiBold
             }
 
             Text {
@@ -282,7 +331,7 @@ Scope {
                 wrapMode: Text.Wrap
                 elide: Text.ElideRight
                 maximumLineCount: 4
-                font.family: Theme.sansSerif
+                font.family: Theme.monospace
                 font.pixelSize: 12
                 lineHeight: 1.2
             }

@@ -11,6 +11,10 @@ Item {
     property bool inputEnabled: true
     property bool responseVisible: false
     property bool showWallpaper: true
+    // Independent of showWallpaper: Polkit's window is fully transparent and
+    // relies on this dim scrim alone to darken the desktop behind it. The
+    // lock screen has its own opaque background already, so it opts out.
+    property bool dimBackground: true
     property alias text: passwordInput.text
     readonly property alias input: passwordInput
 
@@ -29,6 +33,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
+        visible: root.dimBackground
         color: Utils.alpha(Theme.base00, root.showWallpaper ? 0.35 : 0.55)
     }
 
@@ -63,7 +68,14 @@ Item {
             font.pixelSize: Utils.scaledFont(22)
             font.letterSpacing: 2
             onAccepted: root.accepted()
-            Keys.onPressed: event => root.keyPressed(event)
+            Keys.onPressed: event => {
+                if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
+                    passwordInput.text = "";
+                    event.accepted = true;
+                    return;
+                }
+                root.keyPressed(event);
+            }
         }
     }
 }

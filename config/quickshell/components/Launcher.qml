@@ -194,10 +194,21 @@ Scope {
             return -1;
         }
 
+        // Debounced separately from search.text so the frame's height
+        // (bound to results.length) doesn't re-animate on every keystroke
+        // while typing fast.
+        property string query: ""
+
+        Timer {
+            id: queryDebounce
+            interval: 150
+            onTriggered: window.query = search.text
+        }
+
         readonly property var results: {
-            const tokens = search.text.toLowerCase().split(" ").filter(token => token !== "");
+            const tokens = window.query.toLowerCase().split(" ").filter(token => token !== "");
             if (tokens.length === 0)
-                return window.entries;
+                return [];
 
             const matches = [];
             for (const item of window.entries) {
@@ -213,7 +224,32 @@ Scope {
                 if (tier !== -1)
                     matches.push({ item, tier });
             }
-            return matches.sort((a, b) => a.tier - b.tier).map(match => match.item);
+            const found = matches.sort((a, b) => a.tier - b.tier).map(match => match.item);
+            // No installed app matches -- offer to search the web / NixOS
+            // packages for the typed term instead of a dead-end empty list.
+            // Skipped while apps are still loading so this can't flash before
+            // real matches have a chance to appear.
+            if (found.length === 0 && window.entries.length > 0)
+                return window.fallbackResults();
+            return found;
+        }
+
+        function fallbackResults(): var {
+            const term = window.query;
+            return [
+                {
+                    isFallback: true,
+                    entry: { name: "Search the web", icon: "firefox" },
+                    command: ["firefox",
+                        `https://www.google.com/search?q=${encodeURIComponent(term)}`]
+                },
+                {
+                    isFallback: true,
+                    entry: { name: "Search packages", icon: "nix-snowflake" },
+                    command: ["firefox",
+                        `https://search.nixos.org/packages?channel=unstable&query=${encodeURIComponent(term)}`]
+                }
+            ];
         }
 
         // Hover-select is ignored until the pointer actually moves after the
@@ -226,33 +262,6 @@ Scope {
         // stationary cursor still reports a position once input starts.
         property var armPosition: null
 
-        property var menuEntry: null
-        property real menuX: 0
-        property real menuY: 0
-        property int menuActionIndex: 0
-        readonly property bool menuOpen: menuEntry !== null
-        readonly property var menuActions: menuEntry?.actions ?? []
-
-        function openContextMenu(entry: DesktopEntry, item: Item, localX: real, localY: real): void {
-            if (!entry)
-                return;
-            const point = item.mapToItem(null, localX, localY);
-            window.menuX = point.x;
-            window.menuY = point.y;
-            window.menuActionIndex = 0;
-            window.menuEntry = entry;
-        }
-
-        function closeContextMenu(): void {
-            window.menuEntry = null;
-            window.menuActionIndex = 0;
-        }
-
-        function moveContextSelection(offset: int): void {
-            menuActionIndex = Math.max(0,
-                Math.min(menuActions.length, menuActionIndex + offset));
-        }
-
         function moveAppSelection(offset: int): void {
             if (results.length === 0) {
                 appList.currentIndex = -1;
@@ -261,30 +270,6 @@ Scope {
             appList.currentIndex = Math.max(0, Math.min(results.length - 1,
                 (appList.currentIndex < 0 ? 0 : appList.currentIndex) + offset));
             appList.positionViewAtIndex(appList.currentIndex, ListView.Contain);
-        }
-
-        function activateContextSelection(): void {
-            const entry = menuEntry;
-            if (!entry)
-                return;
-            if (menuActionIndex === 0) {
-                closeContextMenu();
-                launch(entry);
-                return;
-            }
-            const action = menuActions[menuActionIndex - 1];
-            if (!action)
-                return;
-            launchDetached(action.command, entry.workingDirectory);
-            closeContextMenu();
-            root.open = false;
-        }
-
-        function openSelectedContextMenu(): void {
-            const item = appList.currentItem;
-            if (!item?.entry)
-                return;
-            openContextMenu(item.entry, item, item.width - 10, item.height / 2);
         }
 
         function launchDetached(command: var, workingDirectory: string): void {
@@ -305,18 +290,47 @@ Scope {
             root.open = false;
         }
 
+        // Fallback rows (web/NixOS search) aren't desktop entries -- no
+        // window to track, just fire and forget the browser command.
+        function launchFallback(item: var): void {
+            launchDetached(item.command, "");
+            root.open = false;
+        }
+
+        // If Enter is pressed before the debounce timer fires, results still
+        // reflect the stale query. Flush it immediately so the freshly typed
+        // text has a chance to match, and jump to its top result rather than
+        // launching whatever was selected under the old query.
+        function launchSelection(): void {
+            if (queryDebounce.running) {
+                queryDebounce.stop();
+                window.query = search.text;
+                appList.currentIndex = window.results.length > 0 ? 0 : -1;
+            }
+            const current = appList.currentItem;
+            if (current?.isFallback)
+                window.launchFallback(current.modelData);
+            else
+                window.launch(current?.entry ?? null);
+        }
+
         Connections {
             target: root
 
             function onOpenChanged(): void {
-                window.closeContextMenu();
                 window.hoverSelectReady = false;
                 window.armPosition = null;
+                // Reset immediately on close (while hidden) rather than on
+                // open, so the frame is already collapsed to its empty-state
+                // height before it's shown again — otherwise the height
+                // Behavior animates the shrink visibly on the next open.
+                search.text = "";
+                queryDebounce.stop();
+                window.query = "";
+                appList.currentIndex = 0;
                 if (!root.open)
                     return;
-                search.text = "";
                 search.forceActiveFocus();
-                appList.currentIndex = 0;
                 appList.positionViewAtBeginning();
             }
         }
@@ -355,9 +369,29 @@ Scope {
             id: launcherFrame
 
             anchors.centerIn: parent
-            width: Math.min(640, parent.width - 32)
-            height: Math.min(522, parent.height - 64)
+            width: Math.min(400, parent.width - 32)
+            // 72 = top+bottom margins (12 each) + search row (48); the list
+            // only adds its own height (rows + inter-row spacing) plus the
+            // spacing between the search row and the list, so the frame
+            // never grows past what the visible rows need.
+            readonly property int searchBarHeight: 72
+            readonly property int rowHeight: 58
+            readonly property int rowSpacing: 4
+            readonly property int maxHeight: Math.min(400, parent.height - 64)
+            readonly property int wantedListHeight: window.results.length === 0 ? 0
+                : window.results.length * launcherFrame.rowHeight
+                    + (window.results.length - 1) * launcherFrame.rowSpacing
+
+            Behavior on height {
+                NumberAnimation { duration: 100; easing.type: Easing.OutQuad }
+            }
+
+            height: window.results.length === 0
+                ? launcherFrame.searchBarHeight
+                : Math.min(launcherFrame.maxHeight,
+                    launcherFrame.searchBarHeight + 10 + launcherFrame.wantedListHeight)
             enabled: root.open
+
             clip: true
             radius: PanelService.rounding
             color: Theme.base01
@@ -381,11 +415,9 @@ Scope {
                 opacity: root.open ? 1 : 0
                 spacing: 10
 
-                Rectangle {
+                Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 48
-                    radius: PanelService.rounding
-                    color: Theme.base02
 
                     Text {
                         anchors {
@@ -425,7 +457,10 @@ Scope {
                             color: Theme.base05
                         }
 
-                        onTextChanged: appList.currentIndex = 0
+                        onTextChanged: {
+                            appList.currentIndex = 0;
+                            queryDebounce.restart();
+                        }
 
                         Text {
                             anchors.fill: parent
@@ -437,46 +472,17 @@ Scope {
                             font.pixelSize: Utils.scaledFont(14)
                         }
 
-                        Keys.onEscapePressed: {
-                            if (window.menuOpen)
-                                window.closeContextMenu();
-                            else
-                                root.open = false;
-                        }
-                        Keys.onDownPressed: {
-                            if (window.menuOpen)
-                                window.moveContextSelection(1);
-                            else
-                                window.moveAppSelection(1);
-                        }
-                        Keys.onUpPressed: {
-                            if (window.menuOpen)
-                                window.moveContextSelection(-1);
-                            else
-                                window.moveAppSelection(-1);
-                        }
-                        Keys.onLeftPressed: if (window.menuOpen)
-                            window.closeContextMenu()
                         Keys.onPressed: event => {
-                            if (!window.menuOpen && (event.key === Qt.Key_Menu
-                                    || (event.key === Qt.Key_F10
-                                        && event.modifiers & Qt.ShiftModifier))) {
-                                window.openSelectedContextMenu();
+                            if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
+                                search.text = "";
                                 event.accepted = true;
                             }
                         }
-                        Keys.onReturnPressed: {
-                            if (window.menuOpen)
-                                window.activateContextSelection();
-                            else
-                                window.launch(appList.currentItem?.entry ?? null);
-                        }
-                        Keys.onEnterPressed: {
-                            if (window.menuOpen)
-                                window.activateContextSelection();
-                            else
-                                window.launch(appList.currentItem?.entry ?? null);
-                        }
+                        Keys.onEscapePressed: root.open = false
+                        Keys.onDownPressed: window.moveAppSelection(1)
+                        Keys.onUpPressed: window.moveAppSelection(-1)
+                        Keys.onReturnPressed: window.launchSelection()
+                        Keys.onEnterPressed: window.launchSelection()
                     }
                 }
 
@@ -500,6 +506,7 @@ Scope {
                         required property var modelData
                         required property int index
                         readonly property var entry: modelData.entry
+                        readonly property bool isFallback: !!modelData.isFallback
                         readonly property bool selected: ListView.isCurrentItem
 
                         width: appList.width
@@ -570,7 +577,7 @@ Scope {
                             }
                         }
 
-                        Column {
+                        Text {
                             anchors {
                                 left: iconFrame.right
                                 right: parent.right
@@ -578,39 +585,23 @@ Scope {
                                 rightMargin: 14
                                 verticalCenter: parent.verticalCenter
                             }
-                            spacing: 2
-
-                            Text {
-                                width: parent.width
-                                text: appRow.entry.name
-                                color: Theme.base05
-                                elide: Text.ElideRight
-                                font.family: Theme.monospace
-                                font.pixelSize: Utils.scaledFont(14)
-                                font.bold: appRow.selected
-                            }
-
-                            Text {
-                                width: parent.width
-                                text: appRow.entry.comment || appRow.entry.genericName || "Application"
-                                color: Theme.base04
-                                elide: Text.ElideRight
-                                font.family: Theme.monospace
-                                font.pixelSize: Utils.scaledFont(11)
-                            }
+                            text: appRow.entry.name
+                            color: Theme.base05
+                            elide: Text.ElideRight
+                            font.family: Theme.monospace
+                            font.pixelSize: Utils.scaledFont(16)
                         }
 
                         MouseArea {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            acceptedButtons: Qt.LeftButton | Qt.RightButton
                             onContainsMouseChanged: if (containsMouse && window.hoverSelectReady)
                                 appList.currentIndex = appRow.index
-                            onClicked: mouse => {
+                            onClicked: {
                                 appList.currentIndex = appRow.index;
-                                if (mouse.button === Qt.RightButton)
-                                    window.openContextMenu(appRow.entry, appRow, mouse.x, mouse.y);
+                                if (appRow.isFallback)
+                                    window.launchFallback(appRow.modelData);
                                 else
                                     window.launch(appRow.entry);
                             }
@@ -643,178 +634,8 @@ Scope {
                             font.letterSpacing: 1
                         }
                     }
-
-                    Column {
-                        anchors.centerIn: parent
-                        visible: window.entries.length > 0 && window.results.length === 0
-                        spacing: 10
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: "󰈉"
-                            color: Theme.base04
-                            font.family: Theme.monospace
-                            font.pixelSize: Utils.scaledFont(28)
-                        }
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: "NO MATCHING APPLICATIONS"
-                            color: Theme.base04
-                            font.family: Theme.monospace
-                            font.pixelSize: Utils.scaledFont(11)
-                            font.bold: true
-                            font.letterSpacing: 1
-                        }
-                    }
                 }
 
-            }
-        }
-
-
-        // Close context menu without also dismissing launcher.
-        MouseArea {
-            anchors.fill: parent
-            visible: window.menuOpen
-            z: 10
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            onPressed: mouse => {
-                window.closeContextMenu();
-                mouse.accepted = true;
-            }
-        }
-
-        Rectangle {
-            id: contextMenu
-
-            visible: window.menuOpen
-            z: 11
-            width: 250
-            height: contextColumn.implicitHeight + 24
-            radius: PanelService.rounding
-            x: Math.max(8, Math.min(window.menuX, window.width - width - 8))
-            y: Math.max(8, Math.min(window.menuY, window.height - height - 8))
-            color: Theme.base00
-            border.width: 1
-            border.color: Theme.base03
-            layer.enabled: true
-            layer.effect: ShellShadow {}
-
-            MouseArea {
-                anchors.fill: parent
-                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                onPressed: mouse => mouse.accepted = true
-            }
-
-            Column {
-                id: contextColumn
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    top: parent.top
-                    margins: 12
-                }
-                spacing: 2
-
-                SectionHeader {
-                    width: contextColumn.width
-                    title: "APPLICATION ACTIONS"
-                }
-
-                Item { width: 1; height: 6 }
-
-                Rectangle {
-                    width: contextColumn.width
-                    height: 34
-                    radius: PanelService.rounding
-                    color: window.menuActionIndex === 0 ? Theme.base02 : "transparent"
-
-                    Text {
-                        anchors {
-                            left: parent.left
-                            leftMargin: 10
-                            verticalCenter: parent.verticalCenter
-                        }
-                        text: "Launch"
-                        color: Theme.base05
-                        font.family: Theme.monospace
-                        font.pixelSize: Utils.scaledFont(13)
-                        font.bold: true
-                    }
-
-                    Text {
-                        anchors {
-                            right: parent.right
-                            rightMargin: 10
-                            verticalCenter: parent.verticalCenter
-                        }
-                        text: "↵"
-                        color: Theme.base04
-                        font.family: Theme.monospace
-                        font.pixelSize: Utils.scaledFont(12)
-                    }
-
-                    MouseArea {
-                        id: launchMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onContainsMouseChanged: if (containsMouse && window.hoverSelectReady)
-                            window.menuActionIndex = 0
-                        onClicked: {
-                            const entry = window.menuEntry;
-                            window.closeContextMenu();
-                            window.launch(entry);
-                        }
-                    }
-                }
-
-                Repeater {
-                    model: window.menuActions
-
-                    Rectangle {
-                        id: actionRow
-                        required property var modelData
-                        required property int index
-                        width: contextColumn.width
-                        height: 34
-                        radius: PanelService.rounding
-                        color: window.menuActionIndex === actionRow.index + 1
-                            ? Theme.base02 : "transparent"
-
-                        Text {
-                            anchors {
-                                left: parent.left
-                                right: parent.right
-                                leftMargin: 10
-                                rightMargin: 10
-                                verticalCenter: parent.verticalCenter
-                            }
-                            text: actionRow.modelData.name
-                            color: Theme.base04
-                            elide: Text.ElideRight
-                            font.family: Theme.monospace
-                            font.pixelSize: Utils.scaledFont(13)
-                        }
-
-                        MouseArea {
-                            id: actionMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onContainsMouseChanged: if (containsMouse && window.hoverSelectReady)
-                                window.menuActionIndex = actionRow.index + 1
-                            onClicked: {
-                                window.menuActionIndex = actionRow.index + 1;
-                                window.launchDetached(actionRow.modelData.command,
-                                    window.menuEntry?.workingDirectory ?? "");
-                                window.closeContextMenu();
-                                root.open = false;
-                            }
-                        }
-                    }
-                }
             }
         }
     }

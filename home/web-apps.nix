@@ -24,6 +24,7 @@ let
       id = "llama-slack";
       name = "Llama Slack";
       url = "https://app.slack.com/client/TNZGA82FQ";
+      browser = "chromium";
       isolated = false;
     }
     {
@@ -42,6 +43,7 @@ let
       id = "whatsapp";
       name = "WhatsApp";
       url = "https://web.whatsapp.com/";
+      browser = "chromium";
       isolated = false;
     }
     {
@@ -74,6 +76,7 @@ let
       id = "onshape";
       name = "Onshape";
       url = "https://cad.onshape.com/documents?resourceType=resourceuserowner&nodeId=64b5b94853a57c4809702d57";
+      browser = "chromium";
       isolated = false;
     }
     # WEBAPPS
@@ -102,13 +105,18 @@ let
       );
       url = lib.replaceStrings [ "%" "\"" ] [ "%%" "\\\"" ] app.url;
       icon = if app ? iconName then app.iconName else iconDir + "/${app.id}.png";
+      browser = app.browser or "firefox";
+      exec =
+        if browser == "firefox" then
+          ''${pkgs.firefox}/bin/firefox "${url}"''
+        else
+          ''${pkgs.chromium}/bin/chromium ${profileFlag}${chromiumFlags}"--app=${url}"'';
     in
     lib.nameValuePair app.id {
       name = app.name;
       comment = "${app.name} web app";
 
-      exec = ''${pkgs.chromium}/bin/chromium ${profileFlag}${chromiumFlags}"--app=${url}"'';
-      inherit icon;
+      inherit exec icon;
       categories = [ "Network" ];
       terminal = false;
       type = "Application";

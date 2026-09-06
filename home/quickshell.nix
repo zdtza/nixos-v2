@@ -92,6 +92,10 @@ in
         "QML2_IMPORT_PATH=${stylixQmlModule}"
         "QS_FALLBACK_APP_ICON=${pkgs.adwaita-icon-theme}/share/icons/Adwaita/symbolic/categories/applications-system-symbolic.svg"
         "TZDIR=${config.home.sessionVariables.TZDIR}"
+        # locks in-process on startup (cold boot autologin, greeter login, or
+        # a crash restart alike), see LockScreen.qml's Component.onCompleted.
+        # Unset for manual `qs` debug runs from a terminal.
+        "QS_AUTOLOCK=1"
       ];
       ExecStart = "${pkgs.quickshell}/bin/quickshell";
       Restart = "on-failure";

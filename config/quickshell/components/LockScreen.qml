@@ -20,10 +20,26 @@ Scope {
     property bool pamAvailable: false
     readonly property bool locked: sessionLock.locked
 
+    // Plain properties don't survive Quickshell's live reload (it rebuilds
+    // the engine in-process on config changes) -- PersistentProperties is
+    // the type built for carrying a value across that, matched by
+    // reloadableId rather than tree position. Without this, onCompleted
+    // below re-locks on every reload, not just real process startup.
+    PersistentProperties {
+        id: persist
+        reloadableId: "lockScreenAutoLock"
+        property bool autoLockHandled: false
+    }
+
     function lock(): void {
-        // Never enter a secure session lock without a usable authentication
-        // policy: compositor intentionally cannot be bypassed if auth fails.
-        if (sessionLock.locked || !pamAvailable) return;
+        // Fired as early as possible (see Component.onCompleted below) so
+        // the compositor grabs the session lock before anything else gets a
+        // frame on screen — don't gate this on the PAM check resolving,
+        // that's a slower async file read and would just add to the flash
+        // window. Fail-closed behavior lives in submit(): pamAvailable
+        // defaults to false until the check resolves, so unlocking is
+        // already blocked before we know either way.
+        if (sessionLock.locked) return;
         password = "";
         pendingPassword = "";
         errorText = "";
@@ -35,6 +51,11 @@ Scope {
     function submit(): void {
         if (!sessionLock.locked || authenticating || password.length === 0)
             return;
+        if (!pamAvailable) {
+            password = "";
+            errorText = "PAM CONFIG MISSING \u2014 CANNOT UNLOCK";
+            return;
+        }
         pendingPassword = password;
         errorText = "";
         authenticating = true;
@@ -45,12 +66,35 @@ Scope {
         }
     }
 
+    Component.onCompleted: {
+        // Lock in-process the instant this component exists, when launched
+        // as the real session shell (QS_AUTOLOCK=1, set by the systemd
+        // service). No IPC round-trip, no poll-and-hope race, no waiting on
+        // the async PAM file check below — grabbing the compositor lock as
+        // early as possible is what keeps the desktop from flashing on
+        // screen before it's covered. Manual `qs` debug runs don't set the
+        // var, so they don't self-lock.
+        if (persist.autoLockHandled) return;
+        persist.autoLockHandled = true;
+        // Manual escape hatch for editing this file live: `systemctl --user
+        // set-environment QS_DEV_NO_AUTOLOCK=1 && systemctl --user restart
+        // quickshell` before a dev session, unset + restart again when done.
+        if (Quickshell.env("QS_AUTOLOCK") === "1"
+                && Quickshell.env("QS_DEV_NO_AUTOLOCK") !== "1") lock();
+    }
+
     FileView {
         path: "/etc/pam.d/quickshell"
         preload: true
         printErrors: false
         onLoaded: root.pamAvailable = true
-        onLoadFailed: root.pamAvailable = false
+        onLoadFailed: {
+            root.pamAvailable = false;
+            // Resolves after lock() already ran (fast local file read vs a
+            // full QML engine boot) — surface the fail-closed message once
+            // we actually know, instead of guessing at lock time.
+            if (root.locked) root.errorText = "PAM CONFIG MISSING \u2014 CANNOT UNLOCK";
+        }
     }
 
     IpcHandler {
@@ -98,6 +142,7 @@ Scope {
             AuthPrompt {
                 id: prompt
                 anchors.fill: parent
+                dimBackground: true
                 error: root.errorText.length > 0
                 inputEnabled: !root.authenticating
                 text: root.password

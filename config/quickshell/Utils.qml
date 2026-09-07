@@ -9,6 +9,11 @@ QtObject {
     // global adjustment.
     readonly property int fontSizeAdjustment: 1
 
+    // Shared scrim strength for overlays that dim the desktop directly
+    // (launcher, Polkit prompt) with no wallpaper layer of their own drawn
+    // underneath -- keeps them visually consistent, one value to tune.
+    readonly property real scrimOpacity: 0.55
+
     function scaledFont(pixelSize: real): real {
         return pixelSize + fontSizeAdjustment;
     }

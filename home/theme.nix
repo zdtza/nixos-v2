@@ -1,15 +1,9 @@
-# Theme selection lives entirely in home-manager (not NixOS), so switching
-# is `sw` (see home/shell.nix's fish function) -- no sudo, no nixos-rebuild.
-# stylix.base16Scheme/image set here as a plain option beat the NixOS
-# module's own values, which stylix forwards down as mkDefault (see
-# stylix's home-manager-integration.nix), so this cleanly wins.
-#
-# `themes` is plain data (no lib/config args), so it can be `import`-ed
-# standalone by scripts/theme-select.sh, home/nvim.nix and
-# modules/wayland.nix (a NixOS module, outside home-manager's module tree).
-# `homeModule` is the actual home-manager module, wired up in
-# home/default.nix as `(import ./theme.nix).homeModule`.
-let
+# Plain data, no lib/config args, so it can be `import`-ed standalone by
+# scripts/theme-select.sh, scripts/wallpaper-select.sh, home/nvim.nix,
+# home/appearance.nix (which wires it into stylix and declares theme.name --
+# see that file), and modules/wayland.nix (a NixOS module, outside
+# home-manager's module tree).
+{
   themes = {
     tokyo-night = {
       wallpaper = ../assets/wallpapers/tokyo-night/0-winding-road.jpg;
@@ -37,10 +31,20 @@ let
         colorscheme = "tokyonight-night";
         lualine = "tokyonight";
       };
+      # workbench.colorTheme label, from the installed extension's
+      # package.json (contributes.themes[].label) -- see home/vscode.nix
+      vscode = "Tokyo Night";
+      # org.gnome.desktop.interface accent-color (see home/appearance.nix):
+      # one of libadwaita's fixed enum names (blue/teal/green/yellow/orange/
+      # red/pink/purple/slate), nearest to base0D above. The one part of a
+      # GTK4/libadwaita app's palette that re-renders live in an
+      # already-running process (AdwStyleManager watches it) -- everything
+      # else in gtk.css is a CSS provider compiled once at startup.
+      gtkAccent = "blue";
     };
 
-    catppuccin-mocha = {
-      wallpaper = ../assets/wallpapers/catppuccin-mocha/2-waves.jpg;
+    catppuccin = {
+      wallpaper = ../assets/wallpapers/catppuccin/2-waves.jpg;
       colors = {
         base00 = "#1e1e2e";
         base01 = "#181825";
@@ -67,10 +71,12 @@ let
         # lualine ships no catppuccin theme file; "auto" reads the active colorscheme
         lualine = "auto";
       };
+      vscode = "Catppuccin Mocha";
+      gtkAccent = "purple"; # nearest to base0E's mauve
     };
 
-    gruvbox-dark = {
-      wallpaper = ../assets/wallpapers/gruvbox-dark/1-the-backwater.jpg;
+    gruvbox = {
+      wallpaper = ../assets/wallpapers/gruvbox/1-the-backwater.jpg;
       colors = {
         base00 = "#282828";
         base01 = "#1e1e1e";
@@ -94,31 +100,8 @@ let
         colorscheme = "gruvbox";
         lualine = "gruvbox";
       };
+      vscode = "Gruvbox Dark Medium";
+      gtkAccent = "orange"; # base09, gruvbox's signature color
     };
   };
-in
-{
-  inherit themes;
-
-  homeModule =
-    { lib, config, pkgs, ... }:
-    {
-      options.theme.name = lib.mkOption {
-        type = lib.types.enum (builtins.attrNames themes);
-        default = "tokyo-night";
-        description = "Selected preset from home/theme.nix's `themes` list.";
-      };
-
-      config.stylix = {
-        base16Scheme = themes.${config.theme.name}.colors;
-        image = themes.${config.theme.name}.wallpaper;
-      };
-
-      # `theme-select` on PATH, no more cd-ing into scripts/ to run it
-      config.home.packages = [
-        (pkgs.writeShellScriptBin "theme-select" ''
-          exec ${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.src/nixos/scripts/theme-select.sh "$@"
-        '')
-      ];
-    };
 }

@@ -59,7 +59,7 @@ in
       count_cut       = { bg = "${colors.base08}" }
       count_selected  = { bg = "${colors.base0A}" }
       border_symbol   = "│"
-      border_style    = { fg = "${colors.base02}" }
+      border_style    = { fg = "${colors.base00}" }
 
       [indicator]
       parent  = { fg = "${colors.base07}", bg = "${colors.base02}" }
@@ -74,10 +74,10 @@ in
       sep_outer = { open = " ", close = " " }
 
       [mode]
-      normal_main = { fg = "${colors.base00}", bg = "${colors.base0C}", bold = true }
-      normal_alt  = { fg = "${colors.base0C}", bg = "${colors.base02}" }
-      select_main = { fg = "${colors.base00}", bg = "${colors.base0C}", bold = true }
-      select_alt  = { fg = "${colors.base0C}", bg = "${colors.base02}" }
+      normal_main = { fg = "${colors.base00}", bg = "${colors.base0D}", bold = true }
+      normal_alt  = { fg = "${colors.base0D}", bg = "${colors.base02}" }
+      select_main = { fg = "${colors.base00}", bg = "${colors.base0D}", bold = true }
+      select_alt  = { fg = "${colors.base0D}", bg = "${colors.base02}" }
       unset_main  = { fg = "${colors.base00}", bg = "${colors.base09}", bold = true }
       unset_alt   = { fg = "${colors.base09}", bg = "${colors.base02}" }
 
@@ -157,7 +157,7 @@ in
         { mime = "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "${colors.base0A}" },
         { mime = "application/{pdf,doc,rtf}", fg = "${colors.base05}" },
         { mime = "vfs/{absent,stale}", fg = "${colors.base04}" },
-        { url = "*/", fg = "${colors.base0D}" },
+        { url = "*/", fg = "${colors.base07}" },
         { url = "*", fg = "${colors.base07}" },
       ]
     '';

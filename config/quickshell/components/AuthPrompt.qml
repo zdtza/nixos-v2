@@ -33,7 +33,7 @@ Item {
     Rectangle {
         anchors.fill: parent
         visible: root.dimBackground
-        color: Utils.alpha(Theme.base00, root.showWallpaper ? 0.35 : 0.55)
+        color: Utils.alpha(Theme.base00, root.showWallpaper ? 0.35 : Utils.scrimOpacity)
     }
 
     Rectangle {

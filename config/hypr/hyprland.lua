@@ -89,6 +89,7 @@ end
 -- Quickshell launcher stays mapped with an empty input region while closed.
 -- Keep layer animations disabled so opacity changes remain immediate.
 local quickshell_layers = {
+	"quickshell:background",
 	"quickshell:bar",
 	"quickshell:bar-shadow",
 	"quickshell:launcher",

@@ -434,7 +434,7 @@ PopupWindow {
                             leftMargin: 6
                             rightMargin: 6
                         }
-                        radius: PanelService.rounding
+                        radius: PanelService.shellRounding
                         color: menu.selectedEntryIndex === row.index
                             && row.interactive ? Theme.base02 : "transparent"
 

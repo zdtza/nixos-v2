@@ -200,7 +200,7 @@ Scope {
 
         Timer {
             id: queryDebounce
-            interval: 150
+            interval: 120
             onTriggered: window.query = search.text
         }
 
@@ -336,7 +336,7 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
-            color: Utils.alpha(Theme.base00, 0.7)
+            color: Utils.alpha(Theme.base00, Utils.scrimOpacity)
             opacity: root.open ? 1 : 0
         }
 

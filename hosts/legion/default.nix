@@ -95,7 +95,6 @@ in
     claude-code # AI code assistant
     wl-clipboard # clipboard manager
     hyprpicker # color picker
-    hyprpaper # wallpaper manager
     bluetui # bluetooth manager
     localsend # local file sharing
     pi-coding-agent # AI coding assistant
@@ -129,6 +128,7 @@ in
     gdu # disk usage analyzer
     lazydocker # Docker UI
     obsidian # note-taking app
+    blender # 3D modeling software
   ];
 
   networking = {

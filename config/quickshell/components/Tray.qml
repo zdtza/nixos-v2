@@ -207,7 +207,14 @@ Item {
         id: row
 
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 0
+        spacing: root.expanded ? 4 : 0
+
+        Behavior on spacing {
+            NumberAnimation {
+                duration: PanelService.slideDuration
+                easing.type: Easing.OutCubic
+            }
+        }
 
         Button {
             id: chevron

@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   # raw (no '#') hex, hyprland colors want 0xAARRGGBB
@@ -17,5 +17,16 @@ in
         active_border = "0xff${colors.base0D}",
         inactive_border = "0xff${colors.base01}",
     }
+  '';
+
+  # `hyprctl reload` re-executes hyprland.lua's `require("stylix")` fresh
+  # (verified: not a cached, long-lived Lua module table) -- without this,
+  # `sw` swaps stylix.lua's symlink target but nothing ever tells the
+  # running Hyprland session to re-read it, so border colors only changed on
+  # the next full Hyprland restart. Best-effort: no session, no failure.
+  home.activation.hyprReload = lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
+    if [ -n "''${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+      run ${lib.getExe' pkgs.hyprland "hyprctl"} reload || true
+    fi
   '';
 }

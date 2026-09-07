@@ -34,30 +34,66 @@ PanelWindow {
         height: 0
     }
 
-    // "shown" stays on the previous wallpaper until "preloader" (invisible,
-    // asynchronous) finishes decoding the new one -- swapping instantly only
-    // once it's ready avoids the black flash of binding straight to
-    // Theme.wallpaper while the new image is still loading.
+    // Two stacked images, swapped by z-order instead of by reassigning one
+    // shared "source" -- reassigning source on the visible Image destroys its
+    // GPU texture before the new one uploads, and since this is the bottom-
+    // most wlr layer (nothing behind it to show through), that gap paints
+    // black. Loading the next wallpaper into whichever image is currently
+    // underneath means it's fully decoded and rendered (just occluded)
+    // before it's ever raised on top, so the promotion is a z change with
+    // no missing-texture frame.
+    property bool topIsA: true
+
     Image {
-        id: shown
+        id: imgA
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
-        // Synchronous here on purpose: source is only ever assigned once
-        // preloader below confirms it's already decoded and cached, so this
-        // grabs it straight from cache with no gap -- asynchronous: true
-        // could still paint one blank frame first even on a cache hit.
-        asynchronous: false
         cache: true
+        z: root.topIsA ? 1 : 0
+        opacity: root.topIsA ? 1 : 0
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 400
+                easing.type: Easing.InOutQuad
+            }
+        }
+        // Synchronous on purpose: this is the one that bootstraps the very
+        // first wallpaper on shell startup, before anything is on-screen to
+        // occlude a loading frame.
+        asynchronous: false
+        onStatusChanged: if (status === Image.Ready && source === Theme.wallpaper && !root.topIsA) root.topIsA = true
     }
 
     Image {
-        id: preloader
-        visible: false
-        asynchronous: true
+        id: imgB
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop
         cache: true
-        source: Theme.wallpaper
-        onStatusChanged: if (status === Image.Ready) shown.source = source
+        z: root.topIsA ? 0 : 1
+        opacity: root.topIsA ? 0 : 1
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 400
+                easing.type: Easing.InOutQuad
+            }
+        }
+        asynchronous: true
+        onStatusChanged: if (status === Image.Ready && source === Theme.wallpaper && root.topIsA) root.topIsA = false
     }
 
-    Component.onCompleted: shown.source = Theme.wallpaper
+    Connections {
+        target: Theme
+        function onWallpaperChanged() {
+            // Reassigning the same url is a silent no-op in QML (no property
+            // change => no statusChanged => never promoted) -- this bites
+            // exactly when reverting to a wallpaper this same back image
+            // already held from an earlier swap. Clearing it first forces a
+            // real Null -> Loading -> Ready transition every time.
+            const back = root.topIsA ? imgB : imgA;
+            back.source = "";
+            back.source = Theme.wallpaper;
+        }
+    }
+
+    Component.onCompleted: imgA.source = Theme.wallpaper
 }

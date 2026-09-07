@@ -200,7 +200,7 @@ Scope {
 
         Timer {
             id: queryDebounce
-            interval: 120
+            interval: 300
             onTriggered: window.query = search.text
         }
 

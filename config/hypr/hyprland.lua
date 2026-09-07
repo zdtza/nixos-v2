@@ -131,6 +131,16 @@ hl.window_rule({
 	size = { 360, 616 },
 })
 
+-- Matched by open_floating_terminal's `--class` below, kept floating instead
+-- of tiling in like a normal launch-terminal-cwd window.
+hl.window_rule({
+	name = "floating-terminal",
+	match = { class = "^floating-terminal$" },
+	float = true,
+	center = true,
+	size = { 900, 600 },
+})
+
 -- Teams' "screen is being shared" indicator window; always keep it out of
 -- sight (shrunk to nothing, moved off-screen, and stripped of decoration).
 hl.window_rule({
@@ -325,6 +335,10 @@ local function open_terminal()
 	hl.dispatch(hl.dsp.exec_cmd("launch-terminal-cwd"))
 end
 
+local function open_floating_terminal()
+	hl.dispatch(hl.dsp.exec_cmd("launch-terminal-cwd --class floating-terminal"))
+end
+
 local function focus_next_workspace()
 	scroll_workspace(1)
 end
@@ -363,6 +377,7 @@ bind("switch:on:Lid Switch", "Suspend when lid closes", hl.dsp.exec_cmd("systemc
 bind("SUPER + S", "Toggle terminal workspace", hl.dsp.workspace.toggle_special("terminal"))
 bind("SUPER + E", "Open file manager", hl.dsp.exec_cmd("nautilus"))
 bind("SUPER + Return", "Open terminal", open_terminal)
+bind("SUPER + CTRL + Return", "Open floating terminal", open_floating_terminal)
 bind("SUPER + W", "Close active window", hl.dsp.window.close())
 bind("SUPER + J", "Toggle split direction", hl.dsp.layout("togglesplit"))
 bind("SUPER + T", "Toggle floating window", hl.dsp.window.float({ action = "toggle" }))

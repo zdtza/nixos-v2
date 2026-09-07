@@ -6,7 +6,7 @@
 {
   themes = {
     tokyo-night = {
-      wallpaper = ../assets/wallpapers/tokyo-night/0-winding-road.jpg;
+      wallpaper = ../assets/wallpapers/tokyo-night/1-quattro.jpg;
       colors = {
         base00 = "#1a1b26"; # background
         base01 = "#13141c"; # dark_background

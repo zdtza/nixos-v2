@@ -30,12 +30,6 @@
       CPU_MAX_PERF_ON_AC = 100;
       CPU_MIN_PERF_ON_BAT = 0;
       CPU_MAX_PERF_ON_BAT = 60; # Lower cap to save power on battery
-
-      # ponytail: unconfirmed fix, TLP's default runtime PM (auto) can race
-      # with nvidia's own suspend/resume hooks and leave the GPU asleep on
-      # wake; testing exclusion. Revert if tlp-stat -e no longer shows
-      # nvidia stuck in D3 after a bad wake, or if it doesn't fix it.
-      RUNTIME_PM_DRIVER_DENYLIST = "nvidia";
     };
   };
 

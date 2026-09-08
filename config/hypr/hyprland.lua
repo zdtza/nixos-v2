@@ -93,6 +93,7 @@ local quickshell_layers = {
 	"quickshell:bar",
 	"quickshell:bar-shadow",
 	"quickshell:launcher",
+	"quickshell:image-picker",
 	"quickshell:center-panel",
 	"quickshell:panel-drawer",
 }
@@ -523,6 +524,8 @@ bind("F9", "Stop dictation", hl.dsp.exec_cmd("voxtype record stop"), { release =
 -- Dispatch directly to Quickshell's registered global shortcut. This avoids
 -- starting the ~50 ms `qs` Qt IPC client on every invocation.
 bind("SUPER + space", "Toggle app launcher", hl.dsp.global("quickshell:launcher"))
+bind("SUPER + CTRL + W", "Toggle wallpaper picker", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"))
+bind("SUPER + CTRL + A", "Toggle theme picker", hl.dsp.exec_cmd("qs ipc call theme toggle"))
 bind("SUPER + CTRL + P", "Toggle power panel", hl.dsp.exec_cmd("qs ipc call panels toggle power"))
 bind("SUPER + CTRL + C", "Toggle calendar panel", hl.dsp.exec_cmd("qs ipc call panels toggle calendar"))
 bind("SUPER + CTRL + L", "Toggle night-light panel", hl.dsp.exec_cmd("qs ipc call panels toggle nightlight"))

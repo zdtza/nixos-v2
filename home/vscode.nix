@@ -1,7 +1,7 @@
 { config, pkgs, lib, ... }:
 
 let
-  vscodeTheme = (import ./theme.nix).themes.${config.theme.name}.vscode;
+  vscodeTheme = (import ../themes).themes.${config.theme.name}.vscode;
 in
 {
   # VS Code watches settings.json itself and hot-applies external edits --

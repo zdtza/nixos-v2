@@ -1,6 +1,7 @@
 pragma Singleton
 
 import QtQuick
+import Quickshell
 
 // Small stateless helpers shared across bar and panel components.
 QtObject {
@@ -16,6 +17,16 @@ QtObject {
 
     function scaledFont(pixelSize: real): real {
         return pixelSize + fontSizeAdjustment;
+    }
+
+    // Screen object for a Hyprland monitor name, falling back to the first
+    // screen. Used by fullscreen overlays that open on the focused monitor.
+    function screenForMonitor(name: string): var {
+        for (const screen of Quickshell.screens) {
+            if (String(screen.name) === name)
+                return screen;
+        }
+        return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
     }
 
     // Theme color with an overridden alpha, e.g. a faint hover fill derived

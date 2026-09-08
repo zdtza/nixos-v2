@@ -2,6 +2,25 @@
 
 let
   colors = config.lib.stylix.colors.withHashtag;
+
+  # Yaru accent -> nearest base16 slot, so yazi's folder icon roughly tracks the
+  # Nautilus folder color (themes/*/iconTheme, applied in home/appearance.nix).
+  # Derived from the variant rather than a third per-theme color key, so a theme
+  # that changes its icon variant moves both at once. Falls back to base0D for
+  # variants not listed (the -dark twins, or a new one).
+  iconSlot = {
+    Yaru-blue = "base0D";
+    Yaru-magenta = "base0E";
+    Yaru-purple = "base0E";
+    Yaru-olive = "base0B";
+    Yaru-sage = "base0B";
+    Yaru-prussiangreen = "base0C";
+    Yaru-red = "base08";
+    Yaru-yellow = "base0A";
+    Yaru-wartybrown = "base0F";
+  };
+  iconTheme = (import ../themes).themes.${config.theme.name}.iconTheme;
+  dirColor = colors.${iconSlot.${iconTheme} or "base0D"};
 in
 {
   # custom theme.toml below renders semantic colors directly
@@ -145,8 +164,8 @@ in
       [icon]
       dirs = []
       prepend_conds = [
-        { if = "dir & hovered", text = "󰝰", fg = "${colors.base0C}" },
-        { if = "dir",           text = "󰉋", fg = "${colors.base0C}" },
+        { if = "dir & hovered", text = "󰝰", fg = "${dirColor}" },
+        { if = "dir",           text = "󰉋", fg = "${dirColor}" },
       ]
 
       [filetype]

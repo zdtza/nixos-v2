@@ -9,6 +9,17 @@ let
   colors = config.lib.stylix.colors.withHashtag;
   fonts = config.stylix.fonts;
 
+  # The wallpaper's path *in the repo*, not the /nix/store copy
+  # config.stylix.image resolves to. components/WallpaperPicker.qml lists the
+  # sibling files of this path to build its choices, and /nix/store's siblings
+  # are the entire store; themes/<theme>/wallpapers is the real set (folder
+  # name matches theme.name exactly, see themes/default.nix). It is also the
+  # exact shape scripts/select-wallpaper.sh writes into this same file on a
+  # live switch, so the value no longer changes form across `sw`.
+  themes = (import ../themes).themes;
+  wallpaperPath = "${config.home.homeDirectory}/.src/nixos/themes/"
+    + "${config.theme.name}/wallpapers/${baseNameOf themes.${config.theme.name}.wallpaper}";
+
   # theme data for Quickshell, read at runtime by services/Theme.qml. Plain
   # JSON on purpose, not a generated QML module imported via QML2_IMPORT_PATH:
   # that path was a Nix store path that changed every theme switch, which
@@ -38,7 +49,7 @@ let
         base0E
         base0F
         ;
-      wallpaper = "${config.stylix.image}";
+      wallpaper = wallpaperPath;
       monospace = fonts.monospace.name;
       sansSerif = fonts.sansSerif.name;
     }

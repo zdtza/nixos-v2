@@ -8,9 +8,9 @@
 let
   cfg = config.wayland-desktop;
   # NixOS-level stylix requires *some* scheme/image; home-manager's
-  # theme.name (home/theme.nix) overrides both for the real, switchable
+  # theme.name (themes/) overrides both for the real, switchable
   # selection, this is only the fixed pre-login/system-level fallback
-  fallbackTheme = (import ../home/theme.nix).themes.tokyo-night;
+  fallbackTheme = (import ../themes).themes.tokyo-night;
 in
 {
   options.wayland-desktop.autoLoginUser = lib.mkOption {
@@ -109,15 +109,15 @@ in
       size = 24;
     };
 
-    # base16Scheme and image come from home-manager's theme.name (home/theme.nix),
+    # base16Scheme and image come from home-manager's theme.name (themes/),
     # which overrides these NixOS-level defaults -- see stylix's mkDefault forwarding
 
     fonts = {
       sizes = {
-        applications = 10;
+        applications = 11;
         terminal = 11.5;
-        desktop = 10;
-        popups = 10;
+        desktop = 11;
+        popups = 11;
       };
 
       serif = {

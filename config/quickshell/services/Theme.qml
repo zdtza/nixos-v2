@@ -1,6 +1,6 @@
 pragma Singleton
 
-// Colors/fonts/wallpaper picked in home/theme.nix. Loaded from a plain JSON
+// Colors/fonts/wallpaper picked in themes/<theme>/default.nix. Loaded from a plain JSON
 // file (home/quickshell.nix rewrites it *in place* on every `sw`, same inode,
 // no symlink swap -- see that file for why) instead of a generated QML module
 // imported via QML2_IMPORT_PATH: a swapped Nix store path was invisible to any

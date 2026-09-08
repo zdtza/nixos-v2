@@ -79,6 +79,9 @@ in
   xdg.configFile."hyprland-preview-share-picker/style.css".text = ''
     @define-color foreground ${colors.base05};
     @define-color background ${colors.base00};
+    /* Surface color of every quickshell overlay (components/Popup.qml,
+       Launcher.qml): base01, darker than base00, no border, 16px rounding. */
+    @define-color surface ${colors.base01};
     @define-color accent ${colors.base0D};
     @define-color muted ${colors.base03};
     @define-color card_bg ${colors.base02};
@@ -96,8 +99,8 @@ in
     }
 
     .window {
-      background: alpha(@background, 0.95);
-      border: solid 2px @accent;
+      background: @surface;
+      border-radius: 16px;
       margin: 4px;
       padding: 18px;
     }

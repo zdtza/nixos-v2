@@ -37,7 +37,7 @@ in
 
     # picks stylix.base16Scheme + wallpaper from home/themes/list.nix;
     # change and run `sw` (no sudo, no nixos-rebuild -- see home/shell.nix),
-    # or run scripts/theme-select.sh
+    # or run scripts/select-theme.sh
     theme.name = "tokyo-night";
   };
 

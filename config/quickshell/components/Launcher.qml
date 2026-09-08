@@ -45,14 +45,6 @@ Scope {
         root.pendingLaunchName = "";
     }
 
-    function screenForMonitor(name: string): var {
-        for (const screen of Quickshell.screens) {
-            if (String(screen.name) === name)
-                return screen;
-        }
-        return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
-    }
-
     function show(): void {
         const monitorName = String(Hyprland.focusedMonitor?.name ?? "");
         root.openedMonitorName = monitorName;
@@ -137,7 +129,7 @@ Scope {
     PanelWindow {
         id: window
 
-        screen: root.screenForMonitor(root.openedMonitorName)
+        screen: Utils.screenForMonitor(root.openedMonitorName)
 
         // Keep the layer surface mapped. Closing only makes it transparent and
         // removes its input region, avoiding a Wayland map round trip on open.

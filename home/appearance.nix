@@ -6,15 +6,16 @@ let
   # nixos-rebuild. stylix.base16Scheme/image set here as a plain option
   # beats the NixOS module's own values, which stylix forwards down as
   # mkDefault (see stylix's home-manager-integration.nix), so this cleanly
-  # wins. `themes` itself is plain data -- see home/theme.nix.
-  themes = (import ./theme.nix).themes;
+  # wins. `themes` itself is plain data -- see themes/default.nix.
+  themes = (import ../themes).themes;
   gtkAccent = themes.${config.theme.name}.gtkAccent;
+  iconTheme = themes.${config.theme.name}.iconTheme;
 in
 {
   options.theme.name = lib.mkOption {
     type = lib.types.enum (builtins.attrNames themes);
     default = "tokyo-night";
-    description = "Selected preset from home/theme.nix's `themes` list.";
+    description = "Selected preset from the themes/ folder (one subfolder per theme).";
   };
 
   config = {
@@ -23,13 +24,13 @@ in
       image = themes.${config.theme.name}.wallpaper;
     };
 
-    # `theme-select`/`wallpaper-select` on PATH, no more cd-ing into scripts/ to run them
+    # `select-theme`/`select-wallpaper` on PATH, no more cd-ing into scripts/ to run them
     home.packages = [
-      (pkgs.writeShellScriptBin "theme-select" ''
-        exec ${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.src/nixos/scripts/theme-select.sh "$@"
+      (pkgs.writeShellScriptBin "select-theme" ''
+        exec ${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.src/nixos/scripts/select-theme.sh "$@"
       '')
-      (pkgs.writeShellScriptBin "wallpaper-select" ''
-        exec ${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.src/nixos/scripts/wallpaper-select.sh "$@"
+      (pkgs.writeShellScriptBin "select-wallpaper" ''
+        exec ${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.src/nixos/scripts/select-wallpaper.sh "$@"
       '')
     ];
 
@@ -60,10 +61,15 @@ in
     # global color scheme for GTK apps, follows stylix polarity
     gtk.colorScheme = if config.stylix.polarity == "light" then "light" else "dark";
 
-    # global icon theme
+    # Per-theme icon colors, same trick as ~/omarchy: one yaru-theme package
+    # ships every accent variant (Yaru-purple, Yaru-olive, ...) with the
+    # folder/mime art already recolored, so a theme only names the variant
+    # (themes/*/iconTheme) instead of shipping SVGs. Omarchy additionally
+    # symlinks Adwaita's go-previous/next-symbolic into Yaru for Nautilus's
+    # nav arrows; nixpkgs' Yaru already ships both, so that patch is skipped.
     gtk.iconTheme = {
-      name = "Adwaita";
-      package = pkgs.adwaita-icon-theme;
+      name = iconTheme;
+      package = pkgs.yaru-theme;
     };
 
     # mirrored into dconf too (programs.dconf.enable in modules/wayland.nix):
@@ -71,7 +77,7 @@ in
     # settings.ini above only covers apps launched after the fact
     dconf.settings."org/gnome/desktop/interface" = {
       color-scheme = if config.stylix.polarity == "light" then "prefer-light" else "prefer-dark";
-      icon-theme = "Adwaita";
+      icon-theme = iconTheme;
       # libadwaita (GTK4) apps -- gnome-calculator, gnome-disks, Nautilus --
       # hold an AdwStyleManager that watches this key and re-renders live.
       accent-color = gtkAccent;
@@ -81,7 +87,9 @@ in
     # them (no icon_theme key ends up in qt6ct.conf), so QIcon::fromTheme in
     # Qt apps (quickshell included) has no theme to search -- point it at
     # the same theme GTK uses above.
-    qt.qt5ctSettings.Appearance.icon_theme = "Adwaita";
-    qt.qt6ctSettings.Appearance.icon_theme = "Adwaita";
+    # (Adwaita is no longer installed by gtk.iconTheme.package above, so point
+    # Qt at the same Yaru variant rather than a theme that may not be present.)
+    qt.qt5ctSettings.Appearance.icon_theme = iconTheme;
+    qt.qt6ctSettings.Appearance.icon_theme = iconTheme;
   };
 }

@@ -185,16 +185,7 @@ Scope {
             return -1;
         }
 
-        // Debounced separately from search.text so the frame's height
-        // (bound to results.length) doesn't re-animate on every keystroke
-        // while typing fast.
-        property string query: ""
-
-        Timer {
-            id: queryDebounce
-            interval: 300
-            onTriggered: window.query = search.text
-        }
+        readonly property string query: search.text
 
         readonly property var results: {
             const tokens = window.query.toLowerCase().split(" ").filter(token => token !== "");
@@ -288,16 +279,7 @@ Scope {
             root.open = false;
         }
 
-        // If Enter is pressed before the debounce timer fires, results still
-        // reflect the stale query. Flush it immediately so the freshly typed
-        // text has a chance to match, and jump to its top result rather than
-        // launching whatever was selected under the old query.
         function launchSelection(): void {
-            if (queryDebounce.running) {
-                queryDebounce.stop();
-                window.query = search.text;
-                appList.currentIndex = window.results.length > 0 ? 0 : -1;
-            }
             const current = appList.currentItem;
             if (current?.isFallback)
                 window.launchFallback(current.modelData);
@@ -316,8 +298,6 @@ Scope {
                 // height before it's shown again — otherwise the height
                 // Behavior animates the shrink visibly on the next open.
                 search.text = "";
-                queryDebounce.stop();
-                window.query = "";
                 appList.currentIndex = 0;
                 if (!root.open)
                     return;
@@ -359,7 +339,16 @@ Scope {
         Rectangle {
             id: launcherFrame
 
-            anchors.centerIn: parent
+            // Pinned to the top edge it would have at full height, not centred:
+            // a centred frame re-centres itself every time the result count
+            // changes, so the search bar drifts up and down under the cursor
+            // while typing. Only the list below it grows and shrinks now.
+            // ... and sits below centre, where the eye already is, rather than
+            // in the middle of the screen. One gap drives both ends: the frame
+            // starts at topGap and may grow until the bottom gap matches it, so
+            // a full list is evenly framed while the search bar alone stays low.
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: launcherFrame.topGap
             width: Math.min(400, parent.width - 32)
             // 72 = top+bottom margins (12 each) + search row (48); the list
             // only adds its own height (rows + inter-row spacing) plus the
@@ -368,7 +357,16 @@ Scope {
             readonly property int searchBarHeight: 72
             readonly property int rowHeight: 58
             readonly property int rowSpacing: 4
-            readonly property int maxHeight: Math.min(400, parent.height - 64)
+            // Whole rows only. A max height that lands mid-row leaves the last
+            // entry sliced in half at the bottom edge, which reads as a bug
+            // rather than as "there is more below".
+            readonly property int maxRows: Math.max(1, Math.floor(
+                (parent.height * 0.44 - launcherFrame.searchBarHeight - 10 + launcherFrame.rowSpacing)
+                    / (launcherFrame.rowHeight + launcherFrame.rowSpacing)))
+            readonly property int maxHeight: launcherFrame.searchBarHeight + 10
+                + launcherFrame.maxRows * launcherFrame.rowHeight
+                + (launcherFrame.maxRows - 1) * launcherFrame.rowSpacing
+            readonly property int topGap: Math.round((parent.height - launcherFrame.maxHeight) / 2)
             readonly property int wantedListHeight: window.results.length === 0 ? 0
                 : window.results.length * launcherFrame.rowHeight
                     + (window.results.length - 1) * launcherFrame.rowSpacing
@@ -448,10 +446,7 @@ Scope {
                             color: Theme.base05
                         }
 
-                        onTextChanged: {
-                            appList.currentIndex = 0;
-                            queryDebounce.restart();
-                        }
+                        onTextChanged: appList.currentIndex = 0
 
                         Text {
                             anchors.fill: parent

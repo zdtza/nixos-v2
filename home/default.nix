@@ -2,6 +2,7 @@
   imports = [
     ./xdg-mimeapps.nix
     ./appearance.nix
+    ./gtk-live-css
     ./kitty.nix
     ./shell.nix
     ./hyprland.nix

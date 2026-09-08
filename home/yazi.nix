@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, lib, ... }:
 
 let
   colors = config.lib.stylix.colors.withHashtag;
@@ -63,6 +63,22 @@ in
     };
   };
 
+  # yazi parses theme.toml once at startup, so a theme switch has to be pushed
+  # into instances that are already open -- every other app here reloads live.
+  # `app:theme` is the same action the terminal's dark/light report triggers:
+  # it re-reads theme.toml from disk (a stable path whose symlink target this
+  # activation just swapped), so no in-place rewrite is needed. Receiver 0
+  # broadcasts over the DDS bus to every running instance, and fails fast when
+  # there is none. The reload alone only takes effect on the instance's next
+  # event, so `app:resume` (rebuild terminal + redraw) forces the repaint now.
+  home.activation.yaziTheme = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    ya=${lib.getExe' config.programs.yazi.package "ya"}
+    # nothing running is the normal case, don't nag about it
+    if run $ya emit-to 0 app:theme 2>/dev/null; then
+      run $ya emit-to 0 app:resume 2>/dev/null || true
+    fi
+  '';
+
   # custom yazi theme
   xdg = {
     configFile."yazi/theme.toml".text = ''
@@ -78,7 +94,7 @@ in
       count_cut       = { bg = "${colors.base08}" }
       count_selected  = { bg = "${colors.base0A}" }
       border_symbol   = "│"
-      border_style    = { fg = "${colors.base00}" }
+      border_style    = { fg = "${dirColor}" }
 
       [indicator]
       parent  = { fg = "${colors.base07}", bg = "${colors.base02}" }

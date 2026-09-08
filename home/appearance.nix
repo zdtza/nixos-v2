@@ -34,29 +34,17 @@ in
       '')
     ];
 
-    # GTK has no hot-reload for a custom gtk.css (unlike gtk-theme-name or
-    # libadwaita's accent-color above, which do propagate live) -- the CSS
-    # provider is only read at startup. Any GTK app you actually launch
-    # after `sw` picks up the new colors fine; the only ones that need help
-    # are single-instance GApplications that stay resident in the background
-    # after their window closes (Nautilus does), since they never relaunch
-    # on their own. `nautilus -q` sends an async D-Bus quit instead of
-    # killing anything -- the old process can sit tearing down (pending
-    # thumbnail/search work) for a long time, and a fast relaunch just
-    # reconnects to that still-dying instance instead of starting fresh, so
-    # the new theme doesn't show until it *finally* exits. SIGKILL is
-    # instant and safe here: a backgrounded file manager holds no unsaved
-    # state. nix wraps the real binary as `.nautilus-wrapped`; `comm`
-    # truncates to 15 chars (".nautilus-wrapp"), and that's what `pkill -x`
-    # matches against, so plain `-x nautilus` silently no-ops (swallowed by
-    # `|| true`), leaving the real process alive forever on the old theme.
-    # `-f` (cmdline) doesn't work either: argv[0] still shows the wrapper's
-    # invoked path (/run/current-system/sw/bin/nautilus), not the real exe.
-    # If another resident GNOME app joins the setup, check its comm the
-    # same way (`cat /proc/<pid>/comm`) before assuming its plain name works.
-    home.activation.nautilusThemeReload = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      run ${pkgs.procps}/bin/pkill -9 -x '.nautilus-wrapp' || true
-    '';
+    # GTK itself never re-reads a custom gtk.css -- the provider is loaded once
+    # at startup -- so a theme switch used to mean killing every resident GTK
+    # app (Nautilus and other single-instance GApplications stay alive in the
+    # background after their last window closes, so they never relaunch on
+    # their own). home/gtk-live-css now adds a second, file-watching CSS
+    # provider inside each GTK process instead, so those apps retint in place
+    # and nothing needs killing. If that ever regresses, the fallback is
+    # `pkill -9 -x '.nautilus-wrapp'` -- note the comm, not the name: nix wraps
+    # the binary and `comm` truncates to 15 chars, so `pkill -x nautilus`
+    # silently matches nothing, and `-f` fails too since argv[0] is the
+    # wrapper's path.
 
     # global color scheme for GTK apps, follows stylix polarity
     gtk.colorScheme = if config.stylix.polarity == "light" then "light" else "dark";

@@ -1,5 +1,5 @@
 {
-  wallpaper = ./wallpapers/3-village-square.jpg;
+  wallpaper = ./wallpapers/1-the-backwater.jpg;
   colors = {
     base00 = "#282828";
     base01 = "#1e1e1e";

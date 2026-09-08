@@ -85,11 +85,23 @@ in
       [
         xdg-desktop-portal-hyprland
         xdg-desktop-portal-termfilechooser
+        # Only for its Settings impl, routed explicitly below. GTK4 on Wayland
+        # reads gtk-icon-theme-name/color-scheme/accent-color *only* from
+        # org.freedesktop.portal.Settings -- it never falls back to reading
+        # dconf itself (verified: with the gnome schemas on GSETTINGS_SCHEMA_DIR
+        # and no Settings portal, a running Nautilus still ignored an
+        # icon-theme change). Without a backend for it, the dconf keys in
+        # home/appearance.nix are write-only: apps read their icon theme once
+        # from gtk-{3,4}.0/settings.ini at startup and never again.
+        xdg-desktop-portal-gtk
       ]
     );
     config.hyprland = {
       default = [ "hyprland" ];
       "org.freedesktop.impl.portal.FileChooser" = [ "termfilechooser" ];
+      # gtk backend stays pinned to this one interface, so it cannot quietly
+      # take over the file picker the line above exists to control.
+      "org.freedesktop.impl.portal.Settings" = [ "gtk" ];
     };
   };
 

@@ -43,12 +43,21 @@ tree_for() {
 # Build a theme's generation from an *export* of that tree rather than the
 # working tree -- a dirty flake copies exactly the files git tracks, so the
 # export hashes to the same store path (verified) while leaving the repo
-# alone.
+# alone. Building from the tree is also what keeps the cache honest: the key
+# and the thing stored under it come from the same object, so no concurrent
+# write to the repo can make an entry lie about which theme it holds.
 build_tree() {
-  local worktree
+  local tree=$1 theme=$2 worktree
   worktree=$(mktemp -d)
-  git -C "$repo_dir" archive "$1" | tar -x -C "$worktree"
-  nix build "path:$worktree#$attr" --out-link "$cache_dir/$1" --option warn-dirty false
+  git -C "$repo_dir" archive "$tree" | tar -x -C "$worktree"
+  # Cheap guard against ever caching a generation under the wrong key again:
+  # the export must actually select the theme this entry claims.
+  grep -q "theme\.name = \"$theme\";" "$worktree/${host_file#"$repo_dir"/}" || {
+    printf 'refusing to cache %s: export does not select %s\n' "$tree" "$theme" >&2
+    rm -rf "$worktree"
+    return 1
+  }
+  nix build "path:$worktree#$attr" --out-link "$cache_dir/$tree" --option warn-dirty false
   rm -rf "$worktree"
 }
 
@@ -68,7 +77,7 @@ prebuild_others() {
   find "$cache_dir" -maxdepth 1 -type l -mtime +14 -delete
   while read -r theme; do
     tree=$(tree_for "$theme")
-    [[ -e "$cache_dir/$tree" ]] || build_tree "$tree"
+    [[ -e "$cache_dir/$tree" ]] || build_tree "$tree" "$theme"
   done < <(list_themes)
 }
 
@@ -95,26 +104,39 @@ if [[ ! -d "$repo_dir/themes/$chosen" ]]; then
   exit 1
 fi
 
+# One switch at a time, and no prebuild running underneath it: the tree hash is
+# taken from the repo a moment before the build reads it, so a second writer in
+# that window (another switch, the shell picker) used to silently store the
+# other theme's generation under this theme's key -- a lie the cache then
+# served forever, since a hit is never re-checked.
+exec 9>"$cache_dir/.lock"
+flock 9
+
 sed -i "s/theme\.name = \".*\";/theme.name = \"$chosen\";/" "$host_file"
-# `sw` git-adds everything itself, but the tree hash below has to see the same
-# files nix will, so stage first either way.
+# The tree hash below has to see the same files nix will, so stage first.
 git -C "$repo_dir" add --all
 tree=$(git -C "$repo_dir" write-tree)
 
 echo "Set theme.name to $chosen. Activating..."
 
-if [[ -e "$cache_dir/$tree/activate" ]]; then
-  if ! "$cache_dir/$tree/activate"; then
-    notify --urgency=critical "Theme switch failed" "activation failed for $chosen"
+# Miss: build this exact tree, never the live working tree, so what lands in
+# the cache is always what the key says it is. A miss is the slow path (nix
+# eval + build, tens of seconds), so say so up front -- a cache hit switches
+# in under a second and needs no announcement.
+if [[ ! -e "$cache_dir/$tree/activate" ]]; then
+  notify "Building $chosen" "Theme is not cached yet, this will take a while..."
+  if ! build_tree "$tree" "$chosen"; then
+    notify --urgency=critical "Theme switch failed" "build failed for $chosen"
     exit 1
   fi
-elif fish -c sw; then
-  # Record what `sw` just built, so switching back to it later is a cache hit.
-  nix build "$repo_dir#$attr" --out-link "$cache_dir/$tree" --option warn-dirty false
-else
-  notify --urgency=critical "Theme switch failed" "sw failed while switching to $chosen"
+fi
+
+if ! "$cache_dir/$tree/activate"; then
+  notify --urgency=critical "Theme switch failed" "activation failed for $chosen"
   exit 1
 fi
 
 # Warm the other themes for next time, detached -- the switch is already done.
+# Hand the lock over first, or the prebuild's `flock -n` would just give up.
+flock -u 9
 setsid "$0" --prebuild >/dev/null 2>&1 &

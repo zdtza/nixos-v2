@@ -51,26 +51,9 @@ let
         ;
       wallpaper = wallpaperPath;
       monospace = fonts.monospace.name;
-      sansSerif = fonts.sansSerif.name;
     }
   );
 
-  # notification for timer completion
-  timerAlert = pkgs.writeShellApplication {
-    name = "qs-timer-alert";
-    text = ''
-      ${pkgs.libnotify}/bin/notify-send \
-        --app-name="Quickshell Timer" \
-        --urgency=critical \
-        --icon=alarm-symbolic \
-        --expire-time=10000 \
-        "Timer complete" \
-        "Countdown has elapsed." || true
-
-      exec ${pkgs.pipewire}/bin/pw-play \
-        ${pkgs.sound-theme-freedesktop}/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
-    '';
-  };
 in
 {
   # `cp` (no --remove-destination) overwrites the destination's content in
@@ -92,7 +75,13 @@ in
     TZDIR = "/etc/zoneinfo";
   };
 
-  # dependencies for the quickshell (mostly for the network panel stats)
+  # Dependencies for the quickshell (mostly for the network panel stats).
+  # The timer alert is no longer a packaged wrapper -- services/TimerService.qml
+  # discovers a notifier, the sound theme and a player at runtime, so this list
+  # only has to make them present on XDG_DATA_DIRS / PATH the same way any
+  # other distro would. No player is listed: pw-play comes with the system
+  # audio server, and installing pipewire into a user profile beside it only
+  # invites version skew.
   home.packages = with pkgs; [
     quickshell
     gawk
@@ -100,7 +89,8 @@ in
     iputils
     iw
     jq
-    timerAlert
+    libnotify
+    sound-theme-freedesktop
   ];
 
   # symlinking the quickshell folder

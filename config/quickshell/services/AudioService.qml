@@ -22,6 +22,18 @@ Item {
     readonly property bool outputMuted: output && output.audio ? output.audio.muted : false
     readonly property bool inputMuted: input && input.audio ? input.audio.muted : false
 
+    // Speaker glyph for the current output level. Lives here because the bar
+    // panel and the OSD both need it and had drifted into two copies.
+    readonly property string outputIcon: {
+        if (outputMuted)
+            return "󰝟";
+        if (outputVolume >= 0.6)
+            return "󰕾";
+        if (outputVolume >= 0.2)
+            return "󰖀";
+        return "󰕿";
+    }
+
     signal volumeIpcInvoked(bool input)
 
     function audioNodes(sinks: bool): var {

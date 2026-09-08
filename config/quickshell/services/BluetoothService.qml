@@ -15,9 +15,6 @@ Item {
     readonly property var devices: sortedDevices()
     readonly property var connectedDevices: devices.filter(device => isConnected(device))
     readonly property var connectedDevice: connectedDevices.length > 0 ? connectedDevices[0] : null
-    readonly property bool busy: devices.some(device => device.pairing
-        || device.state === BluetoothDeviceState.Connecting
-        || device.state === BluetoothDeviceState.Disconnecting)
     readonly property string icon: !enabled ? "󰂲" : connectedDevices.length > 0 ? "󰂱" : "󰂯"
 
     property int scannerUsers: 0

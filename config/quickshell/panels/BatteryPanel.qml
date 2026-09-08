@@ -72,42 +72,20 @@ Item {
     onAvailableChanged: if (!available)
         PanelService.close(root)
 
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Left"
-        context: Qt.ApplicationShortcut
+        sequences: ["Left", "Up"]
         onActivated: root.selectedProfileIndex = Math.max(0, root.selectedProfileIndex - 1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Up"
-        context: Qt.ApplicationShortcut
-        onActivated: root.selectedProfileIndex = Math.max(0, root.selectedProfileIndex - 1)
-    }
-    Shortcut {
-        enabled: root.opened
-        sequence: "Right"
-        context: Qt.ApplicationShortcut
+        sequences: ["Right", "Down"]
         onActivated: root.selectedProfileIndex = Math.min(root.profiles.length - 1,
             root.selectedProfileIndex + 1)
     }
-    Shortcut {
-        enabled: root.opened
-        sequence: "Down"
-        context: Qt.ApplicationShortcut
-        onActivated: root.selectedProfileIndex = Math.min(root.profiles.length - 1,
-            root.selectedProfileIndex + 1)
-    }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened && root.profiles.length > 0
-        sequence: "Return"
-        context: Qt.ApplicationShortcut
-        onActivated: root.setProfile(String(root.profiles[root.selectedProfileIndex]))
-    }
-    Shortcut {
-        enabled: root.opened && root.profiles.length > 0
-        sequence: "Enter"
-        context: Qt.ApplicationShortcut
+        sequences: ["Return", "Enter"]
         onActivated: root.setProfile(String(root.profiles[root.selectedProfileIndex]))
     }
 
@@ -158,13 +136,11 @@ Item {
             trailingHeight: heroPercent.implicitHeight
             trailingMargin: 10
 
-            Text {
+            ShellText {
                 id: heroPercent
                 anchors.centerIn: parent
                 text: root.percent + "%"
-                color: Theme.base05
-                font.family: Theme.monospace
-                font.pixelSize: Utils.scaledFont(30)
+                size: 30
                 font.bold: true
             }
         }
@@ -290,20 +266,16 @@ Item {
                         Row {
                             anchors.centerIn: parent
                             spacing: 8
-                            Text {
+                            ShellText {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: root.profileIcon(String(profileButton.modelData))
-                                color: Theme.base05
-                                font.family: Theme.monospace
-                                font.pixelSize: Utils.scaledFont(15)
+                                size: 15
                             }
-                            Text {
+                            ShellText {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: String(profileButton.modelData) === "PowerSaver"
                                     ? "Power-saver" : String(profileButton.modelData)
-                                color: Theme.base05
-                                font.family: Theme.monospace
-                                font.pixelSize: Utils.scaledFont(12)
+                                size: 12
                             }
                         }
                     }
@@ -318,23 +290,19 @@ Item {
         width: parent.width
         spacing: 8
 
-        Text {
+        ShellText {
             text: parent.labelText
-            color: Theme.base05
             opacity: 0.6
-            font.family: Theme.monospace
-            font.pixelSize: Utils.scaledFont(12)
+            size: 12
         }
         Item {
             width: Math.max(0, parent.width
                 - parent.children[0].implicitWidth - parent.children[2].implicitWidth - 16)
             height: 1
         }
-        Text {
+        ShellText {
             text: parent.valueText
-            color: Theme.base05
-            font.family: Theme.monospace
-            font.pixelSize: Utils.scaledFont(12)
+            size: 12
         }
     }
 }

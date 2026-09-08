@@ -22,14 +22,6 @@ Scope {
     // generation's Quickshell.screens every time it's needed.
     property string targetScreenName: Quickshell.screens.length > 0 ? Quickshell.screens[0].name : ""
 
-    function screenForMonitor(name: string): var {
-        for (const screen of Quickshell.screens) {
-            if (screen.name === name)
-                return screen;
-        }
-        return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
-    }
-
     function focusedMonitorName(): string {
         return Hyprland.focusedMonitor?.name ?? "";
     }
@@ -86,7 +78,7 @@ Scope {
     PanelWindow {
         id: window
 
-        screen: root.screenForMonitor(root.targetScreenName)
+        screen: Utils.screenForMonitor(root.targetScreenName)
         visible: !DoNotDisturbService.enabled
             && server.trackedNotifications.values.length > 0
         color: "transparent"
@@ -121,22 +113,9 @@ Scope {
         // of floating with a gap on either side.
         margins.top: PanelService.barVisible ? PanelService.barHeight : 0
 
-        Canvas {
-            id: cornerCanvas
+        ShellCorner {
             width: window.cornerSize
             height: Math.min(width, window.panelHeight)
-
-            onPaint: {
-                const context = getContext("2d");
-                context.clearRect(0, 0, width, width);
-                context.fillStyle = Theme.base01;
-                context.beginPath();
-                context.moveTo(0, 0);
-                context.lineTo(width, 0);
-                context.lineTo(width, width);
-                context.arc(0, width, width, 0, -Math.PI / 2, true);
-                context.fill();
-            }
         }
 
         // Shadow-only copy behind the visible panel. The MultiEffect shader
@@ -308,29 +287,25 @@ Scope {
             }
             spacing: 10
 
-            Text {
+            ShellText {
                 width: parent.width
                 text: card.notification.summary
                 visible: text !== ""
-                color: Theme.base05
                 wrapMode: Text.Wrap
                 elide: Text.ElideRight
                 maximumLineCount: 2
-                font.family: Theme.monospace
                 font.pixelSize: 13
                 font.weight: Font.DemiBold
             }
 
-            Text {
+            ShellText {
                 width: parent.width
                 text: card.notification.body
                 visible: text !== ""
-                color: Theme.base05
                 textFormat: Text.StyledText
                 wrapMode: Text.Wrap
                 elide: Text.ElideRight
                 maximumLineCount: 4
-                font.family: Theme.monospace
                 font.pixelSize: 12
                 lineHeight: 1.2
             }

@@ -408,7 +408,7 @@ Scope {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 48
 
-                    Text {
+                    ShellText {
                         anchors {
                             left: parent.left
                             leftMargin: 16
@@ -416,8 +416,7 @@ Scope {
                         }
                         text: "󰍉"
                         color: Theme.base04
-                        font.family: Theme.monospace
-                        font.pixelSize: Utils.scaledFont(14)
+                        size: 14
                     }
 
                     TextInput {
@@ -448,14 +447,13 @@ Scope {
 
                         onTextChanged: appList.currentIndex = 0
 
-                        Text {
+                        ShellText {
                             anchors.fill: parent
                             verticalAlignment: Text.AlignVCenter
                             visible: search.text === ""
                             text: "Search apps…"
                             color: Theme.base04
-                            font.family: Theme.monospace
-                            font.pixelSize: Utils.scaledFont(14)
+                            size: 14
                         }
 
                         Keys.onPressed: event => {
@@ -522,13 +520,12 @@ Scope {
                             width: 38
                             height: 38
 
-                            Text {
+                            ShellText {
                                 anchors.centerIn: parent
                                 visible: applicationIcon.status === Image.Loading
                                 text: "…"
                                 color: Theme.base04
-                                font.family: Theme.monospace
-                                font.pixelSize: Utils.scaledFont(16)
+                                size: 16
                             }
 
                             Image {
@@ -563,7 +560,7 @@ Scope {
                             }
                         }
 
-                        Text {
+                        ShellText {
                             anchors {
                                 left: iconFrame.right
                                 right: parent.right
@@ -572,10 +569,8 @@ Scope {
                                 verticalCenter: parent.verticalCenter
                             }
                             text: appRow.entry.name
-                            color: Theme.base05
                             elide: Text.ElideRight
-                            font.family: Theme.monospace
-                            font.pixelSize: Utils.scaledFont(16)
+                            size: 16
                         }
 
                         MouseArea {
@@ -602,20 +597,18 @@ Scope {
                         visible: window.entries.length === 0
                         spacing: 10
 
-                        Text {
+                        ShellText {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: "…"
                             color: Theme.base04
-                            font.family: Theme.monospace
-                            font.pixelSize: Utils.scaledFont(28)
+                            size: 28
                         }
 
-                        Text {
+                        ShellText {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: "LOADING APPLICATIONS"
                             color: Theme.base04
-                            font.family: Theme.monospace
-                            font.pixelSize: Utils.scaledFont(11)
+                            size: 11
                             font.bold: true
                             font.letterSpacing: 1
                         }

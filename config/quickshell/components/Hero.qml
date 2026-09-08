@@ -1,6 +1,5 @@
 import QtQuick
 import "../services"
-import ".."
 
 // Shared panel heading: icon, title/status labels, optional trailing control.
 Item {
@@ -17,14 +16,12 @@ Item {
 
     implicitHeight: Math.max(heroIcon.implicitHeight, labels.implicitHeight, trailingSlot.implicitHeight)
 
-    Text {
+    ShellText {
         id: heroIcon
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         text: root.icon
-        color: Theme.base05
-        font.family: Theme.monospace
-        font.pixelSize: Utils.scaledFont(26)
+        size: 26
     }
 
     Column {
@@ -36,23 +33,20 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 2
 
-        Text {
+        ShellText {
             width: parent.width
             text: root.title
-            color: Theme.base05
-            font.family: Theme.monospace
-            font.pixelSize: Utils.scaledFont(15)
+            size: 15
             font.bold: true
             elide: Text.ElideRight
         }
 
-        Text {
+        ShellText {
             id: statusText
             width: parent.width
             text: root.status
             color: Qt.darker(Theme.base05, 1.4)
-            font.family: Theme.monospace
-            font.pixelSize: Utils.scaledFont(11)
+            size: 11
             font.bold: true
             font.letterSpacing: 1.2
             elide: Text.ElideRight

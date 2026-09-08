@@ -40,6 +40,13 @@ Item {
     readonly property string statusText: NetworkService.kind === "disconnected"
         ? "NOT CONNECTED" : phrases[phraseIndex % phrases.length].toUpperCase()
 
+    // Mounted in the bar window, but only while a passphrase is actually
+    // being entered -- the rest of the time this panel is shortcut-driven and
+    // wants no text proxy at all. Drawer surfaces don't own compositor
+    // keyboard focus, so the visible field in the drawer renders the text
+    // while this is what receives the keystrokes.
+    readonly property Component keyboardProxy: passwordSsid === "" ? null : passwordProxy
+
     signal restorePasswordFocus
 
     visible: available
@@ -214,46 +221,53 @@ Item {
         onTriggered: root.restorePasswordFocus()
     }
 
+    Component {
+        id: passwordProxy
+
+        TextInput {
+            focus: true
+            echoMode: TextInput.Password
+            text: root.passwordText
+
+            onTextEdited: root.passwordText = text
+            onActiveFocusChanged: if (activeFocus)
+                cursorPosition = length
+
+            Keys.onReturnPressed: root.submitPassword()
+            Keys.onEnterPressed: root.submitPassword()
+            Keys.onEscapePressed: root.cancelPasswordEntry()
+        }
+    }
+
     StatusRotator {
         target: networkHero.statusLabel
         running: root.opened && NetworkService.kind !== "disconnected"
         onAdvance: root.phraseIndex = (root.phraseIndex + 1) % root.phrases.length
     }
 
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened && root.passwordSsid === ""
-        sequence: "Up"
-        context: Qt.ApplicationShortcut
+        sequences: ["Up"]
         onActivated: root.selectNetwork(-1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened && root.passwordSsid === ""
-        sequence: "Down"
-        context: Qt.ApplicationShortcut
+        sequences: ["Down"]
         onActivated: root.selectNetwork(1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened && root.passwordSsid === ""
-        sequence: "Return"
-        context: Qt.ApplicationShortcut
+        sequences: ["Return", "Enter"]
         onActivated: root.activateSelectedNetwork()
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened && root.passwordSsid === ""
-        sequence: "Enter"
-        context: Qt.ApplicationShortcut
-        onActivated: root.activateSelectedNetwork()
-    }
-    Shortcut {
-        enabled: root.opened && root.passwordSsid === ""
-        sequence: "Delete"
-        context: Qt.ApplicationShortcut
+        sequences: ["Delete"]
         onActivated: root.forgetSelectedNetwork()
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened && root.passwordSsid === ""
-        sequence: "Space"
-        context: Qt.ApplicationShortcut
+        sequences: ["Space"]
         onActivated: NetworkService.toggleWifi()
     }
 
@@ -452,15 +466,13 @@ Item {
                                 anchors.top: parent.top
                                 height: 48
 
-                                Text {
+                                ShellText {
                                     id: networkIcon
                                     anchors.left: parent.left
                                     anchors.leftMargin: 10
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: NetworkService.wifiIcon(networkRow.modelData.signal)
-                                    color: Theme.base05
-                                    font.family: Theme.monospace
-                                    font.pixelSize: Utils.scaledFont(16)
+                                    size: 16
                                 }
                                 Column {
                                     anchors.left: networkIcon.right
@@ -470,23 +482,20 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: 1
 
-                                    Text {
+                                    ShellText {
                                         width: parent.width
                                         text: networkRow.modelData.ssid
-                                        color: Theme.base05
-                                        font.family: Theme.monospace
-                                        font.pixelSize: Utils.scaledFont(12)
+                                        size: 12
                                         elide: Text.ElideRight
                                     }
-                                    Text {
+                                    ShellText {
                                         width: parent.width
                                         text: networkRow.modelData.stateChanging ? "Connecting…"
                                             : networkRow.modelData.connected ? "Connected"
                                             : networkRow.modelData.known ? "Known network"
                                             : NetworkService.securityLabel(networkRow.modelData.security)
                                         color: Theme.base04
-                                        font.family: Theme.monospace
-                                        font.pixelSize: Utils.scaledFont(11)
+                                        size: 11
                                         elide: Text.ElideRight
                                     }
                                 }
@@ -514,15 +523,14 @@ Item {
                                     }
                                 }
 
-                                Text {
+                                ShellText {
                                     id: lockIcon
                                     anchors.right: parent.right
                                     anchors.rightMargin: 10
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: NetworkService.securityRequiresPassword(networkRow.modelData.security) ? "󰌾" : ""
                                     color: Theme.base04
-                                    font.family: Theme.monospace
-                                    font.pixelSize: Utils.scaledFont(12)
+                                    size: 12
                                 }
 
                                 MouseArea {
@@ -563,7 +571,7 @@ Item {
                                     border.color: passwordInput.activeFocus ? Theme.base04 : Utils.alpha(Theme.base05, 0.4)
 
 
-                                    Text {
+                                    ShellText {
                                         anchors {
                                             left: parent.left
                                             leftMargin: 10
@@ -572,8 +580,7 @@ Item {
                                         visible: passwordInput.text === ""
                                         text: root.failureText !== "" ? root.failureText : "Password"
                                         color: root.failureText !== "" ? Theme.base08 : Theme.base04
-                                        font.family: Theme.monospace
-                                        font.pixelSize: Utils.scaledFont(12)
+                                        size: 12
                                     }
 
                                     TextInput {
@@ -610,12 +617,10 @@ Item {
 
                                     border.width: 1
                                     border.color: Utils.alpha(Theme.base05, 0.4)
-                                    Text {
+                                    ShellText {
                                         anchors.centerIn: parent
                                         text: "Connect"
-                                        color: Theme.base05
-                                        font.family: Theme.monospace
-                                        font.pixelSize: Utils.scaledFont(11)
+                                        size: 11
                                         font.bold: true
                                     }
                                     MouseArea {
@@ -636,12 +641,10 @@ Item {
 
                                     border.width: 1
                                     border.color: Utils.alpha(Theme.base05, 0.3)
-                                    Text {
+                                    ShellText {
                                         anchors.centerIn: parent
                                         text: "󰅖"
-                                        color: Theme.base05
-                                        font.family: Theme.monospace
-                                        font.pixelSize: Utils.scaledFont(12)
+                                        size: 12
                                     }
                                     MouseArea {
                                         id: cancelMouse
@@ -707,7 +710,7 @@ Item {
                     width: networkList.width
                     spacing: root.networkRowSpacing
 
-                    Text {
+                    ShellText {
                         width: parent.width
                         height: root.emptyStateHeight
                         visible: root.availableNetworks.length === 0
@@ -716,8 +719,7 @@ Item {
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         color: Theme.base04
-                        font.family: Theme.monospace
-                        font.pixelSize: Utils.scaledFont(12)
+                        size: 12
                     }
 
                     Repeater {
@@ -729,22 +731,19 @@ Item {
         }
     }
 
-    component InfoLabel: Text {
-        color: Theme.base05
+    component InfoLabel: ShellText {
         opacity: 0.6
-        font.family: Theme.monospace
-        font.pixelSize: Utils.scaledFont(12)
+        size: 12
     }
 
-    component DetailValue: Text {
+    component DetailValue: ShellText {
         property bool copyable: false
         property color valueColor: Theme.base05
 
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignRight
         color: valueColor
-        font.family: Theme.monospace
-        font.pixelSize: Utils.scaledFont(12)
+        size: 12
         elide: Text.ElideRight
 
         MouseArea {

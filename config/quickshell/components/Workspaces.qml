@@ -12,7 +12,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import "../services"
-import ".."
 
 Item {
     id: root
@@ -67,14 +66,13 @@ Item {
                 border.width: workspaceItem.isActive ? 1 : 0
                 border.color: Theme.base05
 
-                Text {
+                ShellText {
                     id: workspaceNumber
 
                     anchors.centerIn: parent
                     text: workspaceItem.workspaceId
                     color: workspaceItem.isActive || workspaceItem.isOccupied ? Theme.base05 : Theme.base04
-                    font.family: Theme.monospace
-                    font.pixelSize: Utils.scaledFont(Theme.fontSize)
+                    size: Theme.fontSize
                 }
 
                 MouseArea {

@@ -5,6 +5,22 @@ import Quickshell.Hyprland
 import Quickshell.Io
 
 // Coordinates bar panels so only one instance is open across all screens.
+//
+// A "panel" is any item handed to open()/toggle()/registerPanel(). Everything
+// the shell expects of one is optional and duck-typed:
+//
+//   requiresKeyboardFocus : bool      the bar takes compositor keyboard focus
+//                                     while this panel is active, so its
+//                                     application-wide shortcuts fire.
+//   keyboardProxy         : Component an item the bar mounts and focuses for
+//                                     panels needing real text entry, since
+//                                     drawer/popup surfaces never own
+//                                     keyboard focus themselves. Bind it to
+//                                     null to release the proxy. Declaring it
+//                                     is what keeps typing behaviour in the
+//                                     panel that owns it rather than in Bar.
+//   toggleFromIpc()       : function  overrides plain toggle() for `qs ipc
+//                                     call panels toggle <name>`.
 Item {
     id: root
 
@@ -20,13 +36,6 @@ Item {
 
     // Shared top-bar geometry keeps standalone panels aligned with popups.
     property real barHeight: 30
-    // Height of every panel-backed bar icon (Button, and the few
-    // fixed-size items that match it). Bar icons are vertically centered in
-    // the bar, so their real bottom edge sits (barHeight - barIconHeight) / 2
-    // above the bar's bottom edge. Popup/TrayMenu anchor directly
-    // to their bar icon and don't need this, but Notifications has no icon
-    // to anchor to, so it approximates the same edge from these two.
-    property real barIconHeight: 26
     // Single source for the gap between every bar button/toggle and the
     // clock, so the bar's groups all read as evenly spaced.
     property real barSpacing: 6
@@ -40,7 +49,6 @@ Item {
     // pixels compositor rounding/borders leave popups and notifications off
     // by. Positive pushes the panel further from that edge. This is the only
     // place panel-edge spacing should be adjusted.
-    property real gapTopOffset: 0
     property real gapBottomOffset: 0
     property real gapLeftOffset: 0
     property real gapRightOffset: 0

@@ -49,16 +49,6 @@ Item {
             AudioService.adjustInputVolume(offset * AudioService.inputStep);
     }
 
-    function outputIcon(): string {
-        if (AudioService.outputMuted)
-            return "󰝟";
-        if (AudioService.outputVolume >= 0.6)
-            return "󰕾";
-        if (AudioService.outputVolume >= 0.2)
-            return "󰖀";
-        return "󰕿";
-    }
-
     function nodeLabel(node: var): string {
         if (!node)
             return "Unknown device";
@@ -85,46 +75,34 @@ Item {
         selectedDeviceIndex = Math.max(0,
             AudioService.outputs.indexOf(AudioService.output));
 
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Up"
-        context: Qt.ApplicationShortcut
+        sequences: ["Up"]
         onActivated: root.moveDeviceSelection(-1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Down"
-        context: Qt.ApplicationShortcut
+        sequences: ["Down"]
         onActivated: root.moveDeviceSelection(1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Left"
-        context: Qt.ApplicationShortcut
+        sequences: ["Left"]
         onActivated: root.adjustSelectedVolume(-1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Right"
-        context: Qt.ApplicationShortcut
+        sequences: ["Right"]
         onActivated: root.adjustSelectedVolume(1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Return"
-        context: Qt.ApplicationShortcut
+        sequences: ["Return", "Enter"]
         onActivated: root.activateSelectedDevice()
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Enter"
-        context: Qt.ApplicationShortcut
-        onActivated: root.activateSelectedDevice()
-    }
-    Shortcut {
-        enabled: root.opened
-        sequence: "Space"
-        context: Qt.ApplicationShortcut
+        sequences: ["Space"]
         onActivated: AudioService.toggleOutputMute()
     }
     PwNodePeakMonitor {
@@ -137,7 +115,7 @@ Item {
         id: indicator
         anchors.centerIn: parent
         panel: root
-        text: root.outputIcon()
+        text: AudioService.outputIcon
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton)
@@ -168,7 +146,7 @@ Item {
 
         Hero {
             width: parent.width
-            icon: root.outputIcon()
+            icon: AudioService.outputIcon
             title: "Audio"
             status: root.volumeStatus()
             trailingWidth: 44
@@ -199,14 +177,13 @@ Item {
             width: parent.width
             spacing: 4
 
-            Text {
+            ShellText {
                 width: parent.width
                 height: AudioService.outputs.length === 0 ? implicitHeight : 0
                 visible: AudioService.outputs.length === 0
                 text: "No audio outputs"
                 color: Theme.base04
-                font.family: Theme.monospace
-                font.pixelSize: Utils.scaledFont(12)
+                size: 12
             }
 
             Repeater {
@@ -275,14 +252,13 @@ Item {
             width: parent.width
             spacing: 4
 
-            Text {
+            ShellText {
                 width: parent.width
                 height: AudioService.inputs.length === 0 ? implicitHeight : 0
                 visible: AudioService.inputs.length === 0
                 text: "No audio inputs"
                 color: Theme.base04
-                font.family: Theme.monospace
-                font.pixelSize: Utils.scaledFont(12)
+                size: 12
             }
 
             Repeater {
@@ -326,40 +302,34 @@ Item {
         border.width: keyboardSelected ? 1 : 0
         border.color: Utils.alpha(Theme.base05, 0.25)
 
-        Text {
+        ShellText {
             id: deviceIcon
             anchors.left: parent.left
             anchors.leftMargin: 10
             anchors.verticalCenter: parent.verticalCenter
             text: deviceRow.icon
-            color: Theme.base05
-            font.family: Theme.monospace
-            font.pixelSize: Utils.scaledFont(14)
+            size: 14
         }
 
-        Text {
+        ShellText {
             anchors.left: deviceIcon.right
             anchors.leftMargin: 10
             anchors.right: defaultIcon.left
             anchors.rightMargin: 10
             anchors.verticalCenter: parent.verticalCenter
             text: root.nodeLabel(deviceRow.node)
-            color: Theme.base05
-            font.family: Theme.monospace
-            font.pixelSize: Utils.scaledFont(12)
+            size: 12
             elide: Text.ElideRight
         }
 
-        Text {
+        ShellText {
             id: defaultIcon
             anchors.right: parent.right
             anchors.rightMargin: 10
             anchors.verticalCenter: parent.verticalCenter
             visible: deviceRow.selected
             text: "󰄬"
-            color: Theme.base05
-            font.family: Theme.monospace
-            font.pixelSize: Utils.scaledFont(12)
+            size: 12
         }
 
         MouseArea {

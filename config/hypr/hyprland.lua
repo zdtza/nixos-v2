@@ -526,7 +526,6 @@ bind("F9", "Stop dictation", hl.dsp.exec_cmd("voxtype record stop"), { release =
 bind("SUPER + space", "Toggle app launcher", hl.dsp.global("quickshell:launcher"))
 bind("SUPER + CTRL + W", "Toggle wallpaper picker", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"))
 bind("SUPER + CTRL + A", "Toggle theme picker", hl.dsp.exec_cmd("qs ipc call theme toggle"))
-bind("SUPER + CTRL + P", "Toggle power panel", hl.dsp.exec_cmd("qs ipc call panels toggle power"))
 bind("SUPER + CTRL + C", "Toggle calendar panel", hl.dsp.exec_cmd("qs ipc call panels toggle calendar"))
 bind("SUPER + CTRL + L", "Toggle night-light panel", hl.dsp.exec_cmd("qs ipc call panels toggle nightlight"))
 bind("SUPER + CTRL + T", "Toggle timer panel", hl.dsp.exec_cmd("qs ipc call panels toggle timer"))

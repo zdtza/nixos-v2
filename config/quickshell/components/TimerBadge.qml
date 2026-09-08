@@ -38,20 +38,16 @@ Item {
         anchors.centerIn: parent
         spacing: 4
 
-        Text {
+        ShellText {
             anchors.verticalCenter: parent.verticalCenter
             text: "󱎫"
-            color: Theme.base05
-            font.family: Theme.monospace
-            font.pixelSize: Utils.scaledFont(11)
+            size: 11
         }
 
-        Text {
+        ShellText {
             anchors.verticalCenter: parent.verticalCenter
             text: root.display
-            color: Theme.base05
-            font.family: Theme.monospace
-            font.pixelSize: Utils.scaledFont(11)
+            size: 11
             font.weight: Font.Medium
         }
     }

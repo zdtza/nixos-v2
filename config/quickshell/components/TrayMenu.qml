@@ -11,7 +11,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import "../services"
-import ".."
 
 PopupWindow {
     id: menu
@@ -100,34 +99,24 @@ PopupWindow {
         }
     }
 
-    Shortcut {
+    PanelShortcut {
         enabled: menu.visible && !menu.activeSubmenu
-        sequence: "Up"
-        context: Qt.ApplicationShortcut
+        sequences: ["Up"]
         onActivated: menu.moveSelection(-1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: menu.visible && !menu.activeSubmenu
-        sequence: "Down"
-        context: Qt.ApplicationShortcut
+        sequences: ["Down"]
         onActivated: menu.moveSelection(1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: menu.visible && !menu.activeSubmenu
-        sequence: "Return"
-        context: Qt.ApplicationShortcut
+        sequences: ["Return", "Enter"]
         onActivated: menu.activateSelection()
     }
-    Shortcut {
-        enabled: menu.visible && !menu.activeSubmenu
-        sequence: "Enter"
-        context: Qt.ApplicationShortcut
-        onActivated: menu.activateSelection()
-    }
-    Shortcut {
+    PanelShortcut {
         enabled: menu.visible && menu.submenu && !menu.activeSubmenu
-        sequence: "Right"
-        context: Qt.ApplicationShortcut
+        sequences: ["Right"]
         onActivated: {
             const entry = menu.selectedEntryIndex >= 0
                 ? menu.menuEntries[menu.selectedEntryIndex] : null;
@@ -148,10 +137,9 @@ PopupWindow {
         return true;
     }
 
-    Shortcut {
+    PanelShortcut {
         enabled: menu.visible && !menu.submenu
-        sequence: "Escape"
-        context: Qt.ApplicationShortcut
+        sequences: ["Escape"]
         onActivated: {
             if (!menu.closeSubmenu())
                 menu.dismissRequested();
@@ -293,41 +281,18 @@ PopupWindow {
             NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
         }
 
-        Canvas {
+        ShellCorner {
             visible: menu.cornerSize > 0
             width: menu.cornerSize
             height: Math.min(width, revealClip.height)
-
-            onPaint: {
-                const context = getContext("2d");
-                context.clearRect(0, 0, width, width);
-                context.fillStyle = Theme.base01;
-                context.beginPath();
-                context.moveTo(0, 0);
-                context.lineTo(width, 0);
-                context.lineTo(width, width);
-                context.arc(0, width, width, 0, -Math.PI / 2, true);
-                context.fill();
-            }
         }
 
-        Canvas {
+        ShellCorner {
+            mirrored: true
             visible: menu.cornerSize > 0
+            x: parent.width - width
             width: menu.cornerSize
             height: Math.min(width, revealClip.height)
-            x: parent.width - width
-
-            onPaint: {
-                const context = getContext("2d");
-                context.clearRect(0, 0, width, width);
-                context.fillStyle = Theme.base01;
-                context.beginPath();
-                context.moveTo(0, 0);
-                context.lineTo(width, 0);
-                context.arc(width, width, width, -Math.PI / 2, -Math.PI, true);
-                context.lineTo(0, 0);
-                context.fill();
-            }
         }
 
         Rectangle {
@@ -355,7 +320,7 @@ PopupWindow {
                 implicitHeight: menu.menuTitle === "" ? 0 : (menu.menuStatus === "" ? 38 : 52)
                 visible: implicitHeight > 0
 
-                Text {
+                ShellText {
                     anchors.left: parent.left
                     anchors.leftMargin: 14
                     anchors.right: parent.right
@@ -363,15 +328,13 @@ PopupWindow {
                     anchors.top: parent.top
                     anchors.topMargin: 6
                     text: menu.menuTitle
-                    color: Theme.base05
                     elide: Text.ElideRight
-                    font.family: Theme.monospace
-                    font.pixelSize: Utils.scaledFont(14)
+                    size: 14
                     font.weight: Font.Medium
                     font.letterSpacing: 0.1
                 }
 
-                Text {
+                ShellText {
                     anchors.left: parent.left
                     anchors.leftMargin: 14
                     anchors.right: parent.right
@@ -382,8 +345,7 @@ PopupWindow {
                     text: menu.menuStatus.toUpperCase()
                     color: Theme.base04
                     elide: Text.ElideRight
-                    font.family: Theme.monospace
-                    font.pixelSize: Utils.scaledFont(9)
+                    size: 9
                     font.weight: Font.Medium
                     font.letterSpacing: 1.8
                 }
@@ -439,7 +401,7 @@ PopupWindow {
                             && row.interactive ? Theme.base02 : "transparent"
 
 
-                        Text {
+                        ShellText {
                             anchors {
                                 left: parent.left
                                 leftMargin: 14
@@ -451,14 +413,13 @@ PopupWindow {
                             text: row.sectionLabel ? row.entry.text.toUpperCase() : row.entry.text
                             elide: Text.ElideRight
                             color: row.sectionLabel ? Theme.base03 : (row.interactive ? Theme.base05 : Theme.base04)
-                            font.family: Theme.monospace
-                            font.pixelSize: Utils.scaledFont(row.sectionLabel ? 9 : 12)
+                            size: row.sectionLabel ? 9 : 12
                             font.weight: row.sectionLabel ? Font.Medium : Font.Normal
                             font.letterSpacing: row.sectionLabel ? 1.8 : 0.1
                         }
 
                         // Checkmark for toggles, chevron for submenus.
-                        Text {
+                        ShellText {
                             id: indicator
 
                             anchors {
@@ -475,8 +436,7 @@ PopupWindow {
                                 return "";
                             }
                             color: Theme.base04
-                            font.family: Theme.monospace
-                            font.pixelSize: Utils.scaledFont(Theme.fontSize)
+                            size: Theme.fontSize
                         }
 
                         MouseArea {

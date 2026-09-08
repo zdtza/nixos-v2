@@ -44,41 +44,30 @@ Item {
         selectedScaleIndex = Math.max(0, index);
     }
 
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Up"
-        context: Qt.ApplicationShortcut
+        sequences: ["Up"]
         onActivated: DisplayService.adjustBrightness(DisplayService.brightnessStep)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Down"
-        context: Qt.ApplicationShortcut
+        sequences: ["Down"]
         onActivated: DisplayService.adjustBrightness(-DisplayService.brightnessStep)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Left"
-        context: Qt.ApplicationShortcut
+        sequences: ["Left"]
         onActivated: root.selectedScaleIndex = Math.max(0, root.selectedScaleIndex - 1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Right"
-        context: Qt.ApplicationShortcut
+        sequences: ["Right"]
         onActivated: root.selectedScaleIndex = Math.min(root.scales.length - 1,
             root.selectedScaleIndex + 1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened && !!DisplayService.focusedMonitor
-        sequence: "Return"
-        context: Qt.ApplicationShortcut
-        onActivated: DisplayService.setScale(Number(root.scales[root.selectedScaleIndex]))
-    }
-    Shortcut {
-        enabled: root.opened && !!DisplayService.focusedMonitor
-        sequence: "Enter"
-        context: Qt.ApplicationShortcut
+        sequences: ["Return", "Enter"]
         onActivated: DisplayService.setScale(Number(root.scales[root.selectedScaleIndex]))
     }
 
@@ -168,12 +157,10 @@ Item {
                         DisplayService.setScale(Number(scaleButton.modelData));
                     }
 
-                    Text {
+                    ShellText {
                         anchors.centerIn: parent
                         text: root.scaleLabel(Number(scaleButton.modelData))
-                        color: Theme.base05
-                        font.family: Theme.monospace
-                        font.pixelSize: Utils.scaledFont(12)
+                        size: 12
                     }
                 }
             }
@@ -208,40 +195,34 @@ Item {
                     border.width: focused ? 1 : 0
                     border.color: Utils.alpha(Theme.base05, 0.25)
 
-                    Text {
+                    ShellText {
                         id: monitorIcon
                         anchors.left: parent.left
                         anchors.leftMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
                         text: "󰍹"
-                        color: Theme.base05
-                        font.family: Theme.monospace
-                        font.pixelSize: Utils.scaledFont(14)
+                        size: 14
                     }
 
-                    Text {
+                    ShellText {
                         anchors.left: monitorIcon.right
                         anchors.leftMargin: 10
                         anchors.right: focusedCheck.left
                         anchors.rightMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
                         text: String(monitorRow.modelData.name)
-                        color: Theme.base05
-                        font.family: Theme.monospace
-                        font.pixelSize: Utils.scaledFont(12)
+                        size: 12
                         elide: Text.ElideRight
                     }
 
-                    Text {
+                    ShellText {
                         id: focusedCheck
                         anchors.right: parent.right
                         anchors.rightMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
                         visible: monitorRow.focused
                         text: "󰄬"
-                        color: Theme.base05
-                        font.family: Theme.monospace
-                        font.pixelSize: Utils.scaledFont(12)
+                        size: 12
                     }
                 }
             }

@@ -33,7 +33,6 @@ Item {
     property color base0F: "#75493d"
     property url wallpaper: ""
     property string monospace: "monospace"
-    property string sansSerif: "sans-serif"
     property int fontSize: 13
 
     function apply(data: var): void {
@@ -55,7 +54,6 @@ Item {
         base0F = data.base0F;
         wallpaper = "file://" + data.wallpaper;
         monospace = data.monospace;
-        sansSerif = data.sansSerif;
     }
 
     FileView {

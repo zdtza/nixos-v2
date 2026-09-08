@@ -22,9 +22,6 @@ Item {
         ? Math.round(Number(connectedWifi.signalStrength || 0) * 100) : -1
     readonly property string connectionName: kind === "ethernet"
         ? "Ethernet" : (connectedWifi ? connectedWifi.name : "Disconnected")
-    readonly property string interfaceName: kind === "ethernet" && wiredDevice
-        ? wiredDevice.name : (wifiDevice ? wifiDevice.name : "—")
-    readonly property string connectivity: NetworkConnectivity.toString(Networking.connectivity)
     readonly property string icon: connectionIcon(kind, signalStrength)
     readonly property var wifiNetworks: snapshotNetworks()
 

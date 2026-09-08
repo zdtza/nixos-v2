@@ -105,40 +105,29 @@ Item {
     Component.onDestruction: if (opened)
         BluetoothService.releaseScanner()
 
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Up"
-        context: Qt.ApplicationShortcut
+        sequences: ["Up"]
         onActivated: root.selectDevice(-1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Down"
-        context: Qt.ApplicationShortcut
+        sequences: ["Down"]
         onActivated: root.selectDevice(1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Return"
-        context: Qt.ApplicationShortcut
+        sequences: ["Return", "Enter"]
         onActivated: root.activateSelectedDevice()
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Enter"
-        context: Qt.ApplicationShortcut
-        onActivated: root.activateSelectedDevice()
-    }
-    Shortcut {
-        enabled: root.opened
-        sequence: "Space"
-        context: Qt.ApplicationShortcut
+        sequences: ["Space"]
         onActivated: BluetoothService.toggle()
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Delete"
-        context: Qt.ApplicationShortcut
+        sequences: ["Delete"]
         onActivated: root.forgetSelectedDevice()
     }
 
@@ -274,7 +263,7 @@ Item {
                                 ? "SCANNING" : "READY"
                         }
 
-                        Text {
+                        ShellText {
                             width: parent.width
                             height: root.emptyStateHeight
                             visible: root.availableDevices.length === 0
@@ -283,8 +272,7 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                             color: Theme.base04
-                            font.family: Theme.monospace
-                            font.pixelSize: Utils.scaledFont(12)
+                            size: 12
                         }
 
                         Repeater {
@@ -340,15 +328,13 @@ Item {
                 root.selectedDevice = deviceRow.device
         }
 
-        Text {
+        ShellText {
             id: deviceIcon
             anchors.left: parent.left
             anchors.leftMargin: 10
             anchors.verticalCenter: parent.verticalCenter
             text: BluetoothService.deviceIcon(deviceRow.device)
-            color: Theme.base05
-            font.family: Theme.monospace
-            font.pixelSize: Utils.scaledFont(16)
+            size: 16
         }
 
         Column {
@@ -359,16 +345,14 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 1
 
-            Text {
+            ShellText {
                 width: parent.width
                 text: BluetoothService.deviceLabel(deviceRow.device)
-                color: Theme.base05
-                font.family: Theme.monospace
-                font.pixelSize: Utils.scaledFont(12)
+                size: 12
                 elide: Text.ElideRight
             }
 
-            Text {
+            ShellText {
                 width: parent.width
                 text: {
                     if (deviceRow.device.pairing) return "Pairing…";
@@ -384,8 +368,7 @@ Item {
                     return deviceRow.device.paired ? "Paired" : "Available";
                 }
                 color: Theme.base04
-                font.family: Theme.monospace
-                font.pixelSize: Utils.scaledFont(11)
+                size: 11
                 elide: Text.ElideRight
             }
         }
@@ -413,7 +396,7 @@ Item {
             }
         }
 
-        Text {
+        ShellText {
             id: stateIcon
             anchors.right: parent.right
             anchors.rightMargin: 10
@@ -421,8 +404,7 @@ Item {
             text: BluetoothService.isConnected(deviceRow.device) ? "󰂱"
                 : (deviceRow.device.paired ? "󰌾" : "")
             color: Theme.base04
-            font.family: Theme.monospace
-            font.pixelSize: Utils.scaledFont(12)
+            size: 12
         }
 
         MouseArea {

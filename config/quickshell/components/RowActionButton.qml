@@ -21,12 +21,10 @@ Rectangle {
     border.width: 1
     border.color: Utils.alpha(Theme.base05, 0.3)
 
-    Text {
+    ShellText {
         anchors.centerIn: parent
         text: root.icon
-        color: Theme.base05
-        font.family: Theme.monospace
-        font.pixelSize: Utils.scaledFont(12)
+        size: 12
     }
 
     MouseArea {

@@ -6,19 +6,12 @@ import Quickshell.Hyprland
 import Quickshell.Services.Polkit
 import Quickshell.Wayland
 import "../services"
+import ".."
 
 Scope {
     id: root
 
     property string openedMonitorName: ""
-
-    function screenForMonitor(name: string): var {
-        for (const screen of Quickshell.screens) {
-            if (String(screen.name) === name)
-                return screen;
-        }
-        return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
-    }
 
     function submit(): void {
         const flow = agent.flow;
@@ -41,7 +34,7 @@ Scope {
     PanelWindow {
         id: window
 
-        screen: root.screenForMonitor(root.openedMonitorName)
+        screen: Utils.screenForMonitor(root.openedMonitorName)
         visible: agent.isActive
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
@@ -69,10 +62,9 @@ Scope {
             onAccepted: root.submit()
         }
 
-        Shortcut {
+        PanelShortcut {
             enabled: agent.isActive
-            sequence: "Escape"
-            context: Qt.ApplicationShortcut
+            sequences: ["Escape"]
             onActivated: agent.flow?.cancelAuthenticationRequest()
         }
 

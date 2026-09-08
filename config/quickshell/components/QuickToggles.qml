@@ -5,7 +5,6 @@ import QtQuick
 import Quickshell.Services.Pipewire
 import "../panels"
 import "../services"
-import ".."
 
 Item {
     id: root
@@ -22,6 +21,20 @@ Item {
                 || String(node.properties["media.name"] || "")
                     .startsWith("xdph-streaming-"))) : []
     readonly property bool recordingActive: recordingNodes.length > 0
+
+    // Active-state of every slot, in slot declaration order. A slot's index
+    // here is its identity for the ordering below and for toggleX().
+    readonly property var toggleStates: [
+        NightLightService.enabled,
+        StayAwakeService.enabled,
+        TimerService.running,
+        DoNotDisturbService.enabled,
+        recordingActive,
+        VoiceDictationService.active
+    ]
+    // Last states the ordering was built from, so a change can be narrowed to
+    // the slots that actually flipped.
+    property var appliedStates: []
     property var activeOrder: []
     property var inactiveOrder: []
 
@@ -39,14 +52,11 @@ Item {
     }
 
     function initializeToggleOrder(): void {
-        const states = [NightLightService.enabled, StayAwakeService.enabled,
-            TimerService.running, DoNotDisturbService.enabled, recordingActive,
-            VoiceDictationService.active];
         const nextActive = [];
         const nextInactive = [];
 
-        for (let index = 0; index < states.length; ++index) {
-            if (states[index])
+        for (let index = 0; index < toggleStates.length; ++index) {
+            if (toggleStates[index])
                 nextActive.push(index);
             else
                 nextInactive.push(index);
@@ -54,6 +64,17 @@ Item {
 
         activeOrder = nextActive;
         inactiveOrder = nextInactive;
+        appliedStates = toggleStates.slice();
+    }
+
+    // One handler on the states array replaces a Connections block per
+    // service: whichever slots flipped since the last pass get re-ordered.
+    function syncToggleOrder(): void {
+        for (let index = 0; index < toggleStates.length; ++index) {
+            if (appliedStates[index] !== toggleStates[index])
+                moveToggle(index, toggleStates[index]);
+        }
+        appliedStates = toggleStates.slice();
     }
 
     function toggleX(index: int): real {
@@ -69,42 +90,9 @@ Item {
     }
 
     Component.onCompleted: initializeToggleOrder()
-    onRecordingActiveChanged: moveToggle(4, recordingActive)
-
-    Connections {
-        target: NightLightService
-        function onEnabledChanged() {
-            root.moveToggle(0, NightLightService.enabled);
-        }
-    }
-
-    Connections {
-        target: StayAwakeService
-        function onEnabledChanged() {
-            root.moveToggle(1, StayAwakeService.enabled);
-        }
-    }
-
-    Connections {
-        target: TimerService
-        function onRunningChanged() {
-            root.moveToggle(2, TimerService.running);
-        }
-    }
-
-    Connections {
-        target: DoNotDisturbService
-        function onEnabledChanged() {
-            root.moveToggle(3, DoNotDisturbService.enabled);
-        }
-    }
-
-    Connections {
-        target: VoiceDictationService
-        function onActiveChanged() {
-            root.moveToggle(5, VoiceDictationService.active);
-        }
-    }
+    // Guarded so the first evaluation (which fires before onCompleted) can't
+    // re-order against an empty baseline.
+    onToggleStatesChanged: if (appliedStates.length > 0) syncToggleOrder()
 
     // Reserve hover space for every toggle, including collapsed controls, so
     // entering anywhere the expanded tray occupies reveals the full tray.
@@ -126,7 +114,6 @@ Item {
         implicitHeight: 26
         opacity: implicitWidth > 0 ? 1 : 0
 
-
         Item {
             id: buttons
 
@@ -137,192 +124,71 @@ Item {
                 + timerSlot.width + dndSlot.width + recordingSlot.width
                 + dictationSlot.width
 
-            Item {
+            QuickToggleSlot {
                 id: nightLightSlot
-
                 x: root.toggleX(0)
-                width: implicitWidth
-                implicitWidth: root.expanded || NightLightService.enabled ? 28 : 0
-                implicitHeight: 26
-                clip: true
+                shown: root.expanded || NightLightService.enabled
 
-                Behavior on implicitWidth {
-                    NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
-                }
-
-                NightLightTogglePanel {
-                    id: nightLightToggle
-                    anchors.right: parent.right
-                }
+                NightLightTogglePanel { id: nightLightToggle }
             }
 
-            Item {
+            QuickToggleSlot {
                 id: stayAwakeSlot
-
                 x: root.toggleX(1)
-                width: implicitWidth
-                implicitWidth: root.expanded || StayAwakeService.enabled ? 28 : 0
-                implicitHeight: 26
-                clip: true
+                shown: root.expanded || StayAwakeService.enabled
 
-                Behavior on implicitWidth {
-                    NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
-                }
-
-                Item {
-                    width: 28
-                    height: 26
-                    anchors.right: parent.right
-
-                    Text {
-                        anchors.centerIn: parent
-                        anchors.verticalCenterOffset: -1
-                        text: "󰅶"
-                        color: StayAwakeService.enabled ? Theme.base05 : Theme.base04
-                        font.family: Theme.monospace
-                        font.pixelSize: Utils.scaledFont(14)
-
-                        Behavior on color { ColorAnimation { duration: 120 } }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: StayAwakeService.toggle()
-                    }
+                QuickToggleButton {
+                    icon: "󰅶"
+                    active: StayAwakeService.enabled
+                    onClicked: StayAwakeService.toggle()
                 }
             }
 
-            Item {
+            QuickToggleSlot {
                 id: timerSlot
-
                 x: root.toggleX(2)
-                width: implicitWidth
                 // Running state is already surfaced by the badge next to the
                 // clock, so this slot only reveals on hover rather than
                 // staying pinned open while a timer counts down.
-                implicitWidth: root.expanded ? 28 : 0
-                implicitHeight: 26
-                clip: true
+                shown: root.expanded
 
-                Behavior on implicitWidth {
-                    NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
-                }
-
-                TimerTogglePanel {
-                    id: timerToggle
-                    anchors.right: parent.right
-                }
+                TimerTogglePanel { id: timerToggle }
             }
 
-            Item {
+            QuickToggleSlot {
                 id: dndSlot
-
                 x: root.toggleX(3)
-                width: implicitWidth
-                implicitWidth: root.expanded || DoNotDisturbService.enabled ? 28 : 0
-                implicitHeight: 26
-                clip: true
+                shown: root.expanded || DoNotDisturbService.enabled
 
-                Behavior on implicitWidth {
-                    NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
-                }
-
-                Item {
-                    width: 28
-                    height: 26
-                    anchors.right: parent.right
-
-                    Text {
-                        anchors.centerIn: parent
-                        anchors.verticalCenterOffset: -1
-                        text: "󰂛"
-                        color: DoNotDisturbService.enabled
-                            ? Theme.base05 : Theme.base04
-                        font.family: Theme.monospace
-                        font.pixelSize: Utils.scaledFont(14)
-
-                        Behavior on color { ColorAnimation { duration: 120 } }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: DoNotDisturbService.toggle()
-                    }
+                QuickToggleButton {
+                    icon: "󰂛"
+                    active: DoNotDisturbService.enabled
+                    onClicked: DoNotDisturbService.toggle()
                 }
             }
 
-            Item {
+            QuickToggleSlot {
                 id: recordingSlot
-
                 x: root.toggleX(4)
-                width: implicitWidth
-                implicitWidth: root.recordingActive ? 28 : 0
-                implicitHeight: 26
-                clip: true
+                shown: root.recordingActive
 
-                Behavior on implicitWidth {
-                    NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
-                }
-
-                Item {
-                    width: 28
-                    height: 26
-                    anchors.right: parent.right
-
-                    Text {
-                        anchors.centerIn: parent
-                        anchors.verticalCenterOffset: -1
-                        text: ""
-                        color: Theme.base08
-                        font.family: Theme.monospace
-                        font.pixelSize: Utils.scaledFont(14)
-                    }
+                QuickToggleButton {
+                    icon: ""
+                    active: true
+                    activeColor: Theme.base08
+                    interactive: false
                 }
             }
 
-            Item {
+            QuickToggleSlot {
                 id: dictationSlot
-
                 x: root.toggleX(5)
-                width: implicitWidth
-                implicitWidth: root.expanded || VoiceDictationService.active ? 28 : 0
-                implicitHeight: 26
-                clip: true
+                shown: root.expanded || VoiceDictationService.active
 
-                Behavior on implicitWidth {
-                    NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
-                }
-
-                Item {
-                    width: 28
-                    height: 26
-                    anchors.right: parent.right
-
-                    Text {
-                        anchors.centerIn: parent
-                        anchors.verticalCenterOffset: -1
-                        text: ""
-                        color: VoiceDictationService.active
-                            ? Theme.base05 : Theme.base04
-                        font.family: Theme.monospace
-                        font.pixelSize: Utils.scaledFont(14)
-
-                        Behavior on color { ColorAnimation { duration: 120 } }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: VoiceDictationService.toggle()
-                    }
+                QuickToggleButton {
+                    icon: ""
+                    active: VoiceDictationService.active
+                    onClicked: VoiceDictationService.toggle()
                 }
             }
         }

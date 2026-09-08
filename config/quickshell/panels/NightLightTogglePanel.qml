@@ -41,40 +41,24 @@ Item {
         }
     }
 
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Left"
-        context: Qt.ApplicationShortcut
+        sequences: ["Left", "Down"]
         onActivated: NightLightService.setTemperature(NightLightService.temperature - root.temperatureStep)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Down"
-        context: Qt.ApplicationShortcut
-        onActivated: NightLightService.setTemperature(NightLightService.temperature - root.temperatureStep)
-    }
-    Shortcut {
-        enabled: root.opened
-        sequence: "Right"
-        context: Qt.ApplicationShortcut
+        sequences: ["Right", "Up"]
         onActivated: NightLightService.setTemperature(NightLightService.temperature + root.temperatureStep)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Up"
-        context: Qt.ApplicationShortcut
-        onActivated: NightLightService.setTemperature(NightLightService.temperature + root.temperatureStep)
-    }
-    Shortcut {
-        enabled: root.opened
-        sequence: "Space"
-        context: Qt.ApplicationShortcut
+        sequences: ["Space"]
         onActivated: NightLightService.toggle()
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened
-        sequence: "Delete"
-        context: Qt.ApplicationShortcut
+        sequences: ["Delete"]
         onActivated: NightLightService.disable()
     }
 

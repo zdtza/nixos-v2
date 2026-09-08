@@ -4,7 +4,6 @@ import QtQuick
 import Quickshell
 import "../components"
 import "../services"
-import ".."
 
 // Current-year calendar shown from clock in bar.
 Popup {
@@ -175,70 +174,49 @@ Popup {
         precision: SystemClock.Minutes
     }
 
-    Shortcut {
+    PanelShortcut {
         enabled: root.open
-        sequence: "Shift+Left"
-        context: Qt.ApplicationShortcut
+        sequences: ["Shift+Left"]
         onActivated: root.changeMonth(-1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.open
-        sequence: "Shift+Right"
-        context: Qt.ApplicationShortcut
+        sequences: ["Shift+Right"]
         onActivated: root.changeMonth(1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.open
-        sequence: "Left"
-        context: Qt.ApplicationShortcut
+        sequences: ["Left"]
         onActivated: root.moveKeyboardDay(-1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.open
-        sequence: "Right"
-        context: Qt.ApplicationShortcut
+        sequences: ["Right"]
         onActivated: root.moveKeyboardDay(1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.open
-        sequence: "Up"
-        context: Qt.ApplicationShortcut
+        sequences: ["Up"]
         onActivated: root.moveKeyboardDay(-7)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.open
-        sequence: "Down"
-        context: Qt.ApplicationShortcut
+        sequences: ["Down"]
         onActivated: root.moveKeyboardDay(7)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.open
-        sequence: "Return"
-        context: Qt.ApplicationShortcut
+        sequences: ["Return", "Enter"]
         onActivated: root.activateKeyboardDay(false)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.open
-        sequence: "Enter"
-        context: Qt.ApplicationShortcut
-        onActivated: root.activateKeyboardDay(false)
-    }
-    Shortcut {
-        enabled: root.open
-        sequence: "Shift+Return"
-        context: Qt.ApplicationShortcut
+        sequences: ["Shift+Return", "Shift+Enter"]
         onActivated: root.activateKeyboardDay(true)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.open
-        sequence: "Shift+Enter"
-        context: Qt.ApplicationShortcut
-        onActivated: root.activateKeyboardDay(true)
-    }
-    Shortcut {
-        enabled: root.open
-        sequence: "Delete"
-        context: Qt.ApplicationShortcut
+        sequences: ["Delete"]
         onActivated: root.clearSelection()
     }
 
@@ -250,21 +228,17 @@ Popup {
             anchors.centerIn: parent
             spacing: 24
 
-            Text {
+            ShellText {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "󰃭"
-                color: Theme.base05
-                font.family: Theme.monospace
-                font.pixelSize: Utils.scaledFont(50)
+                size: 50
                 font.bold: true
             }
 
-            Text {
+            ShellText {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.monthNames[clock.date.getMonth()] + " " + clock.date.getDate()
-                color: Theme.base05
-                font.family: Theme.monospace
-                font.pixelSize: Utils.scaledFont(48)
+                size: 48
                 font.weight: Font.Bold
             }
         }
@@ -276,13 +250,12 @@ Popup {
         height: 40
         spacing: 8
 
-        Text {
+        ShellText {
             width: 44
             anchors.verticalCenter: parent.verticalCenter
             text: root.currentYear
             color: Theme.base04
-            font.family: Theme.monospace
-            font.pixelSize: Utils.scaledFont(12)
+            size: 12
             font.letterSpacing: 1
         }
 
@@ -307,14 +280,12 @@ Popup {
             }
         }
 
-        Text {
+        ShellText {
             width: 42
             anchors.verticalCenter: parent.verticalCenter
             horizontalAlignment: Text.AlignRight
             text: root.yearCompletePercent + "%"
-            color: Theme.base05
-            font.family: Theme.monospace
-            font.pixelSize: Utils.scaledFont(12)
+            size: 12
             font.letterSpacing: 1
         }
     }
@@ -326,7 +297,7 @@ Popup {
         Repeater {
             model: root.weekdayNames
 
-            Text {
+            ShellText {
                 required property string modelData
                 required property int index
 
@@ -334,8 +305,7 @@ Popup {
                 horizontalAlignment: Text.AlignHCenter
                 text: modelData
                 color: Theme.base04
-                font.family: Theme.monospace
-                font.pixelSize: Utils.scaledFont(11)
+                size: 11
                 font.weight: Font.Medium
                 font.letterSpacing: 1
             }
@@ -388,13 +358,12 @@ Popup {
 
                     }
 
-                    Text {
+                    ShellText {
                         anchors.centerIn: parent
                         text: dayCell.modelData.label
                         color: dayCell.modelData.weekNumber || !dayCell.modelData.inMonth
                             ? Theme.base03 : Theme.base05
-                        font.family: Theme.monospace
-                        font.pixelSize: Utils.scaledFont(dayCell.modelData.weekNumber ? 10 : 13)
+                        size: dayCell.modelData.weekNumber ? 10 : 13
                         font.weight: dayCell.marked ? Font.Medium : Font.Normal
                     }
 
@@ -440,14 +409,12 @@ Popup {
             height: 28
             color: "transparent"
 
-            Text {
+            ShellText {
                 anchors.fill: parent
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 text: "‹"
-                color: Theme.base05
-                font.family: Theme.monospace
-                font.pixelSize: Utils.scaledFont(18)
+                size: 18
             }
 
             MouseArea {
@@ -463,23 +430,20 @@ Popup {
             anchors.centerIn: parent
             spacing: 2
 
-            Text {
+            ShellText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: (root.monthNames[root.shownMonth] + " " + root.currentYear).toUpperCase()
-                color: Theme.base05
-                font.family: Theme.monospace
-                font.pixelSize: Utils.scaledFont(11)
+                size: 11
                 font.weight: Font.Medium
                 font.letterSpacing: 1.4
             }
 
-            Text {
+            ShellText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: root.selectedDayCount > 0
                 text: root.selectedDayCount + " DAYS SELECTED"
                 color: Theme.base04
-                font.family: Theme.monospace
-                font.pixelSize: Utils.scaledFont(9)
+                size: 9
                 font.letterSpacing: 1
             }
         }
@@ -491,14 +455,12 @@ Popup {
             height: 28
             color: "transparent"
 
-            Text {
+            ShellText {
                 anchors.fill: parent
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 text: "›"
-                color: Theme.base05
-                font.family: Theme.monospace
-                font.pixelSize: Utils.scaledFont(18)
+                size: 18
             }
 
             MouseArea {

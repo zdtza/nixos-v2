@@ -20,6 +20,12 @@ Item {
     property alias keyboardInputText: durationInput.text
     property int selectedTimerIndex: -1
 
+    // Mounted in the bar window while this panel is active: popup surfaces
+    // don't own compositor keyboard focus, so real typing has to be received
+    // there and mirrored back here. Declared in this file so the duration
+    // field's key handling stays next to the field it drives.
+    readonly property Component keyboardProxy: durationProxy
+
     implicitWidth: 28
     implicitHeight: 26
 
@@ -111,6 +117,28 @@ Item {
 
     Component.onCompleted: inputReady = true
 
+    Component {
+        id: durationProxy
+
+        TextInput {
+            focus: true
+            inputMask: "00:00"
+            text: root.keyboardInputText
+
+            onTextEdited: root.setInputText(text)
+            onActiveFocusChanged: if (activeFocus)
+                selectAll()
+
+            Keys.onReturnPressed: root.startTimer()
+            Keys.onEnterPressed: root.startTimer()
+            Keys.onDownPressed: root.selectTimer(1)
+            Keys.onUpPressed: root.selectTimer(-1)
+            Keys.onDeletePressed: if (root.selectedTimerIndex >= 0)
+                root.removeSelectedTimer()
+            Keys.onEscapePressed: PanelService.close(root)
+        }
+    }
+
     Button {
         anchors.centerIn: parent
         panel: root
@@ -191,12 +219,10 @@ Item {
                 border.color: Utils.alpha(Theme.base05, 0.3)
                 opacity: canStart ? 1 : 0.5
 
-                Text {
+                ShellText {
                     anchors.centerIn: parent
                     text: "󰐕"
-                    color: Theme.base05
-                    font.family: Theme.monospace
-                    font.pixelSize: Utils.scaledFont(14)
+                    size: 14
                 }
 
                 MouseArea {
@@ -272,15 +298,14 @@ Item {
             height: panel.timerViewportHeight
             clip: true
 
-            Text {
+            ShellText {
                 anchors.fill: parent
                 visible: TimerService.timers.length === 0
                 text: "No running timers"
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 color: Theme.base04
-                font.family: Theme.monospace
-                font.pixelSize: Utils.scaledFont(12)
+                size: 12
             }
 
             Flickable {
@@ -327,18 +352,16 @@ Item {
                                     root.selectedTimerIndex = timerRow.index
                             }
 
-                            Text {
+                            ShellText {
                                 id: timerIcon
                                 anchors.left: parent.left
                                 anchors.leftMargin: 10
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "󱎫"
-                                color: Theme.base05
-                                font.family: Theme.monospace
-                                font.pixelSize: Utils.scaledFont(16)
+                                size: 16
                             }
 
-                            Text {
+                            ShellText {
                                 anchors.left: timerIcon.right
                                 anchors.leftMargin: 12
                                 anchors.right: deleteButton.visible
@@ -348,9 +371,7 @@ Item {
                                 text: TimerService.formatDuration(Math.max(0,
                                     Math.ceil((timerRow.modelData.deadlineMs
                                         - TimerService.nowMs) / 1000)))
-                                color: Theme.base05
-                                font.family: Theme.monospace
-                                font.pixelSize: Utils.scaledFont(24)
+                                size: 24
                                 font.weight: Font.Medium
                             }
 

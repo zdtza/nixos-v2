@@ -141,46 +141,34 @@ Item {
         }
     }
 
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened && !menuLoader.item && !windowsMenuLoader.item
-        sequence: "Escape"
-        context: Qt.ApplicationShortcut
+        sequences: ["Escape"]
         onActivated: root.collapseTray()
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened && !menuLoader.item?.activeSubmenu
-        sequence: "Left"
-        context: Qt.ApplicationShortcut
+        sequences: ["Left"]
         onActivated: root.cycleSelection(-1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened && !menuLoader.item && !windowsMenuLoader.item
-        sequence: "Up"
-        context: Qt.ApplicationShortcut
+        sequences: ["Up"]
         onActivated: root.moveSelection(-1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened && !menuLoader.item?.activeSubmenu
-        sequence: "Right"
-        context: Qt.ApplicationShortcut
+        sequences: ["Right"]
         onActivated: root.cycleSelection(1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened && !menuLoader.item && !windowsMenuLoader.item
-        sequence: "Down"
-        context: Qt.ApplicationShortcut
+        sequences: ["Down"]
         onActivated: root.moveSelection(1)
     }
-    Shortcut {
+    PanelShortcut {
         enabled: root.opened && !menuLoader.item && !windowsMenuLoader.item
-        sequence: "Return"
-        context: Qt.ApplicationShortcut
-        onActivated: root.activateSelection()
-    }
-    Shortcut {
-        enabled: root.opened && !menuLoader.item && !windowsMenuLoader.item
-        sequence: "Enter"
-        context: Qt.ApplicationShortcut
+        sequences: ["Return", "Enter"]
         onActivated: root.activateSelection()
     }
 

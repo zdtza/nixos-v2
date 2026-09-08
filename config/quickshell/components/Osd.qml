@@ -18,14 +18,6 @@ Scope {
     property real value: 0
     property color fillColor: Theme.base05
 
-    function screenForMonitor(name: string): var {
-        for (const screen of Quickshell.screens) {
-            if (String(screen.name) === name)
-                return screen;
-        }
-        return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
-    }
-
     function show(iconName: string, progress: real, fill: color): void {
         if (Quickshell.screens.length === 0)
             return;
@@ -35,16 +27,6 @@ Scope {
         fillColor = fill;
         shown = true;
         hideTimer.restart();
-    }
-
-    function outputIcon(): string {
-        if (AudioService.outputMuted)
-            return "󰝟";
-        if (AudioService.outputVolume >= 0.6)
-            return "󰕾";
-        if (AudioService.outputVolume >= 0.2)
-            return "󰖀";
-        return "󰕿";
     }
 
     Timer {
@@ -62,7 +44,7 @@ Scope {
                     AudioService.inputVolume / AudioService.maximumVolume,
                     AudioService.inputMuted ? Theme.base04 : Theme.base05);
             } else {
-                root.show(root.outputIcon(),
+                root.show(AudioService.outputIcon,
                     AudioService.outputVolume / AudioService.maximumVolume,
                     AudioService.outputMuted ? Theme.base04 : Theme.base05);
             }
@@ -80,7 +62,7 @@ Scope {
     PanelWindow {
         id: window
 
-        screen: root.screenForMonitor(root.targetScreenName)
+        screen: Utils.screenForMonitor(root.targetScreenName)
         visible: root.shown && Quickshell.screens.length > 0
         color: "transparent"
         implicitWidth: 240
@@ -108,15 +90,13 @@ Scope {
                 }
                 spacing: 14
 
-                Text {
+                ShellText {
                     width: 18
                     height: parent.height
                     text: root.icon
-                    color: Theme.base05
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
-                    font.family: Theme.monospace
-                    font.pixelSize: Utils.scaledFont(16)
+                    size: 16
                 }
 
                 Item {

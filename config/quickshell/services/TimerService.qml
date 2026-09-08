@@ -15,7 +15,43 @@ Item {
     property int lastDurationSeconds: 0
     property int nextTimerSequence: 0
 
-    signal elapsed(var timerId)
+    // Completion alert, kept here as plain POSIX sh rather than a packaged
+    // wrapper so this config runs unmodified off NixOS: nothing below is a
+    // build-time path, it is all discovered from the running system. Same
+    // idiom as NetworkService.detailsCommand.
+    //
+    // Both halves degrade quietly -- no notification daemon, no sound theme,
+    // or no player just means that part is skipped, never a broken timer.
+    readonly property string alertCommand: `
+notify-send --app-name="Quickshell Timer" --urgency=critical \\
+    --icon=alarm-symbolic --expire-time=10000 \\
+    "Timer complete" "Countdown has elapsed." 2>/dev/null
+
+# The freedesktop sound theme has no portable absolute path: NixOS keeps it in
+# the system profile, most distros under /usr/share. Both are on XDG_DATA_DIRS.
+dirs=$XDG_DATA_DIRS
+[ -n "$dirs" ] || dirs=/usr/local/share:/usr/share
+
+sound=$(IFS=:; for dir in $dirs; do
+    for ext in oga ogg wav; do
+        file=$dir/sounds/freedesktop/stereo/alarm-clock-elapsed.$ext
+        [ -r "$file" ] && { printf '%s' "$file"; exit 0; }
+    done
+done)
+[ -n "$sound" ] || exit 0
+
+# First player present wins; between them these cover PipeWire, PulseAudio,
+# ALSA and the usual media players.
+for player in pw-play paplay mpv ffplay aplay; do
+    command -v "$player" >/dev/null 2>&1 || continue
+    case $player in
+        mpv)    exec mpv --no-video --really-quiet "$sound" ;;
+        ffplay) exec ffplay -nodisp -autoexit -loglevel quiet "$sound" ;;
+        aplay)  case $sound in *.wav) exec aplay -q "$sound" ;; esac ;;
+        *)      exec "$player" "$sound" ;;
+    esac
+done
+`
 
     function formatDuration(seconds: int): string {
         const total = Math.max(0, Math.min(5999, Math.floor(Number(seconds))));
@@ -125,10 +161,8 @@ Item {
 
         if (expired.length > 0) {
             saveTimers();
-            for (const timerId of expired) {
-                Quickshell.execDetached(["qs-timer-alert"]);
-                elapsed(timerId);
-            }
+            for (let index = 0; index < expired.length; ++index)
+                Quickshell.execDetached(["sh", "-c", root.alertCommand]);
         }
     }
 

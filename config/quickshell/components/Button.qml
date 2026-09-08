@@ -1,6 +1,5 @@
 import QtQuick
 import "../services"
-import ".."
 
 // Fixed-width bar button shared by panel-backed status controls.
 Item {
@@ -21,13 +20,12 @@ Item {
     implicitHeight: 26
     clip: true
 
-    Text {
+    ShellText {
         anchors.centerIn: parent
         anchors.verticalCenterOffset: -1
         text: root.text
         color: root.textColor
-        font.family: Theme.monospace
-        font.pixelSize: Utils.scaledFont(14)
+        size: 14
     }
 
     Rectangle {

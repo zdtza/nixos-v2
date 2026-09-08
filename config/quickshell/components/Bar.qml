@@ -98,63 +98,37 @@ PanelWindow {
         onClicked: PanelService.closeActive()
     }
 
-    // Keep keyboard focus on bar without intercepting pointer input. Popup
-    // shortcuts remain application-wide; timer text is mirrored through the
-    // hidden bar input because popup windows do not own compositor focus.
+    // Panel keyboard hosting. Drawer and popup surfaces don't own compositor
+    // keyboard focus, so whatever a panel needs focused has to live in the
+    // bar window instead.
+    //
+    // Panels that only use application-wide shortcuts just need *something*
+    // here focused, which is the stub below. A panel that also needs real
+    // text entry publishes a `keyboardProxy` component (see PanelService for
+    // the contract) and the Loader mounts it -- so the bar hosts the input
+    // without knowing whether it's a countdown, a passphrase, or anything
+    // added later.
+    readonly property Component activeKeyboardProxy:
+        PanelService.activePanel?.keyboardProxy ?? null
+
     Item {
         width: 1
         height: 1
         opacity: 0
-        focus: !!PanelService.activePanel
-            && PanelService.activePanel !== quickToggles.timerPanel
-            && !(PanelService.activePanel === network && network.passwordSsid !== "")
-            && !!PanelService.activePanel.requiresKeyboardFocus
+        focus: !bar.activeKeyboardProxy
+            && !!PanelService.activePanel?.requiresKeyboardFocus
     }
 
-    TextInput {
-        id: timerKeyboardInput
-
+    Loader {
         x: -10
         width: 1
         height: 1
         opacity: 0
-        enabled: PanelService.activePanel === quickToggles.timerPanel
-        focus: enabled
-        inputMask: "00:00"
-        text: quickToggles.timerPanel?.keyboardInputText ?? "00:00"
-
-        onTextEdited: quickToggles.timerPanel.setInputText(text)
-        onActiveFocusChanged: if (activeFocus)
-            selectAll()
-
-        Keys.onReturnPressed: quickToggles.timerPanel.startTimer()
-        Keys.onEnterPressed: quickToggles.timerPanel.startTimer()
-        Keys.onDownPressed: quickToggles.timerPanel.selectTimer(1)
-        Keys.onUpPressed: quickToggles.timerPanel.selectTimer(-1)
-        Keys.onDeletePressed: if (quickToggles.timerPanel.selectedTimerIndex >= 0)
-            quickToggles.timerPanel.removeSelectedTimer()
-        Keys.onEscapePressed: PanelService.close(quickToggles.timerPanel)
-    }
-
-    TextInput {
-        id: networkPasswordKeyboardInput
-
-        x: -10
-        width: 1
-        height: 1
-        opacity: 0
-        enabled: PanelService.activePanel === network && network.passwordSsid !== ""
-        focus: enabled
-        echoMode: TextInput.Password
-        text: network.passwordText
-
-        onTextEdited: network.passwordText = text
-        onActiveFocusChanged: if (activeFocus)
-            cursorPosition = length
-
-        Keys.onReturnPressed: network.submitPassword()
-        Keys.onEnterPressed: network.submitPassword()
-        Keys.onEscapePressed: network.cancelPasswordEntry()
+        // Loader is a focus scope, so this plus `focus: true` on the proxy
+        // itself is what actually lands active focus inside it.
+        active: !!bar.activeKeyboardProxy
+        focus: active
+        sourceComponent: bar.activeKeyboardProxy
     }
 
     // --- left ---
@@ -226,9 +200,5 @@ PanelWindow {
         NetworkPanel { id: network }
 
         BatteryPanel { id: battery }
-
-        // PowerPanel {
-        //     id: power
-        // }
     }
 }

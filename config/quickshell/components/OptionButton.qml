@@ -2,18 +2,18 @@ import QtQuick
 import "../services"
 import ".."
 
-// Selectable option cell used by power profiles and display scales. Selection
-// and hover use the same visual language as device, network, and monitor rows.
-// Content (label, icon, ...) is declared as normal children.
+// Selectable option cell used by power profiles and display scales. Only the
+// cursor (hover or keyboard) is drawn -- the applied value is deliberately not
+// marked, since a panel is reopened with the cursor already on it. Same visual
+// language as device, network, and monitor rows. Content (label, icon, ...) is
+// declared as normal children.
 Rectangle {
     id: root
 
-    property bool active: false
     property bool keyboardFocused: false
     property bool enabled: true
     readonly property alias hovered: mouseArea.containsMouse
-    // Hover and keyboard share one focus cursor. `active` remains separate: it
-    // marks value currently applied by system after cursor moves elsewhere.
+    // Hover and keyboard share one focus cursor.
     readonly property bool highlighted: keyboardFocused
 
     signal activated()
@@ -25,12 +25,9 @@ Rectangle {
         ? Utils.alpha(Theme.base05, 0.22)
         : root.highlighted
             ? Utils.alpha(Theme.base05, 0.12)
-            : root.active
-                ? Utils.alpha(Theme.base05, 0.08)
-                : "transparent"
-    border.width: root.active || root.highlighted ? 1 : 0
-    border.color: Utils.alpha(Theme.base05,
-        root.highlighted ? 0.35 : 0.25)
+            : "transparent"
+    border.width: root.highlighted ? 1 : 0
+    border.color: Utils.alpha(Theme.base05, 0.35)
 
     MouseArea {
         id: mouseArea

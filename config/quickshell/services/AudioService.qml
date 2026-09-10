@@ -50,8 +50,17 @@ Item {
             output.audio.volume = clampVolume(value);
     }
 
+    // PipeWire hands the volume back as a float that is not exactly a multiple
+    // of the step (1.5 reads as 1.4999998), so stepping relative to the
+    // readback compounds that error and slides the grid -- holding volume-down
+    // from 150% lands on 99% instead of 100%. Snap to the step grid instead of
+    // trusting the readback.
+    function snapToStep(value: real, step: real): real {
+        return Math.round(value / step) * step;
+    }
+
     function adjustOutputVolume(delta: real): void {
-        setOutputVolume(outputVolume + delta);
+        setOutputVolume(snapToStep(outputVolume + delta, outputStep));
     }
 
     function setInputVolume(value: real): void {
@@ -60,7 +69,7 @@ Item {
     }
 
     function adjustInputVolume(delta: real): void {
-        setInputVolume(inputVolume + delta);
+        setInputVolume(snapToStep(inputVolume + delta, inputStep));
     }
 
     function toggleOutputMute(): void {

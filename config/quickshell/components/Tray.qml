@@ -23,7 +23,6 @@ Item {
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     property bool pinned: false
-    property bool openedFromIpc: false
     property int selectedItemIndex: 0
     readonly property int keyboardItemCount: items.length + (WindowsService.running ? 1 : 0)
     readonly property bool expanded: root.pinned || hover.hovered || root.opened
@@ -44,7 +43,6 @@ Item {
 
     onOpenedChanged: {
         if (!opened) {
-            openedFromIpc = false;
             windowsMenuOpen = false;
             menuLoader.trayItem = null;
             menuLoader.anchorItem = null;
@@ -65,7 +63,6 @@ Item {
     function toggleFromIpc(): void {
         const closing = PanelService.activePanel === root
             || PanelService.pendingPanel === root;
-        openedFromIpc = true;
         PanelService.toggle(root);
         if (!closing && keyboardItemCount > 0) {
             selectedItemIndex = 0;
@@ -73,13 +70,8 @@ Item {
         }
     }
 
-    function dismissMenuFromEscape(): void {
-        if (openedFromIpc && keyboardItemCount > 1)
-            dismissMenu();
-        else
-            collapseTray();
-    }
-
+    // Escape always leaves the tray entirely: the open menu (and any submenu
+    // chain under it) plus the tray itself, in one press.
     function collapseTray(): void {
         pinned = false;
         dismissMenu();
@@ -295,7 +287,6 @@ Item {
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                             onClicked: mouse => {
-                                root.openedFromIpc = false;
                                 root.selectedItemIndex = entry.index;
                                 if (entry.modelData.hasMenu) {
                                     // Same item toggles; another item transfers menu ownership.
@@ -368,7 +359,6 @@ Item {
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                         onClicked: {
-                            root.openedFromIpc = false;
                             root.selectedItemIndex = root.items.length;
                             if (root.opened && root.windowsMenuOpen) {
                                 PanelService.close(root);
@@ -413,7 +403,7 @@ Item {
             menuTitle: menuLoader.trayItem?.title ?? ""
             menuStatus: root.menuStatus(menuLoader.trayItem)
 
-            onDismissRequested: root.dismissMenuFromEscape()
+            onDismissRequested: root.collapseTray()
             onCloseRequested: PanelService.close(root)
         }
     }
@@ -432,7 +422,7 @@ Item {
             menuTitle: "Windows"
             menuStatus: WindowsService.running ? "Running" : "Stopped"
 
-            onDismissRequested: root.dismissMenuFromEscape()
+            onDismissRequested: root.collapseTray()
             onCloseRequested: PanelService.close(root)
         }
     }

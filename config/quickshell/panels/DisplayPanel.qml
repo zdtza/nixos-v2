@@ -146,12 +146,8 @@ Item {
                     id: scaleButton
                     required property var modelData
                     required property int index
-                    readonly property bool selected: DisplayService.focusedMonitor
-                        && Math.abs(Number(DisplayService.focusedMonitor.scale)
-                            - Number(modelData)) < 0.01
 
                     width: scaleRow.cellWidth
-                    active: selected
                     keyboardFocused: scaleButton.index === root.selectedScaleIndex
                     enabled: !!DisplayService.focusedMonitor
                     onHoveredChanged: if (hovered)
@@ -193,11 +189,7 @@ Item {
                     width: parent.width
                     height: 36
                     radius: PanelService.rounding
-                    color: focused
-                        ? Utils.alpha(Theme.base05, 0.08)
-                        : "transparent"
-                    border.width: focused ? 1 : 0
-                    border.color: Utils.alpha(Theme.base05, 0.25)
+                    color: "transparent"
 
                     ShellText {
                         id: monitorIcon
@@ -222,7 +214,7 @@ Item {
                     ShellText {
                         id: focusedCheck
                         anchors.right: parent.right
-                        anchors.rightMargin: 10
+                        anchors.rightMargin: 16
                         anchors.verticalCenter: parent.verticalCenter
                         visible: monitorRow.focused
                         text: "󰄬"

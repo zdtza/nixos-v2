@@ -27,7 +27,6 @@ Item {
     readonly property var availableNetworks: NetworkService.wifiNetworks.filter(network => !network.connected)
     readonly property var networks: connectedNetworks.concat(availableNetworks)
     readonly property int networkRowHeight: 48
-    readonly property int passwordRowHeight: 96
     readonly property int networkRowSpacing: 8
     readonly property int emptyStateHeight: 52
     // One pixel lets the final row's antialiased border render inside the
@@ -133,13 +132,11 @@ Item {
 
         const availableIndex = index - connectedNetworks.length;
         const rowTop = availableIndex * (networkRowHeight + networkRowSpacing);
-        const rowHeight = passwordSsid === selectedSsid
-            ? passwordRowHeight : networkRowHeight;
         if (rowTop < networkList.contentY)
             networkList.contentY = rowTop;
-        else if (rowTop + rowHeight > networkList.contentY + networkList.height)
+        else if (rowTop + networkRowHeight > networkList.contentY + networkList.height)
             networkList.contentY = Math.min(networkList.contentHeight - networkList.height,
-                rowTop + rowHeight - networkList.height);
+                rowTop + networkRowHeight - networkList.height);
     }
 
     function activateSelectedNetwork(): void {
@@ -423,7 +420,10 @@ Item {
                             })
 
                             width: parent.width
-                            height: passwordOpen ? root.passwordRowHeight : root.networkRowHeight
+                            // Passphrase entry takes over this row in place
+                            // rather than growing it, so opening a prompt
+                            // never reflows the list or the panel height.
+                            height: root.networkRowHeight
                             color: rowMouse.pressed && !passwordOpen
                                 ? Utils.alpha(Theme.base05, 0.22)
                                 : networkRow.keyboardSelected && !passwordOpen
@@ -461,10 +461,8 @@ Item {
 
                             Item {
                                 id: summary
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.top: parent.top
-                                height: 48
+                                anchors.fill: parent
+                                visible: !networkRow.passwordOpen
 
                                 ShellText {
                                     id: networkIcon
@@ -526,7 +524,7 @@ Item {
                                 ShellText {
                                     id: lockIcon
                                     anchors.right: parent.right
-                                    anchors.rightMargin: 10
+                                    anchors.rightMargin: 16
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: NetworkService.securityRequiresPassword(networkRow.modelData.security) ? "󰌾" : ""
                                     color: Theme.base04
@@ -553,17 +551,14 @@ Item {
                                 anchors {
                                     left: parent.left
                                     right: parent.right
-                                    top: summary.bottom
-                                    bottom: parent.bottom
+                                    verticalCenter: parent.verticalCenter
                                     leftMargin: 10
                                     rightMargin: 10
-                                    topMargin: 4
-                                    bottomMargin: 20
                                 }
                                 spacing: 8
 
                                 Rectangle {
-                                    width: parent.width - connectButton.width - cancelButton.width - parent.spacing * 2
+                                    width: parent.width - connectButton.width - parent.spacing
                                     height: 32
                                     radius: PanelService.rounding
                                     color: Utils.alpha(Theme.base05, 0.04)
@@ -632,28 +627,6 @@ Item {
                                     }
                                 }
 
-                                Rectangle {
-                                    id: cancelButton
-                                    width: 32
-                                    height: 32
-                                    radius: PanelService.rounding
-                                    color: cancelMouse.containsMouse ? Utils.alpha(Theme.base05, 0.12) : "transparent"
-
-                                    border.width: 1
-                                    border.color: Utils.alpha(Theme.base05, 0.3)
-                                    ShellText {
-                                        anchors.centerIn: parent
-                                        text: "󰅖"
-                                        size: 12
-                                    }
-                                    MouseArea {
-                                        id: cancelMouse
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.cancelPasswordEntry()
-                                    }
-                                }
                             }
                         }
                     }

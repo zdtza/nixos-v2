@@ -399,7 +399,7 @@ Item {
         ShellText {
             id: stateIcon
             anchors.right: parent.right
-            anchors.rightMargin: 10
+            anchors.rightMargin: 16
             anchors.verticalCenter: parent.verticalCenter
             text: BluetoothService.isConnected(deviceRow.device) ? "󰂱"
                 : (deviceRow.device.paired ? "󰌾" : "")

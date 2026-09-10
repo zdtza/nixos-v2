@@ -380,7 +380,7 @@ Item {
                                 z: 2
                                 visible: timerRow.index === root.selectedTimerIndex
                                 anchors.right: parent.right
-                                anchors.rightMargin: 10
+                                anchors.rightMargin: 16
                                 anchors.verticalCenter: parent.verticalCenter
                                 icon: "󰆴"
                                 onClicked: {

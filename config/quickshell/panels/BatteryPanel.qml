@@ -239,10 +239,13 @@ Item {
 
             Row {
                 id: profileRow
-                width: parent.width
+                anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 6
-                readonly property real cellWidth: root.profiles.length > 0
-                    ? (width - spacing * (root.profiles.length - 1)) / root.profiles.length : 0
+                // Cells hug their own label with fixed side padding rather
+                // than splitting the row into equal thirds: "Performance" and
+                // "Power-saver" nearly filled a third on their own, so they
+                // read as cramped next to the short "Balanced".
+                readonly property int cellPadding: 14
 
                 Repeater {
                     model: root.profiles
@@ -250,11 +253,9 @@ Item {
                         id: profileButton
                         required property var modelData
                         required property int index
-                        readonly property bool isActive: root.activeProfile === String(modelData)
 
-                        width: profileRow.cellWidth
+                        width: profileContent.implicitWidth + profileRow.cellPadding * 2
                         height: 36
-                        active: profileButton.isActive
                         keyboardFocused: profileButton.index === root.selectedProfileIndex
                         onHoveredChanged: if (hovered)
                             root.selectedProfileIndex = profileButton.index
@@ -264,6 +265,7 @@ Item {
                         }
 
                         Row {
+                            id: profileContent
                             anchors.centerIn: parent
                             spacing: 8
                             ShellText {

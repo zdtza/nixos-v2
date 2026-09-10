@@ -125,25 +125,13 @@ PopupWindow {
         }
     }
 
-    // Closes the deepest currently-open submenu in this chain, if any.
-    // Returns whether it closed something, so escape can be pressed
-    // repeatedly to walk back out one level at a time before finally
-    // dismissing the whole menu.
-    function closeSubmenu(): bool {
-        if (!menu.activeSubmenu)
-            return false;
-        if (!menu.activeSubmenu.closeSubmenu())
-            menu.submenuEntry = null;
-        return true;
-    }
-
+    // Escape is a single exit, not a walk back out through each open submenu
+    // level: it dismisses the whole chain and the tray with it. Submenu
+    // instances leave this disabled, so only the root menu handles the key.
     PanelShortcut {
         enabled: menu.visible && !menu.submenu
         sequences: ["Escape"]
-        onActivated: {
-            if (!menu.closeSubmenu())
-                menu.dismissRequested();
-        }
+        onActivated: menu.dismissRequested()
     }
 
     // PopupAnchor.item and .window are mutually exclusive in quickshell's

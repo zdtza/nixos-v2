@@ -325,7 +325,7 @@ Item {
         ShellText {
             id: defaultIcon
             anchors.right: parent.right
-            anchors.rightMargin: 10
+            anchors.rightMargin: 16
             anchors.verticalCenter: parent.verticalCenter
             visible: deviceRow.selected
             text: "󰄬"

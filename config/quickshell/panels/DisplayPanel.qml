@@ -24,7 +24,8 @@ Item {
 
     function brightnessStatus(): string {
         if (!DisplayService.available) return "DISPLAY READY";
-        const value = DisplayService.brightnessPercent;
+        const value = DisplayService.level;
+        if (value > 100) return "BEYOND DAYLIGHT";
         if (value <= 10) return "THE GLOAMING";
         if (value <= 30) return "MOONLIGHT HAZE";
         if (value <= 50) return "SOFT MORNING";
@@ -47,12 +48,12 @@ Item {
     PanelShortcut {
         enabled: root.opened
         sequences: ["Up"]
-        onActivated: DisplayService.adjustBrightness(DisplayService.brightnessStep)
+        onActivated: DisplayService.adjustLevel(DisplayService.brightnessStep)
     }
     PanelShortcut {
         enabled: root.opened
         sequences: ["Down"]
-        onActivated: DisplayService.adjustBrightness(-DisplayService.brightnessStep)
+        onActivated: DisplayService.adjustLevel(-DisplayService.brightnessStep)
     }
     PanelShortcut {
         enabled: root.opened
@@ -77,7 +78,7 @@ Item {
         panel: root
         text: "󰍹"
         onClicked: PanelService.toggle(root)
-        onWheeled: wheel => DisplayService.adjustBrightness(
+        onWheeled: wheel => DisplayService.adjustLevel(
             wheel.angleDelta.y > 0 ? DisplayService.brightnessStep : -DisplayService.brightnessStep)
     }
 
@@ -110,14 +111,17 @@ Item {
         SectionHeader {
             title: "BRIGHTNESS"
             detail: DisplayService.available
-                ? DisplayService.brightnessPercent + "%" : "UNAVAILABLE"
+                ? DisplayService.level + "%" : "UNAVAILABLE"
         }
 
+        // Full travel is 0-150%: the last third is gamma overdrive on top of a
+        // maxed backlight, so the 100% hardware ceiling sits at two thirds.
         Slider {
             width: parent.width
             enabled: DisplayService.available
-            value: DisplayService.brightnessPercent / 100
-            onValueEdited: value => DisplayService.setBrightness(Math.round(value * 100))
+            value: DisplayService.level / DisplayService.maxLevel
+            onValueEdited: value => DisplayService.setLevel(
+                Math.round(value * DisplayService.maxLevel))
         }
 
         Separator {}

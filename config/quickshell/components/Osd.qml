@@ -33,7 +33,9 @@ Scope {
 
     Timer {
         id: hideTimer
-        interval: 800
+        // Longer than the ~1s pre-repeat delay of the brightness keys, so the
+        // OSD doesn't blink out between the first tap and the repeat stream.
+        interval: 1400
         onTriggered: root.shown = false
     }
 
@@ -59,8 +61,8 @@ Scope {
         target: DisplayService
 
         function onBrightnessIpcInvoked(): void {
-            root.show("󰍹", DisplayService.brightnessPercent / 100, Theme.base05,
-                DisplayService.brightnessPercent);
+            root.show("󰍹", DisplayService.level / DisplayService.maxLevel,
+                Theme.base05, DisplayService.level);
         }
     }
 

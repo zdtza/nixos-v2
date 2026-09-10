@@ -501,17 +501,21 @@ bind(
 	hl.dsp.exec_cmd("qs ipc call audio toggleInputMute"),
 	{ locked = true, repeating = true }
 )
+-- No `repeating` flag on these two: the brightness keys are firmware taps
+-- (press plus a release ~30ms later, auto-repeated by the EC), so the key is
+-- never held as far as the compositor is concerned and bind repeat never
+-- fires. One step per tap, accelerated shell-side in DisplayService.
 bind(
 	"XF86MonBrightnessUp",
 	"Raise display brightness",
 	hl.dsp.exec_cmd("qs ipc call display brightnessUp"),
-	{ locked = true, repeating = true }
+	{ locked = true }
 )
 bind(
 	"XF86MonBrightnessDown",
 	"Lower display brightness",
 	hl.dsp.exec_cmd("qs ipc call display brightnessDown"),
-	{ locked = true, repeating = true }
+	{ locked = true }
 )
 
 -- =============================================================================

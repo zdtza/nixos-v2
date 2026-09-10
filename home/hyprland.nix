@@ -3,6 +3,9 @@
 let
   # raw (no '#') hex, hyprland colors want 0xAARRGGBB
   colors = config.lib.stylix.colors;
+  # themes/*/accent names the base16 slot this theme accents with; same value
+  # colors yazi's folder icons (home/yazi.nix).
+  accent = colors.${(import ../themes).themes.${config.theme.name}.accent};
 in
 {
   # symlinking the hyprland lua config, single file for maximum portability
@@ -14,8 +17,8 @@ in
   # land as a small generated module next to it instead of inline strings.
   home.file.".config/hypr/stylix.lua".text = ''
     return {
-        active_border = "0xff${colors.base0D}",
-        inactive_border = "0xff${colors.base01}",
+        active_border = "0xff${accent}",
+        inactive_border = "0xff${colors.base03}",
     }
   '';
 

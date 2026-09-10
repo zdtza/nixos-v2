@@ -138,7 +138,7 @@ Item {
                 shown: root.expanded || StayAwakeService.enabled
 
                 QuickToggleButton {
-                    icon: "󰅶"
+                    icon: "󰈈"
                     active: StayAwakeService.enabled
                     onClicked: StayAwakeService.toggle()
                 }

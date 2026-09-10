@@ -24,6 +24,7 @@
     lualine = "gruvbox";
   };
   vscode = "Gruvbox Dark Medium";
+  accent = "base09"; # see themes/tokyo-night
   gtkAccent = "orange"; # base09, gruvbox's signature color
   iconTheme = "Yaru-olive"; # see themes/tokyo-night for the variant list
 }

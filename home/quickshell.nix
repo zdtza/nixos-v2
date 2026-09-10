@@ -49,6 +49,9 @@ let
         base0E
         base0F
         ;
+      # themes/*/accent, same slot hyprland's active border and yazi's folder
+      # icons use (home/hyprland.nix, home/yazi.nix)
+      accent = colors.${themes.${config.theme.name}.accent};
       wallpaper = wallpaperPath;
       monospace = fonts.monospace.name;
     }

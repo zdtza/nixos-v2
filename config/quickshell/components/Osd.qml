@@ -16,14 +16,16 @@ Scope {
     property bool shown: false
     property string icon: ""
     property real value: 0
+    property int percent: 0
     property color fillColor: Theme.base05
 
-    function show(iconName: string, progress: real, fill: color): void {
+    function show(iconName: string, progress: real, fill: color, percentValue: int): void {
         if (Quickshell.screens.length === 0)
             return;
         targetScreenName = String(Hyprland.focusedMonitor?.name ?? "");
         icon = iconName;
         value = Math.max(0, Math.min(1, Number(progress)));
+        percent = Math.round(percentValue);
         fillColor = fill;
         shown = true;
         hideTimer.restart();
@@ -42,11 +44,13 @@ Scope {
             if (input) {
                 root.show(AudioService.inputMuted ? "󰍭" : "󰍬",
                     AudioService.inputVolume / AudioService.maximumVolume,
-                    AudioService.inputMuted ? Theme.base04 : Theme.base05);
+                    AudioService.inputMuted ? Theme.base04 : Theme.base05,
+                    AudioService.inputVolume * 100);
             } else {
                 root.show(AudioService.outputIcon,
                     AudioService.outputVolume / AudioService.maximumVolume,
-                    AudioService.outputMuted ? Theme.base04 : Theme.base05);
+                    AudioService.outputMuted ? Theme.base04 : Theme.base05,
+                    AudioService.outputVolume * 100);
             }
         }
     }
@@ -55,7 +59,8 @@ Scope {
         target: DisplayService
 
         function onBrightnessIpcInvoked(): void {
-            root.show("󰍹", DisplayService.brightnessPercent / 100, Theme.base05);
+            root.show("󰍹", DisplayService.brightnessPercent / 100, Theme.base05,
+                DisplayService.brightnessPercent);
         }
     }
 
@@ -85,10 +90,11 @@ Scope {
             Row {
                 anchors {
                     fill: parent
-                    margins: 16
+                    margins: 14
                     leftMargin: 11
+                    rightMargin: 11
                 }
-                spacing: 14
+                spacing: 12
 
                 ShellText {
                     width: 18
@@ -96,18 +102,18 @@ Scope {
                     text: root.icon
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
-                    size: 16
+                    size: 15
                 }
 
                 Item {
-                    width: parent.width - 18 - parent.spacing
+                    width: parent.width - 18 - percentText.width - 2 * parent.spacing
                     height: parent.height
 
                     Rectangle {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        height: 5
+                        height: 4
                         radius: height / 2
                         color: Utils.alpha(Theme.base05, 0.12)
 
@@ -116,8 +122,26 @@ Scope {
                             height: parent.height
                             radius: parent.radius
                             color: root.fillColor
+
+                            Behavior on width {
+                                NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                            }
                         }
                     }
+                }
+
+                ShellText {
+                    id: percentText
+                    // Natural width, not the widest possible label: the track
+                    // absorbs the slack so "5%" keeps the same right padding
+                    // as "150%" instead of leaving a gap after the bar.
+                    width: implicitWidth
+                    height: parent.height
+                    text: root.percent + "%"
+                    horizontalAlignment: Text.AlignRight
+                    verticalAlignment: Text.AlignVCenter
+                    size: 11
+                    color: Utils.alpha(Theme.base05, 0.6)
                 }
             }
         }

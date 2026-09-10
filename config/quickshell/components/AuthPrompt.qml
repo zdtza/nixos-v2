@@ -43,8 +43,11 @@ Item {
         radius: PanelService.rounding
         color: Utils.alpha(Theme.base01, 0.95)
         border.width: 2
+        // Same idle/focus pair as NetworkPanel's password field, so the
+        // border reads as a field outline rather than an accent highlight.
+        // Error stays full base08 -- it has to be noticed.
         border.color: root.error ? Theme.base08
-            : (passwordInput.activeFocus ? Theme.base04 : Theme.base03)
+            : (passwordInput.activeFocus ? Theme.base04 : Utils.alpha(Theme.base05, 0.4))
         layer.enabled: true
         layer.effect: ShellShadow {}
 

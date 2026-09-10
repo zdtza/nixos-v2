@@ -47,6 +47,15 @@ in
   services.udisks2.enable = true;
   services.gvfs.enable = true;
 
+  # cups ships its own config UI on localhost:631, no gui package needed.
+  # avahi is what makes network printers show up in the print dialog at all.
+  services.printing.enable = true;
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    openFirewall = true;
+  };
+
   # secret service backend for gvfs/nautilus mount credentials
   services.gnome.gnome-keyring.enable = true;
 

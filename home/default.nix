@@ -9,6 +9,7 @@
     ./hypridle.nix
     ./hyprsunset.nix
     ./screen-share.nix
+    ./screenshot.nix
     ./voxtype.nix
     ./btop.nix
     ./nvim.nix

@@ -26,19 +26,10 @@
     colorscheme = "tokyonight-night";
     lualine = "tokyonight";
   };
-  # workbench.colorTheme label, from the installed extension's
-  # package.json (contributes.themes[].label) -- see home/vscode.nix
   vscode = "Tokyo Night";
-  # org.gnome.desktop.interface accent-color (see home/appearance.nix):
-  # one of libadwaita's fixed enum names (blue/teal/green/yellow/orange/
-  # red/pink/purple/slate), nearest to base0D above. The one part of a
-  # GTK4/libadwaita app's palette that re-renders live in an
-  # already-running process (AdwStyleManager watches it) -- everything
-  # else in gtk.css is a CSS provider compiled once at startup.
+  # base16 slot used as this theme's accent: yazi's folder icons/border and
+  # hyprland's active window border (home/yazi.nix, home/hyprland.nix)
+  accent = "base0D";
   gtkAccent = "blue";
-  # pkgs.yaru-theme variant, folder/mime icons recolored per accent (see
-  # home/appearance.nix). Names are fixed by the package: Yaru-{blue,magenta,
-  # olive,prussiangreen,purple,red,sage,wartybrown,yellow}, each with a -dark
-  # twin. Borrowed from ~/omarchy/themes/*/icons.theme.
-  iconTheme = "Yaru-magenta";
+  iconTheme = "Yaru-blue";
 }

@@ -31,6 +31,8 @@ Item {
     property color base0D: "#7aa2f7"
     property color base0E: "#ad8ee6"
     property color base0F: "#75493d"
+    // per-theme accent slot (themes/*/accent)
+    property color accent: "#7aa2f7"
     property url wallpaper: ""
     property string monospace: "monospace"
     property int fontSize: 13
@@ -52,6 +54,7 @@ Item {
         base0D = data.base0D;
         base0E = data.base0E;
         base0F = data.base0F;
+        accent = data.accent;
         wallpaper = "file://" + data.wallpaper;
         monospace = data.monospace;
     }

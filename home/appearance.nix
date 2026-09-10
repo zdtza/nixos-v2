@@ -22,6 +22,26 @@ in
     stylix = {
       base16Scheme = themes.${config.theme.name}.colors;
       image = themes.${config.theme.name}.wallpaper;
+
+      # The document area of a GtkSourceView app (gnome-text-editor, Builder)
+      # is not painted from GTK colors at all -- it comes from the *style
+      # scheme*, stylix's gtksourceview-5/styles/stylix.xml, which the scheme
+      # manager reads once and caches per process. A theme switch swaps that
+      # file, home/gtk-live-css retints everything else in place, and the text
+      # area alone keeps the old theme's background until the app restarts.
+      # Repainting it from @view_bg_color instead makes it follow the live
+      # gtk.css like the rest of the window. Display-level user CSS beats the
+      # scheme's own provider, and syntax colors are text tags, so they still
+      # win over this (they stay stale until restart -- background is the part
+      # that is visibly wrong, since a stale one leaves the window looking
+      # untinted against the new wallpaper).
+      targets.gtk.extraCss = ''
+        textview.sourceview,
+        textview.sourceview text {
+          background-color: @view_bg_color;
+          color: @view_fg_color;
+        }
+      '';
     };
 
     # `select-theme`/`select-wallpaper` on PATH, no more cd-ing into scripts/ to run them
@@ -69,6 +89,14 @@ in
       # libadwaita (GTK4) apps -- gnome-calculator, gnome-disks, Nautilus --
       # hold an AdwStyleManager that watches this key and re-renders live.
       accent-color = gtkAccent;
+    };
+
+    # GNOME Text Editor otherwise inherits monospace-font-name (Regular), which
+    # renders lighter than kitty's rasterization of the same face. Medium matches
+    # it; swap weight/size in the string below to taste.
+    dconf.settings."org/gnome/TextEditor" = {
+      use-system-font = false;
+      custom-font = "${config.stylix.fonts.monospace.name} SemiBold 11.5";
     };
 
     # stylix's qt target wires up qt6ct/qt5ct but never sets icon_theme in

@@ -117,6 +117,7 @@ in
     fd # file search tool
     gcc # C/C++ compiler
     unzip # unzip utility
+    p7zip # 7z/rar/etc archives from the terminal (nautilus extracts natively via gnome-autoar)
     lazygit # git UI
     nodejs # JavaScript runtime
     nixfmt # Nix formatter
@@ -129,6 +130,7 @@ in
     lazydocker # Docker UI
     obsidian # note-taking app
     blender # 3D modeling software
+    gnome-text-editor # basic text editor
   ];
 
   networking = {
@@ -138,9 +140,12 @@ in
       allowedUDPPorts = [ 53317 ];
     };
     # any custom local hosts
+    # 127.0.0.3, not 127.0.0.1: systemd-resolved treats anything on 127.0.0.1 as
+    # a localhost alias and synthesizes an extra ::1, so node resolves these
+    # names ipv6-first and `next dev --hostname <name>` binds [::1] alone --
+    # which firefox never falls back to (chromium does).
     hosts = {
-      "127.0.0.1" = localHosts;
-      "::1" = localHosts;
+      "127.0.0.3" = localHosts;
     };
   };
 

@@ -3,24 +3,9 @@
 let
   colors = config.lib.stylix.colors.withHashtag;
 
-  # Yaru accent -> nearest base16 slot, so yazi's folder icon roughly tracks the
-  # Nautilus folder color (themes/*/iconTheme, applied in home/appearance.nix).
-  # Derived from the variant rather than a third per-theme color key, so a theme
-  # that changes its icon variant moves both at once. Falls back to base0D for
-  # variants not listed (the -dark twins, or a new one).
-  iconSlot = {
-    Yaru-blue = "base0D";
-    Yaru-magenta = "base0E";
-    Yaru-purple = "base0E";
-    Yaru-olive = "base0B";
-    Yaru-sage = "base0B";
-    Yaru-prussiangreen = "base0C";
-    Yaru-red = "base08";
-    Yaru-yellow = "base0A";
-    Yaru-wartybrown = "base0F";
-  };
-  iconTheme = (import ../themes).themes.${config.theme.name}.iconTheme;
-  dirColor = colors.${iconSlot.${iconTheme} or "base0D"};
+  # themes/*/accent names the base16 slot this theme accents with; same value
+  # drives hyprland's active border (home/hyprland.nix).
+  accent = colors.${(import ../themes).themes.${config.theme.name}.accent};
 in
 {
   # custom theme.toml below renders semantic colors directly
@@ -94,7 +79,7 @@ in
       count_cut       = { bg = "${colors.base08}" }
       count_selected  = { bg = "${colors.base0A}" }
       border_symbol   = "│"
-      border_style    = { fg = "${dirColor}" }
+      border_style    = { fg = "${colors.base03}" }
 
       [indicator]
       parent  = { fg = "${colors.base07}", bg = "${colors.base02}" }
@@ -109,10 +94,10 @@ in
       sep_outer = { open = " ", close = " " }
 
       [mode]
-      normal_main = { fg = "${colors.base00}", bg = "${colors.base0D}", bold = true }
-      normal_alt  = { fg = "${colors.base0D}", bg = "${colors.base02}" }
-      select_main = { fg = "${colors.base00}", bg = "${colors.base0D}", bold = true }
-      select_alt  = { fg = "${colors.base0D}", bg = "${colors.base02}" }
+      normal_main = { fg = "${colors.base00}", bg = "${accent}", bold = true }
+      normal_alt  = { fg = "${accent}", bg = "${colors.base02}" }
+      select_main = { fg = "${colors.base00}", bg = "${accent}", bold = true }
+      select_alt  = { fg = "${accent}", bg = "${colors.base02}" }
       unset_main  = { fg = "${colors.base00}", bg = "${colors.base09}", bold = true }
       unset_alt   = { fg = "${colors.base09}", bg = "${colors.base02}" }
 
@@ -180,8 +165,8 @@ in
       [icon]
       dirs = []
       prepend_conds = [
-        { if = "dir & hovered", text = "󰝰", fg = "${dirColor}" },
-        { if = "dir",           text = "󰉋", fg = "${dirColor}" },
+        { if = "dir & hovered", text = "󰝰", fg = "${accent}" },
+        { if = "dir",           text = "󰉋", fg = "${accent}" },
       ]
 
       [filetype]

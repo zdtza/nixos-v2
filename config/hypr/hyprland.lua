@@ -31,15 +31,15 @@ hl.config({
 		rounding = 0,
 		active_opacity = 0.98,
 		inactive_opacity = 0.96,
-		blur = { enabled = true, xray = true, special = true, passes = 2, size = 3 },
-		shadow = {
-			enabled = true,
-			range = 30,
-			render_power = 50,
-			color = 0x33000000,
-			color_inactive = 0x22000000,
-			offset = { 0, 4 },
-		},
+		blur = { enabled = true, xray = false, special = true, passes = 2, size = 3 },
+		-- shadow = {
+		-- 	enabled = true,
+		-- 	range = 30,
+		-- 	render_power = 50,
+		-- 	color = 0x33000000,
+		-- 	color_inactive = 0x22000000,
+		-- 	offset = { 0, 4 },
+		-- },
 	},
 	animations = { enabled = true },
 	layout = { single_window_aspect_ratio = { 16, 9 } },
@@ -114,6 +114,7 @@ local picker_windows = {
 	{ class = "xdg-desktop-portal-gtk" },
 	{ title = "termfilechooser" },
 	{ class = "1password" },
+	{ class = "^com.gabm.satty$" }, -- screenshot annotator (StartupWMClass)
 }
 
 for _, window in ipairs(picker_windows) do
@@ -355,8 +356,8 @@ local function bind(keys, description, dispatcher, options)
 	return hl.bind(keys, dispatcher, options)
 end
 
-local screenshot_command =
-	'mkdir -p ~/Screenshots && file="$HOME/Screenshots/screenshot-$(date +%Y%m%d-%H%M%S).png" && grim -g "$(slurp)" "$file" && wl-copy --type image/png < "$file"'
+-- capture, copy, notify; clicking the notification opens it in satty (home/hyprland.nix)
+local screenshot_command = "screenshot"
 
 -- =============================================================================
 -- GESTURES
@@ -531,10 +532,10 @@ bind("SUPER + CTRL + L", "Toggle night-light panel", hl.dsp.exec_cmd("qs ipc cal
 bind("SUPER + CTRL + T", "Toggle timer panel", hl.dsp.exec_cmd("qs ipc call panels toggle timer"))
 bind("SUPER + CTRL + R", "Toggle system-tray panel", hl.dsp.exec_cmd("qs ipc call panels toggle tray"))
 bind("SUPER + CTRL + V", "Toggle volume panel", hl.dsp.exec_cmd("qs ipc call panels toggle volume"))
-bind("SUPER + CTRL + D", "Toggle Bluetooth panel", hl.dsp.exec_cmd("qs ipc call panels toggle bluetooth"))
-bind("SUPER + CTRL + M", "Toggle display panel", hl.dsp.exec_cmd("qs ipc call panels toggle display"))
+bind("SUPER + CTRL + B", "Toggle Bluetooth panel", hl.dsp.exec_cmd("qs ipc call panels toggle bluetooth"))
+bind("SUPER + CTRL + D", "Toggle display panel", hl.dsp.exec_cmd("qs ipc call panels toggle display"))
 bind("SUPER + CTRL + N", "Toggle network panel", hl.dsp.exec_cmd("qs ipc call panels toggle network"))
-bind("SUPER + CTRL + B", "Toggle battery panel", hl.dsp.exec_cmd("qs ipc call panels toggle battery"))
+bind("SUPER + CTRL + P", "Toggle battery panel", hl.dsp.exec_cmd("qs ipc call panels toggle battery"))
 bind("SUPER + CTRL + S", "Toggle stay-awake mode", hl.dsp.exec_cmd("qs ipc call stayawake toggle"))
 bind("SUPER + CTRL + SHIFT + D", "Toggle do-not-disturb mode", hl.dsp.exec_cmd("qs ipc call dnd toggle"))
 bind("SUPER + SHIFT + space", "Toggle status bar", hl.dsp.exec_cmd("qs ipc call bar toggle"))

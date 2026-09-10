@@ -23,13 +23,22 @@
     # nixos aliases for faster rebuilds, updates and home manager switching
     functions.rb = ''
       command git -C "$HOME/.src/nixos" add --all; or return $status
-      command pkexec --disable-internal-agent /run/current-system/sw/bin/nixos-rebuild switch --flake "$HOME/.src/nixos#"(hostname) --option warn-dirty false $argv
+      command pkexec --disable-internal-agent /run/current-system/sw/bin/nixos-rebuild switch --flake "$HOME/.src/nixos#"(hostname) --option warn-dirty false $argv; or return $status
     '';
 
     functions.sw = ''
       command git -C "$HOME/.src/nixos" add --all; or return $status
       set -l activation (command nix build "$HOME/.src/nixos#nixosConfigurations."(hostname)".config.home-manager.users.$USER.home.activationPackage" --no-link --print-out-paths --option warn-dirty false); or return $status
       "$activation/activate"; or return $status
+    '';
+
+    # Manual, never part of `sw`/`rb`: builds each theme's home generation
+    # into ~/.cache/theme-generations/<theme>, which is what `select-theme`
+    # activates out of. Run it when a theme's colors/wallpapers change, or
+    # after config edits the other themes should carry; until then switching
+    # keeps serving the last build -- instantly, and never touching nix.
+    functions.build-themes = ''
+      command select-theme --build $argv
     '';
 
     functions.up = ''

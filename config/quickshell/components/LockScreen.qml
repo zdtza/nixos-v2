@@ -22,12 +22,40 @@ Scope {
     // Plain properties don't survive Quickshell's live reload (it rebuilds
     // the engine in-process on config changes) -- PersistentProperties is
     // the type built for carrying a value across that, matched by
-    // reloadableId rather than tree position. Without this, onCompleted
-    // below re-locks on every reload, not just real process startup.
+    // reloadableId rather than tree position.
+    //
+    // The autolock decision lives in onLoaded, not Component.onCompleted:
+    // component completion runs before Quickshell restores persisted state,
+    // so a flag checked there always reads false and every config reload
+    // re-locks the session. onLoaded fires once the restore is done -- on a
+    // real process start the flag is still false and we lock; on a reload it
+    // comes back true and we don't. This is the earliest ordering-safe point
+    // and still runs during config load, before any surface is on screen.
     PersistentProperties {
         id: persist
         reloadableId: "lockScreenAutoLock"
         property bool autoLockHandled: false
+
+        onLoaded: {
+            if (persist.autoLockHandled)
+                return;
+            persist.autoLockHandled = true;
+            // Lock in-process when launched as the real session shell
+            // (QS_AUTOLOCK=1, set by the systemd service). No IPC round-trip,
+            // no poll-and-hope race, no waiting on the async PAM file check
+            // below -- grabbing the compositor lock as early as possible is
+            // what keeps the desktop from flashing on screen before it's
+            // covered. Manual `qs` debug runs don't set the var, so they
+            // don't self-lock.
+            //
+            // Manual escape hatch for editing this file live: `systemctl
+            // --user set-environment QS_DEV_NO_AUTOLOCK=1 && systemctl
+            // --user restart quickshell` before a dev session, unset +
+            // restart again when done.
+            if (Quickshell.env("QS_AUTOLOCK") === "1"
+                    && Quickshell.env("QS_DEV_NO_AUTOLOCK") !== "1")
+                root.lock();
+        }
     }
 
     function lock(): void {
@@ -63,23 +91,6 @@ Scope {
             pendingPassword = "";
             errorText = "AUTHENTICATION UNAVAILABLE";
         }
-    }
-
-    Component.onCompleted: {
-        // Lock in-process the instant this component exists, when launched
-        // as the real session shell (QS_AUTOLOCK=1, set by the systemd
-        // service). No IPC round-trip, no poll-and-hope race, no waiting on
-        // the async PAM file check below — grabbing the compositor lock as
-        // early as possible is what keeps the desktop from flashing on
-        // screen before it's covered. Manual `qs` debug runs don't set the
-        // var, so they don't self-lock.
-        if (persist.autoLockHandled) return;
-        persist.autoLockHandled = true;
-        // Manual escape hatch for editing this file live: `systemctl --user
-        // set-environment QS_DEV_NO_AUTOLOCK=1 && systemctl --user restart
-        // quickshell` before a dev session, unset + restart again when done.
-        if (Quickshell.env("QS_AUTOLOCK") === "1"
-                && Quickshell.env("QS_DEV_NO_AUTOLOCK") !== "1") lock();
     }
 
     FileView {

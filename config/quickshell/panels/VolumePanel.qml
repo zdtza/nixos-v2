@@ -337,7 +337,7 @@ Item {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onContainsMouseChanged: if (containsMouse) {
+            onContainsMouseChanged: if (containsMouse && PanelService.hoverSelectReady) {
                 const index = AudioService.outputs.indexOf(deviceRow.node);
                 root.selectedDeviceIndex = index >= 0 ? index
                     : AudioService.outputs.length

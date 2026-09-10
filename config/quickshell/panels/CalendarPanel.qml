@@ -374,7 +374,7 @@ Popup {
                         enabled: !dayCell.modelData.weekNumber
                         hoverEnabled: true
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onContainsMouseChanged: if (containsMouse) {
+                        onContainsMouseChanged: if (containsMouse && PanelService.hoverSelectReady) {
                             const index = root.keyboardDays.findIndex(day =>
                                 day.key === dayCell.modelData.key);
                             if (index >= 0)

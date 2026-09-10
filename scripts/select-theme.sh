@@ -1,65 +1,32 @@
 #!/usr/bin/env bash
 # Pick a theme from the themes/ folder, write it into theme.name, and activate
 # it -- stylix (via home-manager) is the only thing that ever themes the
-# desktop; this script just picks and rebuilds.
+# desktop; this script just picks and activates.
 #
 # With no argument this fzf-picks interactively; with one it takes that theme
 # name straight away, which is how quickshell's components/ThemePicker.qml
-# applies a selection -- the rebuild and its notifications stay in this one
-# place either way.
+# applies a selection.
 #
-# A plain `sw` costs ~9 s of nix eval plus up to ~9 s of building, every time,
-# even switching back to a theme used a minute ago. Since theme.name is the
-# *only* thing changing, the resulting home-manager generation for each theme
-# is prebuilt in the background and kept under $cache_dir, keyed by the git
-# tree hash of the repo as it would look with that theme selected. On a hit,
-# switching is just `activate` (~0.7 s) and nix is never invoked. Any other
-# edit in the repo changes the tree hash, so the cache can't serve a stale
-# generation -- it simply misses and falls back to `sw`.
+# Switching costs one `activate` (~0.7 s) and never invokes nix: the
+# generations live under $link/<theme>, built by `build-themes` (fish function
+# in home/shell.nix, `select-theme --build` here).
+#
+# That build is entirely manual: nothing in `sw`/`rb` or in a switch triggers
+# it, so an ordinary rebuild stays as fast as it was, and a switch always
+# serves whatever was built last -- even if the repo has moved on since. The
+# next `sw` re-syncs the active theme from the working tree anyway; run
+# `build-themes` when the *other* themes should pick up newer config.
+#
+# The one exception is a theme with no generation at all (never built, or a
+# newly added themes/ folder): there is nothing to activate, so it is built.
 set -euo pipefail
 
 repo_dir=$HOME/.src/nixos
-host_file="$repo_dir/hosts/legion/default.nix"
-cache_dir="$HOME/.cache/select-theme"
-attr="nixosConfigurations.$(hostname).config.home-manager.users.$(id -un).home.activationPackage"
+host=$(hostname)
+host_file="$repo_dir/hosts/$host/default.nix"
+link=$HOME/.cache/theme-generations
 
 notify() { notify-send --app-name="Theme" "$@" || true; }
-
-# Tree hash the repo index would have with theme.name = $1. Computed against a
-# throwaway copy of the index so prebuilding other themes never touches the
-# working tree the user is editing.
-tree_for() {
-  local blob index
-  blob=$(sed "s/theme\.name = \".*\";/theme.name = \"$1\";/" "$host_file" |
-    git -C "$repo_dir" hash-object -w --stdin)
-  index=$(mktemp)
-  cp "$(git -C "$repo_dir" rev-parse --git-path index)" "$index"
-  GIT_INDEX_FILE=$index git -C "$repo_dir" update-index \
-    --cacheinfo "100644,$blob,${host_file#"$repo_dir"/}"
-  GIT_INDEX_FILE=$index git -C "$repo_dir" write-tree
-  rm -f "$index"
-}
-
-# Build a theme's generation from an *export* of that tree rather than the
-# working tree -- a dirty flake copies exactly the files git tracks, so the
-# export hashes to the same store path (verified) while leaving the repo
-# alone. Building from the tree is also what keeps the cache honest: the key
-# and the thing stored under it come from the same object, so no concurrent
-# write to the repo can make an entry lie about which theme it holds.
-build_tree() {
-  local tree=$1 theme=$2 worktree
-  worktree=$(mktemp -d)
-  git -C "$repo_dir" archive "$tree" | tar -x -C "$worktree"
-  # Cheap guard against ever caching a generation under the wrong key again:
-  # the export must actually select the theme this entry claims.
-  grep -q "theme\.name = \"$theme\";" "$worktree/${host_file#"$repo_dir"/}" || {
-    printf 'refusing to cache %s: export does not select %s\n' "$tree" "$theme" >&2
-    rm -rf "$worktree"
-    return 1
-  }
-  nix build "path:$worktree#$attr" --out-link "$cache_dir/$tree" --option warn-dirty false
-  rm -rf "$worktree"
-}
 
 # A theme *is* a folder under themes/ (themes/default.nix builds the attrset
 # with the same readDir), so list them directly -- no nix eval round trip.
@@ -67,25 +34,53 @@ list_themes() {
   find "$repo_dir/themes" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort
 }
 
-# Fill the cache for every theme that isn't in it yet. Detached and behind a
-# lock, so back-to-back switches don't stack up duplicate builds.
-prebuild_others() {
-  local theme tree
-  flock -n 9 || exit 0
-  # Out-links are GC roots; drop the ones no switch has used in a fortnight
-  # (older repo states) so the store isn't pinned forever.
-  find "$cache_dir" -maxdepth 1 -type l -mtime +14 -delete
+current_theme() { sed -n 's/.*theme\.name = "\(.*\)";.*/\1/p' "$host_file"; }
+set_theme() { sed -i "s/theme\.name = \".*\";/theme.name = \"$1\";/" "$host_file"; }
+
+# One theme's generation, as an out-link at $link/<theme>. theme.name is the
+# only input that differs between themes, so this rewrites it in the working
+# tree and builds the normal flake attr -- no extra flake output to keep in
+# sync. Always call through with_restore.
+# ponytail: edits the repo in place while it runs, so don't `sw` in another
+# terminal mid-build; export a worktree per theme if that ever collides.
+build_one() {
+  echo "Building $1..."
+  set_theme "$1"
+  git -C "$repo_dir" add --all
+  nix build "$repo_dir#nixosConfigurations.$host.config.home-manager.users.$(id -un).home.activationPackage" \
+    --out-link "$link/$1" --option warn-dirty false
+}
+
+# No names = every theme; names = just those (e.g. refreshing the one you are
+# currently running, after editing config that affects it).
+build_themes() {
+  local theme
+  if [[ $# -gt 0 ]]; then
+    for theme in "$@"; do build_one "$theme"; done
+    return
+  fi
   while read -r theme; do
-    tree=$(tree_for "$theme")
-    [[ -e "$cache_dir/$tree" ]] || build_tree "$tree" "$theme"
+    build_one "$theme"
   done < <(list_themes)
 }
 
-mkdir -p "$cache_dir"
+# Runs a build with $link ready, restoring the selection the file had on entry
+# even if the build fails.
+with_restore() {
+  # Global, not local: the EXIT trap runs after this function has returned, so
+  # a local would be gone (and unbound, under set -u) by the time it fires.
+  original=$(current_theme)
+  trap 'set_theme "$original"; git -C "$repo_dir" add --all' EXIT
+  # $link was a single link-farm symlink in an earlier version; it is a plain
+  # directory of out-links now.
+  if [[ -L $link ]]; then rm -f "$link"; fi
+  mkdir -p "$link"
+  "$@"
+}
 
-if [[ ${1:-} == --prebuild ]]; then
-  exec 9>"$cache_dir/.lock"
-  prebuild_others
+if [[ ${1:-} == --build ]]; then
+  shift
+  with_restore build_themes "$@"
   exit 0
 fi
 
@@ -104,39 +99,18 @@ if [[ ! -d "$repo_dir/themes/$chosen" ]]; then
   exit 1
 fi
 
-# One switch at a time, and no prebuild running underneath it: the tree hash is
-# taken from the repo a moment before the build reads it, so a second writer in
-# that window (another switch, the shell picker) used to silently store the
-# other theme's generation under this theme's key -- a lie the cache then
-# served forever, since a hit is never re-checked.
-exec 9>"$cache_dir/.lock"
-flock 9
-
-sed -i "s/theme\.name = \".*\";/theme.name = \"$chosen\";/" "$host_file"
-# The tree hash below has to see the same files nix will, so stage first.
-git -C "$repo_dir" add --all
-tree=$(git -C "$repo_dir" write-tree)
-
+set_theme "$chosen"
 echo "Set theme.name to $chosen. Activating..."
 
-# Miss: build this exact tree, never the live working tree, so what lands in
-# the cache is always what the key says it is. A miss is the slow path (nix
-# eval + build, tens of seconds), so say so up front -- a cache hit switches
-# in under a second and needs no announcement.
-if [[ ! -e "$cache_dir/$tree/activate" ]]; then
-  notify "Building $chosen" "Theme is not cached yet, this will take a while..."
-  if ! build_tree "$tree" "$chosen"; then
+if [[ ! -x "$link/$chosen/activate" ]]; then
+  notify "Building $chosen" "Not built yet, this will take a while..."
+  if ! with_restore build_one "$chosen"; then
     notify --urgency=critical "Theme switch failed" "build failed for $chosen"
     exit 1
   fi
 fi
 
-if ! "$cache_dir/$tree/activate"; then
+if ! "$link/$chosen/activate"; then
   notify --urgency=critical "Theme switch failed" "activation failed for $chosen"
   exit 1
 fi
-
-# Warm the other themes for next time, detached -- the switch is already done.
-# Hand the lock over first, or the prebuild's `flock -n` would just give up.
-flock -u 9
-setsid "$0" --prebuild >/dev/null 2>&1 &

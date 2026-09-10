@@ -39,6 +39,7 @@ in
     # change and run `sw` (no sudo, no nixos-rebuild -- see home/shell.nix),
     # or run scripts/select-theme.sh
     theme.name = "tokyo-night";
+    
   };
 
   networking.hostName = "legion"; # lenovo legion y540

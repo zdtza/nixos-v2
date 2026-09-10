@@ -435,7 +435,8 @@ Item {
 
                             HoverHandler {
                                 id: networkHover
-                                onHoveredChanged: if (hovered && !networkRow.passwordOpen)
+                                onHoveredChanged: if (hovered && !networkRow.passwordOpen
+                                        && PanelService.hoverSelectReady)
                                     root.selectedSsid = String(networkRow.modelData.ssid)
                             }
 

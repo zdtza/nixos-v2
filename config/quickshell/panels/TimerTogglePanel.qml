@@ -348,7 +348,7 @@ Item {
 
                             HoverHandler {
                                 id: rowHover
-                                onHoveredChanged: if (hovered)
+                                onHoveredChanged: if (hovered && PanelService.hoverSelectReady)
                                     root.selectedTimerIndex = timerRow.index
                             }
 

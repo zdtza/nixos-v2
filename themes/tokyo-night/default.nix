@@ -1,7 +1,7 @@
 {
   # Active wallpaper, rewritten by scripts/select-wallpaper.sh (and by the
   # quickshell picker, which shells out to it) -- always a file in ./wallpapers.
-  wallpaper = ./wallpapers/0-winding-road.jpg;
+  wallpaper = ./wallpapers/1-quattro.jpg;
   colors = {
     base00 = "#1a1b26"; # background
     base01 = "#13141c"; # dark_background
@@ -31,5 +31,5 @@
   # hyprland's active window border (home/yazi.nix, home/hyprland.nix)
   accent = "base0D";
   gtkAccent = "blue";
-  iconTheme = "Yaru-blue";
+  iconTheme = "Yaru-magenta";
 }

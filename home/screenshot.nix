@@ -40,7 +40,7 @@ let
     grim -g "$region" "$file"
     wl-copy --type image/png <"$file"
 
-    action=$(notify-send --app-name=Screenshot --action=default=Edit -t 3000 \
+    action=$(notify-send --app-name=Screenshot --action=default=Edit -t 4000 \
       "Screenshot saved" "$(basename "$file")")
 
     [ "$action" = default ] || exit 0

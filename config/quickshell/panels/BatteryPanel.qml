@@ -257,7 +257,7 @@ Item {
                         width: profileContent.implicitWidth + profileRow.cellPadding * 2
                         height: 36
                         keyboardFocused: profileButton.index === root.selectedProfileIndex
-                        onHoveredChanged: if (hovered)
+                        onHoveredChanged: if (hovered && PanelService.hoverSelectReady)
                             root.selectedProfileIndex = profileButton.index
                         onActivated: {
                             root.selectedProfileIndex = profileButton.index;

@@ -17,12 +17,18 @@ Scope {
         const flow = agent.flow;
         if (!flow?.isResponseRequired)
             return;
+        // Text stays put while PAM validates: the field is disabled by then
+        // (isResponseRequired goes false), so the dots read as "checking"
+        // instead of the input blanking the instant Enter is pressed.
+        // Cleared on failure, on the next prompt, and when the agent closes.
         flow.submit(prompt.text);
-        prompt.text = "";
     }
 
     PolkitAgent {
         id: agent
+
+        onIsActiveChanged: if (!isActive)
+            prompt.text = "";
 
         onAuthenticationRequestStarted: {
             root.openedMonitorName = String(Hyprland.focusedMonitor?.name ?? "");
@@ -72,9 +78,10 @@ Scope {
             target: agent.flow
 
             function onIsResponseRequiredChanged(): void {
-                prompt.text = "";
-                if (agent.flow?.isResponseRequired)
+                if (agent.flow?.isResponseRequired) {
+                    prompt.text = "";
                     prompt.input.forceActiveFocus();
+                }
             }
 
             function onAuthenticationFailed(): void {

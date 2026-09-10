@@ -150,7 +150,7 @@ Item {
                     width: scaleRow.cellWidth
                     keyboardFocused: scaleButton.index === root.selectedScaleIndex
                     enabled: !!DisplayService.focusedMonitor
-                    onHoveredChanged: if (hovered)
+                    onHoveredChanged: if (hovered && PanelService.hoverSelectReady)
                         root.selectedScaleIndex = scaleButton.index
                     onActivated: {
                         root.selectedScaleIndex = scaleButton.index;

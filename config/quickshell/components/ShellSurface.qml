@@ -65,6 +65,17 @@ PanelWindow {
         onActivated: root.closeRequested()
     }
 
+    // Arms hover-select once the pointer genuinely moves, as opposed to a
+    // panel merely appearing underneath a still cursor. Lives here so both
+    // shapes (Drawer and Popup) get it once; a HoverHandler on the window
+    // sees every move regardless of which child is topmost, unlike a
+    // MouseArea, which only gets events when nothing else covers it.
+    HoverHandler {
+        enabled: root.open && !PanelService.hoverSelectReady
+        acceptedDevices: PointerDevice.AllDevices
+        onPointChanged: PanelService.armHoverSelect(point.position.x, point.position.y)
+    }
+
     Item {
         id: surfaceClip
         anchors {

@@ -1,0 +1,276 @@
+pragma ComponentBehavior: Bound
+
+// The surface both the launcher and the keybind sheet are: a card on a
+// click-to-dismiss scrim, one search field over one list. Callers supply the
+// model, the row delegate and what Enter means; the layer surface, the height
+// maths and the selection handling live here.
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Hyprland
+import Quickshell.Wayland
+import "../services"
+import ".."
+
+Scope {
+    id: root
+
+    property bool open: false
+    property string layerNamespace: ""
+    property string placeholder: ""
+    property int frameWidth: 400
+    property int rowHeight: 58
+    property int rowSpacing: 4
+    property var model: []
+    property Component delegate: null
+    // The card stays collapsed to the search bar until the caller has
+    // something worth showing under it.
+    property bool expanded: false
+    // 72 = top+bottom margins (12 each) + search row (48).
+    readonly property int searchBarHeight: 72
+    // Whole rows only. A max height that lands mid-row leaves the last entry
+    // sliced in half at the bottom edge, which reads as a bug rather than as
+    // "there is more below".
+    property int maxRows: Math.max(1, Math.floor(
+        (window.height * 0.44 - root.searchBarHeight - 10 + root.rowSpacing)
+            / (root.rowHeight + root.rowSpacing)))
+
+    property alias query: search.text
+    property alias currentIndex: list.currentIndex
+    // Hover-select stays disarmed until the pointer genuinely moves after
+    // opening: without this, opening under a stationary cursor synthesizes a
+    // hover-enter on whatever row is beneath it and overrides the selection.
+    property bool hoverSelectReady: false
+
+    // Empty/loading overlays are declared by the caller as list children.
+    default property alias listData: list.data
+
+    signal accepted
+
+    property string openedMonitorName: ""
+
+    function show(): void {
+        root.openedMonitorName = String(Hyprland.focusedMonitor?.name ?? "");
+        PanelService.closeActive();
+        root.open = true;
+    }
+
+    function toggle(): void {
+        if (root.open)
+            root.open = false;
+        else
+            root.show();
+    }
+
+    function moveSelection(offset: int): void {
+        if (list.count === 0) {
+            list.currentIndex = -1;
+            return;
+        }
+        list.currentIndex = Math.max(0, Math.min(list.count - 1,
+            (list.currentIndex < 0 ? 0 : list.currentIndex) + offset));
+        list.positionViewAtIndex(list.currentIndex, ListView.Contain);
+    }
+
+    onOpenChanged: {
+        root.hoverSelectReady = false;
+        window.armPosition = null;
+        // Reset immediately on close (while hidden) rather than on open, so
+        // the frame is already collapsed before it is shown again — otherwise
+        // the height Behavior animates the shrink visibly on the next open.
+        search.text = "";
+        list.currentIndex = list.count > 0 ? 0 : -1;
+        if (!root.open)
+            return;
+        search.forceActiveFocus();
+        list.positionViewAtBeginning();
+    }
+
+    Connections {
+        target: Hyprland
+
+        function onFocusedMonitorChanged(): void {
+            if (root.open && String(Hyprland.focusedMonitor?.name ?? "") !== root.openedMonitorName)
+                root.open = false;
+        }
+    }
+
+    PanelWindow {
+        id: window
+
+        screen: Utils.screenForMonitor(root.openedMonitorName)
+
+        // Keep the layer surface mapped. Closing only makes it transparent and
+        // removes its input region, avoiding a Wayland map round trip on open.
+        visible: true
+        color: "transparent"
+        mask: Region {
+            width: root.open ? window.width : 0
+            height: root.open ? window.height : 0
+        }
+        anchors {
+            top: true
+            bottom: true
+            left: true
+            right: true
+        }
+
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.namespace: root.layerNamespace
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: root.open
+            ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+        // Cursor position seen the first time it is reported after opening,
+        // compared against later ones to tell real movement from a cursor the
+        // panel merely appeared beneath.
+        property var armPosition: null
+
+        Rectangle {
+            anchors.fill: parent
+            color: Utils.alpha(Theme.base00, Utils.scrimOpacity)
+            opacity: root.open ? 1 : 0
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: root.open
+            onClicked: root.open = false
+        }
+
+        // A HoverHandler on the window sees every pointer move regardless of
+        // which child is topmost, unlike a MouseArea that only gets events
+        // when nothing covers it.
+        HoverHandler {
+            enabled: root.open && !root.hoverSelectReady
+            acceptedDevices: PointerDevice.AllDevices
+            onPointChanged: {
+                if (window.armPosition === null)
+                    window.armPosition = Qt.point(point.position.x, point.position.y);
+                else if (point.position.x !== window.armPosition.x
+                        || point.position.y !== window.armPosition.y)
+                    root.hoverSelectReady = true;
+            }
+        }
+
+        Rectangle {
+            id: frame
+
+            // Pinned to the top edge it would have at full height, not centred:
+            // a centred frame re-centres itself every time the row count
+            // changes, so the search bar drifts under the cursor while typing.
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: Math.round((parent.height - frame.maxHeight) / 2)
+            width: Math.min(root.frameWidth, parent.width - 32)
+
+            readonly property int maxHeight: root.searchBarHeight + 10
+                + root.maxRows * root.rowHeight + (root.maxRows - 1) * root.rowSpacing
+            // At least one row tall while expanded, so an overlay message fits.
+            readonly property int listHeight: Math.max(root.rowHeight,
+                list.count * root.rowHeight + (list.count - 1) * root.rowSpacing)
+
+            Behavior on height {
+                NumberAnimation { duration: 100; easing.type: Easing.OutQuad }
+            }
+
+            height: root.expanded
+                ? Math.min(frame.maxHeight, root.searchBarHeight + 10 + frame.listHeight)
+                : root.searchBarHeight
+            enabled: root.open
+
+            clip: true
+            radius: PanelService.rounding
+            color: Theme.base01
+            opacity: root.open ? 1 : 0
+            layer.enabled: true
+            layer.effect: ShellShadow {}
+
+            MouseArea {
+                anchors.fill: parent
+                onPressed: mouse => mouse.accepted = true
+            }
+
+            ColumnLayout {
+                anchors {
+                    fill: parent
+                    leftMargin: 12
+                    rightMargin: 12
+                    topMargin: 12
+                    bottomMargin: 12
+                }
+                opacity: root.open ? 1 : 0
+                spacing: 10
+
+                // Wrapper keeps the row 48 tall while the field itself stays
+                // 30, so the text cursor is caret-sized rather than row-sized.
+                Item {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 48
+
+                    TextInput {
+                        id: search
+
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            leftMargin: 16
+                            rightMargin: 16
+                            verticalCenter: parent.verticalCenter
+                        }
+                        height: 30
+                        verticalAlignment: TextInput.AlignVCenter
+                        focus: true
+                        selectByMouse: true
+                        clip: true
+                        color: Theme.base05
+                        selectionColor: Theme.base02
+                        selectedTextColor: Theme.base05
+                        font.family: Theme.monospace
+                        font.pixelSize: Utils.scaledFont(14)
+
+                        cursorDelegate: Rectangle {
+                            width: 1
+                            color: Theme.base05
+                        }
+
+                        ShellText {
+                            anchors.fill: parent
+                            verticalAlignment: Text.AlignVCenter
+                            visible: search.text === ""
+                            text: root.placeholder
+                            color: Theme.base04
+                            size: 14
+                        }
+
+                        Keys.onPressed: event => {
+                            if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
+                                search.text = "";
+                                event.accepted = true;
+                            }
+                        }
+                        Keys.onEscapePressed: root.open = false
+                        Keys.onDownPressed: root.moveSelection(1)
+                        Keys.onUpPressed: root.moveSelection(-1)
+                        Keys.onReturnPressed: root.accepted()
+                        Keys.onEnterPressed: root.accepted()
+                    }
+                }
+
+                ListView {
+                    id: list
+
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    spacing: root.rowSpacing
+                    model: root.model
+                    delegate: root.delegate
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    // Every query change starts over at the top match.
+                    onModelChanged: list.currentIndex = list.count > 0 ? 0 : -1
+                }
+            }
+        }
+    }
+}

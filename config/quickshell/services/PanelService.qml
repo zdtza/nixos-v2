@@ -26,6 +26,27 @@ Item {
 
     property var activePanel: null
     property var pendingPanel: null
+
+    // Hover-select is ignored until the pointer actually moves after a panel
+    // opens. Without this, a panel appearing under a stationary cursor
+    // synthesizes a hover-enter on whatever row lands beneath it and silently
+    // overrides the default selection. Same guard the launcher uses.
+    property bool hoverSelectReady: false
+    // Cursor position observed the first time it is seen after opening, to
+    // tell a real move from the one position report a still cursor makes.
+    property var hoverArmPosition: null
+
+    onActivePanelChanged: {
+        hoverSelectReady = false;
+        hoverArmPosition = null;
+    }
+
+    function armHoverSelect(x: real, y: real): void {
+        if (hoverArmPosition === null)
+            hoverArmPosition = Qt.point(x, y);
+        else if (x !== hoverArmPosition.x || y !== hoverArmPosition.y)
+            hoverSelectReady = true;
+    }
     property int handoffGeneration: 0
     property var registeredPanels: ({})
 

@@ -57,6 +57,9 @@ ShellRoot {
     // Single instance, toggled over IPC: `qs ipc call launcher toggle`
     Launcher {}
 
+    // `qs ipc call keybinds toggle`
+    Keybinds {}
+
     // `qs ipc call wallpaper toggle`
     WallpaperPicker {}
 

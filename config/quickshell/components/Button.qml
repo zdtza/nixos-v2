@@ -36,7 +36,7 @@ Item {
         radius: PanelService.rounding
         visible: opacity > 0
         opacity: root.showPanelIndicator && (root.panelOpen || mouseArea.containsMouse) ? 1 : 0
-        color: Theme.base0D
+        color: Theme.base05
 
         Behavior on opacity { NumberAnimation { duration: 120 } }
     }

@@ -272,7 +272,7 @@ Item {
                                 || (root.opened && root.selectedItemIndex === entry.index)
                                 || (root.opened && !root.windowsMenuOpen && menuLoader.trayItem === entry.modelData)
                                 ? 1 : 0
-                            color: Theme.base0D
+                            color: Theme.base05
 
                             Behavior on opacity { NumberAnimation { duration: 120 } }
                         }
@@ -344,7 +344,7 @@ Item {
                             || (root.opened && root.selectedItemIndex === root.items.length)
                             || (root.opened && root.windowsMenuOpen)
                             ? 1 : 0
-                        color: Theme.base0D
+                        color: Theme.base05
 
                         Behavior on opacity { NumberAnimation { duration: 120 } }
                     }

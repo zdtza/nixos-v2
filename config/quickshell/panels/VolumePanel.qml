@@ -223,10 +223,7 @@ Item {
         Item {
             id: inputLevelMeter
 
-            // Mild compression keeps speech responsive without amplifying the
-            // microphone noise floor as aggressively as a square-root curve.
-            readonly property real level: Math.pow(
-                Math.max(0, Number(inputPeak.peak || 0)), 0.75)
+            readonly property real level: Utils.peakLevel(inputPeak.peak)
 
             width: parent.width
             implicitHeight: 6
@@ -238,8 +235,7 @@ Item {
 
                 Rectangle {
                     height: parent.height
-                    width: parent.width * Math.max(0,
-                        Math.min(1, inputLevelMeter.level))
+                    width: parent.width * inputLevelMeter.level
                     radius: PanelService.rounding
                     color: AudioService.inputMuted
                         ? Theme.base04 : Theme.base05

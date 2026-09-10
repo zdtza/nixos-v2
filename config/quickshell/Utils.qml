@@ -29,6 +29,14 @@ QtObject {
         return Quickshell.screens.length > 0 ? Quickshell.screens[0] : null;
     }
 
+    // PwNodePeakMonitor peak -> 0..1 meter fill. Mild compression keeps speech
+    // responsive without amplifying the microphone noise floor as aggressively
+    // as a square-root curve. Shared so the audio panel's meter and the
+    // dictation OSD read identically for the same input.
+    function peakLevel(peak: real): real {
+        return Math.max(0, Math.min(1, Math.pow(Math.max(0, Number(peak || 0)), 0.75)));
+    }
+
     // Theme color with an overridden alpha, e.g. a faint hover fill derived
     // from Theme.base05.
     function alpha(base: color, a: real): color {

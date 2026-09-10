@@ -1,6 +1,8 @@
-// Optional controls beside the clock. Inactive controls collapse into the
-// clock edge and appear when the hidden area is hovered. Active controls
-// remain visible on the right, with inactive controls ordered to their left.
+// Optional controls in the bar's right-hand group. Inactive controls collapse
+// to nothing and appear when the reserved area is hovered; active ones stay
+// visible. Order is fixed (see the Row below) -- a slot never moves, whether
+// it is active, inactive or collapsed, so the same control is always in the
+// same place.
 import QtQuick
 import "../panels"
 import "../services"
@@ -10,163 +12,59 @@ Item {
 
     readonly property bool expanded: hover.hovered || nightLightToggle.opened
         || timerToggle.opened
-    readonly property real fullTrayWidth: 28 * 5
     readonly property var nightLightPanel: nightLightToggle
     readonly property var timerPanel: timerToggle
-    // Active-state of every slot, in slot declaration order. A slot's index
-    // here is its identity for the ordering below and for toggleX().
-    readonly property var toggleStates: [
-        NightLightService.enabled,
-        StayAwakeService.enabled,
-        TimerService.running,
-        DoNotDisturbService.enabled,
-        VoiceDictationService.active
-    ]
-    // Last states the ordering was built from, so a change can be narrowed to
-    // the slots that actually flipped.
-    property var appliedStates: []
-    property var activeOrder: []
-    property var inactiveOrder: []
-
-    function moveToggle(index: int, active: bool): void {
-        const nextActive = activeOrder.filter(candidate => candidate !== index);
-        const nextInactive = inactiveOrder.filter(candidate => candidate !== index);
-
-        if (active)
-            nextActive.unshift(index);
-        else
-            nextInactive.push(index);
-
-        activeOrder = nextActive;
-        inactiveOrder = nextInactive;
-    }
-
-    function initializeToggleOrder(): void {
-        const nextActive = [];
-        const nextInactive = [];
-
-        for (let index = 0; index < toggleStates.length; ++index) {
-            if (toggleStates[index])
-                nextActive.push(index);
-            else
-                nextInactive.push(index);
-        }
-
-        activeOrder = nextActive;
-        inactiveOrder = nextInactive;
-        appliedStates = toggleStates.slice();
-    }
-
-    // One handler on the states array replaces a Connections block per
-    // service: whichever slots flipped since the last pass get re-ordered.
-    function syncToggleOrder(): void {
-        for (let index = 0; index < toggleStates.length; ++index) {
-            if (appliedStates[index] !== toggleStates[index])
-                moveToggle(index, toggleStates[index]);
-        }
-        appliedStates = toggleStates.slice();
-    }
-
-    function toggleX(index: int): real {
-        const order = inactiveOrder.concat(activeOrder);
-        const slots = [nightLightSlot, stayAwakeSlot, timerSlot, dndSlot,
-            dictationSlot];
-        let x = 0;
-
-        for (let position = 0; position < order.indexOf(index); ++position)
-            x += slots[order[position]].width;
-
-        return x;
-    }
-
-    Component.onCompleted: initializeToggleOrder()
-    // Guarded so the first evaluation (which fires before onCompleted) can't
-    // re-order against an empty baseline.
-    onToggleStatesChanged: if (appliedStates.length > 0) syncToggleOrder()
 
     // Reserve hover space for every toggle, including collapsed controls, so
     // entering anywhere the expanded tray occupies reveals the full tray.
-    implicitWidth: root.fullTrayWidth
+    implicitWidth: 28 * 4
     implicitHeight: 26
 
     HoverHandler {
         id: hover
     }
 
-    Item {
-        id: viewport
-
+    // Right-anchored: collapsed slots take no width, so the visible controls
+    // always sit against the right edge of the reserved strip. Declaration
+    // order here *is* the on-screen order, left to right -- night light and
+    // timer last, i.e. outermost right; swap those two lines to flip them.
+    Row {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        clip: true
 
-        implicitWidth: buttons.implicitWidth
-        implicitHeight: 26
-        opacity: implicitWidth > 0 ? 1 : 0
+        QuickToggleSlot {
+            shown: root.expanded || StayAwakeService.enabled
 
-        Item {
-            id: buttons
-
-            anchors.right: parent.right
-            width: implicitWidth
-            height: 26
-            implicitWidth: nightLightSlot.width + stayAwakeSlot.width
-                + timerSlot.width + dndSlot.width + dictationSlot.width
-
-            QuickToggleSlot {
-                id: nightLightSlot
-                x: root.toggleX(0)
-                shown: root.expanded || NightLightService.enabled
-
-                NightLightTogglePanel { id: nightLightToggle }
+            QuickToggleButton {
+                icon: "󰅶"
+                active: StayAwakeService.enabled
+                onClicked: StayAwakeService.toggle()
             }
+        }
 
-            QuickToggleSlot {
-                id: stayAwakeSlot
-                x: root.toggleX(1)
-                shown: root.expanded || StayAwakeService.enabled
+        QuickToggleSlot {
+            shown: root.expanded || DoNotDisturbService.enabled
 
-                QuickToggleButton {
-                    icon: "󰈈"
-                    active: StayAwakeService.enabled
-                    onClicked: StayAwakeService.toggle()
-                }
+            QuickToggleButton {
+                icon: "󰂛"
+                active: DoNotDisturbService.enabled
+                onClicked: DoNotDisturbService.toggle()
             }
+        }
 
-            QuickToggleSlot {
-                id: timerSlot
-                x: root.toggleX(2)
-                // Running state is already surfaced by the badge next to the
-                // clock, so this slot only reveals on hover rather than
-                // staying pinned open while a timer counts down.
-                shown: root.expanded
+        QuickToggleSlot {
+            // Running state is already surfaced by the badge next to the
+            // clock, so this slot only reveals on hover rather than staying
+            // pinned open while a timer counts down.
+            shown: root.expanded
 
-                TimerTogglePanel { id: timerToggle }
-            }
+            TimerTogglePanel { id: timerToggle }
+        }
 
-            QuickToggleSlot {
-                id: dndSlot
-                x: root.toggleX(3)
-                shown: root.expanded || DoNotDisturbService.enabled
+        QuickToggleSlot {
+            shown: root.expanded || NightLightService.enabled
 
-                QuickToggleButton {
-                    icon: "󰂛"
-                    active: DoNotDisturbService.enabled
-                    onClicked: DoNotDisturbService.toggle()
-                }
-            }
-
-            QuickToggleSlot {
-                id: dictationSlot
-                x: root.toggleX(4)
-                shown: root.expanded || VoiceDictationService.active
-
-                QuickToggleButton {
-                    icon: ""
-                    active: VoiceDictationService.active
-                    onClicked: VoiceDictationService.toggle()
-                }
-            }
+            NightLightTogglePanel { id: nightLightToggle }
         }
     }
 }

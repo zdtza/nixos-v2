@@ -10,7 +10,11 @@ import Quickshell.Io
 Item {
     id: root
 
-    property bool active: false
+    // Strictly the capture window. The daemon reports three classes -- idle,
+    // recording, transcribing -- and transcribing can run for seconds after
+    // the toggle is pressed, so anything treating "not idle" as active keeps
+    // showing a microphone that is no longer listening.
+    property bool recording: false
 
     function toggle(): void {
         if (!toggleProcess.running)
@@ -20,7 +24,7 @@ Item {
     function parseStatus(raw: string): void {
         try {
             const data = JSON.parse(raw);
-            root.active = String(data.class || "idle") !== "idle";
+            root.recording = String(data.class || "idle") === "recording";
         } catch (e) {
             // Daemon not running or malformed output; leave state as-is.
         }

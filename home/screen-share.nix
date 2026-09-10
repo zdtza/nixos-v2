@@ -12,24 +12,6 @@ let
   font = config.stylix.fonts.monospace.name;
 
   yamlFormat = pkgs.formats.yaml { };
-
-  # XDPH tells nobody what a running cast is capturing -- no portal property,
-  # no hyprctl query -- but the picker prints its choice
-  # ("[SELECTION]screen:DP-1") on stdout for XDPH to parse. So wrap it: record
-  # that line where quickshell can watch it
-  # (services/ScreenShareService.qml, which draws components/ShareBorder.qml
-  # around the matching output) and hand XDPH the exact same bytes back.
-  pickerWrapper = pkgs.writeShellScriptBin "share-picker-recording" ''
-    selection=$(${lib.getExe' picker "hyprland-preview-share-picker"} "$@")
-    status=$?
-    # Cancelled picks print nothing; leave the previous selection alone rather
-    # than blanking it, since XDPH then starts no stream either.
-    if [ -n "$selection" ]; then
-      printf '%s\n' "$selection" > "$XDG_RUNTIME_DIR/xdph-share-selection"
-    fi
-    printf '%s\n' "$selection"
-    exit $status
-  '';
 in
 {
   home.packages = [
@@ -40,7 +22,7 @@ in
   # enabling the custom screen share picker for hyprland
   xdg.configFile."hypr/xdph.conf".text = ''
     screencopy {
-      custom_picker_binary = ${lib.getExe' pickerWrapper "share-picker-recording"}
+      custom_picker_binary = ${lib.getExe' picker "hyprland-preview-share-picker"}
       allow_token_by_default = 1
     }
   '';

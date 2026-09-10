@@ -21,6 +21,13 @@ ShellRoot {
         Bar {}
     }
 
+    // Red outline on whichever screen a portal screencast is capturing
+    Variants {
+        model: Quickshell.screens
+
+        ShareBorder {}
+    }
+
     IpcHandler {
         target: "panels"
 

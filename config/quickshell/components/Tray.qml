@@ -1,7 +1,9 @@
 pragma ComponentBehavior: Bound
 
-// System tray, collapsed behind a chevron. Hovering the chevron (or the icons
-// themselves) slides the icons out; moving the pointer away slides them back.
+// System tray, collapsed behind a blank hotspot on its left edge (a chevron
+// glyph used to sit there; the target stayed, the glyph did not). Hovering it
+// -- or the icons themselves -- slides the icons out; moving the pointer away
+// slides them back.
 // Icons stay instantiated and are revealed by animating a clipped container,
 // so nothing is rebuilt on every hover.
 //
@@ -196,12 +198,15 @@ Item {
             }
         }
 
+        // Deliberately textless: a fixed 22px hover/click target (Button's
+        // implicitWidth is independent of its text) that keeps the collapsed
+        // tray reachable without drawing anything itself. Clicking it still
+        // pins the icons out.
         Button {
             id: chevron
 
             panel: root
             showPanelIndicator: false
-            text: ""
             onClicked: {
                 root.pinned = !root.pinned;
                 if (!root.pinned)
@@ -209,7 +214,7 @@ Item {
             }
         }
 
-        // Clipped viewport keeps the icon row pinned behind the chevron.
+        // Clipped viewport keeps the icon row pinned behind the hotspot.
         Item {
             id: viewport
 

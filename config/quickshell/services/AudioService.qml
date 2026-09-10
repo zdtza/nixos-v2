@@ -45,11 +45,6 @@ Item {
         return Math.max(0, Math.min(maximumVolume, Number(value)));
     }
 
-    function setOutputVolume(value: real): void {
-        if (output && output.audio)
-            output.audio.volume = clampVolume(value);
-    }
-
     // PipeWire hands the volume back as a float that is not exactly a multiple
     // of the step (1.5 reads as 1.4999998), so stepping relative to the
     // readback compounds that error and slides the grid -- holding volume-down
@@ -59,17 +54,26 @@ Item {
         return Math.round(value / step) * step;
     }
 
+    // Every write goes through the grid, not just the keybind steps: slider
+    // drags, the 4%-per-notch wheel, and `setOutput 37` used to park the
+    // volume off-grid, and the OSD then reported 37% / 43% / 49% instead of
+    // the 5% ticks.
+    function setOutputVolume(value: real): void {
+        if (output && output.audio)
+            output.audio.volume = clampVolume(snapToStep(value, outputStep));
+    }
+
     function adjustOutputVolume(delta: real): void {
-        setOutputVolume(snapToStep(outputVolume + delta, outputStep));
+        setOutputVolume(snapToStep(outputVolume, outputStep) + delta);
     }
 
     function setInputVolume(value: real): void {
         if (input && input.audio)
-            input.audio.volume = clampVolume(value);
+            input.audio.volume = clampVolume(snapToStep(value, inputStep));
     }
 
     function adjustInputVolume(delta: real): void {
-        setInputVolume(snapToStep(inputVolume + delta, inputStep));
+        setInputVolume(snapToStep(inputVolume, inputStep) + delta);
     }
 
     function toggleOutputMute(): void {

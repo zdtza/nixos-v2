@@ -2,7 +2,6 @@
 // clock edge and appear when the hidden area is hovered. Active controls
 // remain visible on the right, with inactive controls ordered to their left.
 import QtQuick
-import Quickshell.Services.Pipewire
 import "../panels"
 import "../services"
 
@@ -11,17 +10,9 @@ Item {
 
     readonly property bool expanded: hover.hovered || nightLightToggle.opened
         || timerToggle.opened
-    readonly property real fullTrayWidth: 28 * 5 + (recordingActive ? 28 : 0)
+    readonly property real fullTrayWidth: 28 * 5
     readonly property var nightLightPanel: nightLightToggle
     readonly property var timerPanel: timerToggle
-    // XDPH creates one of these PipeWire sources per active portal capture.
-    readonly property var recordingNodes: Pipewire.nodes
-        ? Pipewire.nodes.values.filter(node => node && node.ready
-            && (node.name.startsWith("xdph-streaming-")
-                || String(node.properties["media.name"] || "")
-                    .startsWith("xdph-streaming-"))) : []
-    readonly property bool recordingActive: recordingNodes.length > 0
-
     // Active-state of every slot, in slot declaration order. A slot's index
     // here is its identity for the ordering below and for toggleX().
     readonly property var toggleStates: [
@@ -29,7 +20,6 @@ Item {
         StayAwakeService.enabled,
         TimerService.running,
         DoNotDisturbService.enabled,
-        recordingActive,
         VoiceDictationService.active
     ]
     // Last states the ordering was built from, so a change can be narrowed to
@@ -80,7 +70,7 @@ Item {
     function toggleX(index: int): real {
         const order = inactiveOrder.concat(activeOrder);
         const slots = [nightLightSlot, stayAwakeSlot, timerSlot, dndSlot,
-            recordingSlot, dictationSlot];
+            dictationSlot];
         let x = 0;
 
         for (let position = 0; position < order.indexOf(index); ++position)
@@ -121,8 +111,7 @@ Item {
             width: implicitWidth
             height: 26
             implicitWidth: nightLightSlot.width + stayAwakeSlot.width
-                + timerSlot.width + dndSlot.width + recordingSlot.width
-                + dictationSlot.width
+                + timerSlot.width + dndSlot.width + dictationSlot.width
 
             QuickToggleSlot {
                 id: nightLightSlot
@@ -168,21 +157,8 @@ Item {
             }
 
             QuickToggleSlot {
-                id: recordingSlot
-                x: root.toggleX(4)
-                shown: root.recordingActive
-
-                QuickToggleButton {
-                    icon: ""
-                    active: true
-                    activeColor: Theme.base08
-                    interactive: false
-                }
-            }
-
-            QuickToggleSlot {
                 id: dictationSlot
-                x: root.toggleX(5)
+                x: root.toggleX(4)
                 shown: root.expanded || VoiceDictationService.active
 
                 QuickToggleButton {

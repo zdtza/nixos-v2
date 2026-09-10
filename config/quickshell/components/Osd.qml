@@ -19,7 +19,10 @@ Scope {
     property int percent: 0
     property color fillColor: Theme.base05
 
-    function show(iconName: string, progress: real, fill: color, percentValue: int): void {
+    // percentValue is `real`, not `int`: an int parameter truncates on the way
+    // in, so 70% volume that PipeWire reads back as 0.6999999 arrived as 69 and
+    // the OSD disagreed with the panel by a percent.
+    function show(iconName: string, progress: real, fill: color, percentValue: real): void {
         if (Quickshell.screens.length === 0)
             return;
         targetScreenName = String(Hyprland.focusedMonitor?.name ?? "");

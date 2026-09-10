@@ -161,15 +161,18 @@ PanelWindow {
         panelTarget: quickToggles.timerPanel
     }
 
-    QuickToggles {
-        id: quickToggles
+    // Anchored rather than in the right row so its collapsed hotspot keeps a
+    // fixed spot beside the clock: the icons slide out leftwards from there
+    // and nothing else on the bar moves.
+    Tray {
+        id: tray
 
         anchors {
             right: clock.left
-            // Clock and toggle slots both include transparent horizontal
-            // padding. Pull their bounds together so visible content keeps
-            // the same compact gap as neighboring bar icons.
-            rightMargin: PanelService.barSpacing - 8
+            // Negative on purpose: both sides pad themselves invisibly -- the
+            // clock's text has padding and each 30px tray entry centres a 16px
+            // icon -- so a positive margin here reads as a double gap.
+            rightMargin: -4
             verticalCenter: clock.verticalCenter
         }
     }
@@ -183,7 +186,10 @@ PanelWindow {
             verticalCenter: parent.verticalCenter
         }
 
-        Tray { id: tray }
+        QuickToggles { 
+            id: quickToggles 
+            Layout.rightMargin: -4
+        }
 
         VolumePanel {
             id: volume

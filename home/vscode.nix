@@ -6,13 +6,8 @@ let
   vscodeTheme = builtins.replaceStrings [ "'" ] [ "'\\''" ] (import ../themes).themes.${config.theme.name}.vscode;
 in
 {
-  # VS Code watches settings.json itself and hot-applies external edits --
-  # workbench.colorTheme included -- so patching the file on `sw` is enough,
-  # no restart/signal needed. It's hand-edited from the GUI constantly and
-  # is JSONC in practice (this file already carries a trailing comma), so a
-  # strict JSON parser would choke on it and reformat the rest; sed-patch
-  # just the one key in place instead, same approach as omarchy's own
-  # omarchy-theme-set-vscode.
+  # VS Code hot-reloads settings.json. Patch only the theme key to preserve
+  # user edits, comments and trailing commas in this JSONC file.
   home.activation.vscodeTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     settings="$HOME/.config/Code/User/settings.json"
     if [ -f "$settings" ]; then

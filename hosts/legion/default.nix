@@ -11,13 +11,6 @@ let
   ];
 in
 {
-  # windows 11 in a container (dockurr/windows: kvm + qemu inside docker)
-  windows.user = user;
-
-  # cold boot straight into hyprland, skipping the tuigreet prompt;
-  # quickshell locks the session on startup so the screen isn't exposed
-  wayland-desktop.autoLoginUser = user;
-
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -30,19 +23,19 @@ in
     ../../modules/windows.nix
   ];
 
-  # home-manager modules for this host's user
+  windows.user = user;
+
+  # Quickshell locks the session immediately after autologin.
+  wayland-desktop.autoLoginUser = user;
+
+  # Home environment and theme.
   home-manager.users.${user} = {
     home.stateVersion = "26.05";
     imports = [ ../../home ];
 
-    # picks stylix.base16Scheme + wallpaper from home/themes/list.nix;
-    # change and run `sw` (no sudo, no nixos-rebuild -- see home/shell.nix),
-    # or run scripts/select-theme.sh
-    theme.name = "matte-black";
-    
+    # Select from themes/; apply user-only changes with `sw`.
+    theme.name = "tokyo-night";
   };
-
-  networking.hostName = "legion"; # lenovo legion y540
 
   # time zone
   time.timeZone = "Africa/Johannesburg";
@@ -66,37 +59,32 @@ in
     ];
   };
 
-  # pam policy for quickshell's secure wayland session lock
-  # enableGnomeKeyring: without it, unlocking the screen doesn't re-feed the
-  # password to gnome-keyring, so it can end up locked/stale and apps like
-  # the WhatsApp webapp prompt for a password again
-  security.pam.services.quickshell.enableGnomeKeyring = true;
-
-  # trusting local mkcert dev certs system-wide, so chromium webapps and firefox
-  # accept them; regenerate from ~/.local/share/mkcert/rootCA.pem if this host's CA rotates
-  security.pki.certificateFiles = [ ./rootCA.pem ];
-
-  programs._1password.enable = true;
-  programs._1password-gui = {
-    enable = true;
-    polkitPolicyOwners = [ user ];
+  programs = {
+    _1password.enable = true;
+    _1password-gui = {
+      enable = true;
+      polkitPolicyOwners = [ user ];
+    };
   };
 
-  # 1Password's "unlock with system authentication" normally pops a polkit
-  # password prompt; this grants it silently to this user's *active* session,
-  # which quickshell's lock screen has already authenticated with PAM at
-  # startup. Vault unlock therefore rides on that single password entry.
-  # Only the unlock action -- CLI authorization and the ssh agent still prompt.
-  # (polkit is system-level, so this cannot live in the home module.)
-  security.polkit.extraConfig = ''
+  security = {
+    # Unlock the login keyring with the Quickshell session password.
+    pam.services.quickshell.enableGnomeKeyring = true;
+
+    # Local mkcert CA; refresh this file if the host's CA rotates.
+    pki.certificateFiles = [ ./rootCA.pem ];
+
+    # Allow vault unlock only for this active user session. Quickshell handles
+    # initial PAM authentication; CLI authorization and SSH still prompt.
+    polkit.extraConfig = ''
     polkit.addRule(function(action, subject) {
       if (action.id == "com.1password.1Password.unlock"
           && subject.user == "${user}" && subject.active)
         return polkit.Result.YES;
     });
   '';
+  };
 
- 
   environment.systemPackages = with pkgs; [
     nautilus # file manager
     firefox # web browser
@@ -150,16 +138,15 @@ in
   ];
 
   networking = {
+    hostName = "legion";
+
     firewall = {
       # local send ports
       allowedTCPPorts = [ 53317 ];
       allowedUDPPorts = [ 53317 ];
     };
-    # any custom local hosts
-    # 127.0.0.3, not 127.0.0.1: systemd-resolved treats anything on 127.0.0.1 as
-    # a localhost alias and synthesizes an extra ::1, so node resolves these
-    # names ipv6-first and `next dev --hostname <name>` binds [::1] alone --
-    # which firefox never falls back to (chromium does).
+    # Avoid 127.0.0.1: resolved adds ::1 for localhost aliases, causing Node
+    # dev servers to bind IPv6-only while Firefox tries IPv4.
     hosts = {
       "127.0.0.3" = localHosts;
     };

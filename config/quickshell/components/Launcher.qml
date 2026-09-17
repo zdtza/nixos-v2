@@ -17,7 +17,6 @@ Scope {
     property string pendingLaunchIcon: "application-x-executable"
     property string launchBaselineActiveAddress: ""
     property var launchBaselineAddresses: ({})
-    property int pendingLaunchWorkspace: 0
 
     readonly property var entries: {
         const entries = [];
@@ -103,29 +102,7 @@ Scope {
         root.launchBaselineAddresses = addresses;
         root.launchBaselineActiveAddress = root.normalizedAddress(Hyprland.activeToplevel?.address);
 
-        // Separate from the notification tracking above: that one gives up
-        // after slowLaunchTimer, this one has to survive an arbitrarily slow
-        // start, so it lives until the window actually shows up.
-        root.pendingLaunchWorkspace = Hyprland.focusedWorkspace?.id ?? 0;
         slowLaunchTimer.restart();
-    }
-
-    // HL_INITIAL_WORKSPACE_TOKEN only covers windows opened by the process we
-    // spawn. An already-running app (firefox, and every other single-instance
-    // app) hands the launch off to its existing process, whose window carries
-    // no token and lands on whatever workspace is focused at map time. Pin it
-    // back here instead.
-    function pinToLaunchWorkspace(address: string): void {
-        const workspace = root.pendingLaunchWorkspace;
-        root.pendingLaunchWorkspace = 0;
-        if (workspace <= 0)
-            return;
-
-        // `follow = false` is the silent move. Verified by experiment: the lua
-        // dispatcher ignores unknown keys, so `silent = true` looked accepted
-        // (`ok`) while still dragging the view to the target workspace.
-        Quickshell.execDetached(["hyprctl", "dispatch",
-            `hl.dsp.window.move({ workspace = ${workspace}, follow = false, window = "address:0x${address}" })`]);
     }
 
     function finishLaunchTracking(): void {
@@ -206,7 +183,6 @@ Scope {
                 const address = root.normalizedAddress(event.data.split(",")[0]);
                 if (root.launchBaselineAddresses[address])
                     return;
-                root.pinToLaunchWorkspace(address);
                 root.finishLaunchTracking();
             } else if (event.name === "activewindowv2" && root.pendingLaunchName !== "") {
                 const address = root.normalizedAddress(event.data);

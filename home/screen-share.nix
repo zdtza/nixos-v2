@@ -22,16 +22,15 @@ in
     pkgs.slurp
   ];
 
-  # enabling the custom screen share picker for hyprland
-  xdg.configFile."hypr/xdph.conf".text = ''
+  xdg.configFile = {
+    "hypr/xdph.conf".text = ''
     screencopy {
       custom_picker_binary = ${lib.getExe' picker "hyprland-preview-share-picker"}
       allow_token_by_default = 1
     }
   '';
 
-  # yaml config for the screen picker
-  xdg.configFile."hyprland-preview-share-picker/config.yaml".source = yamlFormat.generate "screensharepicker-config.yaml" {
+    "hyprland-preview-share-picker/config.yaml".source = yamlFormat.generate "screensharepicker-config.yaml" {
     stylesheets = [ "style.css" ];
     default_page = "outputs";
 
@@ -78,8 +77,7 @@ in
     debug = false;
   };
 
-  # styling the screen share picker to match the rest of the system
-  xdg.configFile."hyprland-preview-share-picker/style.css".text = ''
+    "hyprland-preview-share-picker/style.css".text = ''
     @define-color foreground ${colors.base05};
     @define-color background ${colors.base00};
     /* Surface color of every quickshell overlay (components/Popup.qml,
@@ -181,4 +179,5 @@ in
       color: @background;
     }
   '';
+  };
 }

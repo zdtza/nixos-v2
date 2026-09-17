@@ -4,7 +4,8 @@
   # disabling stylix's fish target, its OSC sequences also recolor the tty console
   stylix.targets.fish.enable = false;
 
-  programs.fish = {
+  programs = {
+    fish = {
     enable = true;
 
     # loading secrets from a stable per-user path, independent of flake checkout/cwd
@@ -21,22 +22,24 @@
     '';
 
     # nixos aliases for faster rebuilds, updates and home manager switching
-    functions.rb = ''
+    functions = {
+      rb = ''
       command git -C "$HOME/.src/nixos" add --all; or return $status
       command pkexec --disable-internal-agent /run/current-system/sw/bin/nixos-rebuild switch --flake "$HOME/.src/nixos#"(hostname) --option warn-dirty false $argv; or return $status
     '';
 
-    functions.sw = ''
+      sw = ''
       command git -C "$HOME/.src/nixos" add --all; or return $status
       set -l activation (command nix build "$HOME/.src/nixos#nixosConfigurations."(hostname)".config.home-manager.users.$USER.home.activationPackage" --no-link --print-out-paths --option warn-dirty false); or return $status
       "$activation/activate"; or return $status
     '';
 
-    functions.up = ''
+      up = ''
       command git -C "$HOME/.src/nixos" add --all; or return $status
       command nix flake update --flake "$HOME/.src/nixos" --option warn-dirty false; or return $status
       rb
     '';
+    };
 
     # aliases for the shell
     shellAliases = {
@@ -51,7 +54,7 @@
   };
 
   # better cd
-  programs.zoxide = {
+    zoxide = {
     enable = true;
     options = [
       "--cmd"
@@ -60,7 +63,7 @@
   };
 
   # shell prompt
-  programs.starship = {
+    starship = {
     enable = true;
     settings = {
       add_newline = true;
@@ -77,6 +80,7 @@
         success_symbol = "[❯](bold green)";
         error_symbol = "[❯](bold red)";
       };
+    };
     };
   };
 }

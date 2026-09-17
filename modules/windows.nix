@@ -94,12 +94,13 @@ in
   };
 
   config = {
-    virtualisation.docker = {
+    virtualisation = {
+      docker = {
       enable = true;
       enableOnBoot = false;
     };
 
-    virtualisation.oci-containers = {
+      oci-containers = {
       backend = "docker";
       containers.windows = {
         image = "dockurr/windows:${cfg.imageTag}";
@@ -132,16 +133,18 @@ in
         ];
         capabilities.NET_ADMIN = true;
       };
+      };
     };
 
-    systemd.tmpfiles.rules = [
+    systemd = {
+      tmpfiles.rules = [
       "d ${cfg.storagePath} 0700 root root -"
       "d ${cfg.sharePath} 0755 ${cfg.user} ${config.users.users.${cfg.user}.group} -"
     ];
 
     # erasing every trace of windows: container, disk image, pulled image
     # a unit rather than sudo, so the launcher can trigger it via the polkit rule below
-    systemd.services.windows-wipe = {
+      services.windows-wipe = {
       description = "Erase Windows and its container image";
       serviceConfig = {
         Type = "oneshot";
@@ -165,6 +168,7 @@ in
 
             ${docker} image rm -f ${image} >/dev/null 2>&1 || true
           '';
+      };
       };
     };
 
@@ -367,7 +371,8 @@ in
       in
       {
         # inlined rather than a sibling file, keeps the module self-contained
-        home.file.".local/share/icons/hicolor/scalable/apps/windows.svg".source =
+        home = {
+          file.".local/share/icons/hicolor/scalable/apps/windows.svg".source =
           pkgs.writeText "windows.svg" ''
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
               <g fill="#0078d4">
@@ -379,13 +384,14 @@ in
             </svg>
           '';
 
-        home.packages = [
-          launch
-          restart
-          install
-          stop
-          remove
-        ];
+          packages = [
+            launch
+            restart
+            install
+            stop
+            remove
+          ];
+        };
 
         xdg.desktopEntries.windows = {
           name = "Windows";

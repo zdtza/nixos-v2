@@ -7,9 +7,7 @@
 }:
 let
   cfg = config.wayland-desktop;
-  # NixOS-level stylix requires *some* scheme/image; home-manager's
-  # theme.name (themes/) overrides both for the real, switchable
-  # selection, this is only the fixed pre-login/system-level fallback
+  # Pre-login fallback; home-manager's theme.name overrides the user palette.
   fallbackTheme = (import ../themes).themes.tokyo-night;
 in
 {
@@ -20,10 +18,14 @@ in
   };
 
   config = {
-  programs.hyprland = {
+  programs = {
+    # D-Bus settings let running GTK apps pick up appearance changes.
+    dconf.enable = true;
+    hyprland = {
     enable = true;
     xwayland.enable = true;
     withUWSM = true;
+    };
   };
 
   hardware.graphics = {
@@ -31,42 +33,41 @@ in
     enable32Bit = true;
   };
 
-  security.rtkit.enable = true;
-  security.polkit = {
-    enable = true;
-    enablePkexecWrapper = true;
+  security = {
+    rtkit.enable = true;
+    polkit = {
+      enable = true;
+      enablePkexecWrapper = true;
+    };
+    pam.services.greetd.enableGnomeKeyring = true;
   };
 
-  services.pipewire = {
+  services = {
+    pipewire = {
     enable = true;
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
   };
 
-  services.udisks2.enable = true;
-  services.gvfs.enable = true;
+    udisks2.enable = true;
+    gvfs.enable = true;
 
   # cups ships its own config UI on localhost:631, no gui package needed.
   # avahi is what makes network printers show up in the print dialog at all.
-  services.printing.enable = true;
-  services.avahi = {
+    printing.enable = true;
+    avahi = {
     enable = true;
     nssmdns4 = true;
     openFirewall = true;
   };
 
   # secret service backend for gvfs/nautilus mount credentials
-  services.gnome.gnome-keyring.enable = true;
-
-  # dconf/gsettings: GTK3+/libadwaita apps watch these live over D-Bus, so
-  # mirroring theme.name here (home/appearance.nix) re-themes already-open
-  # GTK apps on `sw`, not just ones launched afterward
-  programs.dconf.enable = true;
+    gnome.gnome-keyring.enable = true;
 
   # tui login manager, launches hyprland through uwsm on login
   # wrapped in a script, greetd's toml parser chokes on a long inline command
-  services.greetd = {
+    greetd = {
     enable = true;
     settings = {
       default_session.command = lib.getExe (
@@ -84,7 +85,7 @@ in
       };
     };
   };
-  security.pam.services.greetd.enableGnomeKeyring = true;
+  };
 
   xdg.portal = {
     enable = true;
@@ -94,14 +95,7 @@ in
       [
         xdg-desktop-portal-hyprland
         xdg-desktop-portal-termfilechooser
-        # Only for its Settings impl, routed explicitly below. GTK4 on Wayland
-        # reads gtk-icon-theme-name/color-scheme/accent-color *only* from
-        # org.freedesktop.portal.Settings -- it never falls back to reading
-        # dconf itself (verified: with the gnome schemas on GSETTINGS_SCHEMA_DIR
-        # and no Settings portal, a running Nautilus still ignored an
-        # icon-theme change). Without a backend for it, the dconf keys in
-        # home/appearance.nix are write-only: apps read their icon theme once
-        # from gtk-{3,4}.0/settings.ini at startup and never again.
+        # GTK4 needs the Settings portal for live appearance changes on Wayland.
         xdg-desktop-portal-gtk
       ]
     );
@@ -121,17 +115,16 @@ in
     image = fallbackTheme.wallpaper;
 
     # keeping boot and virtual consoles on their default palette
-    targets.console.enable = false;
-    targets.fish.enable = false;
+    targets = {
+      console.enable = false;
+      fish.enable = false;
+    };
 
     cursor = {
       package = pkgs.adwaita-icon-theme;
       name = "Adwaita";
       size = 24;
     };
-
-    # base16Scheme and image come from home-manager's theme.name (themes/),
-    # which overrides these NixOS-level defaults -- see stylix's mkDefault forwarding
 
     fonts = {
       sizes = {

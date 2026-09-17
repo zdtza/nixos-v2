@@ -1,13 +1,7 @@
 pragma Singleton
 
-// Colors/fonts/wallpaper picked in themes/<theme>/default.nix. Loaded from a plain JSON
-// file (home/quickshell.nix rewrites it *in place* on every `sw`, same inode,
-// no symlink swap -- see that file for why) instead of a generated QML module
-// imported via QML2_IMPORT_PATH: a swapped Nix store path was invisible to any
-// file watcher, so quickshell never picked up a new theme without a full
-// process restart (which also re-triggered the lock screen's autolock).
-// watchChanges below is the same FileView idiom BatteryService.qml already
-// uses to react to files that change outside of quickshell's own reload.
+// Theme data from home/quickshell.nix. Activation preserves this JSON file's
+// inode so FileView reloads it without restarting the shell or triggering autolock.
 import QtQuick
 import Quickshell
 import Quickshell.Io

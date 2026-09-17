@@ -1,18 +1,6 @@
-# headless-safe defaults, no gpu/laptop/desktop assumptions live here
+# Headless defaults shared by all hosts.
 { ... }:
 {
-  # automatic garbage collection of old generations, and prune the store weekly
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 7d";
-  };
-
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
-
   boot = {
     consoleLogLevel = 0;
     initrd.verbose = false;
@@ -26,39 +14,48 @@
       efi.canTouchEfiVariables = true;
       systemd-boot = {
         enable = true;
-        configurationLimit = 20; # only allow 20 builds to be cached
+        configurationLimit = 20;
       };
     };
   };
 
+  nix = {
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 7d";
+    };
+    settings.experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
+  };
   nixpkgs.config.allowUnfree = true;
 
-  # registers fish in /etc/shells and sets up system-wide completions
-  programs.fish.enable = true;
-
-  programs.neovim = {
-    enable = true;
-    defaultEditor = true;
+  programs = {
+    fish.enable = true;
+    neovim = {
+      enable = true;
+      defaultEditor = true;
+    };
+    # Run prebuilt binaries, including editor-installed language servers.
+    nix-ld.enable = true;
   };
-
-  # lets dynamically linked prebuilt binaries run (nvim-treesitter's
-  # tree-sitter-cli, mason.nvim LSP/formatter installs, etc.)
-  programs.nix-ld.enable = true;
 
   networking.networkmanager = {
     enable = true;
     dns = "systemd-resolved";
-    # used by custom shell and nmtui to manage Wi-Fi connections
     wifi = {
       backend = "wpa_supplicant";
       powersave = false;
     };
   };
 
-  services.resolved.enable = true;
-
-  services.samba-wsdd = {
-    enable = true;
-    openFirewall = true;
+  services = {
+    resolved.enable = true;
+    samba-wsdd = {
+      enable = true;
+      openFirewall = true;
+    };
   };
 }

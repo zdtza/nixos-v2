@@ -1,7 +1,7 @@
 pragma Singleton
 
-// Persistent caffeine mode. Enabled means hypridle is stopped, leaving idle
-// display power and suspend actions disabled until caffeine mode is cleared.
+// Persistent caffeine mode. Inhibit idle actions without stopping hypridle's
+// before-sleep lock and after-sleep display recovery hooks.
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -20,7 +20,7 @@ Item {
 
         writingEnabled = desiredEnabled;
         controlProcess.command = ["systemctl", "--user",
-            writingEnabled ? "stop" : "start", "hypridle.service"];
+            writingEnabled ? "start" : "stop", "stay-awake.service"];
         controlProcess.running = true;
     }
 
@@ -67,12 +67,12 @@ Item {
 
     Process {
         id: statusProcess
-        command: ["systemctl", "--user", "is-active", "--quiet", "hypridle.service"]
+        command: ["systemctl", "--user", "is-active", "--quiet", "stay-awake.service"]
         onExited: (exitCode, exitStatus) => {
             if (controlProcess.running || exitCode === 4)
                 return;
 
-            const actualEnabled = exitCode !== 0;
+            const actualEnabled = exitCode === 0;
             if (!root.stateLoaded) {
                 root.stateLoaded = true;
                 root.desiredEnabled = actualEnabled;

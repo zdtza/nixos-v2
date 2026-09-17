@@ -4,6 +4,7 @@ let
   configFile = pkgs.writeText "hypridle.conf" ''
     general {
         ignore_dbus_inhibit = false
+        ignore_systemd_inhibit = false
         before_sleep_cmd = ${pkgs.quickshell}/bin/qs ipc call lock activate
         after_sleep_cmd = ${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.dpms({ action = "enable" })'
     }
@@ -16,7 +17,7 @@ let
 
     listener {
         timeout = 1800
-        on-timeout = ${pkgs.systemd}/bin/systemctl suspend
+        on-timeout = ${pkgs.systemd}/bin/systemctl suspend-then-hibernate
     }
   '';
 in
@@ -25,8 +26,22 @@ in
     pkgs.hypridle
   ];
 
-  # starting the hypridle service on boot with systemd
-  systemd.user.services.hypridle = {
+  systemd.user.services = {
+  # Caffeine blocks idle actions only; manual suspend still runs hypridle's hooks.
+  # systemd kills the whole process group on stop, releasing the inhibitor.
+    stay-awake = {
+    Unit = {
+      Description = "Inhibit idle actions while caffeine mode is enabled";
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
+    };
+    Service = {
+      ExecStart = "${pkgs.systemd}/bin/systemd-inhibit --what=idle --mode=block --who=Quickshell --why=Stay-awake ${pkgs.coreutils}/bin/sleep infinity";
+      KillMode = "control-group";
+    };
+  };
+
+    hypridle = {
     Unit = {
       Description = "Hyprland idle manager";
       PartOf = [ "graphical-session.target" ];
@@ -40,5 +55,6 @@ in
     };
 
     Install.WantedBy = [ "graphical-session.target" ];
+    };
   };
 }

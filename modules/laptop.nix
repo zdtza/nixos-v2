@@ -3,21 +3,23 @@
 {
   boot.kernelParams = [ "mem_sleep_default=deep" ];
 
-  # power button suspends instead of the systemd default (poweroff)
-  services.logind.settings.Login.HandlePowerKey = "suspend";
+  services = {
+    logind.settings.Login = {
+    HandlePowerKey = "suspend-then-hibernate";
+    HandleLidSwitch = "suspend-then-hibernate";
+    HandleLidSwitchExternalPower = "suspend-then-hibernate";
+  };
 
-  # power-saver on battery, performance when plugged in
-  services.upower = {
+    upower = {
     enable = true;
-    # default HybridSleep needs a resume device this host doesn't have and fails
-    # silently, power off cleanly at the critical level instead
+    # Shut down cleanly at critical battery level.
     criticalPowerAction = "PowerOff";
     percentageLow = 15;
     percentageCritical = 5;
     percentageAction = 3;
   };
 
-  services.tlp = {
+    tlp = {
     enable = true;
     # exposing tlp via power-profiles d-bus, so quickshell can switch profiles
     pd.enable = true;
@@ -29,7 +31,8 @@
       CPU_MIN_PERF_ON_AC = 0;
       CPU_MAX_PERF_ON_AC = 100;
       CPU_MIN_PERF_ON_BAT = 0;
-      CPU_MAX_PERF_ON_BAT = 60; # Lower cap to save power on battery
+      CPU_MAX_PERF_ON_BAT = 60; # Balanced profile cap; Performance uses ON_AC.
+    };
     };
   };
 
@@ -38,9 +41,14 @@
     powerOnBoot = true;
   };
 
-  # force-unblocking bluetooth before bluetoothd starts, systemd-rfkill can
-  # persist a soft-blocked state across rebuilds/reboots
-  systemd.services.bluetooth-unblock = {
+  systemd = {
+    sleep.settings.Sleep = {
+      HibernateDelaySec = "3h";
+      HibernateOnACPower = true;
+    };
+
+    # Clear rfkill's persisted soft block before bluetoothd starts.
+    services.bluetooth-unblock = {
     description = "Unblock Bluetooth rfkill before bluetoothd starts";
     wantedBy = [ "multi-user.target" ];
     before = [ "bluetooth.service" ];
@@ -48,6 +56,7 @@
     serviceConfig = {
       Type = "oneshot";
       ExecStart = "${pkgs.util-linux}/bin/rfkill unblock bluetooth";
+    };
     };
   };
 }

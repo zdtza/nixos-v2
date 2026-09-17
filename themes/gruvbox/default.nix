@@ -1,5 +1,6 @@
 {
   wallpaper = ./wallpapers/1-the-backwater.jpg;
+  polarity = "dark";
   colors = {
     base00 = "#282828";
     base01 = "#1e1e1e";
@@ -25,6 +26,4 @@
   };
   vscode = "Gruvbox Dark Medium";
   accent = "base09"; # see themes/tokyo-night
-  gtkAccent = "orange"; # base09, gruvbox's signature color
-  iconTheme = "Yaru-olive"; # see themes/tokyo-night for the variant list
 }

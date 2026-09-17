@@ -19,6 +19,19 @@ QtObject {
         return pixelSize + fontSizeAdjustment;
     }
 
+    // Subsequence match: every character of `token`, in order, somewhere in
+    // `haystack`. Both are expected lowercase. Shared by the launcher and the
+    // image pickers' type-to-filter.
+    function fuzzyMatches(haystack: string, token: string): bool {
+        let index = -1;
+        for (const character of token) {
+            index = haystack.indexOf(character, index + 1);
+            if (index === -1)
+                return false;
+        }
+        return true;
+    }
+
     // Screen object for a Hyprland monitor name, falling back to the first
     // screen. Used by fullscreen overlays that open on the focused monitor.
     function screenForMonitor(name: string): var {

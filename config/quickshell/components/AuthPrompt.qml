@@ -36,6 +36,15 @@ Item {
         color: Utils.alpha(Theme.base00, root.showWallpaper ? 0.35 : Utils.scrimOpacity)
     }
 
+    // Clicking the scrim (or anything else on the overlay) must not leave the
+    // user typing into nothing: every press outside the field bounces focus
+    // back to it. The field sits above this area and keeps its own handling.
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.AllButtons
+        onPressed: passwordInput.forceActiveFocus()
+    }
+
     Rectangle {
         anchors.centerIn: parent
         width: Math.min(360, parent.width - 48)
@@ -45,11 +54,14 @@ Item {
         border.width: 2
         // Same idle/focus pair as NetworkPanel's password field, so the
         // border reads as a field outline rather than an accent highlight.
+        // Focus alone is not a signal here (the prompt always holds it), so
+        // the border lights up on the first character instead.
         // Error stays full base08 -- it has to be noticed.
+        // Checking disables the field, which dims the border again -- the
+        // dots stay put, so the outline is what says "not your turn".
         border.color: root.error ? Theme.base08
-            : (passwordInput.activeFocus ? Theme.base04 : Utils.alpha(Theme.base05, 0.4))
-        layer.enabled: true
-        layer.effect: ShellShadow {}
+            : (root.inputEnabled && passwordInput.text.length > 0 ? Theme.base04
+                : Utils.alpha(Theme.base05, 0.4))
 
         Behavior on border.color { ColorAnimation { duration: 120 } }
 
@@ -63,6 +75,11 @@ Item {
             enabled: root.inputEnabled
             echoMode: root.responseVisible ? TextInput.Normal : TextInput.Password
             passwordCharacter: "●"
+            // Dots are the only feedback needed; a blinking caret in a
+            // centered password field just jitters the layout. An empty
+            // delegate is the only reliable hide: TextInput re-asserts
+            // cursorVisible itself on every focus change.
+            cursorDelegate: Item {}
             color: Theme.base05
             selectionColor: Theme.base02
             selectedTextColor: Theme.base05
@@ -70,6 +87,9 @@ Item {
             font.pixelSize: Utils.scaledFont(22)
             font.letterSpacing: 2
             onAccepted: root.accepted()
+            // Anything that steals focus while the prompt is up gives it back.
+            onActiveFocusChanged: if (!activeFocus && enabled)
+                Qt.callLater(() => passwordInput.forceActiveFocus())
             Keys.onPressed: event => {
                 if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
                     passwordInput.text = "";

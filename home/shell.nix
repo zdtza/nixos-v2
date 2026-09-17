@@ -32,15 +32,6 @@
       "$activation/activate"; or return $status
     '';
 
-    # Manual, never part of `sw`/`rb`: builds each theme's home generation
-    # into ~/.cache/theme-generations/<theme>, which is what `select-theme`
-    # activates out of. Run it when a theme's colors/wallpapers change, or
-    # after config edits the other themes should carry; until then switching
-    # keeps serving the last build -- instantly, and never touching nix.
-    functions.build-themes = ''
-      command select-theme --build $argv
-    '';
-
     functions.up = ''
       command git -C "$HOME/.src/nixos" add --all; or return $status
       command nix flake update --flake "$HOME/.src/nixos" --option warn-dirty false; or return $status

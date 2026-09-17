@@ -53,7 +53,10 @@ vim.pack.add({
 })
 
 theme.setup()
-vim.cmd.colorscheme(theme.colorscheme)
+-- pcall: some themes color the editor from setup() alone (base16-nvim fed the
+-- palette, colorscheme = ""), and a colorscheme whose plugin failed to clone
+-- must not turn startup into an error popup.
+pcall(vim.cmd.colorscheme, theme.colorscheme)
 
 -- treesitter: highlight only, install parsers on demand
 require("nvim-treesitter").install({ "lua", "vim", "vimdoc", "nix", "bash", "markdown" })

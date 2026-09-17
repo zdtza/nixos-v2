@@ -9,6 +9,9 @@
 let
   picker = inputs.hyprland-preview-share-picker.packages.${pkgs.stdenv.hostPlatform.system}.default;
   colors = config.lib.stylix.colors.withHashtag;
+  # themes/*/accent, the same slot quickshell's pickers and hyprland's active
+  # border use.
+  accent = colors.${(import ../themes).themes.${config.theme.name}.accent};
   font = config.stylix.fonts.monospace.name;
 
   yamlFormat = pkgs.formats.yaml { };
@@ -82,12 +85,12 @@ in
     /* Surface color of every quickshell overlay (components/Popup.qml,
        Launcher.qml): base01, darker than base00, no border, 16px rounding. */
     @define-color surface ${colors.base01};
-    @define-color accent ${colors.base0D};
+    @define-color accent ${accent};
     @define-color muted ${colors.base03};
     @define-color card_bg ${colors.base02};
     @define-color text_dark ${colors.base00};
     @define-color accent_hover ${colors.base07};
-    @define-color selected_tab ${colors.base0D};
+    @define-color selected_tab ${accent};
     @define-color text ${colors.base05};
 
     * {
@@ -98,9 +101,9 @@ in
       font-size: 16px;
     }
 
+    /* Square corners throughout: no border-radius anywhere in this picker. */
     .window {
       background: @surface;
-      border-radius: 16px;
       margin: 4px;
       padding: 18px;
     }
@@ -142,7 +145,6 @@ in
       transition: all 0.2s ease;
       border: solid 2px transparent;
       border-color: @background;
-      border-radius: 5px;
       background-color: @card_bg;
       padding: 5px;
     }
@@ -157,13 +159,8 @@ in
       border: solid 2px @accent;
     }
 
-    .image {
-      border-radius: 5px;
-    }
-
     .region-button {
       padding: 0.5rem 1rem;
-      border-radius: 5px;
       background-color: @accent;
       color: @text_dark;
       transition: all 0.2s ease;

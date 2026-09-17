@@ -1,7 +1,8 @@
 {
   # Active wallpaper, rewritten by scripts/select-wallpaper.sh (and by the
   # quickshell picker, which shells out to it) -- always a file in ./wallpapers.
-  wallpaper = ./wallpapers/1-quattro.jpg;
+  wallpaper = ./wallpapers/0-winding-road.jpg;
+  polarity = "dark";
   colors = {
     base00 = "#1a1b26"; # background
     base01 = "#13141c"; # dark_background
@@ -30,6 +31,4 @@
   # base16 slot used as this theme's accent: yazi's folder icons/border and
   # hyprland's active window border (home/yazi.nix, home/hyprland.nix)
   accent = "base0D";
-  gtkAccent = "blue";
-  iconTheme = "Yaru-magenta";
 }

@@ -1,7 +1,9 @@
 { config, pkgs, lib, ... }:
 
 let
-  vscodeTheme = (import ../themes).themes.${config.theme.name}.vscode;
+  # Escaped for the single-quoted sed script below: theme names carry
+  # apostrophes ("Retro '82"), which would otherwise close the quote.
+  vscodeTheme = builtins.replaceStrings [ "'" ] [ "'\\''" ] (import ../themes).themes.${config.theme.name}.vscode;
 in
 {
   # VS Code watches settings.json itself and hot-applies external edits --

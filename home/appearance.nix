@@ -8,8 +8,84 @@ let
   # mkDefault (see stylix's home-manager-integration.nix), so this cleanly
   # wins. `themes` itself is plain data -- see themes/default.nix.
   themes = (import ../themes).themes;
-  gtkAccent = themes.${config.theme.name}.gtkAccent;
-  iconTheme = themes.${config.theme.name}.iconTheme;
+
+  # Static: one Yaru variant for every theme.
+  iconTheme = "Yaru-dark";
+
+  # Nautilus resolves icons by *name* out of a GTK icon theme, it cannot read
+  # a font glyph -- so hand it a theme whose folder.svg IS the yazi glyph
+  # (home/yazi.nix's dir rule, nf-md-folder U+F024B / open U+F0770) drawn as
+  # SVG <text>; librsvg renders that through pango, same fontconfig face and
+  # same accent color yazi uses. Inherits Yaru, so every non-folder icon still
+  # comes from there.
+  folderThemeName = "yazi-folders";
+
+  folderIcons =
+    let
+      accent = config.lib.stylix.colors.withHashtag.${themes.${config.theme.name}.accent};
+      font = config.stylix.fonts.monospace.name;
+      # The glyph's ink is not centered in its advance width, so text-anchor
+      # alone puts it off to the right and clips it -- x/y/size are measured
+      # tuning knobs, not geometry that can be derived. At these values the
+      # two glyphs land at 108x86 and 114x86 ink inside the 128 box (10px side
+      # margins, vertically centered), which reads at the same weight as the
+      # glyph in a yazi cell. Re-measure with
+      # `rsvg-convert | magick -format %@` after changing the face or size:
+      # x/y are ink_margin + the glyph's own offset from its anchor, so both
+      # move when font-size does.
+      svg = cp: ''
+        <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
+          <text x="49" y="110" text-anchor="middle" fill="${accent}"
+                font-family="${font}" font-size="128">&#x${cp};</text>
+        </svg>'';
+      # yazi shows one glyph for every directory, so all of Nautilus's folder
+      # names (special dirs included) point at the same file.
+      names = [
+        "folder"
+        "inode-directory"
+        "folder-documents"
+        "folder-download"
+        "folder-music"
+        "folder-pictures"
+        "folder-videos"
+        "folder-publicshare"
+        "folder-templates"
+        "folder-desktop"
+        "folder-remote"
+        "user-home"
+        "user-desktop"
+        "user-bookmarks"
+      ];
+    in
+    pkgs.runCommand folderThemeName { } ''
+      d=$out/scalable/places
+      mkdir -p $d
+      cat > $out/index.theme <<'EOF'
+      [Icon Theme]
+      Name=${folderThemeName}
+      Comment=yazi folder glyphs over ${iconTheme}
+      Inherits=${iconTheme},Adwaita,hicolor
+      Directories=scalable/places
+
+      [scalable/places]
+      Size=128
+      MinSize=8
+      MaxSize=512
+      Context=Places
+      Type=Scalable
+      EOF
+      cat > $d/folder.svg <<'EOF'
+      ${svg "F024B"}
+      EOF
+      cat > $d/folder-open.svg <<'EOF'
+      ${svg "F0770"}
+      EOF
+      ln -s folder-open.svg $d/folder-drag-accept.svg
+      ln -s folder-open.svg $d/folder-visiting.svg
+      ${lib.concatMapStringsSep "\n" (n: "ln -s folder.svg $d/${n}.svg") (
+        lib.tail names
+      )}
+    '';
 in
 {
   options.theme.name = lib.mkOption {
@@ -22,19 +98,14 @@ in
     stylix = {
       base16Scheme = themes.${config.theme.name}.colors;
       image = themes.${config.theme.name}.wallpaper;
+      # Light themes exist in themes/ (catppuccin-latte, white, ...), and every
+      # target stylix generates keys off polarity, so it follows theme.name too
+      # -- modules/wayland.nix only sets the pre-login fallback.
+      polarity = themes.${config.theme.name}.polarity;
 
-      # The document area of a GtkSourceView app (gnome-text-editor, Builder)
-      # is not painted from GTK colors at all -- it comes from the *style
-      # scheme*, stylix's gtksourceview-5/styles/stylix.xml, which the scheme
-      # manager reads once and caches per process. A theme switch swaps that
-      # file, home/gtk-live-css retints everything else in place, and the text
-      # area alone keeps the old theme's background until the app restarts.
-      # Repainting it from @view_bg_color instead makes it follow the live
-      # gtk.css like the rest of the window. Display-level user CSS beats the
-      # scheme's own provider, and syntax colors are text tags, so they still
-      # win over this (they stay stale until restart -- background is the part
-      # that is visibly wrong, since a stale one leaves the window looking
-      # untinted against the new wallpaper).
+      # GtkSourceView apps (gnome-text-editor, Builder) paint the document area
+      # from stylix's style scheme, not from GTK colors; repaint it from the
+      # GTK palette so it matches the rest of the window.
       targets.gtk.extraCss = ''
         textview.sourceview,
         textview.sourceview text {
@@ -43,6 +114,12 @@ in
         }
       '';
     };
+
+    # Shipped as a file, not a package: home.packages land in
+    # /etc/profiles/per-user (useUserPackages), which only a nixos-rebuild
+    # rewrites, while xdg.dataFile is relinked by every home activation. GTK
+    # searches XDG_DATA_HOME/icons regardless of XDG_DATA_DIRS.
+    xdg.dataFile."icons/${folderThemeName}".source = folderIcons;
 
     # `select-theme`/`select-wallpaper` on PATH, no more cd-ing into scripts/ to run them
     home.packages = [
@@ -54,42 +131,27 @@ in
       '')
     ];
 
-    # GTK itself never re-reads a custom gtk.css -- the provider is loaded once
-    # at startup -- so a theme switch used to mean killing every resident GTK
-    # app (Nautilus and other single-instance GApplications stay alive in the
-    # background after their last window closes, so they never relaunch on
-    # their own). home/gtk-live-css now adds a second, file-watching CSS
-    # provider inside each GTK process instead, so those apps retint in place
-    # and nothing needs killing. If that ever regresses, the fallback is
-    # `pkill -9 -x '.nautilus-wrapp'` -- note the comm, not the name: nix wraps
-    # the binary and `comm` truncates to 15 chars, so `pkill -x nautilus`
-    # silently matches nothing, and `-f` fails too since argv[0] is the
-    # wrapper's path.
+    # GTK loads gtk.css once at startup, so running GTK apps keep the old theme
+    # until restarted. Resident single-instance apps never relaunch on their
+    # own: `pkill -9 -x '.nautilus-wrapp'` (the comm -- nix wraps the binary and
+    # comm truncates to 15 chars, so `pkill -x nautilus` matches nothing).
 
-    # global color scheme for GTK apps, follows stylix polarity
-    gtk.colorScheme = if config.stylix.polarity == "light" then "light" else "dark";
+    # gtk.colorScheme is stylix's job: it sets it (and the matching
+    # org/gnome/desktop/interface color-scheme) from polarity, and setting
+    # either here conflicts with stylix's own value on light themes.
 
-    # Per-theme icon colors, same trick as ~/omarchy: one yaru-theme package
-    # ships every accent variant (Yaru-purple, Yaru-olive, ...) with the
-    # folder/mime art already recolored, so a theme only names the variant
-    # (themes/*/iconTheme) instead of shipping SVGs. Omarchy additionally
-    # symlinks Adwaita's go-previous/next-symbolic into Yaru for Nautilus's
-    # nav arrows; nixpkgs' Yaru already ships both, so that patch is skipped.
     gtk.iconTheme = {
-      name = iconTheme;
+      name = folderThemeName;
       package = pkgs.yaru-theme;
     };
 
+
     # mirrored into dconf too (programs.dconf.enable in modules/wayland.nix):
     # GTK3+/libadwaita apps subscribe to this over D-Bus and re-theme live,
-    # settings.ini above only covers apps launched after the fact
-    dconf.settings."org/gnome/desktop/interface" = {
-      color-scheme = if config.stylix.polarity == "light" then "prefer-light" else "prefer-dark";
-      icon-theme = iconTheme;
-      # libadwaita (GTK4) apps -- gnome-calculator, gnome-disks, Nautilus --
-      # hold an AdwStyleManager that watches this key and re-renders live.
-      accent-color = gtkAccent;
-    };
+    # settings.ini above only covers apps launched after the fact.
+    # color-scheme is stylix's (modules/gnome/hm.nix), which sets it from
+    # polarity -- setting it here too conflicts on light themes.
+    dconf.settings."org/gnome/desktop/interface".icon-theme = folderThemeName;
 
     # GNOME Text Editor otherwise inherits monospace-font-name (Regular), which
     # renders lighter than kitty's rasterization of the same face. Medium matches
@@ -101,10 +163,7 @@ in
 
     # stylix's qt target wires up qt6ct/qt5ct but never sets icon_theme in
     # them (no icon_theme key ends up in qt6ct.conf), so QIcon::fromTheme in
-    # Qt apps (quickshell included) has no theme to search -- point it at
-    # the same theme GTK uses above.
-    # (Adwaita is no longer installed by gtk.iconTheme.package above, so point
-    # Qt at the same Yaru variant rather than a theme that may not be present.)
+    # Qt apps (quickshell included) has no theme to search -- point it at Yaru.
     qt.qt5ctSettings.Appearance.icon_theme = iconTheme;
     qt.qt6ctSettings.Appearance.icon_theme = iconTheme;
   };

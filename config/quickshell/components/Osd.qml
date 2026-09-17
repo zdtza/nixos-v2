@@ -125,8 +125,6 @@ Scope {
             anchors.fill: parent
             color: Theme.base01
             radius: PanelService.rounding
-            layer.enabled: true
-            layer.effect: ShellShadow {}
 
             Row {
                 anchors {

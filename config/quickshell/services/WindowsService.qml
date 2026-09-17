@@ -21,15 +21,19 @@ Item {
     // windows-remove, deliberately terminal-only.
     readonly property var actions: [
         {
-            label: "Connect",
+            label: "Open",
             triggered: () => root.connect()
+        },
+        {
+            label: "Restart session",
+            triggered: () => root.run(["windows-restart"])
         },
         {
             label: "Web viewer",
             triggered: () => root.run(["xdg-open", root.viewerUrl])
         },
         {
-            label: "Shut down",
+            label: "Quit",
             triggered: () => root.run(["windows-stop"])
         }
     ]

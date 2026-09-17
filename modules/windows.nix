@@ -62,6 +62,15 @@ in
       description = "dockurr/windows image tag.";
     };
 
+    sharePath = lib.mkOption {
+      type = lib.types.path;
+      default = "${config.users.users.${cfg.user}.home}/.windows";
+      description = ''
+        Host folder shared with Windows, where it shows up as the network
+        share \\host.lan\Data. Never touched by windows-remove.
+      '';
+    };
+
     storagePath = lib.mkOption {
       type = lib.types.path;
       default = "/var/lib/windows-vm";
@@ -106,7 +115,10 @@ in
           TZ = config.time.timeZone;
         };
 
-        volumes = [ "${cfg.storagePath}:/storage" ];
+        volumes = [
+          "${cfg.storagePath}:/storage"
+          "${cfg.sharePath}:/data"
+        ];
 
         ports = [
           "127.0.0.1:${toString cfg.ports.web}:8006"
@@ -122,7 +134,10 @@ in
       };
     };
 
-    systemd.tmpfiles.rules = [ "d ${cfg.storagePath} 0700 root root -" ];
+    systemd.tmpfiles.rules = [
+      "d ${cfg.storagePath} 0700 root root -"
+      "d ${cfg.sharePath} 0755 ${cfg.user} ${config.users.users.${cfg.user}.group} -"
+    ];
 
     # erasing every trace of windows: container, disk image, pulled image
     # a unit rather than sudo, so the launcher can trigger it via the polkit rule below
@@ -250,10 +265,13 @@ in
             # answering rdp proves it's installed, whatever the marker said
             mark_installed
 
+            # without -grab-keyboard freerdp swallows every key, including the
+            # compositor's own binds, so SUPER+W could not close the session
             exec xfreerdp \
               "/v:${host}:${rdpPort}" \
               "/u:${container.environment.USERNAME}" \
               "/p:${container.environment.PASSWORD}" \
+              -grab-keyboard \
               /cert:ignore \
               /dynamic-resolution \
               /sound \
@@ -261,6 +279,23 @@ in
               +clipboard \
               +auto-reconnect \
               /wm-class:windows
+          '';
+        };
+
+        # killing a hung rdp client and reconnecting, the vm itself keeps running
+        restart = pkgs.writeShellApplication {
+          name = "windows-restart";
+          runtimeInputs = runtimeInputs ++ [
+            pkgs.procps
+            launch
+          ];
+          text = ''
+            ${helpers}
+
+            notify 'Windows' 'Reconnecting...'
+            pkill -x xfreerdp || true
+            sleep 1
+            exec windows-launch
           '';
         };
 
@@ -346,6 +381,7 @@ in
 
         home.packages = [
           launch
+          restart
           install
           stop
           remove
@@ -368,12 +404,16 @@ in
               name = "Install Windows";
               exec = lib.getExe install;
             };
+            restart = {
+              name = "Restart session";
+              exec = lib.getExe restart;
+            };
             viewer = {
               name = "Web viewer";
               exec = "${pkgs.xdg-utils}/bin/xdg-open ${webUrl}";
             };
             shutdown = {
-              name = "Shut down";
+              name = "Quit";
               exec = lib.getExe stop;
             };
           };

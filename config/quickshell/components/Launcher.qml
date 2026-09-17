@@ -17,6 +17,7 @@ Scope {
     property string pendingLaunchIcon: "application-x-executable"
     property string launchBaselineActiveAddress: ""
     property var launchBaselineAddresses: ({})
+    property int pendingLaunchWorkspace: 0
 
     readonly property var entries: {
         const entries = [];
@@ -33,20 +34,10 @@ Scope {
         return entries.sort((a, b) => a.entry.name.localeCompare(b.entry.name));
     }
 
-    function fuzzyMatches(haystack: string, token: string): bool {
-        let index = -1;
-        for (const character of token) {
-            index = haystack.indexOf(character, index + 1);
-            if (index === -1)
-                return false;
-        }
-        return true;
-    }
-
     function matchTier(item: var, token: string): int {
         if (item.name.startsWith(token)) return 0;
         if (item.name.includes(token)) return 1;
-        if (root.fuzzyMatches(item.name, token)) return 2;
+        if (Utils.fuzzyMatches(item.name, token)) return 2;
         if (item.description.includes(token)) return 3;
         return -1;
     }
@@ -111,7 +102,30 @@ Scope {
         root.pendingLaunchIcon = String(entry.icon || "application-x-executable");
         root.launchBaselineAddresses = addresses;
         root.launchBaselineActiveAddress = root.normalizedAddress(Hyprland.activeToplevel?.address);
+
+        // Separate from the notification tracking above: that one gives up
+        // after slowLaunchTimer, this one has to survive an arbitrarily slow
+        // start, so it lives until the window actually shows up.
+        root.pendingLaunchWorkspace = Hyprland.focusedWorkspace?.id ?? 0;
         slowLaunchTimer.restart();
+    }
+
+    // HL_INITIAL_WORKSPACE_TOKEN only covers windows opened by the process we
+    // spawn. An already-running app (firefox, and every other single-instance
+    // app) hands the launch off to its existing process, whose window carries
+    // no token and lands on whatever workspace is focused at map time. Pin it
+    // back here instead.
+    function pinToLaunchWorkspace(address: string): void {
+        const workspace = root.pendingLaunchWorkspace;
+        root.pendingLaunchWorkspace = 0;
+        if (workspace <= 0)
+            return;
+
+        // `follow = false` is the silent move. Verified by experiment: the lua
+        // dispatcher ignores unknown keys, so `silent = true` looked accepted
+        // (`ok`) while still dragging the view to the target workspace.
+        Quickshell.execDetached(["hyprctl", "dispatch",
+            `hl.dsp.window.move({ workspace = ${workspace}, follow = false, window = "address:0x${address}" })`]);
     }
 
     function finishLaunchTracking(): void {
@@ -119,11 +133,24 @@ Scope {
         root.pendingLaunchName = "";
     }
 
+    function shellQuote(args: var): string {
+        return args.map(arg => "'" + String(arg).replace(/'/g, "'\\''") + "'").join(" ");
+    }
+
+    // Spawned through Hyprland's exec dispatcher rather than directly: only
+    // that path hands the child an HL_INITIAL_WORKSPACE_TOKEN, which pins the
+    // first window to the workspace that was active at launch time, however
+    // long the app takes to map (misc:initial_workspace_tracking in
+    // config/hypr/hyprland.lua). A direct execDetached has no token, so slow
+    // apps land on whatever workspace is focused when they finally show up.
+    //
+    // `hyprctl dispatch` takes Lua now, not `exec <cmd>`; the shell line has
+    // to be embedded as a Lua string literal.
     function launchDetached(command: var, workingDirectory: string): void {
-        Quickshell.execDetached({
-            command: ["uwsm", "app", "--", ...command],
-            workingDirectory: workingDirectory || Quickshell.env("HOME")
-        });
+        const cwd = workingDirectory || Quickshell.env("HOME");
+        const line = `cd ${root.shellQuote([cwd])} && exec ${root.shellQuote(["uwsm", "app", "--", ...command])}`;
+        Quickshell.execDetached(["hyprctl", "dispatch",
+            `hl.dsp.exec_cmd("${line.replace(/[\\"]/g, "\\$&")}")`]);
     }
 
     function launch(entry: DesktopEntry): void {
@@ -175,14 +202,13 @@ Scope {
         target: Hyprland
 
         function onRawEvent(event: var): void {
-            if (root.pendingLaunchName === "")
-                return;
-
             if (event.name === "openwindow") {
                 const address = root.normalizedAddress(event.data.split(",")[0]);
-                if (!root.launchBaselineAddresses[address])
-                    root.finishLaunchTracking();
-            } else if (event.name === "activewindowv2") {
+                if (root.launchBaselineAddresses[address])
+                    return;
+                root.pinToLaunchWorkspace(address);
+                root.finishLaunchTracking();
+            } else if (event.name === "activewindowv2" && root.pendingLaunchName !== "") {
                 const address = root.normalizedAddress(event.data);
                 if (address !== "" && address !== root.launchBaselineActiveAddress)
                     root.finishLaunchTracking();

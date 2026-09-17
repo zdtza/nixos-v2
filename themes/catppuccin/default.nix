@@ -1,5 +1,6 @@
 {
   wallpaper = ./wallpapers/1-totoro.jpg;
+  polarity = "dark";
   colors = {
     base00 = "#1e1e2e";
     base01 = "#181825";
@@ -28,6 +29,4 @@
   };
   vscode = "Catppuccin Mocha";
   accent = "base0E"; # see themes/tokyo-night
-  gtkAccent = "purple"; # nearest to base0E's mauve
-  iconTheme = "Yaru-purple"; # see themes/tokyo-night for the variant list
 }

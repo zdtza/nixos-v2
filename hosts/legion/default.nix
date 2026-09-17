@@ -38,7 +38,7 @@ in
     # picks stylix.base16Scheme + wallpaper from home/themes/list.nix;
     # change and run `sw` (no sudo, no nixos-rebuild -- see home/shell.nix),
     # or run scripts/select-theme.sh
-    theme.name = "tokyo-night";
+    theme.name = "matte-black";
     
   };
 
@@ -81,6 +81,20 @@ in
     enable = true;
     polkitPolicyOwners = [ user ];
   };
+
+  # 1Password's "unlock with system authentication" normally pops a polkit
+  # password prompt; this grants it silently to this user's *active* session,
+  # which quickshell's lock screen has already authenticated with PAM at
+  # startup. Vault unlock therefore rides on that single password entry.
+  # Only the unlock action -- CLI authorization and the ssh agent still prompt.
+  # (polkit is system-level, so this cannot live in the home module.)
+  security.polkit.extraConfig = ''
+    polkit.addRule(function(action, subject) {
+      if (action.id == "com.1password.1Password.unlock"
+          && subject.user == "${user}" && subject.active)
+        return polkit.Result.YES;
+    });
+  '';
 
  
   environment.systemPackages = with pkgs; [
@@ -132,6 +146,7 @@ in
     obsidian # note-taking app
     blender # 3D modeling software
     gnome-text-editor # basic text editor
+    papers # document viewer / editor
   ];
 
   networking = {

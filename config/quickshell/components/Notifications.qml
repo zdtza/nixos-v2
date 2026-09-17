@@ -118,26 +118,6 @@ Scope {
             height: Math.min(width, window.panelHeight)
         }
 
-        // Shadow-only copy behind the visible panel. The MultiEffect shader
-        // softens the *whole* layered texture including the source rect's
-        // own edges (not just the cast shadow), which put a 1px translucent
-        // fringe along the flush top edge even with clip: true. Keeping the
-        // effect on an invisible twin behind the real fill means only the
-        // shadow (which spills outside the rect on the right/bottom, where
-        // it's supposed to) is soft -- the opaque fill on top stays crisp.
-        Rectangle {
-            x: panelBg.x
-            width: panelBg.width
-            height: panelBg.height
-            color: Theme.base01
-            radius: panelBg.radius
-            topLeftRadius: 0
-            topRightRadius: 0
-            bottomRightRadius: 0
-            layer.enabled: true
-            layer.effect: ShellShadow {}
-        }
-
         // One shared panel background behind the whole stack -- same fill
         // and corner radius as the rest of the system panels -- instead of
         // each notification being its own separately-rounded floating card.

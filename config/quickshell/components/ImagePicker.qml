@@ -7,8 +7,12 @@ pragma ComponentBehavior: Bound
 //   Color.imagePicker.scrim -> base00 @ 0.5
 //   dimColor                -> base00
 //
-// omarchy's slice borders and caption are dropped: the selected slice already
-// reads as selected by being the only undimmed, full-size one.
+// The selected slice is the only undimmed, full-size one, and carries an
+// accent outline along its parallelogram edges.
+//
+// `showCaption` puts the selected item's `value` under the carousel, and
+// `filterable` makes typing narrow `items` down by that same value (see
+// components/ThemePicker.qml, which uses both).
 //
 // Purely presentational: the caller supplies `items` and decides what
 // accepting one means, so the same component backs the wallpaper picker
@@ -49,6 +53,22 @@ Scope {
     property color dimColor: Theme.base00
     property color scrim: Utils.alpha(Theme.base00, 0.5)
 
+    // Caption under the carousel (the selected item's `value`), and
+    // type-to-filter over the same field.
+    property bool showCaption: false
+    property bool filterable: false
+    property string filter: ""
+
+    // Everything below indexes into this, not `items`: with a filter typed the
+    // carousel *is* the narrowed list. Fuzzy (subsequence), and a typed space
+    // counts as a dash, since the values are folder names like "tokyo-night".
+    readonly property var shownItems: {
+        const token = root.filter.toLowerCase().replace(/ /g, "-");
+        if (token === "")
+            return root.items;
+        return root.items.filter(item => Utils.fuzzyMatches(String(item.value).toLowerCase(), token));
+    }
+
     property int selectedIndex: 0
 
     signal accepted(item: var)
@@ -58,20 +78,49 @@ Scope {
     property string openedMonitorName: ""
 
     function indexOfSelected(): int {
-        for (let index = 0; index < root.items.length; index++) {
-            if (root.items[index].value === root.selectedValue)
+        for (let index = 0; index < root.shownItems.length; index++) {
+            if (root.shownItems[index].value === root.selectedValue)
                 return index;
         }
         return 0;
     }
 
     function currentItem(): var {
-        return root.items[root.selectedIndex] ?? null;
+        return root.shownItems[root.selectedIndex] ?? null;
+    }
+
+    // Caption markup: the selected value as a title ("tokyo-night" -> "Tokyo
+    // Night") with the letters the filter matched painted in the accent. The
+    // filter matches against the raw value and the title is the same string
+    // cased/spaced differently, so the match positions carry over as-is.
+    function captionMarkup(): string {
+        const value = String(root.currentItem()?.value ?? "");
+        const title = value.split("-")
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+        const token = root.filter.toLowerCase().replace(/ /g, "-");
+        if (token === "")
+            return title;
+
+        const lower = value.toLowerCase();
+        const matched = [];
+        let cursor = -1;
+        for (const character of token) {
+            cursor = lower.indexOf(character, cursor + 1);
+            if (cursor === -1)
+                return title;
+            matched.push(cursor);
+        }
+        return Array.from(title)
+            .map((character, index) => matched.includes(index)
+                ? `<font color="${Theme.accent}">${character}</font>`
+                : character)
+            .join("");
     }
 
     // Wraps around at both ends, like omarchy's selectAdjacent.
     function selectAdjacent(direction: int): void {
-        const count = root.items.length;
+        const count = root.shownItems.length;
         if (count === 0)
             return;
         root.selectedIndex = (root.selectedIndex + direction + count) % count;
@@ -80,6 +129,7 @@ Scope {
     function show(): void {
         root.openedMonitorName = String(Hyprland.focusedMonitor?.name ?? "");
         PanelService.closeActive();
+        root.filter = "";
         root.selectedIndex = root.indexOfSelected();
         root.open = true;
     }
@@ -178,6 +228,13 @@ Scope {
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape) {
                         root.open = false;
+                    } else if (root.filterable && event.key === Qt.Key_C
+                            && (event.modifiers & Qt.ControlModifier)) {
+                        root.filter = "";
+                        root.selectedIndex = 0;
+                    } else if (root.filterable && event.key === Qt.Key_Backspace) {
+                        root.filter = root.filter.slice(0, -1);
+                        root.selectedIndex = 0;
                     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                         root.acceptItem(root.currentItem());
                     } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Backtab
@@ -185,14 +242,28 @@ Scope {
                         root.selectAdjacent(-1);
                     } else if (event.key === Qt.Key_Right || event.key === Qt.Key_Tab) {
                         root.selectAdjacent(1);
+                    } else if (root.filterable && event.text.length === 1 && event.text >= " ") {
+                        // Printable key: narrow the list and start from its top.
+                        root.filter += event.text;
+                        root.selectedIndex = 0;
                     } else {
                         return;
                     }
                     event.accepted = true;
                 }
 
+                // Nothing to show: an empty themes/wallpapers folder, or a
+                // filter that matches none of them.
+                ShellText {
+                    anchors.centerIn: parent
+                    visible: root.shownItems.length === 0
+                    size: 28
+                    color: Theme.base03
+                    text: root.filter !== "" ? "No matches" : "No images"
+                }
+
                 Repeater {
-                    model: root.items
+                    model: root.shownItems
 
                     delegate: Item {
                         id: slice
@@ -288,6 +359,29 @@ Scope {
                             }
                         }
 
+                        // Accent outline on the selected slice. Outside the
+                        // masked Item above so the stroke is not clipped to
+                        // half its width by its own mask.
+                        Shape {
+                            anchors.fill: parent
+                            visible: slice.selected
+                            antialiasing: true
+                            preferredRendererType: Shape.CurveRenderer
+
+                            ShapePath {
+                                fillColor: "transparent"
+                                strokeColor: Theme.accent
+                                strokeWidth: 3
+                                startX: slice.topLeft
+                                startY: 0
+
+                                PathLine { x: slice.topRight; y: 0 }
+                                PathLine { x: slice.bottomRight; y: slice.height }
+                                PathLine { x: slice.bottomLeft; y: slice.height }
+                                PathLine { x: slice.topLeft; y: 0 }
+                            }
+                        }
+
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
@@ -302,6 +396,20 @@ Scope {
                 }
             }
 
+            // Selected item's name, with the typed letters highlighted.
+            // Size/weight match kitty's (11.5pt SemiBold, see modules/wayland.nix
+            // fonts.sizes.terminal and home/appearance.nix's TextEditor font).
+            ShellText {
+                visible: root.showCaption
+                anchors {
+                    bottom: parent.bottom
+                    horizontalCenter: parent.horizontalCenter
+                }
+                size: 14
+                font.weight: Font.DemiBold
+                textFormat: Text.StyledText
+                text: root.captionMarkup()
+            }
         }
 
         Connections {

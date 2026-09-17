@@ -18,7 +18,7 @@ let
       max_duration_secs = 120;
       pause_media = true;
       feedback = {
-        enabled = true;
+        enabled = false;
         theme = "subtle";
         volume = 0.7;
       };

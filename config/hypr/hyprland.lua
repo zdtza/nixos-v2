@@ -32,14 +32,16 @@ hl.config({
 		active_opacity = 0.98,
 		inactive_opacity = 0.96,
 		blur = { enabled = true, xray = false, special = true, passes = 2, size = 3 },
-		shadow = {
-			enabled = true,
-			range = 30,
-			render_power = 50,
-			color = 0x33000000,
-			color_inactive = 0x22000000,
-			offset = { 0, 4 },
-		},
+		-- Window shadows off, to match the shell (quickshell dropped its own).
+		-- shadow = {
+		-- 	enabled = true,
+		-- 	range = 30,
+		-- 	render_power = 50,
+		-- 	color = 0x33000000,
+		-- 	color_inactive = 0x22000000,
+		-- 	offset = { 0, 4 },
+		-- },
+		shadow = { enabled = false },
 	},
 	animations = { enabled = true },
 	layout = { single_window_aspect_ratio = { 16, 9 } },
@@ -51,6 +53,11 @@ hl.config({
 		disable_hyprland_logo = true,
 		disable_splash_rendering = true,
 		focus_on_activate = true,
+		-- 1 = single-shot: a window spawned via `exec` opens on the workspace
+		-- that was active at spawn time, not at map time. Token never expires,
+		-- so slow starters still land right. Quickshell's launcher routes
+		-- through `hyprctl dispatch exec` for this reason.
+		initial_workspace_tracking = 1,
 	},
 })
 
@@ -72,8 +79,8 @@ hl.curve("fast", {
 
 local animations = {
 	{ enabled = true, leaf = "workspaces", speed = 1.5, bezier = "fast" },
-	{ enabled = true, leaf = "windows", speed = 0.1, spring = "spring" },
-	{ enabled = true, leaf = "windowsOut", speed = 0.1, spring = "spring" },
+	{ enabled = true, leaf = "windows", speed = 100, spring = "spring" },
+	{ enabled = true, leaf = "windowsOut", speed = 100, spring = "spring" },
 	{ enabled = true, leaf = "specialWorkspace", speed = 1.5, bezier = "fast", style = "slidevert" },
 	{ enabled = true, leaf = "fade", speed = 4, bezier = "fast" },
 }
@@ -91,7 +98,6 @@ end
 local quickshell_layers = {
 	"quickshell:background",
 	"quickshell:bar",
-	"quickshell:bar-shadow",
 	"quickshell:launcher",
 	"quickshell:keybinds",
 	"quickshell:image-picker",
@@ -109,6 +115,14 @@ end
 -- =============================================================================
 -- WINDOW RULES
 -- =============================================================================
+
+-- Apps (Electron/GTK mostly) request maximize on launch and take the whole
+-- screen; tiling already sizes them.
+hl.window_rule({
+	name = "suppress-maximize-events",
+	match = { class = ".*" },
+	suppress_event = "maximize",
+})
 
 -- Generic float/center rules for picker-style windows.
 local picker_windows = {
@@ -378,6 +392,7 @@ bind("switch:on:Lid Switch", "Suspend", hl.dsp.exec_cmd("systemctl suspend"), { 
 -- =============================================================================
 
 bind("SUPER + S", "Terminal workspace", hl.dsp.workspace.toggle_special("terminal"))
+bind("SUPER + CTRL + SHIFT + S", "Move window to terminal workspace", hl.dsp.window.move({ workspace = "special:terminal" }))
 bind("SUPER + E", "File manager", hl.dsp.exec_cmd("launch-terminal-cwd yazi"))
 bind("SUPER + Return", "Terminal", open_terminal)
 bind("SUPER + CTRL + Return", "Floating terminal", open_floating_terminal)

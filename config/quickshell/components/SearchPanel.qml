@@ -182,8 +182,6 @@ Scope {
             radius: PanelService.rounding
             color: Theme.base01
             opacity: root.open ? 1 : 0
-            layer.enabled: true
-            layer.effect: ShellShadow {}
 
             MouseArea {
                 anchors.fill: parent

@@ -62,35 +62,6 @@ PanelWindow {
     }
     margins.top: PanelService.barVisible ? 0 : -1
 
-    PanelWindow {
-        screen: bar.screen
-        visible: PanelService.barVisible
-        color: "transparent"
-        implicitHeight: 36
-        exclusionMode: ExclusionMode.Ignore
-
-        WlrLayershell.namespace: "quickshell:bar-shadow"
-        WlrLayershell.layer: WlrLayer.Top
-
-        anchors {
-            top: true
-            left: true
-            right: true
-        }
-        margins.top: PanelService.barHeight
-
-        mask: Region { width: 0; height: 0 }
-
-        Rectangle {
-            y: -PanelService.barHeight
-            width: parent.width
-            height: PanelService.barHeight
-            color: Theme.base01
-            layer.enabled: true
-            layer.effect: ShellShadow {}
-        }
-    }
-
     // Popup focus grabs include bar so controls remain directly clickable.
     // This background target dismisses active popup when unused bar area is hit.
     MouseArea {

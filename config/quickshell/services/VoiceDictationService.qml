@@ -1,8 +1,6 @@
 pragma Singleton
 
-// Voxtype voice dictation state. Follows the daemon's Waybar-style JSON
-// status stream (voxtype pushes a line the instant recording starts/stops),
-// so the indicator updates immediately instead of waiting on a poll tick.
+// Voxtype voice dictation state.
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -10,10 +8,7 @@ import Quickshell.Io
 Item {
     id: root
 
-    // Strictly the capture window. The daemon reports three classes -- idle,
-    // recording, transcribing -- and transcribing can run for seconds after
-    // the toggle is pressed, so anything treating "not idle" as active keeps
-    // showing a microphone that is no longer listening.
+    // Strictly the capture window.
     property bool recording: false
 
     function toggle(): void {

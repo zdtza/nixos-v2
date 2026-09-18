@@ -2,11 +2,7 @@ import QtQuick
 import "../services"
 import ".."
 
-// Selectable option cell used by power profiles and display scales. Only the
-// cursor (hover or keyboard) is drawn -- the applied value is deliberately not
-// marked, since a panel is reopened with the cursor already on it. Same visual
-// language as device, network, and monitor rows. Content (label, icon, ...) is
-// declared as normal children.
+// Selectable option cell used by power profiles and display scales.
 Rectangle {
     id: root
 

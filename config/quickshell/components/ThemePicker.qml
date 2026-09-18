@@ -1,10 +1,4 @@
-// Theme picker: the same ImagePicker carousel the wallpaper picker uses, fed
-// by the themes/ folder itself (one subfolder per theme, each with a
-// preview.png -- see themes/default.nix). Accepting one starts
-// scripts/select-theme.sh in the background. It owns the whole switch:
-// rewriting theme.name in the host file and activating the new home
-// generation. A notification offers the progress terminal instead of opening
-// it unconditionally.
+// Theme picker: the same ImagePicker carousel the wallpaper picker uses, fed by the themes/ folder itself.
 import QtQuick
 import Qt.labs.folderlistmodel
 import Quickshell
@@ -15,26 +9,19 @@ ImagePicker {
 
     ipcTarget: "theme"
     selectedValue: root.currentTheme
-    // The value *is* the themes/ folder name, so the caption names the theme
-    // and typing filters on it.
+    // The value *is* the themes/ folder name, so the caption names the theme and typing filters on it.
     showCaption: true
     filterable: true
-    // There are only a few dozen previews. Decode all of them asynchronously
-    // ahead of use so changing the filter never initiates image work.
+    // There are only a few dozen previews.
     preloadAll: true
 
-    // Theme.wallpaper is .../themes/<theme>/wallpapers/<file>, the shell's
-    // only pointer into the repo, so both the theme list's folder and the
-    // active theme come out of it -- no second hardcoded path. A wallpaper
-    // still in /nix/store (theme.json predating home/quickshell.nix writing
-    // repo paths) matches nothing, and the picker shows empty until `sw`.
+    // Derive the themes directory from the active wallpaper path.
     readonly property var repoMatch:
         String(Theme.wallpaper).match(/^(?:file:\/\/)?(.*\/themes)\/([^/]+)\/wallpapers\//)
     readonly property string themesDir: root.repoMatch ? root.repoMatch[1] : ""
     readonly property string currentTheme: root.repoMatch ? root.repoMatch[2] : ""
 
-    // FolderListModel is a list model, not an array; re-read it into
-    // ImagePicker's item shape whenever its count changes.
+    // FolderListModel is a list model, not an array; re-read it into ImagePicker's item shape whenever its count changes.
     items: {
         const entries = [];
         if (root.themesDir === "")
@@ -42,10 +29,7 @@ ImagePicker {
         const prefix = "file://" + root.themesDir + "/";
         for (let index = 0; index < folder.count; index++) {
             const name = String(folder.get(index, "fileName"));
-            // Until Theme.wallpaper loads, themesDir is empty and an empty
-            // FolderListModel.folder means the process CWD ($HOME) -- and the
-            // model keeps serving those rows for a frame after folder changes.
-            // Anything outside themesDir is that stale listing.
+            // Until Theme.wallpaper loads, themesDir is empty and an empty FolderListModel.folder means the process CWD ($HOME)
             if (!String(folder.get(index, "fileUrl")).startsWith(prefix))
                 continue;
             entries.push({

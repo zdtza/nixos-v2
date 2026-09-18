@@ -165,8 +165,7 @@ Item {
         readonly property real panelChromeHeight: contentTopMargin
             + contentBottomMargin + bluetoothHero.implicitHeight
             + bluetoothSeparator.height + contentSpacing * 2
-        // Use stable section counts instead of Column.implicitHeight. Popup
-        // follows actual content while ignoring transient delegate layouts.
+        // Use stable section counts instead of Column.implicitHeight.
         readonly property real connectedSectionHeight: root.connectedDevices.length > 0
             ? connectedHeader.implicitHeight
                 + root.connectedDevices.length * (root.deviceRowHeight + root.deviceRowSpacing)

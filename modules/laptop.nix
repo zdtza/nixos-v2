@@ -1,4 +1,4 @@
-# battery/suspend/bluetooth tuning, only makes sense on a laptop
+# battery/suspend/bluetooth tuning, only makes sense on a laptop.
 { pkgs, ... }:
 {
   boot.kernelParams = [ "mem_sleep_default=deep" ];
@@ -21,7 +21,7 @@
 
     tlp = {
     enable = true;
-    # exposing tlp via power-profiles d-bus, so quickshell can switch profiles
+    # exposing tlp via power-profiles d-bus, so quickshell can switch profiles.
     pd.enable = true;
     settings = {
       CPU_SCALING_GOVERNOR_ON_AC = "performance";

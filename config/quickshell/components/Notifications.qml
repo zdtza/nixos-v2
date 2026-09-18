@@ -12,14 +12,7 @@ import ".."
 Scope {
     id: root
 
-    // Only the monitor *name* is cached, never a screen object. Quickshell's
-    // reload preserves top-level property values across an engine rebuild,
-    // but QuickshellScreenInfo/QScreen objects belong to the generation that
-    // created them and get torn down on reload -- caching one directly here
-    // caused a segfault (QWindow::setScreen on a freed screen) on the next
-    // reload after any notification had arrived. Strings survive reload
-    // safely; the live screen object is re-resolved from the current
-    // generation's Quickshell.screens every time it's needed.
+    // Only the monitor *name* is cached, never a screen object.
     property string targetScreenName: Quickshell.screens.length > 0 ? Quickshell.screens[0].name : ""
 
     function focusedMonitorName(): string {
@@ -43,13 +36,7 @@ Scope {
         persistenceSupported: false
         bodySupported: true
         bodyMarkupSupported: true
-        // Senders (Teams in particular) check this capability before
-        // deciding how to present a link. When it's false they assume we
-        // can't render <a href>, so they fall back to appending the raw
-        // URL as plain text into the body instead. Advertising support
-        // here lets them send a real hyperlink (usually with friendly
-        // link text) instead of concatenating the URL into the
-        // description.
+        // Senders (Teams in particular) check this capability before deciding how to present a link.
         bodyHyperlinksSupported: true
         bodyImagesSupported: false
         actionsSupported: true
@@ -89,15 +76,10 @@ Scope {
         readonly property int panelTopPadding: 0
         readonly property real panelHeight: notificationColumn.implicitHeight > 0
             ? notificationColumn.implicitHeight + panelTopPadding + panelPadding : 0
-        // Same top-left corner treatment as Drawer/BatteryPanel: this stays
-        // square (radius 0) and a same-colour Canvas carves the concave
-        // curve next to it, so the panel reads as continuing the bar's
-        // rounded corner inward instead of having its own convex corner.
+        // Same top-left corner treatment as Drawer/BatteryPanel.
         readonly property real cornerSize: PanelService.barVisible ? PanelService.shellRounding : 0
 
-        // Bounding box for the whole row (corner notch + panel), not just
-        // the panel rect -- keeps the layer surface height stable while
-        // entries are removed instead of stretching the final entry frame.
+        // Bounding box for the whole row, not just the panel rect.
         mask: Region { width: window.panelHeight > 0 ? window.width : 0; height: window.panelHeight }
 
         WlrLayershell.namespace: "quickshell:notifications"
@@ -109,9 +91,7 @@ Scope {
             bottom: true
         }
 
-        // Flush against the bar's underside and the screen's right edge,
-        // same as every other system panel (Drawer/BatteryPanel), instead
-        // of floating with a gap on either side.
+        // Align with the bar bottom and screen right edge.
         margins.top: PanelService.barVisible ? PanelService.barHeight : 0
 
         ShellCorner {
@@ -119,9 +99,7 @@ Scope {
             height: Math.min(width, window.panelHeight)
         }
 
-        // One shared panel background behind the whole stack -- same fill
-        // and corner radius as the rest of the system panels -- instead of
-        // each notification being its own separately-rounded floating card.
+        // One shared panel background behind the whole stack.
         Rectangle {
             id: panelBg
 
@@ -132,9 +110,7 @@ Scope {
             radius: PanelService.shellRounding
             topLeftRadius: 0
             topRightRadius: 0
-            // Right edge sits flush against the screen edge top to bottom,
-            // so it stays a straight line -- only the left side (the one
-            // that floats clear of the screen edge) keeps a rounded corner.
+            // Right edge sits flush against the screen edge top to bottom, so it stays a straight line -- only the left side keeps a rounded corner.
             bottomRightRadius: 0
 
             Column {
@@ -167,8 +143,7 @@ Scope {
         }
     }
 
-    // Single transient notification row, one entry in the shared panel
-    // above. Only ever instantiated by the Repeater above.
+    // Single transient notification row, one entry in the shared panel above.
     component NotificationCard: Item {
         id: card
 
@@ -247,8 +222,7 @@ Scope {
             onTriggered: card.close(true)
         }
 
-        // Plain hover highlight, same treatment as rows in the other
-        // panels (e.g. network list entries), no per-card background.
+        // Plain hover highlight, same treatment as rows in the other panels (e.g. network list entries), no per-card background.
         Rectangle {
             anchors.fill: parent
             radius: PanelService.shellRounding
@@ -267,7 +241,7 @@ Scope {
                 rightMargin: 10
                 topMargin: 6
             }
-            spacing: 4
+            spacing: 6
 
             ShellText {
                 width: parent.width

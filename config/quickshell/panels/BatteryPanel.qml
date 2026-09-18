@@ -120,8 +120,7 @@ Item {
         open: root.opened
         onCloseRequested: PanelService.close(root)
         contentSpacing: 14
-        // Wider card gives each equal-width profile button real horizontal
-        // breathing room around its icon and longest label (Power-saver).
+        // Wider card gives each equal-width profile button real horizontal breathing room around its icon and longest label (Power-saver).
         implicitWidth: 420 + PanelService.shellRounding
         implicitHeight: panelContent.implicitHeight
             + contentTopMargin + contentBottomMargin
@@ -241,10 +240,7 @@ Item {
                 id: profileRow
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 6
-                // Cells hug their own label with fixed side padding rather
-                // than splitting the row into equal thirds: "Performance" and
-                // "Power-saver" nearly filled a third on their own, so they
-                // read as cramped next to the short "Balanced".
+                // Cells hug their own label with fixed side padding rather than splitting the row into equal thirds.
                 readonly property int cellPadding: 14
 
                 Repeater {

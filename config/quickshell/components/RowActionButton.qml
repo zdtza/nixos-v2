@@ -2,9 +2,7 @@ import QtQuick
 import "../services"
 import ".."
 
-// Small square icon button embedded in a list row (disconnect, forget,
-// cancel, ...). Accepts its click so it doesn't also activate the row
-// underneath it.
+// Small square icon button embedded in a list row (disconnect, forget, cancel, ...).
 Rectangle {
     id: root
 

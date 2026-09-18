@@ -1,9 +1,7 @@
 { config, pkgs, lib, ... }:
 
 let
-  # Single definition of "open this image in satty", shared by the screenshot
-  # notification and imv's Ctrl+E bind so their flags can't drift apart.
-  # Saves over the original and re-copies to the clipboard, then exits.
+  # Shared Satty editor for screenshots and imv.
   sattyEdit = pkgs.writeShellScriptBin "satty-edit" ''
     exec ${lib.getExe pkgs.satty} \
       --filename "$1" \
@@ -12,11 +10,7 @@ let
       --early-exit all
   '';
 
-  # region -> file + clipboard, then a notification whose "default" action
-  # (left click, see config/quickshell/components/Notifications.qml) reopens
-  # the shot in satty. notify-send --action blocks until the action fires or
-  # the card expires, so this script outlives the capture -- fine, hyprland's
-  # exec_cmd already detached it.
+  # Capture a region, copy it, and offer annotation.
   screenshot = pkgs.writeShellScriptBin "screenshot" ''
     set -euo pipefail
     export PATH=${
@@ -33,7 +27,7 @@ let
     dir="${config.home.homeDirectory}/Screenshots"
     mkdir -p "$dir"
 
-    # slurp exits non-zero on escape, set -e aborts here before anything is written
+    # slurp exits non-zero on escape, set -e aborts here before anything is written.
     region=$(slurp)
     file="$dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
 
@@ -53,10 +47,7 @@ in
     sattyEdit
   ];
 
-  # satty.desktop ships NoDisplay=true (it is a file handler, not a launchable
-  # app -- it refuses to start without --filename), so the launcher skips it
-  # (Launcher.qml drops noDisplay entries). imv is the default image handler,
-  # this makes it the way in: open any image, Ctrl+E to annotate.
+  # Open images in imv and annotate them with Ctrl+E.
   xdg.configFile."imv/config".text = ''
     [binds]
     <Ctrl+e> = exec satty-edit "$imv_current_file" & ; quit

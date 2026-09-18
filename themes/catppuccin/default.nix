@@ -24,7 +24,7 @@
     # catppuccin.nvim's own colorscheme is flavour-less; flavour is set in setup()
     setup = "require('catppuccin').setup({ flavour = 'mocha' })";
     colorscheme = "catppuccin";
-    # lualine ships no catppuccin theme file; "auto" reads the active colorscheme
+    # lualine ships no catppuccin theme file; "auto" reads the active colorscheme.
     lualine = "auto";
   };
   vscode = "Catppuccin Mocha";

@@ -1,5 +1,4 @@
 # Generated from ~/omarchy/themes/matte-black (colors.toml, neovim.lua, vscode.json).
-# Same shape as themes/tokyo-night -- see that file for what each field drives.
 {
   wallpaper = ./wallpapers/0-ship-at-sea.jpg;
   polarity = "dark";

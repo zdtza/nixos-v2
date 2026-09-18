@@ -1,5 +1,4 @@
--- minimal, portable neovim config. no plugin manager: uses nvim's built-in
--- vim.pack (0.12+). works on any machine with just this one file + git + nvim.
+-- minimal, portable neovim config. no plugin manager.
 
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
@@ -28,9 +27,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 	end,
 })
 
--- colorscheme: comes from the home-manager-selected theme (modules/themes.nix)
--- via NVIM_THEME_LUA, so this stays in sync with the rest of the desktop.
--- Falls back to tokyonight so this file still works stand-alone (no Nix).
+-- colorscheme: comes from the home-manager-selected theme via NVIM_THEME_LUA, so this stays in sync with the rest of the desktop.
 local theme = { plugin = "https://github.com/folke/tokyonight.nvim", colorscheme = "tokyonight-night", lualine = "tokyonight", setup = function() end }
 if vim.env.NVIM_THEME_LUA then
 	local ok, loaded = pcall(dofile, vim.env.NVIM_THEME_LUA)
@@ -53,12 +50,10 @@ vim.pack.add({
 })
 
 theme.setup()
--- pcall: some themes color the editor from setup() alone (base16-nvim fed the
--- palette, colorscheme = ""), and a colorscheme whose plugin failed to clone
--- must not turn startup into an error popup.
+-- Ignore unavailable theme plugins and colorschemes.
 pcall(vim.cmd.colorscheme, theme.colorscheme)
 
--- treesitter: highlight only, install parsers on demand
+-- treesitter: highlight only, install parsers on demand.
 require("nvim-treesitter").install({ "lua", "vim", "vimdoc", "nix", "bash", "markdown" })
 vim.api.nvim_create_autocmd("FileType", {
 	callback = function(args)
@@ -96,7 +91,7 @@ require("which-key").add({
 	{ "<leader>t", group = "tabs" },
 })
 
--- snacks: file picker, file explorer (replaces netrw by default), lazygit
+-- snacks: file picker, file explorer (replaces netrw by default), lazygit.
 require("snacks").setup({
 	explorer = {}, -- enables snacks explorer as netrw replacement
 	scroll = {}, -- animates <C-f>/<C-b>/<C-d>/<C-u>/etc, no extra keymaps needed
@@ -105,7 +100,7 @@ vim.keymap.set("n", "<leader><leader>", function() Snacks.picker.files() end, { 
 vim.keymap.set("n", "<leader>fg", function() Snacks.picker.grep() end, { desc = "Grep" })
 vim.keymap.set("n", "<leader>fb", function() Snacks.picker.buffers() end, { desc = "Buffers" })
 
--- explorer and grug-far are mutually exclusive; only one may be open
+-- explorer and grug-far are mutually exclusive; only one may be open.
 local function close_grug_far()
 	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
 		if vim.bo[buf].filetype == "grug-far" then
@@ -129,8 +124,7 @@ vim.keymap.set("n", "<leader>e", function()
 end, { desc = "Toggle explorer" })
 vim.keymap.set("n", "<leader>gg", function() Snacks.lazygit() end, { desc = "LazyGit" })
 
--- grug-far: project-wide search and replace. Single reused instance, opened
--- left of any snacks explorer, same width as the explorer sidebar (40 cols).
+-- grug-far: project-wide search and replace.
 local GRUG_FAR_INSTANCE = "search"
 local function open_grug_far(prefills)
 	local explorers = Snacks.picker.get({ source = "explorer" })
@@ -151,16 +145,14 @@ local function open_grug_far(prefills)
 				prefills = prefills,
 				windowCreationCommand = "topleft 40vsplit",
 				openTargetWindow = { preferredLocation = "right" },
-				-- unlisted, so Snacks.bufdelete never picks it as a fallback buffer
-				-- for some *other* window (e.g. one showing an opened match)
+				-- unlisted, so Snacks.bufdelete never picks it as a fallback buffer for some *other* window (e.g. one showing an opened match)
 				transient = true,
 			})
 		end
 		vim.wo.winfixwidth = true -- keep the width fixed; grug-far doesn't set this itself, unlike snacks' sidebar
 	end
 	if #explorers > 0 then
-		-- picker:close() tears down its windows on the next tick (vim.schedule);
-		-- opening immediately races that and the split settles at half width
+		-- picker:close() tears down its windows on the next tick (vim.schedule); opening immediately races that and the split settles at half width.
 		vim.schedule(do_open)
 	else
 		do_open()
@@ -171,9 +163,7 @@ vim.keymap.set("n", "<leader>sr", function()
 	open_grug_far({ search = vim.fn.expand("<cword>") })
 end, { desc = "Search & replace word under cursor" })
 
--- closing a grug-far buffer via the generic Snacks.bufdelete swaps in another
--- grug-far buffer (each search opens a new, unrelated listed buffer). Use the
--- plugin's own teardown instead so <C-w>/<leader>bd close it properly.
+-- closing a grug-far buffer via the generic Snacks.bufdelete swaps in another grug-far buffer.
 vim.api.nvim_create_autocmd("FileType", {
 	pattern = "grug-far",
 	callback = function(args)
@@ -183,7 +173,7 @@ vim.api.nvim_create_autocmd("FileType", {
 	end,
 })
 
--- bufferline: LazyVim-style buffer tabs
+-- bufferline: LazyVim-style buffer tabs.
 require("bufferline").setup({
 	options = {
 		diagnostics = "nvim_lsp",
@@ -206,7 +196,7 @@ vim.keymap.set("n", "<leader>q", "<cmd>qa<cr>", { desc = "Quit neovim" })
 
 vim.keymap.set({ "n", "i" }, "<C-s>", "<cmd>write<cr>", { desc = "Save file" })
 
--- noice: styled cmdline, popup near the top instead of the bottom command line
+-- noice: styled cmdline, popup near the top instead of the bottom command line.
 require("noice").setup({
 	presets = {
 		command_palette = true, -- cmdline + popupmenu near the top of the screen
@@ -216,7 +206,7 @@ require("noice").setup({
 	},
 })
 
--- lualine: LazyVim-style statusline footer, single bar across all splits
+-- lualine: LazyVim-style statusline footer, single bar across all splits.
 vim.opt.laststatus = 3
 require("lualine").setup({
 	options = {

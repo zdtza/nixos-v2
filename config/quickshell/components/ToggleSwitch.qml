@@ -2,8 +2,7 @@ import QtQuick
 import "../services"
 import ".."
 
-// On/off pill switch used in panel hero trailing slots (mute, radio power,
-// wifi, night light).
+// On/off pill switch used in panel hero trailing slots (mute, radio power, wifi, night light).
 Item {
     id: root
 

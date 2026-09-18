@@ -1,9 +1,6 @@
 pragma ComponentBehavior: Bound
 
-// The surface both the launcher and the keybind sheet are: a card on a
-// click-to-dismiss scrim, one search field over one list. Callers supply the
-// model, the row delegate and what Enter means; the layer surface, the height
-// maths and the selection handling live here.
+// The surface both the launcher and the keybind sheet are: a card on a click-to-dismiss scrim, one search field over one list.
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -26,23 +23,18 @@ Scope {
     property int listGap: 8
     property var model: []
     property Component delegate: null
-    // The card stays collapsed to the search bar until the caller has
-    // something worth showing under it.
+    // The card stays collapsed to the search bar until the caller has something worth showing under it.
     property bool expanded: false
     readonly property int searchBarHeight: root.contentPadding * 2
         + root.searchRowHeight
-    // Whole rows only. A max height that lands mid-row leaves the last entry
-    // sliced in half at the bottom edge, which reads as a bug rather than as
-    // "there is more below".
+    // Whole rows only.
     property int maxRows: Math.max(1, Math.floor(
         (window.height * 0.44 - root.searchBarHeight - root.listGap + root.rowSpacing)
             / (root.rowHeight + root.rowSpacing)))
 
     property alias query: search.text
     property alias currentIndex: list.currentIndex
-    // Hover-select stays disarmed until the pointer genuinely moves after
-    // opening: without this, opening under a stationary cursor synthesizes a
-    // hover-enter on whatever row is beneath it and overrides the selection.
+    // Hover-select stays disarmed until the pointer genuinely moves after opening.
     property bool hoverSelectReady: false
 
     // Empty/loading overlays are declared by the caller as list children.
@@ -78,9 +70,7 @@ Scope {
     onOpenChanged: {
         root.hoverSelectReady = false;
         window.armPosition = null;
-        // Reset immediately on close (while hidden) rather than on open, so
-        // the frame is already collapsed before it is shown again — otherwise
-        // the height Behavior animates the shrink visibly on the next open.
+        // Reset immediately on close rather than on open, so the frame is already collapsed before it is shown.
         search.text = "";
         list.currentIndex = list.count > 0 ? 0 : -1;
         if (!root.open)
@@ -103,8 +93,7 @@ Scope {
 
         screen: Utils.screenForMonitor(root.openedMonitorName)
 
-        // Keep the layer surface mapped. Closing only makes it transparent and
-        // removes its input region, avoiding a Wayland map round trip on open.
+        // Keep the layer surface mapped.
         visible: true
         color: "transparent"
         mask: Region {
@@ -124,9 +113,7 @@ Scope {
         WlrLayershell.keyboardFocus: root.open
             ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-        // Cursor position seen the first time it is reported after opening,
-        // compared against later ones to tell real movement from a cursor the
-        // panel merely appeared beneath.
+        // Cursor position seen the first time it is reported after opening, compared against later ones to tell real.
         property var armPosition: null
 
         Rectangle {
@@ -141,9 +128,7 @@ Scope {
             onClicked: root.open = false
         }
 
-        // A HoverHandler on the window sees every pointer move regardless of
-        // which child is topmost, unlike a MouseArea that only gets events
-        // when nothing covers it.
+        // A HoverHandler on the window sees every pointer move regardless of which child is topmost, unlike a MouseArea.
         HoverHandler {
             enabled: root.open && !root.hoverSelectReady
             acceptedDevices: PointerDevice.AllDevices
@@ -159,9 +144,7 @@ Scope {
         Rectangle {
             id: frame
 
-            // Pinned to the top edge it would have at full height, not centred:
-            // a centred frame re-centres itself every time the row count
-            // changes, so the search bar drifts under the cursor while typing.
+            // Pinned to the top edge it would have at full height, not centred.
             anchors.horizontalCenter: parent.horizontalCenter
             y: Math.round((parent.height - frame.maxHeight) / 2)
             width: Math.min(root.frameWidth, parent.width - 32)
@@ -182,8 +165,7 @@ Scope {
             enabled: root.open
 
             clip: true
-            // Keep the card edge and its highlighted rows in the same
-            // geometry instead of mixing shell and control corner radii.
+            // Keep the card edge and its highlighted rows in the same geometry instead of mixing shell and control corner radii.
             radius: PanelService.rounding
             color: Theme.base01
             opacity: root.open ? 1 : 0
@@ -204,8 +186,7 @@ Scope {
                 opacity: root.open ? 1 : 0
                 spacing: root.listGap
 
-                // The prompt is deliberately not a separate rounded field;
-                // spacing alone separates it from the result list.
+                // The prompt is deliberately not a separate rounded field; spacing alone separates it from the result list.
                 Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: root.searchRowHeight

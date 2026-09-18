@@ -1,8 +1,4 @@
-// Optional controls in the bar's right-hand group. Inactive controls collapse
-// to nothing and appear when the reserved area is hovered; active ones stay
-// visible. Order is fixed (see the Row below) -- a slot never moves, whether
-// it is active, inactive or collapsed, so the same control is always in the
-// same place.
+// Optional controls in the bar's right-hand group.
 import QtQuick
 import Quickshell.Services.Pipewire
 import "../panels"
@@ -23,8 +19,7 @@ Item {
                     .startsWith("xdph-streaming-"))) : []
     readonly property bool recordingActive: recordingNodes.length > 0
 
-    // Reserve hover space for every toggle, including collapsed controls, so
-    // entering anywhere the expanded tray occupies reveals the full tray.
+    // Reserve hover space for every toggle, including collapsed controls, so entering anywhere the expanded tray occupies reveals the full tray.
     implicitWidth: 28 * 4 + (recordingActive ? 28 : 0)
     implicitHeight: 26
 
@@ -32,10 +27,7 @@ Item {
         id: hover
     }
 
-    // Right-anchored: collapsed slots take no width, so the visible controls
-    // always sit against the right edge of the reserved strip. Declaration
-    // order here *is* the on-screen order, left to right -- night light and
-    // timer last, i.e. outermost right; swap those two lines to flip them.
+    // Right-anchored: collapsed slots take no width, so the visible controls always sit against the right edge of the reserved strip.
     Row {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
@@ -61,16 +53,13 @@ Item {
         }
 
         QuickToggleSlot {
-            // Running state is already surfaced by the badge next to the
-            // clock, so this slot only reveals on hover rather than staying
-            // pinned open while a timer counts down.
+            // The clock badge already shows timer activity.
             shown: root.expanded
 
             TimerTogglePanel { id: timerToggle }
         }
 
-        // Passive indicator, not a control: it only exists while something is
-        // capturing the screen through the portal.
+        // Passive indicator, not a control: it only exists while something is capturing the screen through the portal.
         QuickToggleSlot {
             shown: root.recordingActive
 

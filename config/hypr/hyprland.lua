@@ -366,7 +366,9 @@ bind("switch:on:Lid Switch", "Suspend then hibernate", hl.dsp.exec_cmd("systemct
 
 bind("SUPER + S", "Terminal workspace", hl.dsp.workspace.toggle_special("terminal"))
 bind("SUPER + CTRL + SHIFT + S", "Move window to terminal workspace", hl.dsp.window.move({ workspace = "special:terminal" }))
-bind("SUPER + E", "File manager", hl.dsp.exec_cmd("launch-terminal-cwd yazi"))
+-- This path does not pass through an interactive shell, so inject fzf's
+-- stable options file explicitly rather than relying on Fish session vars.
+bind("SUPER + E", "File manager", hl.dsp.exec_cmd("env -u FZF_DEFAULT_OPTS FZF_DEFAULT_OPTS_FILE=$HOME/.config/fzf/options launch-terminal-cwd yazi"))
 bind("SUPER + Return", "Terminal", open_terminal)
 bind("SUPER + CTRL + Return", "Floating terminal", open_floating_terminal)
 bind("SUPER + W", "Close window", hl.dsp.window.close())

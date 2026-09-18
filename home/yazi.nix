@@ -3,15 +3,14 @@
 let
   colors = config.lib.stylix.colors.withHashtag;
 
-  # themes/*/accent names the base16 slot this theme accents with; same value
-  # drives hyprland's active border (home/hyprland.nix).
+  # themes/*/accent names the base16 slot this theme accents with; same value drives hyprland's active border (home/hyprland.nix).
   accent = colors.${(import ../themes).themes.${config.theme.name}.accent};
 in
 {
-  # custom theme.toml below renders semantic colors directly
+  # custom theme.toml below renders semantic colors directly.
   stylix.targets.yazi.enable = false;
 
-  # custom yazi settings
+  # custom yazi settings.
   programs.yazi = {
     enable = true;
     settings = {
@@ -24,9 +23,7 @@ in
         show_hidden = false;
       };
 
-      # default "*/" open rule uses the "edit" opener ($EDITOR, i.e. nvim);
-      # spawn a nested yazi instead so folders opened via the opener path
-      # (symlinked dirs, chooser, etc.) behave like entering a directory
+      # default "*/" open rule uses the "edit" opener.
       opener = {
         folder = [
           {
@@ -48,23 +45,16 @@ in
     };
   };
 
-  # yazi parses theme.toml once at startup, so a theme switch has to be pushed
-  # into instances that are already open -- every other app here reloads live.
-  # `app:theme` is the same action the terminal's dark/light report triggers:
-  # it re-reads theme.toml from disk (a stable path whose symlink target this
-  # activation just swapped), so no in-place rewrite is needed. Receiver 0
-  # broadcasts over the DDS bus to every running instance, and fails fast when
-  # there is none. The reload alone only takes effect on the instance's next
-  # event, so `app:resume` (rebuild terminal + redraw) forces the repaint now.
+  # yazi parses theme.toml once at startup, so a theme switch has to be pushed into instances that are already open.
   home.activation.yaziTheme = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
     ya=${lib.getExe' config.programs.yazi.package "ya"}
-    # nothing running is the normal case, don't nag about it
+    # nothing running is the normal case, don't nag about it.
     if run $ya emit-to 0 app:theme 2>/dev/null; then
       run $ya emit-to 0 app:resume 2>/dev/null || true
     fi
   '';
 
-  # custom yazi theme
+  # custom yazi theme.
   xdg = {
     configFile."yazi/theme.toml".text = ''
       [mgr]
@@ -160,8 +150,7 @@ in
       title    = { fg = "${colors.base09}" }
       tbl_cell = { fg = "${colors.base05}", bg = "${colors.base02}" }
 
-      # overriding icon colors, yazi's default exts/conds table hard-codes its own
-      # hex colors per filetype, ignoring the base16 scheme entirely
+      # overriding icon colors, yazi's default exts/conds table hard-codes its own hex colors per filetype, ignoring the base16 scheme entirely.
       [icon]
       dirs = []
       prepend_conds = [

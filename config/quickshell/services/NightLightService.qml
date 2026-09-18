@@ -1,7 +1,6 @@
 pragma Singleton
 
-// Persistent hyprsunset state, temperature, and controls. Hyprsunset stays
-// running; controls use its Hyprland IPC endpoint to apply or remove warmth.
+// Persistent hyprsunset state, temperature, and controls.
 import QtQuick
 import Quickshell
 import Quickshell.Io

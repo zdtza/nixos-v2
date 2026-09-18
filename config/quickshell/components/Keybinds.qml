@@ -1,9 +1,6 @@
 pragma ComponentBehavior: Bound
 
-// Read-only cheat sheet of every Hyprland bind, in the launcher's surface
-// language. Data comes straight from `hyprctl binds -j`: config/hypr's local
-// bind() wrapper asserts a description on every bind, so the description is
-// always the label and the __lua dispatcher/arg pair is never shown.
+// Read-only cheat sheet of every Hyprland bind, in the launcher's surface language.
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -14,8 +11,7 @@ import ".."
 Scope {
     id: root
 
-    // Binds only change on a config reload, so they are fetched on first open
-    // and kept until Hyprland says they are stale.
+    // Binds only change on a config reload, so they are fetched on first open and kept until Hyprland says they are stale.
     property var binds: []
     property string loadError: ""
 
@@ -32,8 +28,7 @@ Scope {
             root.show();
     }
 
-    // Only the shapes the current config produces get special handling;
-    // anything else passes through unchanged rather than being mangled.
+    // Only the shapes the current config produces get special handling; anything else passes through unchanged rather than being mangled.
     function keyName(key: string): string {
         if (key.startsWith("switch:"))
             return key.replace(/^switch:o(n|ff):/, "").replace(/\s*Switch$/, "")
@@ -52,8 +47,7 @@ Scope {
         return key.charAt(0).toUpperCase() + key.slice(1);
     }
 
-    // Fixed emit order, not bitmask order, so the same chord always reads
-    // the same way regardless of how Hyprland packed it.
+    // Fixed emit order, not bitmask order, so the same chord always reads the same way regardless of how Hyprland packed it.
     function chordText(bind: var): string {
         const parts = [];
         for (const modifier of [{ bit: 64, name: "SUPER" }, { bit: 4, name: "CTRL" },
@@ -65,9 +59,7 @@ Scope {
         return parts.join(" + ");
     }
 
-    // One flat CHORD → description list, like omarchy's menu: chords sort
-    // by modmask (bare keys, SUPER, SUPER + SHIFT, …) then alphabetically
-    // by description, so the order is emergent instead of hand-maintained.
+    // One flat CHORD → description list, like omarchy's menu.
     readonly property var rows: {
         const tokens = panel.query.toLowerCase().split(" ").filter(token => token !== "");
         const matches = [];
@@ -123,8 +115,7 @@ Scope {
         function onRawEvent(event: var): void {
             if (event.name !== "configreloaded")
                 return;
-            // Re-read now if visible, otherwise drop the list so the next
-            // open pays for the refresh.
+            // Re-read now if visible, otherwise drop the list so the next open pays for the refresh.
             root.binds = [];
             if (panel.open)
                 bindsProcess.running = true;
@@ -136,10 +127,8 @@ Scope {
 
         layerNamespace: "quickshell:keybinds"
         placeholder: "Keybinds…"
-        // Wider than the launcher: a chord plus its description needs room
-        // that an app name does not.
+        // Wider than the launcher: a chord plus its description needs room that an app name does not.
         frameWidth: 700
-        rowHeight: 50
         rowSpacing: 2
         maxRows: 7
         model: root.rows
@@ -159,8 +148,7 @@ Scope {
             radius: PanelService.rounding
             color: bindRow.ListView.isCurrentItem ? Theme.base02 : "transparent"
 
-            // Exact halves: each column is width / 2, padding lives inside
-            // its own half so the split never moves.
+            // Exact halves: each column is width / 2, padding lives inside its own half so the split never moves.
             ShellText {
                 id: chordLabel
                 anchors {

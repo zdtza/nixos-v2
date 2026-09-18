@@ -1,13 +1,6 @@
 pragma ComponentBehavior: Bound
 
-// Hyprland workspace indicators for one monitor. Click to switch.
-//
-// Shows the first `minVisible` workspaces of the monitor at all times, plus any
-// higher one that is active, occupied or urgent - so the bar stays compact
-// until the extra workspaces get used.
-//
-// Styling: only the active workspace gets a border; text is foreground when
-// active or occupied, muted otherwise.
+// Hyprland workspace indicators for one monitor.
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -19,8 +12,7 @@ Item {
     // Screen this widget belongs to; workspaces are filtered to it.
     property var screen: null
 
-    // How many workspaces are always shown, even when empty.
-    // five gives a nice balanace for both sides of the bar
+    // How many workspaces are always shown, even when empty. five gives a nice balanace for both sides of the bar.
     property int minVisible: 3
 
     readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
@@ -82,8 +74,7 @@ Item {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
 
-                    // The lua config backend takes lua expressions, not the
-                    // classic `workspace N` dispatcher string.
+                    // The lua config backend takes lua expressions, not the classic `workspace N` dispatcher string.
                     onClicked: {
                         PanelService.closeActive();
                         Hyprland.dispatch(Hyprland.usingLua ? `hl.dsp.focus({ workspace = ${workspaceItem.workspaceId} })` : `workspace ${workspaceItem.workspaceId}`);

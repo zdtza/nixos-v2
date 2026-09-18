@@ -1,5 +1,4 @@
 # Generated from ~/omarchy/themes/miasma (colors.toml, neovim.lua, vscode.json).
-# Same shape as themes/tokyo-night -- see that file for what each field drives.
 {
   wallpaper = ./wallpapers/01-nature-of-fear.jpg;
   polarity = "dark";

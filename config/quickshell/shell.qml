@@ -1,6 +1,6 @@
 //@ pragma UseQApplication
 
-// Root of the shell. One bar instance per connected screen.
+// Root of the shell.
 import Quickshell
 import Quickshell.Io
 import "components"

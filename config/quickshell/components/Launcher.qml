@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 // Spotlight-style application search matching the shell's compact panel language.
 import QtQuick
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
@@ -43,8 +42,7 @@ Scope {
 
     readonly property var results: {
         const tokens = panel.query.toLowerCase().split(" ").filter(token => token !== "");
-        // Open on the complete alphabetical application list; typing narrows
-        // the same list in place instead of expanding an initially empty card.
+        // Open on the complete alphabetical application list; typing narrows the same list in place instead of expanding an initially empty card.
         if (tokens.length === 0)
             return root.entries;
 
@@ -63,10 +61,7 @@ Scope {
                 matches.push({ item, tier });
         }
         const found = matches.sort((a, b) => a.tier - b.tier).map(match => match.item);
-        // No installed app matches -- offer to search the web / NixOS
-        // packages for the typed term instead of a dead-end empty list.
-        // Skipped while apps are still loading so this can't flash before
-        // real matches have a chance to appear.
+        // No installed app matches -- offer to search the web / NixOS packages for the typed term instead of a dead-end empty list.
         if (found.length === 0 && root.entries.length > 0)
             return root.fallbackResults();
         return found;
@@ -116,15 +111,7 @@ Scope {
         return args.map(arg => "'" + String(arg).replace(/'/g, "'\\''") + "'").join(" ");
     }
 
-    // Spawned through Hyprland's exec dispatcher rather than directly: only
-    // that path hands the child an HL_INITIAL_WORKSPACE_TOKEN, which pins the
-    // first window to the workspace that was active at launch time, however
-    // long the app takes to map (misc:initial_workspace_tracking in
-    // config/hypr/hyprland.lua). A direct execDetached has no token, so slow
-    // apps land on whatever workspace is focused when they finally show up.
-    //
-    // `hyprctl dispatch` takes Lua now, not `exec <cmd>`; the shell line has
-    // to be embedded as a Lua string literal.
+    // Spawned through Hyprland's exec dispatcher rather than directly.
     function launchDetached(command: var, workingDirectory: string): void {
         const cwd = workingDirectory || Quickshell.env("HOME");
         const line = `cd ${root.shellQuote([cwd])} && exec ${root.shellQuote(["uwsm", "app", "--", ...command])}`;
@@ -143,8 +130,7 @@ Scope {
         panel.open = false;
     }
 
-    // Fallback rows (web/NixOS search) aren't desktop entries -- no
-    // window to track, just fire and forget the browser command.
+    // Fallback rows (web/NixOS search) aren't desktop entries -- no window to track, just fire and forget the browser command.
     function activate(item: var): void {
         if (!item)
             return;
@@ -157,7 +143,6 @@ Scope {
     }
 
     // Hyprland dispatches this in-process through its global-shortcut protocol.
-    // Unlike `qs ipc call`, no Qt client process is started for each key press.
     GlobalShortcut {
         appid: "quickshell"
         name: "launcher"
@@ -166,8 +151,7 @@ Scope {
         onPressed: panel.toggle()
     }
 
-    // Keep IPC for scripts and manual control; the keyboard bind uses the
-    // GlobalShortcut above.
+    // Keep IPC for scripts and manual control; the keyboard bind uses the GlobalShortcut above.
     IpcHandler {
         target: "launcher"
 
@@ -233,8 +217,7 @@ Scope {
             width: ListView.view.width
             height: panel.rowHeight
             radius: PanelService.rounding
-            // A quiet fill is enough to locate the keyboard cursor; an
-            // outline made the compact rows read like individual buttons.
+            // A quiet fill is enough to locate the keyboard cursor; an outline made the compact rows read like individual buttons.
             color: appRow.ListView.isCurrentItem
                 ? Utils.alpha(Theme.base05, 0.10) : "transparent"
 
@@ -254,24 +237,6 @@ Scope {
                     text: "…"
                     color: Theme.base04
                     size: 14
-                }
-
-                Image {
-                    anchors.centerIn: parent
-                    width: 24
-                    height: 24
-                    visible: applicationIcon.status === Image.Error
-                        || applicationIcon.status === Image.Null
-                    source: "file://" + Quickshell.env("QS_FALLBACK_APP_ICON")
-                    sourceSize.width: 48
-                    sourceSize.height: 48
-                    smooth: true
-                    layer.enabled: true
-                    layer.effect: MultiEffect {
-                        brightness: 1
-                        colorization: 1
-                        colorizationColor: Theme.base04
-                    }
                 }
 
                 Image {
@@ -315,9 +280,7 @@ Scope {
             }
         }
 
-        // Desktop entries load asynchronously; without this, opening the
-        // launcher before they arrive briefly shows "no matching
-        // applications" instead of a loading state.
+        // Desktop entries load asynchronously.
         Column {
             anchors.centerIn: parent
             visible: root.entries.length === 0

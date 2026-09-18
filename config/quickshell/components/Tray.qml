@@ -1,17 +1,6 @@
 pragma ComponentBehavior: Bound
 
-// System tray, collapsed behind a blank hotspot on its left edge (a chevron
-// glyph used to sit there; the target stayed, the glyph did not). Hovering it
-// -- or the icons themselves -- slides the icons out; moving the pointer away
-// slides them back.
-// Icons stay instantiated and are revealed by animating a clipped container,
-// so nothing is rebuilt on every hover.
-//
-// Left click activates an item, right click opens its menu, rendered by
-// TrayMenu so it follows the system palette instead of the Qt default.
-//
-// Windows is appended as a synthetic entry: it exports no StatusNotifierItem,
-// so WindowsService polls systemd for it instead.
+// System tray, collapsed behind a blank hotspot on its left edge (a chevron glyph used to sit there; the target stayed, the glyph did not).
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -29,8 +18,7 @@ Item {
     readonly property int keyboardItemCount: items.length + (WindowsService.running ? 1 : 0)
     readonly property bool expanded: root.pinned || hover.hovered || root.opened
 
-    // Normalizes Windows' plain action list to the same shape as a
-    // real DBus menu's entries, so TrayMenu can render either.
+    // Normalizes Windows' plain action list to the same shape as a real DBus menu's entries, so TrayMenu can render either.
     readonly property var windowsMenuEntries: WindowsService.actions.map(action => ({
         text: action.label,
         isSeparator: false,
@@ -72,8 +60,7 @@ Item {
         }
     }
 
-    // Escape always leaves the tray entirely: the open menu (and any submenu
-    // chain under it) plus the tray itself, in one press.
+    // Escape always leaves the tray entirely: the open menu (and any submenu chain under it) plus the tray itself, in one press.
     function collapseTray(): void {
         pinned = false;
         dismissMenu();
@@ -198,10 +185,7 @@ Item {
             }
         }
 
-        // Deliberately textless: a fixed 22px hover/click target (Button's
-        // implicitWidth is independent of its text) that keeps the collapsed
-        // tray reachable without drawing anything itself. Clicking it still
-        // pins the icons out.
+        // Deliberately textless: a fixed 22px hover/click target that keeps the collapsed tray reachable without drawing anything itself.
         Button {
             id: chevron
 
@@ -269,9 +253,7 @@ Item {
                             width: 16
                             height: 2
                             radius: PanelService.rounding
-                            // menuLoader.trayItem still points at the last item
-                            // clicked, so the Windows menu has to be excluded here or
-                            // that item lights up alongside it.
+                            // menuLoader.trayItem still points at the last item clicked, so the Windows menu has to be excluded here or that item lights up alongside it.
                             visible: opacity > 0
                             opacity: itemMouse.containsMouse
                                 || (root.opened && root.selectedItemIndex === entry.index)
@@ -317,8 +299,7 @@ Item {
                     }
                 }
 
-                // Synthetic Windows entry, shown only while the container is
-                // up so it behaves like a background app that comes and goes.
+                // Synthetic Windows entry, shown only while the container is up so it behaves like a background app that comes and goes.
                 Item {
                     id: windowsEntry
 
@@ -380,12 +361,10 @@ Item {
         }
     }
 
-    // Grabs input while a menu is open: a click anywhere outside the menu (and
-    // its submenus) clears the grab and dismisses it.
+    // Grabs input while a menu is open: a click anywhere outside the menu (and its submenus) clears the grab and dismisses it.
     HyprlandFocusGrab {
         active: root.opened
-        // Keep bar in grab scope so clicks can transfer directly to another
-        // tray menu or panel without an intermediate dismissing click.
+        // Keep bar in grab scope so clicks can transfer directly to another tray menu or panel without an intermediate dismissing click.
         windows: [root.QsWindow.window]
             .concat(menuLoader.item?.openWindows ?? [])
             .concat(windowsMenuLoader.item?.openWindows ?? [])

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ ... }:
 
 {
   xdg.mimeApps = {
@@ -40,6 +40,7 @@
       "text/x-chdr" = "code.desktop";
       "text/x-csrc" = "code.desktop";
       "text/x-java" = "code.desktop";
+      "text/x-qml" = "code.desktop";
       "text/x-moc" = "code.desktop";
       "text/x-pascal" = "code.desktop";
       "text/x-tcl" = "code.desktop";
@@ -48,9 +49,7 @@
       "text/x-c++" = "code.desktop";
       "application/x-shellscript" = "code.desktop";
 
-      # .ts/.tsx aren't recognised as typescript by shared-mime-info, they
-      # collide with unrelated formats (Qt Linguist / Tiled tileset) and
-      # were falling through to firefox as the catch-all handler
+      # .ts/.tsx aren't recognised as typescript by shared-mime-info, they collide with unrelated formats and were falling through to firefox.
       "text/vnd.trolltech.linguist" = "code.desktop";
       "application/x-tiled-tsx" = "code.desktop";
       "application/typescript" = "code.desktop";

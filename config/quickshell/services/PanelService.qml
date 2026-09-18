@@ -5,35 +5,15 @@ import Quickshell.Hyprland
 import Quickshell.Io
 
 // Coordinates bar panels so only one instance is open across all screens.
-//
-// A "panel" is any item handed to open()/toggle()/registerPanel(). Everything
-// the shell expects of one is optional and duck-typed:
-//
-//   requiresKeyboardFocus : bool      the bar takes compositor keyboard focus
-//                                     while this panel is active, so its
-//                                     application-wide shortcuts fire.
-//   keyboardProxy         : Component an item the bar mounts and focuses for
-//                                     panels needing real text entry, since
-//                                     drawer/popup surfaces never own
-//                                     keyboard focus themselves. Bind it to
-//                                     null to release the proxy. Declaring it
-//                                     is what keeps typing behaviour in the
-//                                     panel that owns it rather than in Bar.
-//   toggleFromIpc()       : function  overrides plain toggle() for `qs ipc
-//                                     call panels toggle <name>`.
 Item {
     id: root
 
     property var activePanel: null
     property var pendingPanel: null
 
-    // Hover-select is ignored until the pointer actually moves after a panel
-    // opens. Without this, a panel appearing under a stationary cursor
-    // synthesizes a hover-enter on whatever row lands beneath it and silently
-    // overrides the default selection. Same guard the launcher uses.
+    // Hover-select is ignored until the pointer actually moves after a panel opens.
     property bool hoverSelectReady: false
-    // Cursor position observed the first time it is seen after opening, to
-    // tell a real move from the one position report a still cursor makes.
+    // Cursor position observed the first time it is seen after opening, to tell a real move from the one position report a still cursor makes.
     property var hoverArmPosition: null
 
     onActivePanelChanged: {
@@ -50,31 +30,20 @@ Item {
     property int handoffGeneration: 0
     property var registeredPanels: ({})
 
-    // Whether the status bar is currently shown (toggled via `qs ipc call
-    // bar toggle/hide/show`). Anything anchored to the bar's edge, like the
-    // launcher, checks this to fall back to the screen edge when it's hidden.
+    // Whether the status bar is currently shown (toggled via `qs ipc call bar toggle/hide/show`).
     property bool barVisible: true
 
     // Shared top-bar geometry keeps standalone panels aligned with popups.
     property real barHeight: 30
-    // Single source for the gap between every bar button/toggle and the
-    // clock, so the bar's groups all read as evenly spaced.
+    // Single source for the gap between every bar button/toggle and the clock, so the bar's groups all read as evenly spaced.
     property real barSpacing: 6
-    // Gap below the bar for popups/notifications. Mirrors Hyprland's
-    // general:gaps_out (top value) so panels line up with window edges
-    // regardless of gap configuration; refreshed on startup and whenever
-    // Hyprland reloads its config. Falls back to this default until the
-    // first query resolves, or if hyprctl is ever unavailable.
+    // Gap below the bar for popups/notifications.
     property real barGap: 9
-    // Manual per-edge nudges layered on top of barGap, for whatever few
-    // pixels compositor rounding/borders leave popups and notifications off
-    // by. Positive pushes the panel further from that edge. This is the only
-    // place panel-edge spacing should be adjusted.
+    // Manual per-edge nudges layered on top of barGap, for whatever few pixels compositor rounding/borders leave popups and notifications off by.
     property real gapBottomOffset: 0
     property real gapLeftOffset: 0
     property real gapRightOffset: 0
-    // Outer drawer/menu corners and their concave joins. Keep separate from
-    // control rounding so every shell surface can be tuned in one place.
+    // Outer drawer/menu corners and their concave joins.
     property real shellRounding: 16
     // Shared speed for every shell slide-out reveal.
     property int slideDuration: 150

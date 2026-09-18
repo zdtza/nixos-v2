@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Remove a Chromium web app entry from home-manager/web-apps.nix.
+# Remove a web app entry from home/web-apps.nix.
 set -euo pipefail
 
 repo_dir=$HOME/.src/nixos

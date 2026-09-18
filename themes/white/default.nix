@@ -1,5 +1,4 @@
 # Generated from ~/omarchy/themes/white (colors.toml, neovim.lua, vscode.json).
-# Same shape as themes/tokyo-night -- see that file for what each field drives.
 {
   wallpaper = ./wallpapers/1-white.jpg;
   polarity = "light";

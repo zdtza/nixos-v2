@@ -1,9 +1,6 @@
 pragma Singleton
 
-// The Windows container registers no StatusNotifierItem of its own, so there is
-// nothing for Quickshell.Services.SystemTray to pick up. Its state is polled
-// from systemd instead and rendered by Tray.qml as a synthetic entry that sits
-// alongside real tray icons.
+// The Windows container registers no StatusNotifierItem of its own, so there is nothing for Quickshell.Services.SystemTray to pick up.
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -17,8 +14,7 @@ Item {
 
     property bool running: false
 
-    // One command per action, none of which can delete anything. Erasing is
-    // windows-remove, deliberately terminal-only.
+    // One command per action, none of which can delete anything.
     readonly property var actions: [
         {
             label: "Open",
@@ -63,8 +59,7 @@ Item {
         Quickshell.execDetached({
             command: ["uwsm", "app", "--", ...command]
         });
-        // Starting or stopping takes a moment to land; re-probe ahead of the
-        // regular poll so the icon does not lag behind the click.
+        // Starting or stopping takes a moment to land; re-probe ahead of the regular poll so the icon does not lag behind the click.
         settleTimer.restart();
     }
 

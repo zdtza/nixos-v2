@@ -3,13 +3,7 @@ import Quickshell
 import Quickshell.Wayland
 import "../services"
 
-// Shared chrome for every panel that hangs off the bar's underside: a clipped
-// slide-reveal, the concave notches continuing the bar's rounded corner into
-// it, the Escape shortcut, and the content column callers fill.
-//
-// Two shapes derive from this and are what panels actually instantiate:
-// Popup (free-floating, notched on both sides) and Drawer (`edgeAligned`,
-// flush against the screen's right edge so that side stays a straight line).
+// Shared chrome for every panel that hangs off the bar's underside.
 PanelWindow {
     id: root
 
@@ -17,9 +11,7 @@ PanelWindow {
     required property var anchorWindow
     property bool open: false
     property bool closeOnEscape: true
-    // Flush against the screen's right edge: the right-hand notch and the
-    // bottom-right corner are both dropped, since that edge has no gap to
-    // round away from.
+    // Flush against the screen's right edge.
     property bool edgeAligned: false
     property real contentMargins: 20
     property real contentHorizontalMargins: contentMargins
@@ -43,9 +35,7 @@ PanelWindow {
     WlrLayershell.keyboardFocus: root.open
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
-    // `anchors` is left to the concrete type (Popup/Drawer) so each owns its
-    // complete edge set in one block, rather than relying on a grouped-property
-    // write here merging with another one a level down.
+    // Concrete surfaces define their own anchors.
     margins.top: PanelService.barVisible ? PanelService.barHeight : 0
 
     mask: Region {
@@ -65,11 +55,7 @@ PanelWindow {
         onActivated: root.closeRequested()
     }
 
-    // Arms hover-select once the pointer genuinely moves, as opposed to a
-    // panel merely appearing underneath a still cursor. Lives here so both
-    // shapes (Drawer and Popup) get it once; a HoverHandler on the window
-    // sees every move regardless of which child is topmost, unlike a
-    // MouseArea, which only gets events when nothing else covers it.
+    // Arms hover-select once the pointer genuinely moves, as opposed to a panel merely appearing underneath a still cursor.
     HoverHandler {
         enabled: root.open && !PanelService.hoverSelectReady
         acceptedDevices: PointerDevice.AllDevices
@@ -86,9 +72,7 @@ PanelWindow {
         height: root.open ? root.height : 0
         clip: true
 
-        // Behavior (not a one-shot animation to a fixed target) so a growing
-        // height while open -- e.g. network scan results hydrating in --
-        // retargets smoothly instead of snapping once the old target is hit.
+        // Behavior so a growing height while open.
         Behavior on height {
             enabled: root.open
             NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }

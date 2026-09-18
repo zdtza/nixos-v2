@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
-// Omarchy-style NetworkManager panel: live status, radio toggle, scanning,
-// connection management, passphrase entry, and saved-network removal.
+// Omarchy-style NetworkManager panel: live status, radio toggle, scanning, connection management, passphrase entry, and saved-network removal.
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -29,8 +28,7 @@ Item {
     readonly property int networkRowHeight: 48
     readonly property int networkRowSpacing: 8
     readonly property int emptyStateHeight: 52
-    // One pixel lets the final row's antialiased border render inside the
-    // clipped viewport without adding visible panel padding.
+    // One pixel lets the final row's antialiased border render inside the clipped viewport without adding visible panel padding.
     readonly property int networkEdgeInset: 1
     readonly property var phrases: [
         "Wiring bits", "Handling packets", "Sorting frames", "Hauling bytes",
@@ -39,11 +37,7 @@ Item {
     readonly property string statusText: NetworkService.kind === "disconnected"
         ? "NOT CONNECTED" : phrases[phraseIndex % phrases.length].toUpperCase()
 
-    // Mounted in the bar window, but only while a passphrase is actually
-    // being entered -- the rest of the time this panel is shortcut-driven and
-    // wants no text proxy at all. Drawer surfaces don't own compositor
-    // keyboard focus, so the visible field in the drawer renders the text
-    // while this is what receives the keystrokes.
+    // Mounted in the bar window, but only while a passphrase is actually being entered.
     readonly property Component keyboardProxy: passwordSsid === "" ? null : passwordProxy
 
     signal restorePasswordFocus
@@ -125,8 +119,7 @@ Item {
             index = Math.max(0, Math.min(networks.length - 1, index + delta));
         selectedSsid = networks[index].ssid;
 
-        // Connected networks are pinned above the scrollable area and are
-        // always visible, so only available-network selections need scrolling.
+        // Connected networks are pinned above the scrollable area and are always visible, so only available-network selections need scrolling.
         if (index < connectedNetworks.length)
             return;
 
@@ -294,16 +287,13 @@ Item {
         readonly property real maximumHeight: Math.max(320,
             (root.QsWindow.window && root.QsWindow.window.screen
                 ? root.QsWindow.window.screen.height : 800) - 45)
-        // Connected networks and the "AVAILABLE" header are pinned
-        // (non-scrolling), so they count toward chrome height rather than
-        // the scrollable viewport.
+        // Connected networks and the "AVAILABLE" header are pinned, so they count toward chrome height rather than the scrollable viewport.
         readonly property real panelChromeHeight: contentTopMargin
             + contentBottomMargin + networkHero.implicitHeight
             + connectionInfo.implicitHeight + networkSeparator.height
             + connectedSectionHeight + availableHeader.implicitHeight
             + contentSpacing * (root.connectedNetworks.length > 0 ? 5 : 4)
-        // Use stable section counts instead of Column.implicitHeight. Panel
-        // follows actual content while ignoring transient delegate layouts.
+        // Use stable section counts instead of Column.implicitHeight.
         readonly property real connectedSectionHeight: root.connectedNetworks.length > 0
             ? connectedHeader.implicitHeight
                 + root.connectedNetworks.length * (root.networkRowHeight + root.networkRowSpacing)
@@ -333,8 +323,7 @@ Item {
             }
         }
 
-        // Omarchy connection information block. Rows remain mounted
-        // before the first sample so opening data never shifts layout.
+        // Omarchy connection information block.
         GridLayout {
             id: connectionInfo
             width: parent.width
@@ -420,9 +409,7 @@ Item {
                             })
 
                             width: parent.width
-                            // Passphrase entry takes over this row in place
-                            // rather than growing it, so opening a prompt
-                            // never reflows the list or the panel height.
+                            // Passphrase entry takes over this row in place rather than growing it, so opening a prompt never reflows the list or the panel height.
                             height: root.networkRowHeight
                             color: rowMouse.pressed && !passwordOpen
                                 ? Utils.alpha(Theme.base05, 0.22)

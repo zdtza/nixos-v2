@@ -17,10 +17,7 @@ Scope {
         const flow = agent.flow;
         if (!flow?.isResponseRequired)
             return;
-        // Text stays put while PAM validates: the field is disabled by then
-        // (isResponseRequired goes false), so the dots read as "checking"
-        // instead of the input blanking the instant Enter is pressed.
-        // Cleared on failure, on the next prompt, and when the agent closes.
+        // Text stays put while PAM validates.
         flow.submit(prompt.text);
     }
 

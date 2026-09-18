@@ -2,8 +2,7 @@ import QtQuick
 import "../services"
 import ".."
 
-// Square value slider shared by panel controls (volume, brightness, color
-// temperature, ...).
+// Square value slider shared by panel controls (volume, brightness, color temperature, ...).
 Item {
     id: root
 

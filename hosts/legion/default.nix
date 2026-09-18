@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 let
-  # this host's one user, referenced below instead of repeating it everywhere
+  # this host's one user, referenced below instead of repeating it everywhere.
   user = "zdtza";
 
   localHosts = [
@@ -15,7 +15,7 @@ in
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
 
-    # feature modules this host uses
+    # feature modules this host uses.
     ../../modules/base.nix
     ../../modules/wayland.nix
     ../../modules/laptop.nix
@@ -34,13 +34,13 @@ in
     imports = [ ../../home ];
 
     # Select from themes/; apply user-only changes with `sw`.
-    theme.name = "tokyo-night";
+    theme.name = "osaka-jade";
   };
 
-  # time zone
+  # time zone.
   time.timeZone = "Africa/Johannesburg";
 
-  # locale
+  # locale.
   i18n.defaultLocale = "en_ZA.UTF-8";
 
   users.users.${user} = {
@@ -73,28 +73,14 @@ in
 
     # Local mkcert CA; refresh this file if the host's CA rotates.
     pki.certificateFiles = [ ./rootCA.pem ];
-
-    # Allow vault unlock only for this active user session. Quickshell handles
-    # initial PAM authentication; CLI authorization and SSH still prompt.
-    polkit.extraConfig = ''
-    polkit.addRule(function(action, subject) {
-      if (action.id == "com.1password.1Password.unlock"
-          && subject.user == "${user}" && subject.active)
-        return polkit.Result.YES;
-    });
-  '';
   };
 
   environment.systemPackages = with pkgs; [
     nautilus # file manager
     firefox # web browser
-    fzf # fuzzy finder
     eza # better ls
-    slurp # screenshot selection tool
     brightnessctl # adjust screen brightness
     vscode # code editor
-    git # version control
-    grim # screenshot tool
     claude-code # AI code assistant
     wl-clipboard # clipboard manager
     hyprpicker # color picker
@@ -102,7 +88,6 @@ in
     localsend # local file sharing
     pi-coding-agent # AI coding assistant
     wiremix # audio mixer
-    btop # system monitor
     chromium # web browser
     python3 # programming language
     file # file type identification
@@ -113,16 +98,13 @@ in
     mkcert # local dev certs
     steam # gaming platform
     gnome-calculator # calculator
-    libnotify # desktop notifications
     mpv # media player
     imv # image viewer
     ripgrep # search tool
     fd # file search tool
-    gcc # C/C++ compiler
     unzip # unzip utility
     p7zip # 7z/rar/etc archives from the terminal (nautilus extracts natively via gnome-autoar)
     lazygit # git UI
-    nodejs # JavaScript runtime
     nixfmt # Nix formatter
     nixd # Nix daemon
     teams-for-linux # Microsoft Teams client
@@ -141,12 +123,11 @@ in
     hostName = "legion";
 
     firewall = {
-      # local send ports
+      # local send ports.
       allowedTCPPorts = [ 53317 ];
       allowedUDPPorts = [ 53317 ];
     };
-    # Avoid 127.0.0.1: resolved adds ::1 for localhost aliases, causing Node
-    # dev servers to bind IPv6-only while Firefox tries IPv4.
+    # Avoid 127.0.0.1: resolved adds ::1 for localhost aliases, causing Node dev servers to bind IPv6-only while Firefox tries IPv4.
     hosts = {
       "127.0.0.3" = localHosts;
     };

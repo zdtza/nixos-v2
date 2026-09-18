@@ -1,6 +1,6 @@
 { ... }:
 {
-  # setting up default git credentials for private github
+  # setting up default git credentials for private github.
   programs.git = {
     enable = true;
     settings = {

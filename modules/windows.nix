@@ -5,86 +5,43 @@
   ...
 }:
 
-# windows 11 in a container (dockurr/windows: kvm + qemu inside docker), over rdp
-# self-contained: import this file, set windows.user, the home-manager launcher
-# and desktop entry come along with it, no separate home-manager module needed
+# Windows 11 via dockur/windows, managed from an RDP launcher.
 let
   cfg = config.windows;
-  container = config.virtualisation.oci-containers.containers.windows;
+  stringOption =
+    default:
+    lib.mkOption {
+      type = lib.types.str;
+      inherit default;
+    };
 in
 {
   options.windows = {
     user = lib.mkOption {
       type = lib.types.str;
-      description = ''
-        Unix user allowed to start/stop/wipe the Windows container without a
-        root password prompt (needed because the launcher is invoked from a
-        desktop entry, where there is no terminal to answer sudo), the
-        home-manager user the launcher/desktop entry are installed for, and
-        the Windows account username, unless overridden below.
-      '';
+      description = "User allowed to manage the Windows VM and receive its launchers.";
     };
-
-    username = lib.mkOption {
-      type = lib.types.str;
-      default = cfg.user;
-      description = "Windows account username. Defaults to `user`.";
-    };
-
-    password = lib.mkOption {
-      type = lib.types.str;
-      default = "windows";
-      description = ''
-        Windows account password. Stored in plaintext in the Nix store and
-        in `docker inspect` output. Fine for a throwaway local VM; do not
-        reuse a real password here.
-      '';
-    };
-
-    ramSize = lib.mkOption {
-      type = lib.types.str;
-      default = "8G";
-    };
-
-    cpuCores = lib.mkOption {
-      type = lib.types.str;
-      default = "4";
-    };
-
-    diskSize = lib.mkOption {
-      type = lib.types.str;
-      default = "64G";
-    };
-
-    imageTag = lib.mkOption {
-      type = lib.types.str;
-      default = "6.05";
-      description = "dockurr/windows image tag.";
-    };
+    username = stringOption cfg.user;
+    password = stringOption "windows";
+    ramSize = stringOption "8G";
+    cpuCores = stringOption "4";
+    diskSize = stringOption "64G";
+    imageTag = stringOption "6.05";
 
     sharePath = lib.mkOption {
       type = lib.types.path;
       default = "${config.users.users.${cfg.user}.home}/.windows";
-      description = ''
-        Host folder shared with Windows, where it shows up as the network
-        share \\host.lan\Data. Never touched by windows-remove.
-      '';
+      description = "Host directory exposed as the Windows Data share.";
     };
-
     storagePath = lib.mkOption {
       type = lib.types.path;
       default = "/var/lib/windows-vm";
-      description = ''
-        Persistent disk image location. Deliberately outside the Nix store
-        and never touched by a rebuild.
-      '';
+      description = "Persistent VM disk directory.";
     };
-
     ports = {
       web = lib.mkOption {
         type = lib.types.port;
         default = 8006;
-        description = "Web viewer, needed to watch the first install.";
       };
       rdp = lib.mkOption {
         type = lib.types.port;
@@ -96,82 +53,64 @@ in
   config = {
     virtualisation = {
       docker = {
-      enable = true;
-      enableOnBoot = false;
-    };
-
-      oci-containers = {
-      backend = "docker";
-      containers.windows = {
-        image = "dockurr/windows:${cfg.imageTag}";
-        autoStart = false;
-
-        environment = {
-          VERSION = "11";
-          RAM_SIZE = cfg.ramSize;
-          CPU_CORES = cfg.cpuCores;
-          DISK_SIZE = cfg.diskSize;
-          USERNAME = cfg.username;
-          PASSWORD = cfg.password;
-          TZ = config.time.timeZone;
-        };
-
-        volumes = [
-          "${cfg.storagePath}:/storage"
-          "${cfg.sharePath}:/data"
-        ];
-
-        ports = [
-          "127.0.0.1:${toString cfg.ports.web}:8006"
-          "127.0.0.1:${toString cfg.ports.rdp}:3389/tcp"
-          "127.0.0.1:${toString cfg.ports.rdp}:3389/udp"
-        ];
-
-        devices = [
-          "/dev/kvm"
-          "/dev/net/tun"
-        ];
-        capabilities.NET_ADMIN = true;
+        enable = true;
+        enableOnBoot = false;
       };
+      oci-containers = {
+        backend = "docker";
+        containers.windows = {
+          image = "dockurr/windows:${cfg.imageTag}";
+          autoStart = false;
+          environment = {
+            VERSION = "11";
+            RAM_SIZE = cfg.ramSize;
+            CPU_CORES = cfg.cpuCores;
+            DISK_SIZE = cfg.diskSize;
+            USERNAME = cfg.username;
+            PASSWORD = cfg.password;
+            TZ = config.time.timeZone;
+          };
+          volumes = [
+            "${cfg.storagePath}:/storage"
+            "${cfg.sharePath}:/data"
+          ];
+          ports = [
+            "127.0.0.1:${toString cfg.ports.web}:8006"
+            "127.0.0.1:${toString cfg.ports.rdp}:3389/tcp"
+            "127.0.0.1:${toString cfg.ports.rdp}:3389/udp"
+          ];
+          devices = [
+            "/dev/kvm"
+            "/dev/net/tun"
+          ];
+          capabilities.NET_ADMIN = true;
+        };
       };
     };
 
     systemd = {
       tmpfiles.rules = [
-      "d ${cfg.storagePath} 0700 root root -"
-      "d ${cfg.sharePath} 0755 ${cfg.user} ${config.users.users.${cfg.user}.group} -"
-    ];
+        "d ${cfg.storagePath} 0700 root root -"
+        "d ${cfg.sharePath} 0755 ${cfg.user} ${config.users.users.${cfg.user}.group} -"
+      ];
 
-    # erasing every trace of windows: container, disk image, pulled image
-    # a unit rather than sudo, so the launcher can trigger it via the polkit rule below
       services.windows-wipe = {
-      description = "Erase Windows and its container image";
-      serviceConfig = {
-        Type = "oneshot";
-        # stopping windows alone can use the full 300s shutdown budget
-        TimeoutStartSec = 600;
-        ExecStart =
-          let
-            docker = "${config.virtualisation.docker.package}/bin/docker";
-            image = config.virtualisation.oci-containers.containers.windows.image;
-          in
-          pkgs.writeShellScript "windows-wipe" ''
+        description = "Erase Windows and its container image";
+        serviceConfig = {
+          Type = "oneshot";
+          TimeoutStartSec = 600;
+          ExecStart = pkgs.writeShellScript "windows-wipe" ''
             set -eu
-
-            systemctl stop docker-windows.service || true
-
-            # normally a no-op, the container runs with --rm
-            ${docker} rm -f windows >/dev/null 2>&1 || true
-
-            # contents only, the directory keeps its 0700 root ownership
-            find ${cfg.storagePath} -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
-
-            ${docker} image rm -f ${image} >/dev/null 2>&1 || true
+            ${pkgs.systemd}/bin/systemctl stop docker-windows.service || true
+            ${config.virtualisation.docker.package}/bin/docker rm -f windows >/dev/null 2>&1 || true
+            ${pkgs.findutils}/bin/find ${cfg.storagePath} -mindepth 1 -maxdepth 1 -exec ${pkgs.coreutils}/bin/rm -rf -- {} +
+            ${config.virtualisation.docker.package}/bin/docker image rm -f ${config.virtualisation.oci-containers.containers.windows.image} >/dev/null 2>&1 || true
           '';
-      };
+        };
       };
     };
 
+    # Starting/stopping is passwordless; destructive removal authenticates.
     security.polkit.extraConfig = ''
       polkit.addRule(function(action, subject) {
         if (action.id != "org.freedesktop.systemd1.manage-units" ||
@@ -186,14 +125,11 @@ in
       });
     '';
 
-    # front end for the container above, installed for cfg.user via home-manager
-    # four separate commands rather than flags, only windows-remove can reach
-    # the disk image, and the deletion itself lives in the root-owned unit above
     home-manager.users.${cfg.user} =
       {
         config,
-        pkgs,
         lib,
+        pkgs,
         ...
       }:
       let
@@ -201,189 +137,118 @@ in
         wipeUnit = "windows-wipe.service";
         host = "127.0.0.1";
         rdpPort = toString cfg.ports.rdp;
-        webUrl = "http://127.0.0.1:${toString cfg.ports.web}";
-
-        # marking install done once rdp answers, removed by windows-remove
-        # only ever a cache, a live rdp handshake always outranks it
+        webUrl = "http://${host}:${toString cfg.ports.web}";
         marker = "${config.xdg.stateHome}/windows-vm/installed";
 
         helpers = ''
           notify() {
-            notify-send \
-              --app-name='Windows' \
-              --icon=windows \
-              --expire-time=2500 \
-              "$@" || true
+            notify-send --app-name=Windows --icon=windows --expire-time=2500 "$@" || true
           }
-
-          windows_running() {
+          running() {
             systemctl is-active --quiet ${unit}
           }
-
           mark_installed() {
             mkdir -p "$(dirname ${marker})"
             touch ${marker}
           }
-
-          # a plain tcp connect reports ready for the whole install, since the
-          # docker port accepts before anything's listening, so send an x.224
-          # request and require a real tpkt reply instead
           rdp_ready() {
             reply=$(timeout 3 bash -c "
               exec 3<>/dev/tcp/${host}/${rdpPort} || exit 1
               printf '\x03\x00\x00\x13\x0e\xe0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x03\x00\x00\x00' >&3
               head -c 4 <&3 | od -An -tx1
             " 2>/dev/null | tr -d ' \n')
-
             [[ $reply == 03* ]]
           }
         '';
 
-        runtimeInputs = with pkgs; [
+        baseInputs = with pkgs; [
           bash
           coreutils
           libnotify
           systemd
         ];
+        mkApp =
+          name: extraInputs: text:
+          pkgs.writeShellApplication {
+            inherit name text;
+            runtimeInputs = baseInputs ++ extraInputs;
+          };
 
-        # connecting to windows, starting it first if needed, no install/delete path
-        launch = pkgs.writeShellApplication {
-          name = "windows-launch";
-          runtimeInputs = runtimeInputs ++ [ pkgs.freerdp ];
-          text = ''
-            ${helpers}
+        launch = mkApp "windows-launch" [ pkgs.freerdp ] ''
+          ${helpers}
+          running || systemctl start ${unit}
 
-            if ! windows_running; then
-              systemctl start ${unit}
-            fi
-
-            deadline=$((SECONDS + 180))
-            while ! rdp_ready; do
-              if (( SECONDS >= deadline )); then
-                notify 'Windows is not responding' 'Watch it at ${webUrl}'
-                exit 1
-              fi
-              sleep 2
-            done
-
-            # answering rdp proves it's installed, whatever the marker said
-            mark_installed
-
-            # without -grab-keyboard freerdp swallows every key, including the
-            # compositor's own binds, so SUPER+W could not close the session
-            exec xfreerdp \
-              "/v:${host}:${rdpPort}" \
-              "/u:${container.environment.USERNAME}" \
-              "/p:${container.environment.PASSWORD}" \
-              -grab-keyboard \
-              /cert:ignore \
-              /dynamic-resolution \
-              /sound \
-              /microphone \
-              +clipboard \
-              +auto-reconnect \
-              /wm-class:windows
-          '';
-        };
-
-        # killing a hung rdp client and reconnecting, the vm itself keeps running
-        restart = pkgs.writeShellApplication {
-          name = "windows-restart";
-          runtimeInputs = runtimeInputs ++ [
-            pkgs.procps
-            launch
-          ];
-          text = ''
-            ${helpers}
-
-            notify 'Windows' 'Reconnecting...'
-            pkill -x xfreerdp || true
-            sleep 1
-            exec windows-launch
-          '';
-        };
-
-        # first-time setup, starts the container and points at the web viewer,
-        # the install itself is unattended and watched in the browser
-        install = pkgs.writeShellApplication {
-          name = "windows-install";
-          inherit runtimeInputs;
-          text = ''
-            ${helpers}
-
-            if [[ -f ${marker} ]]; then
-              notify 'Windows' 'Already installed, erase it first to reinstall.'
-              exit 0
-            fi
-
-            if ! windows_running; then
-              systemctl start ${unit}
-            fi
-
-            notify 'Installing Windows' 'Watch the progress at ${webUrl}'
-          '';
-        };
-
-        # shutting windows down, refuses mid-setup since stopping then throws the install away
-        stop = pkgs.writeShellApplication {
-          name = "windows-stop";
-          inherit runtimeInputs;
-          text = ''
-            ${helpers}
-
-            if ! windows_running; then
-              notify 'Windows' 'Already stopped.'
-              exit 0
-            fi
-
-            # no rdp and no marker looks like an in-progress setup, dockur keeps the
-            # install iso first in boot order, so stopping now restarts it from scratch
-            if ! rdp_ready && [[ ! -f ${marker} ]]; then
-              notify 'Windows Setup is still running' 'Refusing to stop: it would restart the install.'
+          deadline=$((SECONDS + 180))
+          until rdp_ready; do
+            if (( SECONDS >= deadline )); then
+              notify 'Windows is not responding' 'Watch it at ${webUrl}'
               exit 1
             fi
+            sleep 2
+          done
 
-            notify 'Windows' 'Shutting down...'
-            systemctl stop ${unit}
-          '';
-        };
+          mark_installed
+          exec xfreerdp \
+            "/v:${host}:${rdpPort}" \
+            "/u:${cfg.username}" \
+            "/p:${cfg.password}" \
+            -grab-keyboard \
+            /cert:ignore \
+            /dynamic-resolution \
+            /sound \
+            /microphone \
+            +clipboard \
+            +auto-reconnect \
+            /wm-class:windows
+        '';
 
-        # the only command that destroys anything, terminal-only so the confirmation is real
-        remove = pkgs.writeShellApplication {
-          name = "windows-remove";
-          inherit runtimeInputs;
-          text = ''
-            ${helpers}
+        restart = mkApp "windows-restart" [ pkgs.procps launch ] ''
+          ${helpers}
+          notify 'Windows' 'Reconnecting...'
+          pkill -x xfreerdp || true
+          sleep 1
+          exec windows-launch
+        '';
 
-            if [[ ! -t 0 ]]; then
-              notify 'Run windows-remove in a terminal' 'It confirms before deleting the disk image.'
-              exit 1
-            fi
+        install = mkApp "windows-install" [ ] ''
+          ${helpers}
+          if [[ -f ${marker} ]]; then
+            notify 'Windows' 'Already installed, erase it first to reinstall.'
+            exit 0
+          fi
+          running || systemctl start ${unit}
+          notify 'Installing Windows' 'Watch the progress at ${webUrl}'
+        '';
 
-            read -r -p 'Erase Windows? This permanently deletes the disk image. [y/N] ' reply
-            [[ $reply == [Yy]* ]] || exit 0
+        stop = mkApp "windows-stop" [ ] ''
+          ${helpers}
+          if ! running; then
+            notify 'Windows' 'Already stopped.'
+            exit 0
+          fi
+          if ! rdp_ready && [[ ! -f ${marker} ]]; then
+            notify 'Windows Setup is still running' 'Refusing to stop: it would restart the install.'
+            exit 1
+          fi
+          notify 'Windows' 'Shutting down...'
+          systemctl stop ${unit}
+        '';
 
-            systemctl start ${wipeUnit}
-            rm -f ${marker}
-            notify 'Windows erased' 'Run windows-install to set it up again.'
-          '';
-        };
+        remove = mkApp "windows-remove" [ ] ''
+          ${helpers}
+          if [[ ! -t 0 ]]; then
+            notify 'Run windows-remove in a terminal' 'It confirms before deleting the disk image.'
+            exit 1
+          fi
+          read -r -p 'Erase Windows? This permanently deletes the disk image. [y/N] ' reply
+          [[ $reply == [Yy]* ]] || exit 0
+          systemctl start ${wipeUnit}
+          rm -f ${marker}
+          notify 'Windows erased' 'Run windows-install to set it up again.'
+        '';
       in
       {
-        # inlined rather than a sibling file, keeps the module self-contained
         home = {
-          file.".local/share/icons/hicolor/scalable/apps/windows.svg".source =
-          pkgs.writeText "windows.svg" ''
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
-              <g fill="#0078d4">
-                <rect x="4" y="4" width="18" height="18" rx="1.5" />
-                <rect x="26" y="4" width="18" height="18" rx="1.5" />
-                <rect x="4" y="26" width="18" height="18" rx="1.5" />
-                <rect x="26" y="26" width="18" height="18" rx="1.5" />
-              </g>
-            </svg>
-          '';
-
           packages = [
             launch
             restart
@@ -391,6 +256,11 @@ in
             stop
             remove
           ];
+          file.".local/share/icons/hicolor/scalable/apps/windows.svg".text = ''
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+              <path fill="#0078d4" d="M4 4h18v18H4zm22 0h18v18H26zM4 26h18v18H4zm22 0h18v18H26z"/>
+            </svg>
+          '';
         };
 
         xdg.desktopEntries.windows = {
@@ -400,11 +270,7 @@ in
           exec = lib.getExe launch;
           icon = "windows";
           categories = [ "System" ];
-          terminal = false;
-          type = "Application";
           settings.StartupWMClass = "windows";
-
-          # no erase action here, windows-remove is terminal-only by design
           actions = {
             install = {
               name = "Install Windows";

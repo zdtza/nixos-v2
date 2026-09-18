@@ -1,16 +1,6 @@
 pragma Singleton
 
 // Shared backlight state, monitor scaling, and external brightness controls.
-//
-// Brightness is one 1-150 `level`, stacked in two stages:
-//   1-100   backlight only, hyprsunset gamma parked at 100 (neutral)
-//   101-150 backlight pinned at 100, the rest is hyprsunset CTM gamma
-// Gamma only boosts from a full backlight, and the backlight only moves once
-// gamma is back to neutral. Neither stage is persisted: the backlight is read
-// from brightnessctl and the gamma from hyprsunset, so a shell reload or a
-// hyprsunset restart re-adopts whatever is really applied. Gamma above 100
-// multiplies the CTM, so highlights clip -- that is the price of brightness
-// past hardware max, not a bug.
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -22,10 +12,7 @@ Item {
     readonly property int brightnessStep: 5
     // Matches --gamma_max in home/hyprsunset.nix; hyprsunset rejects more.
     readonly property int maxLevel: 150
-    // Held brightness keys repeat every ~40ms and a slider drag emits faster
-    // still. Properties update immediately so the OSD and panel track the
-    // input, but the backlight and gamma writes only fire once the stream of
-    // events goes quiet -- one hardware write per gesture instead of dozens.
+    // Held brightness keys repeat every ~40ms and a slider drag emits faster still.
     readonly property int writeDelay: 150
     readonly property var monitors: Hyprland.monitors ? Hyprland.monitors.values : []
     readonly property var focusedMonitor: Hyprland.focusedMonitor
@@ -55,8 +42,7 @@ Item {
         return Math.max(1, Math.min(maxLevel, Math.round(Number(percent))));
     }
 
-    // Single entry point for anything user-facing. Backlight first on the way
-    // up, gamma first on the way down, so the two stages never overlap.
+    // Single entry point for anything user-facing.
     function setLevel(percent: int): void {
         const next = clampLevel(percent);
         if (next > 100) {
@@ -72,13 +58,7 @@ Item {
         setLevel(level + delta);
     }
 
-    // The brightness keys on this machine are firmware taps, not held keys:
-    // the Video Bus / Ideapad device emits a press plus a release ~30ms later
-    // even while the key is down, then auto-repeats those taps at ~16Hz after
-    // a ~1s hardware pre-delay. So there is no held-key state to ramp from --
-    // neither a compositor repeat flag nor a press/release ramp can work, both
-    // see the key as already released. What we can do is make the tap stream
-    // itself cover ground: consecutive taps grow the step, up to 3x.
+    // The brightness keys on this machine are firmware taps, not held keys.
     function stepLevel(direction: int): void {
         const now = Date.now();
         fastSteps = now - lastStepMs < 150 ? fastSteps + 1 : 0;
@@ -90,8 +70,7 @@ Item {
 
     function setGamma(percent: int): void {
         const next = Math.max(100, Math.min(maxLevel, Math.round(Number(percent))));
-        // Every sub-100 level call parks gamma at neutral, so skip the hyprctl
-        // round trip when it is already there.
+        // Every sub-100 level call parks gamma at neutral, so skip the hyprctl round trip when it is already there.
         if (next === pendingGamma)
             return;
         pendingGamma = next;
@@ -109,11 +88,7 @@ Item {
         enforceGammaCeiling();
     }
 
-    // The invariant, checked against what the backlight actually reports and
-    // not what we asked for: a vendor hotkey or a power profile can dim the
-    // panel under us, and a boost on a dimmed panel is just a washed-out
-    // picture. Skipped while our own backlight write is in flight, since the
-    // reported value is stale until it lands.
+    // The invariant, checked against what the backlight actually reports and not what we asked for.
     function enforceGammaCeiling(): void {
         if (gammaPercent > 100 && available && brightnessPercent < 100
                 && !writeProcess.running && !writeDebounce.running)
@@ -130,8 +105,7 @@ Item {
         const parsed = Number(String(fields[3]).replace("%", ""));
         if (!Number.isFinite(parsed)) return;
         available = true;
-        // A queued or in-flight write means the panel still reports the old
-        // value; adopting it here would yank the slider back mid-gesture.
+        // A queued or in-flight write means the panel still reports the old value; adopting it here would yank the slider back mid-gesture.
         if (writeDebounce.running || writeProcess.running)
             return;
         brightnessPercent = clampBrightness(parsed);
@@ -147,8 +121,7 @@ Item {
 
     function setBrightness(percent: int): void {
         const next = clampBrightness(percent);
-        // Boost steps all target a pinned 100% backlight; don't respawn
-        // brightnessctl for a value the panel already reports.
+        // Boost steps all target a pinned 100% backlight; don't respawn brightnessctl for a value the panel already reports.
         if (next === pendingBrightness && next === brightnessPercent)
             return;
         pendingBrightness = next;
@@ -165,9 +138,7 @@ Item {
         const value = Math.max(1, Math.min(4, Number(scale)));
         if (Math.abs(Number(focusedMonitor.scale) - value) < 0.01) return;
         const position = `${focusedMonitor.x}x${focusedMonitor.y}`;
-        // This setup uses Hyprland's Lua config parser, where legacy `keyword
-        // monitor` requests are rejected. Apply runtime monitor config through
-        // eval and preserve focused monitor's current layout position.
+        // This setup uses Hyprland's Lua config parser, where legacy `keyword monitor` requests are rejected.
         const code = `hl.monitor({ output = ${luaString(focusedMonitor.name)}, `
             + `mode = "preferred", position = ${luaString(position)}, scale = ${value} })`;
         Quickshell.execDetached(["hyprctl", "eval", code]);

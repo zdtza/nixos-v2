@@ -1,9 +1,7 @@
 import QtQuick
 import "../services"
 
-// Icon-only control inside a QuickToggleSlot. Set `interactive: false` for
-// indicator-only cells that report state but can't be clicked (screen
-// recording), which is why the click handler is a signal rather than assumed.
+// Icon-only control inside a QuickToggleSlot.
 Item {
     id: root
 

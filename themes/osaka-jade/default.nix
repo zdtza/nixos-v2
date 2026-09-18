@@ -1,7 +1,6 @@
 # Generated from ~/omarchy/themes/osaka-jade (colors.toml, neovim.lua, vscode.json).
-# Same shape as themes/tokyo-night -- see that file for what each field drives.
 {
-  wallpaper = ./wallpapers/2-shaded-entrance.jpg;
+  wallpaper = ./wallpapers/1-glowing-city.jpg;
   polarity = "dark";
   colors = {
     base00 = "#111c18"; # background

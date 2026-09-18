@@ -1,14 +1,14 @@
 { ... }:
 
 {
-  # disabling stylix's fish target, its OSC sequences also recolor the tty console
+  # disabling stylix's fish target, its OSC sequences also recolor the tty console.
   stylix.targets.fish.enable = false;
 
   programs = {
     fish = {
     enable = true;
 
-    # loading secrets from a stable per-user path, independent of flake checkout/cwd
+    # loading secrets from a stable per-user path, independent of flake checkout/cwd.
     interactiveShellInit = ''
       set -g fish_greeting
       set -l env_file "$XDG_CONFIG_HOME/environment/secrets.env"
@@ -21,7 +21,7 @@
       end
     '';
 
-    # nixos aliases for faster rebuilds, updates and home manager switching
+    # nixos aliases for faster rebuilds, updates and home manager switching.
     functions = {
       rb = ''
       command git -C "$HOME/.src/nixos" add --all; or return $status
@@ -41,7 +41,7 @@
     '';
     };
 
-    # aliases for the shell
+    # aliases for the shell.
     shellAliases = {
       ls = "eza -l --group-directories-first --icons=auto";
       lsa = "ls -a";
@@ -53,7 +53,7 @@
     };
   };
 
-  # better cd
+  # better cd.
     zoxide = {
     enable = true;
     options = [
@@ -62,7 +62,7 @@
     ];
   };
 
-  # shell prompt
+  # shell prompt.
     starship = {
     enable = true;
     settings = {

@@ -1,5 +1,5 @@
 {
-  wallpaper = ./wallpapers/1-the-backwater.jpg;
+  wallpaper = ./wallpapers/2-flower-basket.jpg;
   polarity = "dark";
   colors = {
     base00 = "#282828";

@@ -1,7 +1,6 @@
 pragma Singleton
 
-// Persistent caffeine mode. Inhibit idle actions without stopping hypridle's
-// before-sleep lock and after-sleep display recovery hooks.
+// Persistent caffeine mode.
 import QtQuick
 import Quickshell
 import Quickshell.Io

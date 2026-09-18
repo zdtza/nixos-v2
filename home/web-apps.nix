@@ -12,102 +12,87 @@ let
       id = "youtube";
       name = "YouTube";
       url = "https://www.youtube.com/";
-      isolated = false;
     }
     {
       id = "google-drive";
       name = "Google Drive";
       url = "https://drive.google.com/drive/my-drive";
-      isolated = false;
     }
     {
       id = "llama-slack";
       name = "Llama Slack";
       url = "https://app.slack.com/client/TNZGA82FQ";
       browser = "chromium";
-      isolated = false;
     }
     {
       id = "yt-music";
       name = "YT Music";
       url = "https://music.youtube.com/";
-      isolated = false;
     }
     {
       id = "gmail";
       name = "Gmail";
       url = "https://mail.google.com/mail/u/0/#inbox";
-      isolated = false;
     }
     {
       id = "whatsapp";
       name = "WhatsApp";
       url = "https://web.whatsapp.com/";
       browser = "chromium";
-      isolated = false;
     }
     {
       id = "chatgpt";
       name = "ChatGPT";
       url = "https://chatgpt.com/";
-      isolated = false;
     }
     {
       id = "packages";
       name = "NixOS Packages";
       url = "https://search.nixos.org/packages?channel=unstable";
-      isolated = false;
-      # matching nixos-manual.desktop exactly so the icon theme resolves it
+      # matching nixos-manual.desktop exactly so the icon theme resolves it.
       iconName = "nix-snowflake";
     }
     {
       id = "google-calendar";
       name = "Google Calendar";
       url = "https://calendar.google.com/calendar/u/0/r";
-      isolated = false;
     }
     {
       id = "claude";
       name = "Claude";
       url = "https://claude.ai/new";
-      isolated = false;
     }
     {
       id = "onshape";
       name = "Onshape";
       url = "https://cad.onshape.com/documents?resourceType=resourceuserowner&nodeId=64b5b94853a57c4809702d57";
       browser = "chromium";
-      isolated = false;
     }
     # WEBAPPS
   ];
 
   iconDir = ../assets/icons;
 
-  # importing the custom install / remove scripts
+  # importing the custom install / remove scripts.
   mkWebappCommand =
     command:
     pkgs.writeShellScriptBin command ''
       export WEBAPP_MAGICK=${lib.getExe pkgs.imagemagick}
       exec ${lib.getExe pkgs.bash} ${config.home.homeDirectory}/.src/nixos/scripts/${command}.sh "$@"
     '';
-  webappInstall = mkWebappCommand "webapp-install";
-  webappRemove = mkWebappCommand "webapp-remove";
-
-  # generating the desktop entries for the web apps
+  # generating the desktop entries for the web apps.
   mkEntry =
     app:
     let
       profileFlag = lib.optionalString (app.isolated or false
       ) "--user-data-dir=${config.xdg.dataHome}/chromium-webapps/${app.id} ";
-      chromiumFlags = lib.optionalString ((app.chromiumFlags or [ ]) != [ ]) (
-        "${lib.concatStringsSep " " app.chromiumFlags} "
-      );
+      chromiumFlags = lib.optionalString (
+        app ? chromiumFlags
+      ) "${lib.concatStringsSep " " app.chromiumFlags} ";
       url = lib.replaceStrings [ "%" "\"" ] [ "%%" "\\\"" ] app.url;
-      icon = if app ? iconName then app.iconName else iconDir + "/${app.id}.png";
-      browser = app.browser or "firefox";
+      icon = app.iconName or (iconDir + "/${app.id}.png");
       exec =
-        if browser == "firefox" then
+        if (app.browser or "firefox") == "firefox" then
           ''${pkgs.firefox}/bin/firefox "${url}"''
         else
           ''${pkgs.chromium}/bin/chromium ${profileFlag}${chromiumFlags}"--app=${url}"'';
@@ -118,15 +103,13 @@ let
 
       inherit exec icon;
       categories = [ "Network" ];
-      terminal = false;
-      type = "Application";
     };
 in
 {
   xdg.desktopEntries = builtins.listToAttrs (map mkEntry webApps);
 
-  home.packages = [
-    webappInstall
-    webappRemove
+  home.packages = map mkWebappCommand [
+    "webapp-install"
+    "webapp-remove"
   ];
 }

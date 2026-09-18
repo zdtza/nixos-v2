@@ -21,7 +21,6 @@ let
       accent = config.lib.stylix.colors.withHashtag.${theme.accent};
       font = config.stylix.fonts.monospace.name;
       # Measured offsets center the glyph ink, not its advance width.
-      # Recheck with `rsvg-convert | magick -format %@` after font changes.
       svg = cp: ''
         <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
           <text x="49" y="110" text-anchor="middle" fill="${accent}"
@@ -86,12 +85,7 @@ in
       image = theme.wallpaper;
       polarity = theme.polarity;
 
-      # Match GNOME Text Editor's document area to the surrounding GTK
-      # palette. Keep this scoped to its custom `page` node and `editor`
-      # class: Calculator also embeds a GtkSourceView for equation input and
-      # deliberately makes it transparent over its card. The former generic
-      # `textview.sourceview` selector painted that input as a mismatched
-      # @view_bg_color rectangle.
+      # Match GNOME Text Editor's document area to the surrounding GTK palette.
       targets.gtk.extraCss = ''
         page textview.editor,
         page textview.editor text {
@@ -102,7 +96,6 @@ in
     };
 
     # Relink on home activation instead of requiring a system-profile rebuild.
-    # GTK searches XDG_DATA_HOME/icons directly.
     xdg.dataFile."icons/${folderThemeName}".source = folderIcons;
 
     # Expose the theme and wallpaper selectors on PATH.
@@ -118,7 +111,7 @@ in
       '')
     ];
 
-    # Stylix owns color-scheme via polarity. GTK CSS changes require app restart.
+    # Stylix owns color-scheme via polarity.
     gtk.iconTheme = {
       name = folderThemeName;
       package = pkgs.yaru-theme;

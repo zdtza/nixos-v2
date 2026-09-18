@@ -68,9 +68,7 @@ Item {
         onCleared: PanelService.close(root)
     }
 
-    // Drawer, not Popup: the toggles sit in the bar's right-hand group now, so
-    // this hangs off the screen's right edge like every other system panel
-    // (one notch instead of two, hence one rounding in the width).
+    // Drawer, not Popup.
     Drawer {
         id: panel
 

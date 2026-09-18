@@ -1,5 +1,4 @@
-# amd gpu, in-tree kernel driver only, nothing proprietary to install
-# mutually exclusive with gpu-nvidia.nix, import one or the other
+# AMD GPU using the in-tree driver; conflicts with gpu-nvidia.nix.
 { ... }:
 {
   services.xserver.videoDrivers = [ "amdgpu" ];

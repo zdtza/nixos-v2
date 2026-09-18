@@ -1,23 +1,6 @@
 pragma ComponentBehavior: Bound
 
-// Skewed-slice image carousel, a port of omarchy's image-picker plugin
-// (~/omarchy/shell/plugins/image-picker/ImagePicker.qml) -- same geometry,
-// same parallelogram slices, same dim/border treatment, with omarchy's
-// Color/Style tokens mapped onto this shell's Theme palette:
-//   Color.imagePicker.scrim -> base00 @ 0.5
-//   dimColor                -> base00
-//
-// The selected slice is the only undimmed, full-size one, and carries an
-// accent outline along its parallelogram edges.
-//
-// `showCaption` puts the selected item's display name under the carousel, and
-// `filterable` makes typing narrow `items` by that name (see ThemePicker.qml
-// and WallpaperPicker.qml, which use both).
-//
-// Purely presentational: the caller supplies `items` and decides what
-// accepting one means, so the same component backs the wallpaper picker
-// today and a theme picker later -- each instance just gets its own
-// `ipcTarget`.
+// Skewed-slice image carousel, a port of omarchy's image-picker plugin.
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Shapes
@@ -31,10 +14,7 @@ import ".."
 Scope {
     id: root
 
-    // [{ image: url, value: var, name?: string }]. `value` is handed back
-    // untouched through accepted(), so callers can carry whatever key they
-    // need (a file path, a theme name) without this component knowing. `name`
-    // optionally provides a separate caption and search term.
+    // [{ image: url, value: var, name?: string }].
     property var items: []
     // Entry already in use; the carousel opens on it.
     property var selectedValue: null
@@ -58,23 +38,18 @@ Scope {
     // Caption under the carousel and type-to-filter over the same name.
     property bool showCaption: false
     property bool filterable: false
-    // Small, fixed collections can decode in the background before the picker
-    // is used. Keep this off for wallpaper folders, which may be very large.
+    // Small, fixed collections can decode in the background before the picker is used.
     property bool preloadAll: false
     property string filter: ""
 
-    // Navigation indexes into this narrowed list. The Repeater deliberately
-    // does not: replacing its model on every keypress destroyed and rebuilt
-    // every image, mask, and effect delegate, synchronously decoding previews
-    // again and stalling typing/backspacing.
+    // Navigation indexes into this narrowed list.
     readonly property var shownItems: root.items.filter(item => root.itemMatchesFilter(item))
 
     function itemName(item: var): string {
         return String(item?.name ?? item?.value ?? "");
     }
 
-    // Fuzzy (subsequence), with spaces matching dashes in names such as
-    // "tokyo-night".
+    // Fuzzy (subsequence), with spaces matching dashes in names such as "tokyo-night".
     function itemMatchesFilter(item: var): bool {
         const token = root.filter.toLowerCase().replace(/ /g, "-");
         return token === ""
@@ -82,8 +57,6 @@ Scope {
     }
 
     // Position of an item in shownItems without relying on JS object identity.
-    // This lets stable source-model delegates lay themselves out as a compact
-    // filtered carousel instead of being recreated for each filter change.
     function filteredIndex(sourceIndex: int): int {
         if (!root.itemMatchesFilter(root.items[sourceIndex]))
             return -1;
@@ -99,8 +72,7 @@ Scope {
 
     signal accepted(item: var)
 
-    // Monitor the picker was opened on, resolved to a screen below. Same
-    // idiom as Launcher.qml: overlays open where the keyboard focus is.
+    // Monitor the picker was opened on, resolved to a screen below.
     property string openedMonitorName: ""
 
     function indexOfSelected(): int {
@@ -115,10 +87,7 @@ Scope {
         return root.shownItems[root.selectedIndex] ?? null;
     }
 
-    // Caption markup: the selected name as a title ("tokyo-night" -> "Tokyo
-    // Night") with the letters the filter matched painted in the accent. The
-    // title is the same string cased/spaced differently, so match positions
-    // carry over as-is.
+    // Caption markup: the selected name as a title ("tokyo-night" -> "Tokyo Night") with the letters the filter matched painted in the accent.
     function captionMarkup(): string {
         const value = root.itemName(root.currentItem());
         const title = value.split("-")
@@ -188,9 +157,7 @@ Scope {
         id: window
 
         screen: Utils.screenForMonitor(root.openedMonitorName)
-        // Unlike the launcher this isn't opened dozens of times a session, so
-        // it unmaps when closed rather than staying mapped behind a zero-sized
-        // input region.
+        // Unmap the infrequently used picker when closed.
         visible: root.open
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
@@ -221,14 +188,12 @@ Scope {
             id: card
 
             anchors.centerIn: parent
-            // 13 slices' worth of run-off on each side of the expanded
-            // preview is what omarchy budgets for the fanned-out neighbours.
+            // 13 slices' worth of run-off on each side of the expanded preview is what omarchy budgets for the fanned-out neighbours.
             width: Math.min(parent.width - 80,
                 root.expandedWidth + 13 * (root.sliceWidth + root.sliceSpacing) + 40)
             height: root.expandedHeight + root.topChromeHeight + root.bottomChromeHeight
 
-            // Clicks on the carousel itself must not fall through to the
-            // close-on-click scrim behind it.
+            // Clicks on the carousel itself must not fall through to the close-on-click scrim behind it.
             MouseArea {
                 anchors.fill: parent
                 onPressed: mouse => mouse.accepted = true
@@ -278,8 +243,7 @@ Scope {
                     event.accepted = true;
                 }
 
-                // Nothing to show: an empty themes/wallpapers folder, or a
-                // filter that matches none of them.
+                // Nothing to show: an empty themes/wallpapers folder, or a filter that matches none of them.
                 ShellText {
                     anchors.centerIn: parent
                     visible: root.shownItems.length === 0
@@ -289,10 +253,7 @@ Scope {
                 }
 
                 Repeater {
-                    // Keep delegates (and their decoded image cache entries)
-                    // alive while filtering; only their layout/visibility
-                    // changes. A filtered array here made every keystroke tear
-                    // down and rebuild the expensive preview scene graph.
+                    // Keep delegates (and their decoded image cache entries) alive while filtering; only their layout/visibility changes.
                     model: root.items
 
                     delegate: Item {
@@ -306,9 +267,7 @@ Scope {
                         readonly property int relativeIndex: shownIndex - root.selectedIndex
                         readonly property bool selected: matchesFilter
                             && shownIndex === root.selectedIndex
-                        // Only the matching neighbours that can actually reach
-                        // the screen are decoded; once one has been near, its
-                        // texture is kept through later filter changes.
+                        // once one has been near, its texture is kept through later filter changes.
                         readonly property bool nearby: matchesFilter
                             && Math.abs(relativeIndex) <= 16
                         property bool sourceActivated: root.preloadAll || nearby
@@ -325,8 +284,7 @@ Scope {
                         height: selected ? root.expandedHeight : root.sliceHeight
                         z: selected ? 100 : 50 - Math.min(Math.abs(relativeIndex), 40)
 
-                        // Parallelogram corners: the top edge leans one way by
-                        // skewOffset, the bottom edge the other.
+                        // Parallelogram corners: the top edge leans one way by skewOffset, the bottom edge the other.
                         readonly property real skewAbs: Math.abs(root.skewOffset)
                         readonly property real topLeft: root.skewOffset >= 0 ? skewAbs : 0
                         readonly property real topRight: root.skewOffset >= 0 ? width : width - skewAbs
@@ -374,16 +332,9 @@ Scope {
                                 anchors.fill: parent
                                 source: slice.sourceActivated ? (slice.modelData.image ?? "") : ""
                                 fillMode: Image.PreserveAspectCrop
-                                // Wallpapers are 6-8K JPEGs (25 MPix, ~100 MB
-                                // of RGBA each) but the biggest slice is
-                                // expandedWidth x expandedHeight -- without a
-                                // sourceSize every one is decoded at full size
-                                // on open, which is the whole open delay.
-                                // Qt scales during JPEG decode, so this is
-                                // cheap; 2x the slice for HiDPI headroom.
+                                // Wallpapers are 6-8K JPEGs but the biggest slice is expandedWidth x expandedHeight.
                                 sourceSize.height: root.expandedHeight * 2
-                                // A newly revealed preview must never block the
-                                // input/render thread while it is decoded.
+                                // A newly revealed preview must never block the input/render thread while it is decoded.
                                 asynchronous: true
                                 cache: true
                                 smooth: true
@@ -395,9 +346,7 @@ Scope {
                             }
                         }
 
-                        // Accent outline on the selected slice. Outside the
-                        // masked Item above so the stroke is not clipped to
-                        // half its width by its own mask.
+                        // Accent outline on the selected slice.
                         Shape {
                             anchors.fill: parent
                             visible: slice.selected
@@ -433,8 +382,6 @@ Scope {
             }
 
             // Selected item's name, with the typed letters highlighted.
-            // Size/weight match kitty's (11.5pt SemiBold, see modules/wayland.nix
-            // fonts.sizes.terminal and home/appearance.nix's TextEditor font).
             ShellText {
                 visible: root.showCaption
                 anchors {
@@ -454,8 +401,7 @@ Scope {
             function onOpenChanged(): void {
                 if (!root.open)
                     return;
-                // The layer surface is only mapped once `visible` propagates,
-                // so focus has to wait a turn or it lands on nothing.
+                // The layer surface is only mapped once `visible` propagates, so focus has to wait a turn or it lands on nothing.
                 Qt.callLater(() => carousel.forceActiveFocus());
             }
         }

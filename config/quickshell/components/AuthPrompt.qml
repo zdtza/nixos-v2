@@ -10,9 +10,7 @@ Item {
     property bool inputEnabled: true
     property bool responseVisible: false
     property bool showWallpaper: true
-    // Independent of showWallpaper: Polkit's window is fully transparent and
-    // relies on this dim scrim alone to darken the desktop behind it. The
-    // lock screen has its own opaque background already, so it opts out.
+    // Independent of showWallpaper: Polkit's window is fully transparent and relies on this dim scrim alone to darken the desktop behind it.
     property bool dimBackground: true
     property alias text: passwordInput.text
     readonly property alias input: passwordInput
@@ -36,9 +34,7 @@ Item {
         color: Utils.alpha(Theme.base00, root.showWallpaper ? 0.35 : Utils.scrimOpacity)
     }
 
-    // Clicking the scrim (or anything else on the overlay) must not leave the
-    // user typing into nothing: every press outside the field bounces focus
-    // back to it. The field sits above this area and keeps its own handling.
+    // Clicking the scrim must not leave the user typing into nothing: every press outside the field bounces focus back to it.
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons
@@ -52,8 +48,7 @@ Item {
         radius: PanelService.rounding
         color: Utils.alpha(Theme.base01, 0.95)
         border.width: 2
-        // Text entry does not change the outline; only error/checking state
-        // does. Checking dims it to indicate that input is temporarily blocked.
+        // Text entry does not change the outline; only error/checking state does.
         border.color: root.error ? Theme.base08
             : (root.inputEnabled ? Theme.base04 : Utils.alpha(Theme.base05, 0.4))
 
@@ -69,8 +64,7 @@ Item {
             enabled: root.inputEnabled
             echoMode: root.responseVisible ? TextInput.Normal : TextInput.Password
             passwordCharacter: "●"
-            // Keep the caret visible so both lock-screen and Polkit prompts
-            // clearly indicate that they are ready for keyboard input.
+            // Keep the caret visible so both lock-screen and Polkit prompts clearly indicate that they are ready for keyboard input.
             color: Theme.base05
             selectionColor: Theme.base02
             selectedTextColor: Theme.base05

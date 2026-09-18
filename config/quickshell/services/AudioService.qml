@@ -22,8 +22,7 @@ Item {
     readonly property bool outputMuted: output && output.audio ? output.audio.muted : false
     readonly property bool inputMuted: input && input.audio ? input.audio.muted : false
 
-    // Speaker glyph for the current output level. Lives here because the bar
-    // panel and the OSD both need it and had drifted into two copies.
+    // Speaker glyph for the current output level.
     readonly property string outputIcon: {
         if (outputMuted)
             return "󰝟";
@@ -45,19 +44,12 @@ Item {
         return Math.max(0, Math.min(maximumVolume, Number(value)));
     }
 
-    // PipeWire hands the volume back as a float that is not exactly a multiple
-    // of the step (1.5 reads as 1.4999998), so stepping relative to the
-    // readback compounds that error and slides the grid -- holding volume-down
-    // from 150% lands on 99% instead of 100%. Snap to the step grid instead of
-    // trusting the readback.
+    // Snap PipeWire's imprecise float values to the volume grid.
     function snapToStep(value: real, step: real): real {
         return Math.round(value / step) * step;
     }
 
-    // Every write goes through the grid, not just the keybind steps: slider
-    // drags, the 4%-per-notch wheel, and `setOutput 37` used to park the
-    // volume off-grid, and the OSD then reported 37% / 43% / 49% instead of
-    // the 5% ticks.
+    // Every write goes through the grid, not just the keybind steps.
     function setOutputVolume(value: real): void {
         if (output && output.audio)
             output.audio.volume = clampVolume(snapToStep(value, outputStep));

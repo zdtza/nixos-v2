@@ -85,8 +85,7 @@ Popup {
             return;
         }
 
-        // Plain-clicking anywhere in a range clears it. Clicking elsewhere
-        // moves anchor there; clicking a single selected day clears it.
+        // Plain-clicking anywhere in a range clears it.
         if (root.selectedRangeEnd && root.daySelected(key)) {
             root.selectedDay = "";
             root.selectedRangeEnd = "";

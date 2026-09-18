@@ -1,13 +1,6 @@
 pragma ComponentBehavior: Bound
 
-// Themed replacement for the platform tray menu (QsMenuAnchor renders a native
-// Qt menu that ignores the system palette). Recurses into submenus by loading
-// itself, anchored to the row that owns them.
-//
-// Backed by either a live DBus menu (`handle`, e.g. SystemTrayItem.menu) or a
-// static `entries` list built elsewhere (e.g. the synthetic Windows tray
-// entry), normalized to the same shape:
-// { text, isSeparator, enabled, hasChildren, checkState, triggered() }.
+// Themed replacement for the platform tray menu (QsMenuAnchor renders a native Qt menu that ignores the system palette).
 import QtQuick
 import Quickshell
 import "../services"
@@ -42,7 +35,6 @@ PopupWindow {
         .filter(index => index >= 0)
 
     // Submenus open below their parent row instead of below the bar item.
-    // Only ever set true recursively below, for DBus submenus.
     property bool submenu: false
 
     // Stable menu entry whose submenu is currently open, null for none.
@@ -51,8 +43,7 @@ PopupWindow {
     // Currently open child menu, if any.
     property var activeSubmenu: null
 
-    // This window plus every open descendant, for the focus grab in Tray.qml:
-    // clicking inside any of them must not dismiss the menu.
+    // This window plus every open descendant, for the focus grab in Tray.qml: clicking inside any of them must not dismiss the menu.
     readonly property var openWindows: [menu].concat(activeSubmenu ? activeSubmenu.openWindows : [])
 
     signal closeRequested
@@ -125,24 +116,14 @@ PopupWindow {
         }
     }
 
-    // Escape is a single exit, not a walk back out through each open submenu
-    // level: it dismisses the whole chain and the tray with it. Submenu
-    // instances leave this disabled, so only the root menu handles the key.
+    // Escape is a single exit, not a walk back out through each open submenu level: it dismisses the whole chain and the tray with it.
     PanelShortcut {
         enabled: menu.visible && !menu.submenu
         sequences: ["Escape"]
         onActivated: menu.dismissRequested()
     }
 
-    // PopupAnchor.item and .window are mutually exclusive in quickshell's
-    // native implementation (setting one unsets the other), and its internal
-    // onItemWindowChanged() dereferences the anchor item unconditionally
-    // whenever it's cleared. Binding both item and window permanently on the
-    // same anchor (e.g. `item: cond ? x : null; window: cond ? null : y`)
-    // means whichever evaluates second clobbers the other and can null-deref
-    // a still-live item, crashing quickshell. Only ever touch the property
-    // actually in use for this instance's lifetime, guarded so the other is
-    // never written at all.
+    // PopupAnchor.item and .window are mutually exclusive in quickshell's native implementation, and its internal onItemWindowChanged() dereferences the anchor item.
     Binding {
         target: popupAnchor
         property: "item"
@@ -162,31 +143,18 @@ PopupWindow {
 
         edges: menu.submenu ? Edges.Bottom | Edges.Left : Edges.Top | Edges.Left
         gravity: Edges.Bottom | Edges.Right
-        // Vertical sliding honors compositor outer gaps. Disable it at bare
-        // screen edge or menu gets pushed down despite its zero-y anchor.
+        // Vertical sliding honors compositor outer gaps.
         adjustment: !menu.submenu && !PanelService.barVisible
             ? PopupAdjustment.SlideX : PopupAdjustment.Slide
-        // Anchor rect is a 1x1 point in the anchor item's local coordinates,
-        // used only as the pivot the popup grows from (the popup's actual
-        // size comes from its own window geometry, not this rect). It
-        // defaults to the item's top-left corner (0,0).
-        //
-        // The row's local (0,0) is inset 2px right of the parent menu's own
-        // border (Column's leftMargin below), so pull x back by that much to
-        // keep the submenu's border flush with the parent's. Submenus sit one
-        // row up from the triggering row (a small 5px drop from its top edge,
-        // not a full row height below it), so the top rounding is dropped
-        // below to keep that overlap looking flush.
+        // Anchor rect is a 1x1 point in the anchor item's local coordinates, used only as the pivot the popup grows from.
         rect.x: menu.submenu ? -2 : 0
         rect.y: menu.submenu ? 0
             : (PanelService.barVisible ? PanelService.barHeight : 0)
         rect.width: 1
-        // Top-level menu starts at anchor y; one-pixel height would place it
-        // one pixel below screen/bar edge with Bottom gravity.
+        // Top-level menu starts at anchor y; one-pixel height would place it one pixel below screen/bar edge with Bottom gravity.
         rect.height: menu.submenu ? 1 : 0
 
-        // Match Popup positioning: center under bar item, then leave same
-        // compositor-gap-sized offset below bar.
+        // Match Popup positioning: center under bar item, then leave same compositor-gap-sized offset below bar.
         onAnchoring: {
             if (menu.submenu || !menu.anchorWindow)
                 return;
@@ -214,8 +182,7 @@ PopupWindow {
             menu.submenuEntry = null;
     }
 
-    // Only meaningful in handle mode; harmless no-op (null menu, no children)
-    // when driven by a static entries list instead.
+    // Only meaningful in handle mode; harmless no-op (null menu, no children) when driven by a static entries list instead.
     QsMenuOpener {
         id: opener
         menu: menu.handle
@@ -234,9 +201,7 @@ PopupWindow {
         }
     }
 
-    // QsMenuOpener populates its model asynchronously. Keep popup unmapped
-    // until initial nonempty model geometry has settled, then leave it mapped
-    // while later menu updates hydrate to avoid empty-frame and hide/show flicker.
+    // QsMenuOpener populates its model asynchronously.
     Timer {
         id: revealTimer
         interval: 20
@@ -259,9 +224,7 @@ PopupWindow {
         height: menu.contentReady ? menu.height : 0
         clip: true
 
-        // Behavior (not a one-shot animation to a fixed target) so height
-        // changes mid-reveal -- e.g. async DBus menu hydration -- retarget
-        // smoothly instead of snapping. Matches Popup/Drawer.
+        // Behavior so height changes mid-reveal -- e.g. async DBus menu hydration -- retarget smoothly instead of snapping.
         Behavior on height {
             enabled: menu.contentReady
             NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
@@ -365,7 +328,7 @@ PopupWindow {
                     width: column.width
                     implicitHeight: entry.isSeparator ? 13 : (row.sectionLabel ? 26 : 30)
 
-                    // --- separator ---
+                    // --- separator ---.
                     Rectangle {
                         visible: row.entry.isSeparator
                         anchors.centerIn: parent
@@ -374,7 +337,7 @@ PopupWindow {
                         color: Theme.base03
                     }
 
-                    // --- entry or section heading ---
+                    // --- entry or section heading ---.
                     Rectangle {
                         visible: !row.entry.isSeparator
                         anchors {
@@ -446,8 +409,7 @@ PopupWindow {
                                 menu.closeRequested();
                             }
 
-                            // Hovering only updates the highlighted row;
-                            // submenus open on click, not hover.
+                            // Hovering only updates the highlighted row; submenus open on click, not hover.
                             onContainsMouseChanged: {
                                 if (containsMouse)
                                     menu.selectEntry(row.interactive ? row.index : -1);
@@ -455,10 +417,7 @@ PopupWindow {
                         }
                     }
 
-                    // --- submenu (DBus entries only; static entries never
-                    // report hasChildren, so this loader never activates) ---
-                    // Loaded by URL rather than as an inline component: QML
-                    // refuses to instantiate a type inside its own definition.
+                    // --- submenu --- Loaded by URL rather than as an inline component: QML refuses to instantiate a type inside its own definition.
                     Loader {
                         id: submenuLoader
 

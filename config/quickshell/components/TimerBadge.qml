@@ -1,5 +1,4 @@
-// Small countdown badge next to the clock. Shows the timer with the least
-// remaining time when one or more timers are running; hidden otherwise.
+// Small countdown badge next to the clock.
 import QtQuick
 import "../services"
 import ".."

@@ -1,7 +1,6 @@
 {
-  # Active wallpaper, rewritten by scripts/select-wallpaper.sh (and by the
-  # quickshell picker, which shells out to it) -- always a file in ./wallpapers.
-  wallpaper = ./wallpapers/2-swirl-buck.jpg;
+  # Active wallpaper, rewritten by scripts/select-wallpaper.sh -- always a file in ./wallpapers.
+  wallpaper = ./wallpapers/1-quattro.jpg;
   polarity = "dark";
   colors = {
     base00 = "#1a1b26"; # background
@@ -21,14 +20,13 @@
     base0E = "#ad8ee6"; # magenta
     base0F = "#75493d"; # brown
   };
-  # neovim mapping style borrowed from ~/omarchy/themes/*/neovim.lua
+  # neovim mapping style borrowed from ~/omarchy/themes/*/neovim.lua.
   neovim = {
     plugin = "https://github.com/folke/tokyonight.nvim";
     colorscheme = "tokyonight-night";
     lualine = "tokyonight";
   };
   vscode = "Tokyo Night";
-  # base16 slot used as this theme's accent: yazi's folder icons/border and
-  # hyprland's active window border (home/yazi.nix, home/hyprland.nix)
+  # base16 slot used as this theme's accent: yazi's folder icons/border and hyprland's active window border (home/yazi.nix, home/hyprland.nix)
   accent = "base0D";
 }

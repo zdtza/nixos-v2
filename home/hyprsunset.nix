@@ -3,9 +3,7 @@
 {
   home.packages = [ pkgs.hyprsunset ];
 
-  # starting hyprsunset as an identity transform, quickshell drives it over hyprland ipc.
-  # gamma_max 150 raises the ipc gamma ceiling above the default 100 so DisplayService
-  # can push screen brightness past hardware max (see maxLevel there)
+  # starting hyprsunset as an identity transform, quickshell drives it over hyprland ipc. gamma_max 150 raises the ipc gamma.
   systemd.user.services.hyprsunset = {
     Unit = {
       Description = "Hyprland blue-light filter";

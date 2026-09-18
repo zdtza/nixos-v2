@@ -1,5 +1,4 @@
 # Generated from ~/omarchy/themes/last-horizon (colors.toml, neovim.lua, vscode.json).
-# Same shape as themes/tokyo-night -- see that file for what each field drives.
 {
   wallpaper = ./wallpapers/1-eyes-wide.jpg;
   polarity = "dark";

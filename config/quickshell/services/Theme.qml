@@ -1,7 +1,6 @@
 pragma Singleton
 
-// Theme data from home/quickshell.nix. Activation preserves this JSON file's
-// inode so FileView reloads it without restarting the shell or triggering autolock.
+// Theme data from home/quickshell.nix.
 import QtQuick
 import Quickshell
 import Quickshell.Io

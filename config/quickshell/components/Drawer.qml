@@ -1,7 +1,6 @@
 import Quickshell.Wayland
 
-// Screen-edge drawer used by right-side system panels. Chrome lives in
-// ShellSurface; this only pins it to the right edge.
+// Screen-edge drawer used by right-side system panels.
 ShellSurface {
     edgeAligned: true
 

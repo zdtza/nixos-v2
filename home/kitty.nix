@@ -1,9 +1,8 @@
 { pkgs, ... }:
 
 let
-  # printing the focused kitty window's cwd via its remote-control socket
+  # printing the focused kitty window's cwd via its remote-control socket.
   terminalCwd = pkgs.writeShellScriptBin "terminal-cwd" ''
-    #!/usr/bin/env bash
     set -uo pipefail
 
     terminal_pid=$(hyprctl activewindow -j | ${pkgs.jq}/bin/jq -r '.pid')
@@ -17,9 +16,8 @@ let
     fi
   '';
 
-  # launching a new terminal in the same cwd as the focused one
+  # launching a new terminal in the same cwd as the focused one.
   launchTerminal = pkgs.writeShellScriptBin "launch-terminal-cwd" ''
-    #!/usr/bin/env bash
     exec ${pkgs.kitty}/bin/kitty --directory "$(${terminalCwd}/bin/terminal-cwd)" "$@"
   '';
 in
@@ -40,12 +38,12 @@ in
       cursor_trail_decay = "0.08 0.25";
       cursor_trail_start_threshold = 2;
 
-      # per-instance remote-control socket, lets terminal-cwd query the exact focused tab
+      # per-instance remote-control socket, lets terminal-cwd query the exact focused tab.
       allow_remote_control = true;
       listen_on = "unix:\${XDG_RUNTIME_DIR}/kitty-{kitty_pid}";
     };
 
-    # universal copy / paste keybindings
+    # universal copy / paste keybindings.
     keybindings = {
       "ctrl+insert" = "copy_to_clipboard";
       "shift+insert" = "paste_from_clipboard";

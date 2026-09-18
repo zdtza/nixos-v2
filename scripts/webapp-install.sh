@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Add a Chromium web app entry to home-manager/web-apps.nix.
+# Add a web app entry to home/web-apps.nix.
 set -euo pipefail
 
 repo_dir=$HOME/.src/nixos
@@ -112,8 +112,8 @@ entry = (
     f"      id = {q(app_id)};\n"
     f"      name = {q(name)};\n"
     f"      url = {q(url)};\n"
-    f"      isolated = {isolated};\n"
-    "    }\n"
+    + ("      isolated = true;\n" if isolated == "true" else "")
+    + "    }\n"
 )
 path.write_text(text.replace(marker, entry + marker, 1))
 PY

@@ -20,10 +20,7 @@ Item {
     property alias keyboardInputText: durationInput.text
     property int selectedTimerIndex: -1
 
-    // Mounted in the bar window while this panel is active: popup surfaces
-    // don't own compositor keyboard focus, so real typing has to be received
-    // there and mirrored back here. Declared in this file so the duration
-    // field's key handling stays next to the field it drives.
+    // Mounted in the bar window while this panel is active.
     readonly property Component keyboardProxy: durationProxy
 
     implicitWidth: 28
@@ -159,9 +156,7 @@ Item {
         onCleared: PanelService.close(root)
     }
 
-    // Drawer, not Popup: the toggles sit in the bar's right-hand group now, so
-    // this hangs off the screen's right edge like every other system panel
-    // (one notch instead of two, hence one rounding in the width).
+    // Drawer, not Popup.
     Drawer {
         id: panel
 
@@ -183,8 +178,7 @@ Item {
         readonly property real maximumHeight: Math.max(320,
             (root.QsWindow.window && root.QsWindow.window.screen
                 ? root.QsWindow.window.screen.height : 800) - 55)
-        // Derive popup size from stable controls and timer count. Avoid
-        // Column.implicitHeight while repeater delegates are changing.
+        // Derive popup size from stable controls and timer count.
         readonly property real panelChromeHeight: contentTopMargin
             + contentBottomMargin + timerHero.implicitHeight + durationHeader.implicitHeight
             + timersHeader.implicitHeight + 76 + contentSpacing * 6

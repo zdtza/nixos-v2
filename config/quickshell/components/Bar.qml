@@ -1,5 +1,4 @@
-// Top bar layer-shell panel. Three anchored groups: left, right, and a clock
-// pinned to the true center of the bar (independent of the side widths).
+// Top bar layer-shell panel.
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -40,8 +39,7 @@ PanelWindow {
     Component.onDestruction: unregisterPanels()
 
     screen: modelData
-    // Layer-shell surfaces cannot stay mapped at zero height. Keep a
-    // non-exclusive transparent pixel above the output so popup anchors survive.
+    // Layer-shell surfaces cannot stay mapped at zero height.
     color: PanelService.barVisible ? Theme.base01 : "transparent"
     implicitHeight: PanelService.barVisible ? PanelService.barHeight : 1
     exclusionMode: PanelService.barVisible ? ExclusionMode.Auto : ExclusionMode.Ignore
@@ -63,22 +61,12 @@ PanelWindow {
     margins.top: PanelService.barVisible ? 0 : -1
 
     // Popup focus grabs include bar so controls remain directly clickable.
-    // This background target dismisses active popup when unused bar area is hit.
     MouseArea {
         anchors.fill: parent
         onClicked: PanelService.closeActive()
     }
 
-    // Panel keyboard hosting. Drawer and popup surfaces don't own compositor
-    // keyboard focus, so whatever a panel needs focused has to live in the
-    // bar window instead.
-    //
-    // Panels that only use application-wide shortcuts just need *something*
-    // here focused, which is the stub below. A panel that also needs real
-    // text entry publishes a `keyboardProxy` component (see PanelService for
-    // the contract) and the Loader mounts it -- so the bar hosts the input
-    // without knowing whether it's a countdown, a passphrase, or anything
-    // added later.
+    // Panel keyboard hosting.
     readonly property Component activeKeyboardProxy:
         PanelService.activePanel?.keyboardProxy ?? null
 
@@ -95,14 +83,13 @@ PanelWindow {
         width: 1
         height: 1
         opacity: 0
-        // Loader is a focus scope, so this plus `focus: true` on the proxy
-        // itself is what actually lands active focus inside it.
+        // Loader is a focus scope, so this plus `focus: true` on the proxy itself is what actually lands active focus inside it.
         active: !!bar.activeKeyboardProxy
         focus: active
         sourceComponent: bar.activeKeyboardProxy
     }
 
-    // --- left ---
+    // --- left ---.
     RowLayout {
         spacing: PanelService.barSpacing
         anchors {
@@ -116,7 +103,7 @@ PanelWindow {
         }
     }
 
-    // --- center ---
+    // --- center ---.
     Clock {
         id: clock
         anchors.centerIn: parent
@@ -132,23 +119,19 @@ PanelWindow {
         panelTarget: quickToggles.timerPanel
     }
 
-    // Anchored rather than in the right row so its collapsed hotspot keeps a
-    // fixed spot beside the clock: the icons slide out leftwards from there
-    // and nothing else on the bar moves.
+    // Anchored rather than in the right row so its collapsed hotspot keeps a fixed spot beside the clock.
     Tray {
         id: tray
 
         anchors {
             right: clock.left
-            // Negative on purpose: both sides pad themselves invisibly -- the
-            // clock's text has padding and each 30px tray entry centres a 16px
-            // icon -- so a positive margin here reads as a double gap.
+            // Negative on purpose: both sides pad themselves invisibly.
             rightMargin: -4
             verticalCenter: clock.verticalCenter
         }
     }
 
-    // --- right ---
+    // --- right ---.
     RowLayout {
         spacing: PanelService.barSpacing
         anchors {

@@ -1,5 +1,4 @@
-// Bottom-center volume and brightness feedback, plus the persistent voice
-// dictation readout.
+// Bottom-center volume and brightness feedback, plus the persistent voice dictation readout.
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -11,41 +10,39 @@ import ".."
 Scope {
     id: root
 
-    // Only the monitor *name* is cached, never a screen object -- see
-    // Notifications.qml for why caching a QuickshellScreenInfo/QScreen
-    // reference across a reload segfaults.
+    // Only the monitor *name* is cached, never a screen object.
     property string targetScreenName: ""
     property bool shown: false
     property string icon: ""
     property real value: 0
     property int percent: 0
     property color fillColor: Theme.base05
+    property bool dictationMeterReady: false
 
     // Dictation has no timer: it shows for as long as voxtype is recording.
-    // A volume or brightness OSD still wins the surface while its own timer
-    // runs, then the dictation readout comes back underneath it.
     readonly property bool dictationView: VoiceDictationService.recording && !shown
     readonly property string displayIcon: dictationView
         ? (AudioService.inputMuted ? "󰍭" : "󰍬") : icon
-    // Live microphone peak -- the same meter the audio panel's INPUT section
-    // draws, through the same Utils.peakLevel curve, so the bar follows the
-    // voice being dictated rather than a slider position.
+    // Live microphone peak.
     readonly property real displayValue: dictationView
-        ? Utils.peakLevel(inputPeak.peak) : value
+        ? (dictationMeterReady ? Utils.peakLevel(inputPeak.peak) : 0) : value
     readonly property color displayFill: dictationView
         ? (AudioService.inputMuted ? Theme.base04 : Theme.base05) : fillColor
 
-    // A peak monitor is a real PipeWire capture stream, so only run one while
-    // the readout is actually on screen.
+    // Start monitoring immediately, but briefly hide its startup transient so opening the capture stream does not flash the meter at 100%.
     PwNodePeakMonitor {
         id: inputPeak
         node: AudioService.input
-        enabled: root.dictationView && !!node && !AudioService.inputMuted
+        enabled: VoiceDictationService.recording && !!node && !AudioService.inputMuted
     }
 
-    // percentValue is `real`, not `int`: an int parameter truncates on the way
-    // in, so 70% volume that PipeWire reads back as 0.6999999 arrived as 69 and
-    // the OSD disagreed with the panel by a percent.
+    Timer {
+        interval: 100
+        running: VoiceDictationService.recording && !root.dictationMeterReady
+        onTriggered: root.dictationMeterReady = VoiceDictationService.recording
+    }
+
+    // percentValue is `real`, not `int`
     function show(iconName: string, progress: real, fill: color, percentValue: real): void {
         if (Quickshell.screens.length === 0)
             return;
@@ -60,8 +57,7 @@ Scope {
 
     Timer {
         id: hideTimer
-        // Longer than the ~1s pre-repeat delay of the brightness keys, so the
-        // OSD doesn't blink out between the first tap and the repeat stream.
+        // Longer than the ~1s pre-repeat delay of the brightness keys, so the OSD doesn't blink out between the first tap and the repeat stream.
         interval: 1400
         onTriggered: root.shown = false
     }
@@ -87,9 +83,9 @@ Scope {
     Connections {
         target: VoiceDictationService
 
-        // Same rule as show(): pin the readout to whichever monitor was
-        // focused when recording started, and never cache the screen object.
+        // Same rule as show(): pin the readout to whichever monitor was focused when recording started, and never cache the screen object.
         function onRecordingChanged(): void {
+            root.dictationMeterReady = false;
             if (VoiceDictationService.recording && Quickshell.screens.length > 0)
                 root.targetScreenName = String(Hyprland.focusedMonitor?.name ?? "");
         }
@@ -145,9 +141,7 @@ Scope {
                 }
 
                 Item {
-                    // The percent label collapses entirely for dictation, so
-                    // its spacing has to go with it or the bar stops short of
-                    // the padding on the right.
+                    // The percent label collapses entirely for dictation, so its spacing has to go with it or the bar stops short of the padding on the right.
                     width: parent.width - 18 - percentText.width
                         - (percentText.visible ? 2 : 1) * parent.spacing
                     height: parent.height
@@ -175,12 +169,9 @@ Scope {
 
                 ShellText {
                     id: percentText
-                    // Dictation is a state readout, not a value being nudged,
-                    // so it shows the icon and bar only.
+                    // Dictation is a state readout, not a value being nudged, so it shows the icon and bar only.
                     visible: !root.dictationView
-                    // Natural width, not the widest possible label: the track
-                    // absorbs the slack so "5%" keeps the same right padding
-                    // as "150%" instead of leaving a gap after the bar.
+                    // Natural width, not the widest possible label.
                     width: visible ? implicitWidth : 0
                     height: parent.height
                     text: root.percent + "%"

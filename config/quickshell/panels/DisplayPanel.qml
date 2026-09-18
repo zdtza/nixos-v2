@@ -114,8 +114,7 @@ Item {
                 ? DisplayService.level + "%" : "UNAVAILABLE"
         }
 
-        // Full travel is 0-150%: the last third is gamma overdrive on top of a
-        // maxed backlight, so the 100% hardware ceiling sits at two thirds.
+        // Full travel is 0-150%: the last third is gamma overdrive on top of a maxed backlight, so the 100% hardware ceiling sits at two thirds.
         Slider {
             width: parent.width
             enabled: DisplayService.available

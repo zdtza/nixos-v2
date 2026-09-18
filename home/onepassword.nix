@@ -1,9 +1,5 @@
 {
-  # binary comes from the system-level programs._1password-gui (hosts/legion),
-  # so no home.packages copy here. --silent starts it to the tray without a window.
-  # Auto-unlock comes from the polkit rule in hosts/legion/default.nix plus the
-  # app's own "unlock using system authentication" setting (settings.json is
-  # HMAC-signed by the app, so it's toggled in the GUI, not declared here).
+  # Binary comes from the host's system-level programs._1password-gui, so no home.packages copy is needed. --silent starts it in the tray.
   systemd.user.services."1password" = {
     Unit = {
       Description = "1Password";

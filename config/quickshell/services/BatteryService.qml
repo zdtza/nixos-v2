@@ -1,7 +1,6 @@
 pragma Singleton
 
-// Shared battery and power-profile state. PowerProfiles talks to TLP through
-// tlp-pd's power-profiles-daemon compatible D-Bus API.
+// Shared battery and power-profile state.
 import QtQuick
 import Quickshell
 import Quickshell.Io

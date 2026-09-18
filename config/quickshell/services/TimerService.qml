@@ -15,20 +15,13 @@ Item {
     property int lastDurationSeconds: 0
     property int nextTimerSequence: 0
 
-    // Completion alert, kept here as plain POSIX sh rather than a packaged
-    // wrapper so this config runs unmodified off NixOS: nothing below is a
-    // build-time path, it is all discovered from the running system. Same
-    // idiom as NetworkService.detailsCommand.
-    //
-    // Both halves degrade quietly -- no notification daemon, no sound theme,
-    // or no player just means that part is skipped, never a broken timer.
+    // Completion alert, kept here as plain POSIX sh rather than a packaged wrapper so this config runs unmodified off NixOS.
     readonly property string alertCommand: `
 notify-send --app-name="Quickshell Timer" --urgency=critical \\
     --icon=alarm-symbolic --expire-time=10000 \\
     "Timer complete" "Countdown has elapsed." 2>/dev/null
 
-# The freedesktop sound theme has no portable absolute path: NixOS keeps it in
-# the system profile, most distros under /usr/share. Both are on XDG_DATA_DIRS.
+# Search standard sound-theme directories.
 dirs=$XDG_DATA_DIRS
 [ -n "$dirs" ] || dirs=/usr/local/share:/usr/share
 
@@ -40,8 +33,7 @@ sound=$(IFS=:; for dir in $dirs; do
 done)
 [ -n "$sound" ] || exit 0
 
-# First player present wins; between them these cover PipeWire, PulseAudio,
-# ALSA and the usual media players.
+# Use the first available audio player.
 for player in pw-play paplay mpv ffplay aplay; do
     command -v "$player" >/dev/null 2>&1 || continue
     case $player in
@@ -151,8 +143,7 @@ done
                 nearest = Math.min(nearest, remaining);
         }
 
-        // Keep model identity stable between expirations. Replacing array on
-        // every tick destroys delegates, causing hover and popup-size flicker.
+        // Keep model identity stable between expirations.
         if (expired.length > 0)
             timers = timers.filter(timer => expired.indexOf(timer.id) === -1);
 

@@ -22,9 +22,7 @@ Item {
     property var connectedAddresses: ({})
     property bool connectionSnapshotReady: false
 
-    // Quickshell 0.3 can miss BlueZ Connected property changes, leaving its
-    // BluetoothDevice.connected cache stale until shell restart. Poll BlueZ's
-    // authoritative view so every active device appears in connected section.
+    // Quickshell 0.3 can miss BlueZ Connected property changes, leaving its BluetoothDevice.connected cache stale until shell restart.
     Process {
         id: connectionStatusProcess
         command: ["bluetoothctl", "devices", "Connected"]
@@ -43,10 +41,7 @@ Item {
             connectionStatusProcess.running = true
     }
 
-    // BluetoothDevice.pair() delegates authentication to BlueZ. Keep a
-    // no-input/no-output agent registered so mice, keyboards, and other
-    // Just-Works devices can complete authentication instead of briefly
-    // connecting and failing with "No agent available".
+    // BluetoothDevice.pair() delegates authentication to BlueZ.
     Process {
         running: true
         stdinEnabled: true
@@ -135,8 +130,7 @@ Item {
         }
     }
 
-    // BlueZ may report Enabled briefly before discovery is ready. Retry at a
-    // low rate while panel is open instead of leaving scanner stuck off.
+    // BlueZ may report Enabled briefly before discovery is ready.
     Timer {
         interval: 750
         repeat: true

@@ -1,13 +1,7 @@
 import QtQuick
 import "../services"
 
-// Concave notch that continues the bar's rounded corner inward, so a panel
-// hanging off the bar's underside reads as carved out of it rather than as
-// its own floating card with convex corners of its own.
-//
-// Draws the left-hand notch by default; `mirrored` draws the right-hand one.
-// Callers set `width` to the corner size and clamp `height` to however much
-// of the surface is currently revealed.
+// Concave notch that continues the bar's rounded corner inward, so a panel hanging off the bar's underside reads.
 Canvas {
     id: root
 

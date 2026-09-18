@@ -43,8 +43,10 @@ Scope {
 
     readonly property var results: {
         const tokens = panel.query.toLowerCase().split(" ").filter(token => token !== "");
+        // Open on the complete alphabetical application list; typing narrows
+        // the same list in place instead of expanding an initially empty card.
         if (tokens.length === 0)
-            return [];
+            return root.entries;
 
         const matches = [];
         for (const item of root.entries) {
@@ -216,8 +218,9 @@ Scope {
 
         layerNamespace: "quickshell:launcher"
         placeholder: "Search for apps…"
+        frameWidth: 440
         model: root.results
-        expanded: root.results.length > 0
+        expanded: root.results.length > 0 || root.entries.length === 0
         onAccepted: root.activate(root.results[panel.currentIndex])
 
         delegate: Rectangle {
@@ -230,35 +233,38 @@ Scope {
             width: ListView.view.width
             height: panel.rowHeight
             radius: PanelService.rounding
-            color: appRow.ListView.isCurrentItem ? Theme.base02 : "transparent"
+            // A quiet fill is enough to locate the keyboard cursor; an
+            // outline made the compact rows read like individual buttons.
+            color: appRow.ListView.isCurrentItem
+                ? Utils.alpha(Theme.base05, 0.10) : "transparent"
 
             Item {
                 id: iconFrame
                 anchors {
                     left: parent.left
-                    leftMargin: 14
+                    leftMargin: 10
                     verticalCenter: parent.verticalCenter
                 }
-                width: 38
-                height: 38
+                width: 28
+                height: 28
 
                 ShellText {
                     anchors.centerIn: parent
                     visible: applicationIcon.status === Image.Loading
                     text: "…"
                     color: Theme.base04
-                    size: 16
+                    size: 14
                 }
 
                 Image {
                     anchors.centerIn: parent
-                    width: 32
-                    height: 32
+                    width: 24
+                    height: 24
                     visible: applicationIcon.status === Image.Error
                         || applicationIcon.status === Image.Null
                     source: "file://" + Quickshell.env("QS_FALLBACK_APP_ICON")
-                    sourceSize.width: 64
-                    sourceSize.height: 64
+                    sourceSize.width: 48
+                    sourceSize.height: 48
                     smooth: true
                     layer.enabled: true
                     layer.effect: MultiEffect {
@@ -270,10 +276,12 @@ Scope {
 
                 Image {
                     id: applicationIcon
-                    anchors.fill: parent
+                    anchors.centerIn: parent
+                    width: 24
+                    height: 24
                     source: appRow.entry.icon ? Quickshell.iconPath(appRow.entry.icon, true) : ""
-                    sourceSize.width: 76
-                    sourceSize.height: 76
+                    sourceSize.width: 48
+                    sourceSize.height: 48
                     cache: true
                     asynchronous: true
                     smooth: true
@@ -285,13 +293,13 @@ Scope {
                 anchors {
                     left: iconFrame.right
                     right: parent.right
-                    leftMargin: 14
-                    rightMargin: 14
+                    leftMargin: 10
+                    rightMargin: 12
                     verticalCenter: parent.verticalCenter
                 }
                 text: appRow.entry.name
                 elide: Text.ElideRight
-                size: 16
+                size: 14
             }
 
             MouseArea {

@@ -19,20 +19,23 @@ Scope {
     property string layerNamespace: ""
     property string placeholder: ""
     property int frameWidth: 400
-    property int rowHeight: 58
-    property int rowSpacing: 4
+    property int rowHeight: 48
+    property int rowSpacing: 2
+    property int contentPadding: 10
+    property int searchRowHeight: 40
+    property int listGap: 8
     property var model: []
     property Component delegate: null
     // The card stays collapsed to the search bar until the caller has
     // something worth showing under it.
     property bool expanded: false
-    // 72 = top+bottom margins (12 each) + search row (48).
-    readonly property int searchBarHeight: 72
+    readonly property int searchBarHeight: root.contentPadding * 2
+        + root.searchRowHeight
     // Whole rows only. A max height that lands mid-row leaves the last entry
     // sliced in half at the bottom edge, which reads as a bug rather than as
     // "there is more below".
     property int maxRows: Math.max(1, Math.floor(
-        (window.height * 0.44 - root.searchBarHeight - 10 + root.rowSpacing)
+        (window.height * 0.44 - root.searchBarHeight - root.listGap + root.rowSpacing)
             / (root.rowHeight + root.rowSpacing)))
 
     property alias query: search.text
@@ -163,22 +166,24 @@ Scope {
             y: Math.round((parent.height - frame.maxHeight) / 2)
             width: Math.min(root.frameWidth, parent.width - 32)
 
-            readonly property int maxHeight: root.searchBarHeight + 10
+            readonly property int maxHeight: root.searchBarHeight + root.listGap
                 + root.maxRows * root.rowHeight + (root.maxRows - 1) * root.rowSpacing
             // At least one row tall while expanded, so an overlay message fits.
             readonly property int listHeight: Math.max(root.rowHeight,
                 list.count * root.rowHeight + (list.count - 1) * root.rowSpacing)
 
             Behavior on height {
-                NumberAnimation { duration: 100; easing.type: Easing.OutQuad }
+                NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
             }
 
             height: root.expanded
-                ? Math.min(frame.maxHeight, root.searchBarHeight + 10 + frame.listHeight)
+                ? Math.min(frame.maxHeight, root.searchBarHeight + root.listGap + frame.listHeight)
                 : root.searchBarHeight
             enabled: root.open
 
             clip: true
+            // Keep the card edge and its highlighted rows in the same
+            // geometry instead of mixing shell and control corner radii.
             radius: PanelService.rounding
             color: Theme.base01
             opacity: root.open ? 1 : 0
@@ -191,28 +196,40 @@ Scope {
             ColumnLayout {
                 anchors {
                     fill: parent
-                    leftMargin: 12
-                    rightMargin: 12
-                    topMargin: 12
-                    bottomMargin: 12
+                    leftMargin: root.contentPadding
+                    rightMargin: root.contentPadding
+                    topMargin: root.contentPadding
+                    bottomMargin: root.contentPadding
                 }
                 opacity: root.open ? 1 : 0
-                spacing: 10
+                spacing: root.listGap
 
-                // Wrapper keeps the row 48 tall while the field itself stays
-                // 30, so the text cursor is caret-sized rather than row-sized.
+                // The prompt is deliberately not a separate rounded field;
+                // spacing alone separates it from the result list.
                 Item {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 48
+                    Layout.preferredHeight: root.searchRowHeight
+
+                    ShellText {
+                        id: searchIcon
+                        anchors {
+                            left: parent.left
+                            leftMargin: 10
+                            verticalCenter: parent.verticalCenter
+                        }
+                        text: "󰍉"
+                        color: Theme.base04
+                        size: 14
+                    }
 
                     TextInput {
                         id: search
 
                         anchors {
-                            left: parent.left
+                            left: searchIcon.right
                             right: parent.right
-                            leftMargin: 16
-                            rightMargin: 16
+                            leftMargin: 10
+                            rightMargin: 10
                             verticalCenter: parent.verticalCenter
                         }
                         height: 30

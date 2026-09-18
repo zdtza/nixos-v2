@@ -52,16 +52,10 @@ Item {
         radius: PanelService.rounding
         color: Utils.alpha(Theme.base01, 0.95)
         border.width: 2
-        // Same idle/focus pair as NetworkPanel's password field, so the
-        // border reads as a field outline rather than an accent highlight.
-        // Focus alone is not a signal here (the prompt always holds it), so
-        // the border lights up on the first character instead.
-        // Error stays full base08 -- it has to be noticed.
-        // Checking disables the field, which dims the border again -- the
-        // dots stay put, so the outline is what says "not your turn".
+        // Text entry does not change the outline; only error/checking state
+        // does. Checking dims it to indicate that input is temporarily blocked.
         border.color: root.error ? Theme.base08
-            : (root.inputEnabled && passwordInput.text.length > 0 ? Theme.base04
-                : Utils.alpha(Theme.base05, 0.4))
+            : (root.inputEnabled ? Theme.base04 : Utils.alpha(Theme.base05, 0.4))
 
         Behavior on border.color { ColorAnimation { duration: 120 } }
 

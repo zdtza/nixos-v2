@@ -85,13 +85,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
 	end,
 })
 
--- format with whatever LSP server is attached, before the write hits disk
-vim.api.nvim_create_autocmd("BufWritePre", {
-	callback = function(args)
-		vim.lsp.buf.format({ bufnr = args.buf, timeout_ms = 2000 })
-	end,
-})
-
 require("mini.icons").setup()
 require("which-key").setup() -- shows a popup of available keymaps on <leader>
 require("which-key").add({

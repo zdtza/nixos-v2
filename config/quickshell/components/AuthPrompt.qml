@@ -75,11 +75,8 @@ Item {
             enabled: root.inputEnabled
             echoMode: root.responseVisible ? TextInput.Normal : TextInput.Password
             passwordCharacter: "●"
-            // Dots are the only feedback needed; a blinking caret in a
-            // centered password field just jitters the layout. An empty
-            // delegate is the only reliable hide: TextInput re-asserts
-            // cursorVisible itself on every focus change.
-            cursorDelegate: Item {}
+            // Keep the caret visible so both lock-screen and Polkit prompts
+            // clearly indicate that they are ready for keyboard input.
             color: Theme.base05
             selectionColor: Theme.base02
             selectedTextColor: Theme.base05

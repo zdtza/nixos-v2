@@ -21,6 +21,9 @@ ImagePicker {
     // and typing filters on it.
     showCaption: true
     filterable: true
+    // There are only a few dozen previews. Decode all of them asynchronously
+    // ahead of use so changing the filter never initiates image work.
+    preloadAll: true
 
     // Theme.wallpaper is .../themes/<theme>/wallpapers/<file>, the shell's
     // only pointer into the repo, so both the theme list's folder and the

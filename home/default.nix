@@ -13,6 +13,7 @@
     ./btop.nix
     ./nvim.nix
     ./git.nix
+    ./ssh.nix
     ./web-apps.nix
     ./fzf.nix
     ./yazi.nix

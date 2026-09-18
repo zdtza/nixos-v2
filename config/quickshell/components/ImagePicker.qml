@@ -57,16 +57,37 @@ Scope {
     // type-to-filter over the same field.
     property bool showCaption: false
     property bool filterable: false
+    // Small, fixed collections can decode in the background before the picker
+    // is used. Keep this off for wallpaper folders, which may be very large.
+    property bool preloadAll: false
     property string filter: ""
 
-    // Everything below indexes into this, not `items`: with a filter typed the
-    // carousel *is* the narrowed list. Fuzzy (subsequence), and a typed space
-    // counts as a dash, since the values are folder names like "tokyo-night".
-    readonly property var shownItems: {
+    // Navigation indexes into this narrowed list. The Repeater deliberately
+    // does not: replacing its model on every keypress destroyed and rebuilt
+    // every image, mask, and effect delegate, synchronously decoding previews
+    // again and stalling typing/backspacing.
+    readonly property var shownItems: root.items.filter(item => root.itemMatchesFilter(item))
+
+    // Fuzzy (subsequence), with spaces matching dashes in folder names such as
+    // "tokyo-night".
+    function itemMatchesFilter(item: var): bool {
         const token = root.filter.toLowerCase().replace(/ /g, "-");
-        if (token === "")
-            return root.items;
-        return root.items.filter(item => Utils.fuzzyMatches(String(item.value).toLowerCase(), token));
+        return token === ""
+            || Utils.fuzzyMatches(String(item.value).toLowerCase(), token);
+    }
+
+    // Position of an item in shownItems without relying on JS object identity.
+    // This lets stable source-model delegates lay themselves out as a compact
+    // filtered carousel instead of being recreated for each filter change.
+    function filteredIndex(sourceIndex: int): int {
+        if (!root.itemMatchesFilter(root.items[sourceIndex]))
+            return -1;
+        let result = 0;
+        for (let index = 0; index < sourceIndex; index++) {
+            if (root.itemMatchesFilter(root.items[index]))
+                result++;
+        }
+        return result;
     }
 
     property int selectedIndex: 0
@@ -263,7 +284,11 @@ Scope {
                 }
 
                 Repeater {
-                    model: root.shownItems
+                    // Keep delegates (and their decoded image cache entries)
+                    // alive while filtering; only their layout/visibility
+                    // changes. A filtered array here made every keystroke tear
+                    // down and rebuild the expensive preview scene graph.
+                    model: root.items
 
                     delegate: Item {
                         id: slice
@@ -271,13 +296,17 @@ Scope {
                         required property var modelData
                         required property int index
 
-                        readonly property int relativeIndex: index - root.selectedIndex
-                        readonly property bool selected: index === root.selectedIndex
-                        // Only the neighbours that can actually reach the
-                        // screen are built/decoded; once one has been near, its
-                        // texture is kept so scrolling past doesn't re-decode.
-                        readonly property bool nearby: Math.abs(relativeIndex) <= 16
-                        property bool sourceActivated: nearby
+                        readonly property int shownIndex: root.filteredIndex(index)
+                        readonly property bool matchesFilter: shownIndex >= 0
+                        readonly property int relativeIndex: shownIndex - root.selectedIndex
+                        readonly property bool selected: matchesFilter
+                            && shownIndex === root.selectedIndex
+                        // Only the matching neighbours that can actually reach
+                        // the screen are decoded; once one has been near, its
+                        // texture is kept through later filter changes.
+                        readonly property bool nearby: matchesFilter
+                            && Math.abs(relativeIndex) <= 16
+                        property bool sourceActivated: root.preloadAll || nearby
                         onNearbyChanged: if (nearby) sourceActivated = true
 
                         visible: nearby
@@ -348,7 +377,9 @@ Scope {
                                 // Qt scales during JPEG decode, so this is
                                 // cheap; 2x the slice for HiDPI headroom.
                                 sourceSize.height: root.expandedHeight * 2
-                                asynchronous: false
+                                // A newly revealed preview must never block the
+                                // input/render thread while it is decoded.
+                                asynchronous: true
                                 cache: true
                                 smooth: true
                             }
@@ -389,7 +420,7 @@ Scope {
                                 if (slice.selected)
                                     root.acceptItem(slice.modelData);
                                 else
-                                    root.selectedIndex = slice.index;
+                                    root.selectedIndex = slice.shownIndex;
                             }
                         }
                     }

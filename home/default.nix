@@ -1,5 +1,6 @@
 {
   imports = [
+    ./desktop.nix
     ./xdg-mimeapps.nix
     ./appearance.nix
     ./kitty.nix

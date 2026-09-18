@@ -1,12 +1,10 @@
 // Theme picker: the same ImagePicker carousel the wallpaper picker uses, fed
 // by the themes/ folder itself (one subfolder per theme, each with a
-// preview.png -- see themes/default.nix). Accepting one opens a terminal
-// running scripts/select-theme.sh with the theme name, which owns the whole
-// switch: rewriting theme.name in the host file and activating the new home
-// generation. The terminal is the progress output and closes itself once the
-// switch succeeds; on failure it waits for a keypress so the error stays
-// readable. `--class floating-terminal` picks up the existing float/center
-// window rule in config/hypr/hyprland.lua.
+// preview.png -- see themes/default.nix). Accepting one starts
+// scripts/select-theme.sh in the background. It owns the whole switch:
+// rewriting theme.name in the host file and activating the new home
+// generation. A notification offers the progress terminal instead of opening
+// it unconditionally.
 import QtQuick
 import Qt.labs.folderlistmodel
 import Quickshell
@@ -58,8 +56,7 @@ ImagePicker {
         return entries;
     }
 
-    // bash -c's first positional argument lands in $0, hence the name last.
-    onAccepted: item => Quickshell.execDetached(["kitty", "--class", "floating-terminal", "bash", "-c", "select-theme \"$0\" || read -rsn1 -p 'theme switch failed, press any key'", item.value])
+    onAccepted: item => Quickshell.execDetached(["select-theme", "--background", item.value])
 
     FolderListModel {
         id: folder

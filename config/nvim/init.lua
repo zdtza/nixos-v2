@@ -202,7 +202,7 @@ vim.keymap.set("n", "<leader>bd", function() Snacks.bufdelete() end, { desc = "D
 
 vim.keymap.set("n", "<C-w>", function() Snacks.bufdelete() end, { desc = "Close buffer", nowait = true })
 
-vim.keymap.set("n", "<leader>qq", "<cmd>qa<cr>", { desc = "Quit neovim" })
+vim.keymap.set("n", "<leader>q", "<cmd>qa<cr>", { desc = "Quit neovim" })
 
 vim.keymap.set({ "n", "i" }, "<C-s>", "<cmd>write<cr>", { desc = "Save file" })
 

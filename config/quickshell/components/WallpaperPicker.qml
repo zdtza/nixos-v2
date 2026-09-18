@@ -14,6 +14,8 @@ ImagePicker {
 
     ipcTarget: "wallpaper"
     selectedValue: root.currentPath
+    showCaption: true
+    filterable: true
 
     // Theme.wallpaper is the shell's only pointer at the active theme's
     // wallpaper folder (themes/<theme>/wallpapers) -- its own directory is
@@ -44,9 +46,17 @@ ImagePicker {
             // changes -- drop anything outside the theme's wallpaper folder.
             if (!String(folder.get(index, "fileUrl")).startsWith(prefix))
                 continue;
+            const fileName = String(folder.get(index, "fileName"));
+            // Turn "01-cherry-blossom.jpg" into "cherry-blossom". ImagePicker
+            // handles title casing and spacing while keeping the path as the
+            // value passed to select-wallpaper.
+            const name = fileName.replace(/\.[^.]+$/, "")
+                .replace(/^\d+[-_ ]+/, "")
+                .replace(/[_ ]+/g, "-");
             entries.push({
                 image: folder.get(index, "fileUrl"),
-                value: String(folder.get(index, "filePath"))
+                value: String(folder.get(index, "filePath")),
+                name: name
             });
         }
         return entries;

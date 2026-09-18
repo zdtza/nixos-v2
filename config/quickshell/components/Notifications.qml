@@ -85,9 +85,10 @@ Scope {
         implicitWidth: 450
         exclusionMode: ExclusionMode.Ignore
 
-        readonly property int panelPadding: 10
+        readonly property int panelPadding: 8
+        readonly property int panelTopPadding: 0
         readonly property real panelHeight: notificationColumn.implicitHeight > 0
-            ? notificationColumn.implicitHeight + panelPadding * 2 : 0
+            ? notificationColumn.implicitHeight + panelTopPadding + panelPadding : 0
         // Same top-left corner treatment as Drawer/BatteryPanel: this stays
         // square (radius 0) and a same-colour Canvas carves the concave
         // curve next to it, so the panel reads as continuing the bar's
@@ -143,8 +144,9 @@ Scope {
                     left: parent.left
                     right: parent.right
                     margins: window.panelPadding
+                    topMargin: window.panelTopPadding
                 }
-                spacing: 4
+                spacing: 2
 
                 Repeater {
                     model: server.trackedNotifications
@@ -154,7 +156,7 @@ Scope {
                         required property Notification modelData
                         required property int index
                         width: notificationColumn.width
-                        spacing: 4
+                        spacing: 2
 
                         Separator { visible: rowWrapper.index > 0 }
 
@@ -236,7 +238,7 @@ Scope {
         }
 
         width: notificationColumn.width
-        implicitHeight: textContent.implicitHeight + 16
+        implicitHeight: textContent.implicitHeight + 12
         height: implicitHeight
 
         Timer {
@@ -261,11 +263,11 @@ Scope {
                 left: parent.left
                 right: parent.right
                 top: parent.top
-                leftMargin: 12
-                rightMargin: 12
-                topMargin: 8
+                leftMargin: 10
+                rightMargin: 10
+                topMargin: 6
             }
-            spacing: 10
+            spacing: 4
 
             ShellText {
                 width: parent.width
@@ -286,8 +288,9 @@ Scope {
                 wrapMode: Text.Wrap
                 elide: Text.ElideRight
                 maximumLineCount: 4
+                color: Theme.base04
                 font.pixelSize: 12
-                lineHeight: 1.2
+                lineHeight: 1.1
             }
         }
 

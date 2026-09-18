@@ -86,10 +86,15 @@ in
       image = theme.wallpaper;
       polarity = theme.polarity;
 
-      # Match GtkSourceView's document area to the surrounding GTK palette.
+      # Match GNOME Text Editor's document area to the surrounding GTK
+      # palette. Keep this scoped to its custom `page` node and `editor`
+      # class: Calculator also embeds a GtkSourceView for equation input and
+      # deliberately makes it transparent over its card. The former generic
+      # `textview.sourceview` selector painted that input as a mismatched
+      # @view_bg_color rectangle.
       targets.gtk.extraCss = ''
-        textview.sourceview,
-        textview.sourceview text {
+        page textview.editor,
+        page textview.editor text {
           background-color: @view_bg_color;
           color: @view_fg_color;
         }
@@ -103,6 +108,9 @@ in
     # Expose the theme and wallpaper selectors on PATH.
     home.packages = [
       (pkgs.writeShellScriptBin "select-theme" ''
+        export THEME_TMUX=${lib.getExe pkgs.tmux}
+        export THEME_TERMINAL=${lib.getExe pkgs.kitty}
+        export THEME_NOTIFY_SEND=${lib.getExe' pkgs.libnotify "notify-send"}
         exec ${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.src/nixos/scripts/select-theme.sh "$@"
       '')
       (pkgs.writeShellScriptBin "select-wallpaper" ''

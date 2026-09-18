@@ -10,9 +10,9 @@ pragma ComponentBehavior: Bound
 // The selected slice is the only undimmed, full-size one, and carries an
 // accent outline along its parallelogram edges.
 //
-// `showCaption` puts the selected item's `value` under the carousel, and
-// `filterable` makes typing narrow `items` down by that same value (see
-// components/ThemePicker.qml, which uses both).
+// `showCaption` puts the selected item's display name under the carousel, and
+// `filterable` makes typing narrow `items` by that name (see ThemePicker.qml
+// and WallpaperPicker.qml, which use both).
 //
 // Purely presentational: the caller supplies `items` and decides what
 // accepting one means, so the same component backs the wallpaper picker
@@ -31,9 +31,10 @@ import ".."
 Scope {
     id: root
 
-    // [{ image: url, value: var }]. `value` is handed back
+    // [{ image: url, value: var, name?: string }]. `value` is handed back
     // untouched through accepted(), so callers can carry whatever key they
-    // need (a file path, a theme name) without this component knowing.
+    // need (a file path, a theme name) without this component knowing. `name`
+    // optionally provides a separate caption and search term.
     property var items: []
     // Entry already in use; the carousel opens on it.
     property var selectedValue: null
@@ -48,13 +49,13 @@ Scope {
     property int sliceHeight: 432
     property int sliceSpacing: -30
     property int skewOffset: 28
-    readonly property int bottomChromeHeight: 30
+    readonly property int topChromeHeight: 30
+    readonly property int bottomChromeHeight: 36
 
     property color dimColor: Theme.base00
     property color scrim: Utils.alpha(Theme.base00, 0.5)
 
-    // Caption under the carousel (the selected item's `value`), and
-    // type-to-filter over the same field.
+    // Caption under the carousel and type-to-filter over the same name.
     property bool showCaption: false
     property bool filterable: false
     // Small, fixed collections can decode in the background before the picker
@@ -68,12 +69,16 @@ Scope {
     // again and stalling typing/backspacing.
     readonly property var shownItems: root.items.filter(item => root.itemMatchesFilter(item))
 
-    // Fuzzy (subsequence), with spaces matching dashes in folder names such as
+    function itemName(item: var): string {
+        return String(item?.name ?? item?.value ?? "");
+    }
+
+    // Fuzzy (subsequence), with spaces matching dashes in names such as
     // "tokyo-night".
     function itemMatchesFilter(item: var): bool {
         const token = root.filter.toLowerCase().replace(/ /g, "-");
         return token === ""
-            || Utils.fuzzyMatches(String(item.value).toLowerCase(), token);
+            || Utils.fuzzyMatches(root.itemName(item).toLowerCase(), token);
     }
 
     // Position of an item in shownItems without relying on JS object identity.
@@ -110,12 +115,12 @@ Scope {
         return root.shownItems[root.selectedIndex] ?? null;
     }
 
-    // Caption markup: the selected value as a title ("tokyo-night" -> "Tokyo
+    // Caption markup: the selected name as a title ("tokyo-night" -> "Tokyo
     // Night") with the letters the filter matched painted in the accent. The
-    // filter matches against the raw value and the title is the same string
-    // cased/spaced differently, so the match positions carry over as-is.
+    // title is the same string cased/spaced differently, so match positions
+    // carry over as-is.
     function captionMarkup(): string {
-        const value = String(root.currentItem()?.value ?? "");
+        const value = root.itemName(root.currentItem());
         const title = value.split("-")
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(" ");
@@ -220,7 +225,7 @@ Scope {
             // preview is what omarchy budgets for the fanned-out neighbours.
             width: Math.min(parent.width - 80,
                 root.expandedWidth + 13 * (root.sliceWidth + root.sliceSpacing) + 40)
-            height: root.expandedHeight + 30 + root.bottomChromeHeight
+            height: root.expandedHeight + root.topChromeHeight + root.bottomChromeHeight
 
             // Clicks on the carousel itself must not fall through to the
             // close-on-click scrim behind it.
@@ -234,7 +239,7 @@ Scope {
 
                 anchors {
                     top: parent.top
-                    topMargin: 30
+                    topMargin: root.topChromeHeight
                     bottom: parent.bottom
                     bottomMargin: root.bottomChromeHeight
                     horizontalCenter: parent.horizontalCenter
@@ -436,7 +441,7 @@ Scope {
                     bottom: parent.bottom
                     horizontalCenter: parent.horizontalCenter
                 }
-                size: 14
+                size: 16
                 font.weight: Font.DemiBold
                 textFormat: Text.StyledText
                 text: root.captionMarkup()

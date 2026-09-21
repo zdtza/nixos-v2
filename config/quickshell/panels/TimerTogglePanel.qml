@@ -156,8 +156,7 @@ Item {
         onCleared: PanelService.close(root)
     }
 
-    // Drawer, not Popup.
-    Drawer {
+    Popup {
         id: panel
 
         anchorItem: root

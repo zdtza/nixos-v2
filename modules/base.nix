@@ -1,5 +1,5 @@
 # Headless defaults shared by all hosts.
-{ ... }:
+{ pkgs, ... }:
 {
   boot = {
     consoleLogLevel = 0;
@@ -39,7 +39,12 @@
       defaultEditor = true;
     };
     # Run prebuilt binaries, including editor-installed language servers.
-    nix-ld.enable = true;
+    nix-ld = {
+      enable = true;
+      # The Microsoft SQL Server extension's bundled .NET services load ICU
+      # dynamically and abort at startup when it is absent.
+      libraries = [ pkgs.icu ];
+    };
   };
 
   networking.networkmanager = {

@@ -20,9 +20,11 @@ in
     ../../modules/wayland.nix
     ../../modules/laptop.nix
     ../../modules/gpu-nvidia.nix
+    ../../modules/postgresql.nix
     ../../modules/windows.nix
   ];
 
+  development.postgresql.enable = true;
   windows.user = user;
 
   # Quickshell locks the session immediately after autologin.
@@ -34,7 +36,7 @@ in
     imports = [ ../../home ];
 
     # Select from themes/; apply user-only changes with `sw`.
-    theme.name = "osaka-jade";
+    theme.name = "tokyo-night";
   };
 
   # time zone.

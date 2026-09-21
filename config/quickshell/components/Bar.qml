@@ -119,13 +119,11 @@ PanelWindow {
         panelTarget: quickToggles.timerPanel
     }
 
-    // Anchored rather than in the right row so its collapsed hotspot keeps a fixed spot beside the clock.
-    Tray {
-        id: tray
+    QuickToggles {
+        id: quickToggles
 
         anchors {
             right: clock.left
-            // Negative on purpose: both sides pad themselves invisibly.
             rightMargin: -4
             verticalCenter: clock.verticalCenter
         }
@@ -140,9 +138,9 @@ PanelWindow {
             verticalCenter: parent.verticalCenter
         }
 
-        QuickToggles { 
-            id: quickToggles 
-            Layout.rightMargin: -4
+        Tray {
+            id: tray
+            Layout.rightMargin: -2
         }
 
         VolumePanel {

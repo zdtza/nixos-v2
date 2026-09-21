@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 
-// System tray, collapsed behind a blank hotspot on its left edge (a chevron glyph used to sit there; the target stayed, the glyph did not).
+// System tray, collapsed behind a left-facing chevron.
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -185,12 +185,12 @@ Item {
             }
         }
 
-        // Deliberately textless: a fixed 22px hover/click target that keeps the collapsed tray reachable without drawing anything itself.
         Button {
             id: chevron
 
             panel: root
             showPanelIndicator: false
+            text: ""
             onClicked: {
                 root.pinned = !root.pinned;
                 if (!root.pinned)

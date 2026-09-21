@@ -120,6 +120,15 @@ for _, window in ipairs(picker_windows) do
 	})
 end
 
+-- FreeRDP's dynamic-resolution channel can miss the final configure event when
+-- its tiled window is resized through the opening animation. Map it directly
+-- at its settled size so the initial desktop resolution is applied immediately.
+hl.window_rule({
+	name = "windows-rdp",
+	match = { class = "^windows$" },
+	no_anim = true,
+})
+
 hl.window_rule({
 	name = "gnome-calculator",
 	match = { class = "^org.gnome.Calculator$" },

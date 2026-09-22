@@ -115,12 +115,15 @@ Scope {
         WlrLayershell.layer: WlrLayer.Overlay
 
         anchors.bottom: true
-        margins.bottom: PanelService.barGap + PanelService.gapBottomOffset
+        margins.bottom: PanelService.panelBarInset
+            + PanelService.panelGap + PanelService.gapBottomOffset
 
         Rectangle {
             anchors.fill: parent
             color: Theme.base01
-            radius: PanelService.rounding
+            radius: 0
+            border.width: PanelService.panelBorderWidth
+            border.color: Theme.base04
 
             Row {
                 anchors {

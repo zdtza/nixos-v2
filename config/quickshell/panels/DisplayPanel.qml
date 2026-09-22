@@ -12,6 +12,7 @@ Item {
     id: root
 
     required property var screen
+    property bool showButton: true
     readonly property bool available: DisplayService.available || DisplayService.monitors.length > 0
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
@@ -19,7 +20,7 @@ Item {
     property int selectedScaleIndex: 0
 
     visible: available
-    implicitWidth: available ? indicator.implicitWidth : 0
+    implicitWidth: available && showButton ? indicator.implicitWidth : 0
     implicitHeight: indicator.implicitHeight
 
     function brightnessStatus(): string {
@@ -75,6 +76,7 @@ Item {
     Button {
         id: indicator
         anchors.centerIn: parent
+        visible: root.showButton
         panel: root
         text: "󰍹"
         onClicked: PanelService.toggle(root)
@@ -94,8 +96,8 @@ Item {
         anchorWindow: root.QsWindow.window
         open: root.opened
         onCloseRequested: PanelService.close(root)
-        contentSpacing: 14
-        implicitWidth: 460 + PanelService.shellRounding
+        contentSpacing: 12
+        implicitWidth: 460
         implicitHeight: panelContent.implicitHeight
             + contentTopMargin + contentBottomMargin
 
@@ -148,6 +150,9 @@ Item {
 
                     width: scaleRow.cellWidth
                     keyboardFocused: scaleButton.index === root.selectedScaleIndex
+                    active: !!DisplayService.focusedMonitor
+                        && Math.abs(Number(scaleButton.modelData)
+                            - Number(DisplayService.focusedMonitor.scale)) < 0.01
                     enabled: !!DisplayService.focusedMonitor
                     onHoveredChanged: if (hovered && PanelService.hoverSelectReady)
                         root.selectedScaleIndex = scaleButton.index

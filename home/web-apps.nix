@@ -91,8 +91,14 @@ let
       ) "${lib.concatStringsSep " " app.chromiumFlags} ";
       url = lib.replaceStrings [ "%" "\"" ] [ "%%" "\\\"" ] app.url;
       icon = app.iconName or (iconDir + "/${app.id}.png");
+      isChromium = (app.browser or "firefox") == "chromium";
+      urlParts = builtins.match "^[^:]+://([^/]+).*$" app.url;
+      # Chromium app windows use this generated XWayland class. Quickshell's
+      # desktop-entry lookup understands StartupWMClass and can then resolve the
+      # custom icon instead of falling back to Chromium's icon.
+      startupWMClass = app.startupWMClass or "chrome-${builtins.elemAt urlParts 0}__-Default";
       exec =
-        if (app.browser or "firefox") == "firefox" then
+        if !isChromium then
           ''${pkgs.firefox}/bin/firefox "${url}"''
         else
           ''${pkgs.chromium}/bin/chromium ${profileFlag}${chromiumFlags}"--app=${url}"'';
@@ -103,6 +109,9 @@ let
 
       inherit exec icon;
       categories = [ "Network" ];
+      settings = lib.optionalAttrs isChromium {
+        StartupWMClass = startupWMClass;
+      };
     };
 in
 {

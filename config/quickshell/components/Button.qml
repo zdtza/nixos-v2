@@ -1,5 +1,6 @@
 import QtQuick
 import "../services"
+import ".."
 
 // Fixed-width bar button shared by panel-backed status controls.
 Item {
@@ -7,6 +8,7 @@ Item {
 
     required property var panel
     property string text: ""
+    property real textSize: 14
     property color textColor: Theme.base05
     property int acceptedButtons: Qt.LeftButton
     property bool showPanelIndicator: true
@@ -20,25 +22,20 @@ Item {
     implicitHeight: 26
     clip: true
 
+    Rectangle {
+        anchors.fill: parent
+        radius: 4
+        color: mouseArea.containsMouse
+            || (root.showPanelIndicator && root.panelOpen)
+            ? Utils.alpha(Theme.base05, 0.16) : "transparent"
+    }
+
     ShellText {
         anchors.centerIn: parent
         anchors.verticalCenterOffset: -1
         text: root.text
         color: root.textColor
-        size: 14
-    }
-
-    Rectangle {
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: 16
-        height: 2
-        radius: PanelService.rounding
-        visible: opacity > 0
-        opacity: root.showPanelIndicator && (root.panelOpen || mouseArea.containsMouse) ? 1 : 0
-        color: Theme.base05
-
-        Behavior on opacity { NumberAnimation { duration: 120 } }
+        size: root.textSize
     }
 
     MouseArea {

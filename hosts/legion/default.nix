@@ -24,7 +24,6 @@ in
     ../../modules/windows.nix
   ];
 
-  development.postgresql.enable = true;
   windows.user = user;
 
   # Quickshell locks the session immediately after autologin.
@@ -42,6 +41,10 @@ in
   # time zone.
   time.timeZone = "Africa/Johannesburg";
 
+  nixpkgs.config.permittedInsecurePackages = [
+    "beekeeper-studio-6.0.5"
+  ];
+
   # locale.
   i18n.defaultLocale = "en_ZA.UTF-8";
 
@@ -57,7 +60,6 @@ in
       "onepassword"
       "onepassword-cli"
       "kvm"
-      "docker"
     ];
   };
 
@@ -119,6 +121,8 @@ in
     blender # 3D modeling software
     gnome-text-editor # basic text editor
     papers # document viewer / editor
+    beekeeper-studio # data-base management tool
+    bruno # api management tool
   ];
 
   networking = {

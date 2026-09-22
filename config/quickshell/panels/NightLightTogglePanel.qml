@@ -8,11 +8,12 @@ import "../services"
 Item {
     id: root
 
+    property bool showButton: true
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     readonly property int temperatureStep: 100
 
-    implicitWidth: 28
+    implicitWidth: showButton ? 28 : 0
     implicitHeight: 26
 
     function temperatureStatus(): string {
@@ -29,8 +30,10 @@ Item {
 
     Button {
         anchors.centerIn: parent
+        visible: root.showButton
         panel: root
-        text: "󰖔"
+        text: ""
+        textSize: 12
         textColor: NightLightService.enabled ? Theme.base05 : Theme.base04
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: mouse => {
@@ -68,7 +71,7 @@ Item {
         onCleared: PanelService.close(root)
     }
 
-    Popup {
+    Drawer {
         id: panel
 
         anchorItem: root
@@ -76,13 +79,13 @@ Item {
         open: root.opened
         onCloseRequested: PanelService.close(root)
         contentSpacing: 14
-        implicitWidth: 420 + PanelService.shellRounding
+        implicitWidth: 420
         implicitHeight: panelContent.implicitHeight
             + contentTopMargin + contentBottomMargin
 
         Hero {
             width: parent.width
-            icon: "󰖔"
+            icon: ""
             title: "Night Light"
             status: root.temperatureStatus()
             trailingWidth: 44

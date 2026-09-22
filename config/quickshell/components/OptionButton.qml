@@ -7,6 +7,7 @@ Rectangle {
     id: root
 
     property bool keyboardFocused: false
+    property bool active: false
     property bool enabled: true
     readonly property alias hovered: mouseArea.containsMouse
     // Hover and keyboard share one focus cursor.
@@ -17,11 +18,10 @@ Rectangle {
     implicitHeight: 32
     radius: PanelService.rounding
     opacity: root.enabled ? 1 : 0.5
+    // Navigation only moves the outline; the applied option owns the fill.
     color: mouseArea.pressed
         ? Utils.alpha(Theme.base05, 0.22)
-        : root.highlighted
-            ? Utils.alpha(Theme.base05, 0.12)
-            : "transparent"
+        : root.active ? Utils.alpha(Theme.base05, 0.12) : "transparent"
     border.width: root.highlighted ? 1 : 0
     border.color: Utils.alpha(Theme.base05, 0.35)
 

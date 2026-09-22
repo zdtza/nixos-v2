@@ -139,8 +139,8 @@ Item {
         anchorWindow: root.QsWindow.window
         open: root.opened
         onCloseRequested: PanelService.close(root)
-        contentSpacing: 14
-        implicitWidth: 420 + PanelService.shellRounding
+        contentSpacing: 12
+        implicitWidth: 420
         implicitHeight: panelContent.implicitHeight
             + contentTopMargin + contentBottomMargin
 
@@ -292,9 +292,7 @@ Item {
         width: parent.width
         height: 36
         radius: PanelService.rounding
-        color: keyboardSelected
-            ? Utils.alpha(Theme.base05, 0.08)
-            : "transparent"
+        color: selected ? Utils.alpha(Theme.base05, 0.08) : "transparent"
         border.width: keyboardSelected ? 1 : 0
         border.color: Utils.alpha(Theme.base05, 0.25)
 

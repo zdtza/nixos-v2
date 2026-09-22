@@ -18,14 +18,12 @@ PopupWindow {
 
     property int menuWidth: 220
     property int panelPadding: 6
-    property int panelTopPadding: 3
+    property int panelTopPadding: menuTitle !== "" ? panelPadding : 3
     property int itemAreaPadding: 6
     property string menuTitle: ""
     property string menuStatus: ""
 
     readonly property bool staticEntries: !handle
-    readonly property real cornerSize: !submenu && PanelService.barVisible
-        ? PanelService.shellRounding : 0
     property bool contentReady: staticEntries
     property var selectedEntry: null
     property int selectedEntryIndex: -1
@@ -81,6 +79,14 @@ PopupWindow {
         closeRequested();
     }
 
+    function closeDeepestSubmenu(): bool {
+        if (!activeSubmenu)
+            return false;
+        if (!activeSubmenu.closeDeepestSubmenu())
+            submenuEntry = null;
+        return true;
+    }
+
     Component.onCompleted: {
         if (staticEntries) {
             if (keyboardEntryIndices.length > 0)
@@ -116,11 +122,14 @@ PopupWindow {
         }
     }
 
-    // Escape is a single exit, not a walk back out through each open submenu level: it dismisses the whole chain and the tray with it.
+    // Close one nested menu at a time; only dismiss the tray once the root menu is left.
     PanelShortcut {
         enabled: menu.visible && !menu.submenu
         sequences: ["Escape"]
-        onActivated: menu.dismissRequested()
+        onActivated: {
+            if (!menu.closeDeepestSubmenu())
+                menu.dismissRequested();
+        }
     }
 
     // PopupAnchor.item and .window are mutually exclusive in quickshell's native implementation, and its internal onItemWindowChanged() dereferences the anchor item.
@@ -141,20 +150,20 @@ PopupWindow {
     anchor {
         id: popupAnchor
 
-        edges: menu.submenu ? Edges.Bottom | Edges.Left : Edges.Top | Edges.Left
-        gravity: Edges.Bottom | Edges.Right
+        edges: Edges.Bottom | Edges.Left
+        gravity: menu.submenu ? Edges.Bottom | Edges.Right : Edges.Top | Edges.Right
         // Vertical sliding honors compositor outer gaps.
-        adjustment: !menu.submenu && !PanelService.barVisible
+        adjustment: !menu.submenu && !PanelService.barAffectsPanels
             ? PopupAdjustment.SlideX : PopupAdjustment.Slide
         // Anchor rect is a 1x1 point in the anchor item's local coordinates, used only as the pivot the popup grows from.
         rect.x: menu.submenu ? -2 : 0
         rect.y: menu.submenu ? 0
-            : (PanelService.barVisible ? PanelService.barHeight : 0)
+            : PanelService.popupParentOffset - PanelService.panelGap
         rect.width: 1
-        // Top-level menu starts at anchor y; one-pixel height would place it one pixel below screen/bar edge with Bottom gravity.
+        // Top-level menus grow upward from a point just above the bottom bar.
         rect.height: menu.submenu ? 1 : 0
 
-        // Match Popup positioning: center under bar item, then leave same compositor-gap-sized offset below bar.
+        // Center above the bar item while honoring horizontal screen gaps.
         onAnchoring: {
             if (menu.submenu || !menu.anchorWindow)
                 return;
@@ -164,14 +173,14 @@ PopupWindow {
                 menu.anchorItem.width / 2 - menu.implicitWidth / 2,
                 0
             );
-            point.x = Math.max(PanelService.barGap + PanelService.gapLeftOffset,
+            point.x = Math.max(PanelService.panelGap + PanelService.gapLeftOffset,
                 Math.min(point.x, menu.anchorWindow.width - menu.implicitWidth
-                    - PanelService.barGap - PanelService.gapRightOffset));
+                    - PanelService.panelGap - PanelService.gapRightOffset));
             popupAnchor.rect.x = Math.round(point.x);
         }
     }
 
-    implicitWidth: menu.menuWidth + menu.cornerSize * 2
+    implicitWidth: menu.menuWidth
     implicitHeight: Math.max(1, column.implicitHeight
         + menu.panelTopPadding + menu.panelPadding)
     visible: contentReady
@@ -224,34 +233,12 @@ PopupWindow {
         height: menu.contentReady ? menu.height : 0
         clip: true
 
-        // Behavior so height changes mid-reveal -- e.g. async DBus menu hydration -- retarget smoothly instead of snapping.
-        Behavior on height {
-            enabled: menu.contentReady
-            NumberAnimation { duration: PanelService.slideDuration; easing.type: Easing.OutCubic }
-        }
-
-        ShellCorner {
-            visible: menu.cornerSize > 0
-            width: menu.cornerSize
-            height: Math.min(width, revealClip.height)
-        }
-
-        ShellCorner {
-            mirrored: true
-            visible: menu.cornerSize > 0
-            x: parent.width - width
-            width: menu.cornerSize
-            height: Math.min(width, revealClip.height)
-        }
-
         Rectangle {
-            x: menu.cornerSize
-            width: parent.width - menu.cornerSize * 2
-            height: revealClip.height
+            anchors.fill: parent
             color: Theme.base01
-            radius: PanelService.shellRounding
-            topLeftRadius: 0
-            topRightRadius: 0
+            radius: 0
+            border.width: PanelService.panelBorderWidth
+            border.color: Theme.base04
 
             Column {
                 id: column
@@ -345,7 +332,7 @@ PopupWindow {
                             leftMargin: 6
                             rightMargin: 6
                         }
-                        radius: PanelService.shellRounding
+                        radius: 0
                         color: menu.selectedEntryIndex === row.index
                             && row.interactive ? Theme.base02 : "transparent"
 

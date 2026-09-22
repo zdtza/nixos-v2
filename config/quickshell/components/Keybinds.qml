@@ -146,7 +146,8 @@ Scope {
             width: ListView.view.width
             height: panel.rowHeight
             radius: PanelService.rounding
-            color: bindRow.ListView.isCurrentItem ? Theme.base02 : "transparent"
+            color: bindRow.ListView.isCurrentItem
+                ? Utils.alpha(Theme.base05, 0.10) : "transparent"
 
             // Exact halves: each column is width / 2, padding lives inside its own half so the split never moves.
             ShellText {

@@ -1,13 +1,14 @@
 import Quickshell.Wayland
+import "../services"
 
-// Screen-edge drawer used by right-side system panels.
+// Floating drawer used by right-side system panels.
 ShellSurface {
-    edgeAligned: true
-
     anchors {
-        top: true
+        bottom: true
         right: true
     }
+
+    margins.right: PanelService.panelGap + PanelService.gapRightOffset
 
     WlrLayershell.namespace: "quickshell:panel-drawer"
 }

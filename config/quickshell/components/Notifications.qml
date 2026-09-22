@@ -70,15 +70,13 @@ Scope {
             && server.trackedNotifications.values.length > 0
         color: "transparent"
         implicitWidth: 450
+        implicitHeight: Math.max(1, window.panelHeight)
         exclusionMode: ExclusionMode.Ignore
 
         readonly property int panelPadding: 8
-        readonly property int panelTopPadding: 0
+        readonly property int panelTopPadding: 8
         readonly property real panelHeight: notificationColumn.implicitHeight > 0
             ? notificationColumn.implicitHeight + panelTopPadding + panelPadding : 0
-        // Same top-left corner treatment as Drawer/BatteryPanel.
-        readonly property real cornerSize: PanelService.barVisible ? PanelService.shellRounding : 0
-
         // Bounding box for the whole row, not just the panel rect.
         mask: Region { width: window.panelHeight > 0 ? window.width : 0; height: window.panelHeight }
 
@@ -86,32 +84,24 @@ Scope {
         WlrLayershell.layer: WlrLayer.Overlay
 
         anchors {
-            top: true
             right: true
             bottom: true
         }
 
-        // Align with the bar bottom and screen right edge.
-        margins.top: PanelService.barVisible ? PanelService.barHeight : 0
-
-        ShellCorner {
-            width: window.cornerSize
-            height: Math.min(width, window.panelHeight)
-        }
+        // Float above the bar and clear of the right screen edge.
+        margins.bottom: PanelService.panelBarInset + PanelService.panelGap
+        margins.right: PanelService.panelGap + PanelService.gapRightOffset
 
         // One shared panel background behind the whole stack.
         Rectangle {
             id: panelBg
 
-            x: window.cornerSize
-            width: window.width - window.cornerSize
+            width: window.width
             height: window.panelHeight
             color: Theme.base01
-            radius: PanelService.shellRounding
-            topLeftRadius: 0
-            topRightRadius: 0
-            // Right edge sits flush against the screen edge top to bottom, so it stays a straight line -- only the left side keeps a rounded corner.
-            bottomRightRadius: 0
+            radius: 0
+            border.width: PanelService.panelBorderWidth
+            border.color: Theme.base04
 
             Column {
                 id: notificationColumn
@@ -225,7 +215,7 @@ Scope {
         // Plain hover highlight, same treatment as rows in the other panels (e.g. network list entries), no per-card background.
         Rectangle {
             anchors.fill: parent
-            radius: PanelService.shellRounding
+            radius: 0
             color: notificationMouse.containsMouse ? Utils.alpha(Theme.base05, 0.08) : "transparent"
 
             Behavior on color { ColorAnimation { duration: 120 } }

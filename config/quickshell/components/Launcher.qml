@@ -124,8 +124,11 @@ Scope {
             return;
 
         root.beginLaunchTracking(entry);
+        // Give terminal-backed desktop entries their own WM class instead of
+        // inheriting `kitty`. The class equals the desktop-entry ID, allowing
+        // the taskbar to resolve Yazi, btop, Neovim, and similar app icons.
         root.launchDetached(entry.runInTerminal
-            ? [...root.terminal, "--", ...entry.command]
+            ? [...root.terminal, "--class", entry.id, "--", ...entry.command]
             : entry.command, entry.workingDirectory);
         panel.open = false;
     }
@@ -202,7 +205,7 @@ Scope {
 
         layerNamespace: "quickshell:launcher"
         placeholder: "Search for apps…"
-        frameWidth: 440
+        frameWidth: 380
         model: root.results
         expanded: root.results.length > 0 || root.entries.length === 0
         onAccepted: root.activate(root.results[panel.currentIndex])
@@ -217,7 +220,7 @@ Scope {
             width: ListView.view.width
             height: panel.rowHeight
             radius: PanelService.rounding
-            // A quiet fill is enough to locate the keyboard cursor; an outline made the compact rows read like individual buttons.
+            // A quiet fill locates the keyboard and hover cursor.
             color: appRow.ListView.isCurrentItem
                 ? Utils.alpha(Theme.base05, 0.10) : "transparent"
 

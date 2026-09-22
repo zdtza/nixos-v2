@@ -11,6 +11,7 @@ import ".."
 Item {
     id: root
 
+    property bool showButton: true
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     readonly property int timerRowHeight: 48
@@ -23,7 +24,7 @@ Item {
     // Mounted in the bar window while this panel is active.
     readonly property Component keyboardProxy: durationProxy
 
-    implicitWidth: 28
+    implicitWidth: showButton ? 28 : 0
     implicitHeight: 26
 
     function durationParts(value: string): var {
@@ -138,6 +139,7 @@ Item {
 
     Button {
         anchors.centerIn: parent
+        visible: root.showButton
         panel: root
         text: "󱎫"
         textColor: TimerService.running ? Theme.base05 : Theme.base04
@@ -156,7 +158,7 @@ Item {
         onCleared: PanelService.close(root)
     }
 
-    Popup {
+    Drawer {
         id: panel
 
         anchorItem: root
@@ -188,7 +190,7 @@ Item {
         readonly property real timerViewportHeight: Math.min(272,
             Math.max(52, maximumHeight - panelChromeHeight), desiredTimerHeight)
 
-        implicitWidth: 420 + PanelService.shellRounding
+        implicitWidth: 420
         implicitHeight: Math.min(maximumHeight,
             panelChromeHeight + timerViewportHeight)
 
@@ -337,8 +339,7 @@ Item {
                             height: root.timerRowHeight
                             radius: PanelService.rounding
                             color: timerRow.index === root.selectedTimerIndex
-                                ? Utils.alpha(Theme.base05, 0.08)
-                                : "transparent"
+                                ? Utils.alpha(Theme.base05, 0.08) : "transparent"
                             border.width: timerRow.index === root.selectedTimerIndex ? 1 : 0
                             border.color: Utils.alpha(Theme.base05, 0.25)
 

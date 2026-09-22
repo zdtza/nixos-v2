@@ -1,4 +1,4 @@
-// Optional controls in the bar's right-hand group.
+// Passive status indicators for optional system states.
 import QtQuick
 import Quickshell.Services.Pipewire
 import "../panels"
@@ -7,10 +7,7 @@ import "../services"
 Item {
     id: root
 
-    readonly property bool expanded: hover.hovered || nightLightToggle.opened
-        || timerToggle.opened
-    readonly property var nightLightPanel: nightLightToggle
-    readonly property var timerPanel: timerToggle
+    readonly property var nightLightPanel: nightLightControl
     // XDPH creates one of these PipeWire sources per active portal capture.
     readonly property var recordingNodes: Pipewire.nodes
         ? Pipewire.nodes.values.filter(node => node && node.ready
@@ -19,62 +16,62 @@ Item {
                     .startsWith("xdph-streaming-"))) : []
     readonly property bool recordingActive: recordingNodes.length > 0
 
-    // Reserve hover space for every toggle, including collapsed controls, so entering anywhere the expanded tray occupies reveals the full tray.
-    implicitWidth: 28 * 4 + (recordingActive ? 28 : 0)
+    implicitWidth: indicators.implicitWidth
     implicitHeight: 26
 
-    HoverHandler {
-        id: hover
-    }
-
-    // Right-anchored: collapsed slots take no width, so the visible controls always sit against the right edge of the reserved strip.
     Row {
-        anchors.right: parent.right
+        id: indicators
         anchors.verticalCenter: parent.verticalCenter
 
         QuickToggleSlot {
-            shown: root.expanded || StayAwakeService.enabled
+            shown: StayAwakeService.enabled
 
-            QuickToggleButton {
-                icon: "󰅶"
-                active: StayAwakeService.enabled
-                onClicked: StayAwakeService.toggle()
+            ShellText {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: -1
+                text: "󰅶"
+                size: 14
             }
         }
 
         QuickToggleSlot {
-            shown: root.expanded || DoNotDisturbService.enabled
+            shown: DoNotDisturbService.enabled
 
-            QuickToggleButton {
-                icon: "󰂛"
-                active: DoNotDisturbService.enabled
-                onClicked: DoNotDisturbService.toggle()
+            ShellText {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: -1
+                text: "󰂛"
+                size: 14
             }
         }
 
-        QuickToggleSlot {
-            // The clock badge already shows timer activity.
-            shown: root.expanded
-
-            TimerTogglePanel { id: timerToggle }
-        }
-
-        // Passive indicator, not a control: it only exists while something is capturing the screen through the portal.
         QuickToggleSlot {
             shown: root.recordingActive
 
-            QuickToggleButton {
-                icon: ""
-                active: true
-                activeColor: Theme.base08
-                interactive: false
+            ShellText {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: -1
+                text: ""
+                color: Theme.base08
+                size: 14
             }
         }
 
         QuickToggleSlot {
-            shown: root.expanded || NightLightService.enabled
+            shown: NightLightService.enabled
 
-            NightLightTogglePanel { id: nightLightToggle }
+            ShellText {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: -1
+                text: ""
+                size: 12
+            }
         }
+    }
+
+    // Retain the IPC-only panel without exposing a clickable bar control.
+    NightLightTogglePanel {
+        id: nightLightControl
+        showButton: false
     }
 }

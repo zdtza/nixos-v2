@@ -1,6 +1,6 @@
 {
   # Active wallpaper, rewritten by scripts/select-wallpaper.sh -- always a file in ./wallpapers.
-  wallpaper = ./wallpapers/0-winding-road.jpg;
+  wallpaper = ./wallpapers/1-quattro.jpg;
   polarity = "dark";
   colors = {
     base00 = "#1a1b26"; # background

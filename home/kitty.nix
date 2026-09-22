@@ -18,7 +18,13 @@ let
 
   # launching a new terminal in the same cwd as the focused one.
   launchTerminal = pkgs.writeShellScriptBin "launch-terminal-cwd" ''
-    exec ${pkgs.kitty}/bin/kitty --directory "$(${terminalCwd}/bin/terminal-cwd)" "$@"
+    class_args=()
+    case "''${1:-}" in
+      yazi|btop|nvim) class_args=(--class "$1") ;;
+    esac
+
+    exec ${pkgs.kitty}/bin/kitty --directory "$(${terminalCwd}/bin/terminal-cwd)" \
+      "''${class_args[@]}" "$@"
   '';
 in
 {

@@ -155,19 +155,16 @@ Scope {
             readonly property int listHeight: Math.max(root.rowHeight,
                 list.count * root.rowHeight + (list.count - 1) * root.rowSpacing)
 
-            Behavior on height {
-                NumberAnimation { duration: 70; easing.type: Easing.OutQuad }
-            }
-
             height: root.expanded
                 ? Math.min(frame.maxHeight, root.searchBarHeight + root.listGap + frame.listHeight)
                 : root.searchBarHeight
             enabled: root.open
 
             clip: true
-            // Keep the card edge and its highlighted rows in the same geometry instead of mixing shell and control corner radii.
-            radius: PanelService.rounding
+            radius: 0
             color: Theme.base01
+            border.width: PanelService.panelBorderWidth
+            border.color: Theme.base04
             opacity: root.open ? 1 : 0
 
             MouseArea {

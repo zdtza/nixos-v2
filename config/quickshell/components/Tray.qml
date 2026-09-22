@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Services.SystemTray
 import "../services"
+import ".."
 
 Item {
     id: root
@@ -166,7 +167,7 @@ Item {
 
     visible: items.length > 0 || WindowsService.running
     implicitWidth: row.implicitWidth
-    implicitHeight: 25
+    implicitHeight: 26
 
     HoverHandler {
         id: hover
@@ -176,7 +177,8 @@ Item {
         id: row
 
         anchors.verticalCenter: parent.verticalCenter
-        spacing: root.expanded ? 4 : 0
+        layoutDirection: Qt.LeftToRight
+        spacing: root.expanded ? 2 : 0
 
         Behavior on spacing {
             NumberAnimation {
@@ -191,6 +193,7 @@ Item {
             panel: root
             showPanelIndicator: false
             text: ""
+            textSize: 12
             onClicked: {
                 root.pinned = !root.pinned;
                 if (!root.pinned)
@@ -206,7 +209,7 @@ Item {
             clip: true
 
             implicitWidth: root.expanded ? icons.implicitWidth : 0
-            implicitHeight: 25
+            implicitHeight: 26
             opacity: root.expanded ? 1 : 0
 
             Behavior on implicitWidth {
@@ -220,7 +223,7 @@ Item {
                 id: icons
 
                 anchors.right: parent.right
-                spacing: 0
+                spacing: 2
 
                 Repeater {
                     id: trayRepeater
@@ -232,36 +235,28 @@ Item {
                         required property SystemTrayItem modelData
                         required property int index
 
-                        implicitWidth: 30
-                        implicitHeight: 25
+                        implicitWidth: 28
+                        implicitHeight: 26
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 4
+                            // menuLoader.trayItem still points at the last item clicked, so the Windows menu has to be excluded here or that item lights up alongside it.
+                            color: itemMouse.containsMouse
+                                || (root.opened && root.selectedItemIndex === entry.index)
+                                || (root.opened && !root.windowsMenuOpen && menuLoader.trayItem === entry.modelData)
+                                ? Utils.alpha(Theme.base05, 0.16) : "transparent"
+                        }
 
                         Image {
                             anchors.centerIn: parent
-                            anchors.verticalCenterOffset: -2
                             width: 16
                             height: 16
                             source: entry.modelData.icon
-                            sourceSize.width: 16 * 2
-                            sourceSize.height: 16 * 2
+                            sourceSize.width: 32
+                            sourceSize.height: 32
                             cache: true
                             smooth: true
-                        }
-
-                        Rectangle {
-                            anchors.bottom: parent.bottom
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            width: 16
-                            height: 2
-                            radius: PanelService.rounding
-                            // menuLoader.trayItem still points at the last item clicked, so the Windows menu has to be excluded here or that item lights up alongside it.
-                            visible: opacity > 0
-                            opacity: itemMouse.containsMouse
-                                || (root.opened && root.selectedItemIndex === entry.index)
-                                || (root.opened && !root.windowsMenuOpen && menuLoader.trayItem === entry.modelData)
-                                ? 1 : 0
-                            color: Theme.base05
-
-                            Behavior on opacity { NumberAnimation { duration: 120 } }
                         }
 
                         MouseArea {
@@ -304,35 +299,27 @@ Item {
                     id: windowsEntry
 
                     visible: WindowsService.running
-                    implicitWidth: visible ? 30 : 0
-                    implicitHeight: 25
+                    implicitWidth: visible ? 28 : 0
+                    implicitHeight: 26
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 4
+                        color: windowsMouse.containsMouse
+                            || (root.opened && root.selectedItemIndex === root.items.length)
+                            || (root.opened && root.windowsMenuOpen)
+                            ? Utils.alpha(Theme.base05, 0.16) : "transparent"
+                    }
 
                     Image {
                         anchors.centerIn: parent
-                        anchors.verticalCenterOffset: -2
                         width: 16
                         height: 16
                         source: Quickshell.iconPath("windows", true)
-                        sourceSize.width: 16 * 2
-                        sourceSize.height: 16 * 2
+                        sourceSize.width: 32
+                        sourceSize.height: 32
                         cache: true
                         smooth: true
-                    }
-
-                    Rectangle {
-                        anchors.bottom: parent.bottom
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: 16
-                        height: 2
-                        radius: PanelService.rounding
-                        visible: opacity > 0
-                        opacity: windowsMouse.containsMouse
-                            || (root.opened && root.selectedItemIndex === root.items.length)
-                            || (root.opened && root.windowsMenuOpen)
-                            ? 1 : 0
-                        color: Theme.base05
-
-                        Behavior on opacity { NumberAnimation { duration: 120 } }
                     }
 
                     MouseArea {

@@ -180,7 +180,7 @@ Item {
         readonly property real deviceViewportHeight: Math.min(420,
             Math.max(80, maximumHeight - panelChromeHeight), desiredDeviceHeight)
 
-        implicitWidth: 460 + PanelService.shellRounding
+        implicitWidth: 460
         implicitHeight: Math.min(maximumHeight, panelChromeHeight + deviceViewportHeight)
 
         Hero {
@@ -315,9 +315,8 @@ Item {
         width: parent.width
         height: root.deviceRowHeight
         radius: PanelService.rounding
-        color: keyboardSelected
-            ? Utils.alpha(Theme.base05, 0.08)
-            : "transparent"
+        color: device.connected
+            ? Utils.alpha(Theme.base05, 0.08) : "transparent"
         border.width: keyboardSelected ? 1 : 0
         border.color: Utils.alpha(Theme.base05, 0.25)
 

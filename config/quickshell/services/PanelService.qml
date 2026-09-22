@@ -32,32 +32,37 @@ Item {
 
     // Whether the status bar is currently shown (toggled via `qs ipc call bar toggle/hide/show`).
     property bool barVisible: true
+    readonly property bool focusedAppFullscreen: !!Hyprland.activeToplevel
+        && !!Hyprland.focusedWorkspace?.hasFullscreen
 
-    // Shared top-bar geometry keeps standalone panels aligned with popups.
+    // Fullscreen clients cover the bar, so overlays use hidden-bar geometry.
+    readonly property bool barAffectsPanels: barVisible && !focusedAppFullscreen
+    readonly property real panelBarInset: barAffectsPanels ? barHeight : 0
+    // A visible-but-covered bar remains the popup's parent at the screen edge.
+    readonly property real popupParentOffset: barVisible && focusedAppFullscreen
+        ? barHeight : 0
+
+    // Shared bottom-bar geometry keeps standalone panels aligned with popups.
     property real barHeight: 30
     // Single source for the gap between every bar button/toggle and the clock, so the bar's groups all read as evenly spaced.
     property real barSpacing: 6
-    // Gap below the bar for popups/notifications.
+    // Hyprland's outer gap, also used to inset floating shell panels.
     property real barGap: 9
+    readonly property real panelGap: barGap
     // Manual per-edge nudges layered on top of barGap, for whatever few pixels compositor rounding/borders leave popups and notifications off by.
     property real gapBottomOffset: 0
     property real gapLeftOffset: 0
     property real gapRightOffset: 0
-    // Outer drawer/menu corners and their concave joins.
-    property real shellRounding: 16
-    // Shared speed for every shell slide-out reveal.
+    // Shared speed for animated bar controls.
     property int slideDuration: 150
-    // Control rounding mirrors Hyprland's decoration:rounding.
-    property real rounding: 0
+    // Set this back to 2 to restore borders around shell panels.
+    property real panelBorderWidth: 0
+    // Internal controls use a small, stable radius independent of Hyprland.
+    readonly property real rounding: 2
 
     function refreshBarGap(): void {
         if (!gapsProcess.running)
             gapsProcess.running = true;
-    }
-
-    function refreshRounding(): void {
-        if (!roundingProcess.running)
-            roundingProcess.running = true;
     }
 
     Process {
@@ -78,36 +83,13 @@ Item {
         }
     }
 
-    Process {
-        id: roundingProcess
-        command: ["hyprctl", "-j", "getoption", "decoration:rounding"]
-        stdout: StdioCollector {
-            waitForEnd: true
-            onStreamFinished: {
-                let value;
-                try {
-                    value = Number(JSON.parse(text).int);
-                } catch (e) {
-                    value = NaN;
-                }
-                if (Number.isFinite(value))
-                    root.rounding = value;
-            }
-        }
-    }
-
-    Component.onCompleted: {
-        refreshBarGap();
-        refreshRounding();
-    }
+    Component.onCompleted: refreshBarGap()
 
     Connections {
         target: Hyprland
         function onRawEvent(event: var): void {
-            if (event.name === "configreloaded") {
+            if (event.name === "configreloaded")
                 root.refreshBarGap();
-                root.refreshRounding();
-            }
         }
     }
 

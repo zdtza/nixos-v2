@@ -1,5 +1,6 @@
 import QtQuick
 import "../services"
+import ".."
 
 // Icon-only control inside a QuickToggleSlot.
 Item {
@@ -15,6 +16,12 @@ Item {
 
     anchors.fill: parent
 
+    Rectangle {
+        anchors.fill: parent
+        radius: 4
+        color: mouseArea.containsMouse ? Utils.alpha(Theme.base05, 0.16) : "transparent"
+    }
+
     ShellText {
         anchors.centerIn: parent
         anchors.verticalCenterOffset: -1
@@ -26,6 +33,8 @@ Item {
     }
 
     MouseArea {
+        id: mouseArea
+
         anchors.fill: parent
         enabled: root.interactive
         acceptedButtons: Qt.LeftButton | Qt.RightButton

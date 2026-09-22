@@ -304,7 +304,7 @@ Item {
         readonly property real networkViewportHeight: Math.min(420,
             Math.max(80, maximumHeight - panelChromeHeight), availableSectionHeight + root.networkEdgeInset)
 
-        implicitWidth: 460 + PanelService.shellRounding
+        implicitWidth: 460
         implicitHeight: Math.min(maximumHeight, panelChromeHeight + networkViewportHeight)
 
         Hero {
@@ -411,11 +411,11 @@ Item {
                             width: parent.width
                             // Passphrase entry takes over this row in place rather than growing it, so opening a prompt never reflows the list or the panel height.
                             height: root.networkRowHeight
+                            // Navigation only moves the outline; connection state owns the fill.
                             color: rowMouse.pressed && !passwordOpen
                                 ? Utils.alpha(Theme.base05, 0.22)
-                                : networkRow.keyboardSelected && !passwordOpen
-                                    ? Utils.alpha(Theme.base05, 0.08)
-                                    : "transparent"
+                                : networkRow.modelData.connected
+                                    ? Utils.alpha(Theme.base05, 0.08) : "transparent"
                             border.width: networkRow.keyboardSelected && !passwordOpen ? 1 : 0
                             border.color: Utils.alpha(Theme.base05, 0.25)
                             radius: PanelService.rounding

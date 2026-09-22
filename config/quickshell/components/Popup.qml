@@ -1,8 +1,8 @@
 import Quickshell.Wayland
 
-// Centered launcher-style drawer used by clock and quick-toggle panels.
+// Centered floating panel used by the clock.
 ShellSurface {
-    anchors.top: true
+    anchors.bottom: true
 
     WlrLayershell.namespace: "quickshell:center-panel"
 }

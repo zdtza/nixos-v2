@@ -1,3 +1,8 @@
+-- Stylix generates this bridge from the selected theme.
+local stylix = dofile(os.getenv("HOME") .. "/.config/hypr/stylix.lua")
+_G.ACTIVE_BORDER_COLOR = stylix.active_border_color
+_G.INACTIVE_BORDER_COLOR = stylix.inactive_border_color
+
 -- =============================================================================
 -- CORE SETTINGS
 -- =============================================================================
@@ -15,16 +20,20 @@ hl.config({
 	binds = { scroll_event_delay = 0 },
 	cursor = { no_hardware_cursors = true },
 	general = {
-		gaps_in = 4,
-		gaps_out = 8,
+		gaps_in = 3,
+		gaps_out = 6,
 		border_size = 0,
+		col = {
+			active_border = ACTIVE_BORDER_COLOR,
+			inactive_border = INACTIVE_BORDER_COLOR,
+		},
 		layout = "dwindle",
 	},
 	decoration = {
-		rounding = 2,
-		active_opacity = 0.98,
+		rounding = 0,
+		active_opacity = 0.99,
 		inactive_opacity = 0.96,
-		blur = { enabled = true, xray = false, special = true, passes = 2, size = 3 },
+		blur = { enabled = false, xray = false, special = true, passes = 2, size = 3 },
 		shadow = { enabled = false },
 	},
 	animations = { enabled = true },
@@ -532,7 +541,7 @@ bind("SUPER + space", "App launcher", hl.dsp.global("quickshell:launcher"))
 bind("SUPER + CTRL + K", "Keybinds", hl.dsp.global("quickshell:keybinds"))
 bind("SUPER + CTRL + W", "Wallpaper picker", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"))
 bind("SUPER + CTRL + A", "Theme picker", hl.dsp.exec_cmd("qs ipc call theme toggle"))
-bind("SUPER + CTRL + C", "Calendar", hl.dsp.exec_cmd("qs ipc call panels toggle calendar"))
+bind("SUPER + CTRL + C", "Clock", hl.dsp.exec_cmd("qs ipc call panels toggle clock"))
 bind("SUPER + CTRL + L", "Night light", hl.dsp.exec_cmd("qs ipc call panels toggle nightlight"))
 bind("SUPER + CTRL + T", "Timer", hl.dsp.exec_cmd("qs ipc call panels toggle timer"))
 bind("SUPER + CTRL + R", "System tray", hl.dsp.exec_cmd("qs ipc call panels toggle tray"))

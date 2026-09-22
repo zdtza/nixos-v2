@@ -1,4 +1,4 @@
-// Top bar layer-shell panel.
+// Bottom bar layer-shell panel.
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -13,9 +13,9 @@ PanelWindow {
 
     function panelEntries(): var {
         return [
-            ["calendar", clock],
+            ["clock", clock],
             ["nightlight", quickToggles.nightLightPanel],
-            ["timer", quickToggles.timerPanel],
+            ["timer", clock.timerPanel],
             ["tray", tray],
             ["volume", volume],
             ["bluetooth", bluetooth],
@@ -54,11 +54,11 @@ PanelWindow {
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
     anchors {
-        top: true
+        bottom: true
         left: true
         right: true
     }
-    margins.top: PanelService.barVisible ? 0 : -1
+    margins.bottom: PanelService.barVisible ? 0 : -1
 
     // Popup focus grabs include bar so controls remain directly clickable.
     MouseArea {
@@ -103,32 +103,6 @@ PanelWindow {
         }
     }
 
-    // --- center ---.
-    Clock {
-        id: clock
-        anchors.centerIn: parent
-    }
-
-    TimerBadge {
-        id: timerBadge
-        anchors {
-            left: clock.right
-            leftMargin: PanelService.barSpacing
-            verticalCenter: clock.verticalCenter
-        }
-        panelTarget: quickToggles.timerPanel
-    }
-
-    QuickToggles {
-        id: quickToggles
-
-        anchors {
-            right: clock.left
-            rightMargin: -4
-            verticalCenter: clock.verticalCenter
-        }
-    }
-
     // --- right ---.
     RowLayout {
         spacing: PanelService.barSpacing
@@ -138,10 +112,9 @@ PanelWindow {
             verticalCenter: parent.verticalCenter
         }
 
-        Tray {
-            id: tray
-            Layout.rightMargin: -2
-        }
+        Tray { id: tray }
+
+        QuickToggles { id: quickToggles }
 
         VolumePanel {
             id: volume
@@ -150,13 +123,31 @@ PanelWindow {
 
         BluetoothPanel { id: bluetooth }
 
-        DisplayPanel {
-            id: display
-            screen: bar.screen
-        }
-
         NetworkPanel { id: network }
 
         BatteryPanel { id: battery }
+
+        TimerBadge {
+            id: timerBadge
+            panelTarget: clock.timerPanel
+        }
+
+        Clock {
+            id: clock
+            Layout.rightMargin: -4
+            Layout.leftMargin: -6
+        }
+    }
+
+    // The display panel remains registered for Super+Ctrl+D, but has no bar button.
+    DisplayPanel {
+        id: display
+        screen: bar.screen
+        showButton: false
+        anchors {
+            right: parent.right
+            rightMargin: 12
+            verticalCenter: parent.verticalCenter
+        }
     }
 }

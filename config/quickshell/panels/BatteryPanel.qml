@@ -121,7 +121,7 @@ Item {
         onCloseRequested: PanelService.close(root)
         contentSpacing: 14
         // Wider card gives each equal-width profile button real horizontal breathing room around its icon and longest label (Power-saver).
-        implicitWidth: 420 + PanelService.shellRounding
+        implicitWidth: 420
         implicitHeight: panelContent.implicitHeight
             + contentTopMargin + contentBottomMargin
 
@@ -253,6 +253,7 @@ Item {
                         width: profileContent.implicitWidth + profileRow.cellPadding * 2
                         height: 36
                         keyboardFocused: profileButton.index === root.selectedProfileIndex
+                        active: String(profileButton.modelData) === root.activeProfile
                         onHoveredChanged: if (hovered && PanelService.hoverSelectReady)
                             root.selectedProfileIndex = profileButton.index
                         onActivated: {

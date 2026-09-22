@@ -27,7 +27,7 @@ in
       opener = {
         folder = [
           {
-            run = "kitty -d %s -e yazi";
+            run = "kitty --class yazi -d %s -e yazi";
             desc = "Open in new Yazi";
             orphan = true;
             for = "unix";

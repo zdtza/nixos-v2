@@ -394,8 +394,8 @@ bind("SUPER + J", "Toggle the next split direction", hl.dsp.layout("togglesplit"
 bind("SUPER + T", "Toggle floating mode for focused window", hl.dsp.window.float({ action = "toggle" }))
 bind("SUPER + F", "Toggle fullscreen for focused window", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 bind("SUPER + Tab", "Switch to the previously used workspace", hl.dsp.focus({ workspace = "previous" }))
-bind("SUPER + mouse_down", "Switch to the next workspace", focus_next_workspace)
-bind("SUPER + mouse_up", "Switch to the previous workspace", focus_previous_workspace)
+bind("SUPER + mouse_up", "Switch to the next workspace", focus_next_workspace)
+bind("SUPER + mouse_down", "Switch to the previous workspace", focus_previous_workspace)
 
 -- =============================================================================
 -- KEYBINDS: WINDOW FOCUS AND MOVEMENT

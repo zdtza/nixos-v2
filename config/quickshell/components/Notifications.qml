@@ -91,10 +91,12 @@ Scope {
 
         readonly property int panelPadding: 8
         readonly property int panelTopPadding: 8
-        readonly property real panelHeight: notificationColumn.implicitHeight > 0
-            ? notificationColumn.implicitHeight + panelTopPadding + panelPadding : 0
+        // Round up to the surface's integer pixel size so its lower edge is not
+        // placed just outside the window and clipped.
+        readonly property int panelHeight: notificationColumn.implicitHeight > 0
+            ? Math.ceil(notificationColumn.implicitHeight + panelTopPadding + panelPadding) : 0
         // Bounding box for the whole row, not just the panel rect.
-        mask: Region { width: window.panelHeight > 0 ? window.width : 0; height: window.panelHeight }
+        mask: Region { width: window.panelHeight > 0 ? window.width : 0; height: window.height }
 
         WlrLayershell.namespace: "quickshell:notifications"
         WlrLayershell.layer: WlrLayer.Overlay
@@ -116,8 +118,7 @@ Scope {
         Rectangle {
             id: panelBg
 
-            width: window.width
-            height: window.panelHeight
+            anchors.fill: parent
             color: Theme.base01
             radius: 0
             border.width: PanelService.chromeBorderWidth

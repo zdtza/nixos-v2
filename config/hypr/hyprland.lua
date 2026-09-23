@@ -375,64 +375,64 @@ hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 -- KEYBINDS: SYSTEM
 -- =============================================================================
 
-bind("SUPER + L", "Lock screen", hl.dsp.exec_cmd("qs ipc call lock activate"))
-bind("switch:on:Lid Switch", "Suspend then hibernate", hl.dsp.exec_cmd("systemctl suspend-then-hibernate"), { locked = true })
+bind("SUPER + L", "Lock the current session", hl.dsp.exec_cmd("qs ipc call lock activate"))
+bind("switch:on:Lid Switch", "Suspend, then hibernate after timeout", hl.dsp.exec_cmd("systemctl suspend-then-hibernate"), { locked = true })
 
 -- =============================================================================
 -- KEYBINDS: APPS AND WINDOW ACTIONS
 -- =============================================================================
 
-bind("SUPER + S", "Terminal workspace", hl.dsp.workspace.toggle_special("terminal"))
-bind("SUPER + CTRL + SHIFT + S", "Move window to terminal workspace", hl.dsp.window.move({ workspace = "special:terminal" }))
+bind("SUPER + S", "Toggle the terminal workspace", hl.dsp.workspace.toggle_special("terminal"))
+bind("SUPER + CTRL + SHIFT + S", "Move focused window to terminal workspace", hl.dsp.window.move({ workspace = "special:terminal" }))
 -- This path does not pass through an interactive shell, so inject fzf's
 -- stable options file explicitly rather than relying on Fish session vars.
-bind("SUPER + E", "File manager", hl.dsp.exec_cmd("env -u FZF_DEFAULT_OPTS FZF_DEFAULT_OPTS_FILE=$HOME/.config/fzf/options launch-terminal-cwd yazi"))
-bind("SUPER + Return", "Terminal", open_terminal)
-bind("SUPER + CTRL + Return", "Floating terminal", open_floating_terminal)
-bind("SUPER + W", "Close window", hl.dsp.window.close())
-bind("SUPER + J", "Split direction", hl.dsp.layout("togglesplit"))
-bind("SUPER + T", "Float window", hl.dsp.window.float({ action = "toggle" }))
-bind("SUPER + F", "Fullscreen", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
-bind("SUPER + Tab", "Previous workspace", hl.dsp.focus({ workspace = "previous" }))
-bind("SUPER + mouse_down", "Next workspace", focus_next_workspace)
-bind("SUPER + mouse_up", "Previous workspace", focus_previous_workspace)
+bind("SUPER + E", "Open Yazi file manager", hl.dsp.exec_cmd("env -u FZF_DEFAULT_OPTS FZF_DEFAULT_OPTS_FILE=$HOME/.config/fzf/options launch-terminal-cwd yazi"))
+bind("SUPER + Return", "Open terminal in current directory", open_terminal)
+bind("SUPER + CTRL + Return", "Open a floating terminal", open_floating_terminal)
+bind("SUPER + W", "Close the focused window", hl.dsp.window.close())
+bind("SUPER + J", "Toggle the next split direction", hl.dsp.layout("togglesplit"))
+bind("SUPER + T", "Toggle floating mode for focused window", hl.dsp.window.float({ action = "toggle" }))
+bind("SUPER + F", "Toggle fullscreen for focused window", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
+bind("SUPER + Tab", "Switch to the previously used workspace", hl.dsp.focus({ workspace = "previous" }))
+bind("SUPER + mouse_down", "Switch to the next workspace", focus_next_workspace)
+bind("SUPER + mouse_up", "Switch to the previous workspace", focus_previous_workspace)
 
 -- =============================================================================
 -- KEYBINDS: WINDOW FOCUS AND MOVEMENT
 -- =============================================================================
 
-bind("SUPER + left", "Focus left", hl.dsp.focus({ direction = "left" }))
-bind("SUPER + right", "Focus right", hl.dsp.focus({ direction = "right" }))
-bind("SUPER + up", "Focus up", hl.dsp.focus({ direction = "up" }))
-bind("SUPER + down", "Focus down", hl.dsp.focus({ direction = "down" }))
-bind("SUPER + SHIFT + left", "Move left", hl.dsp.window.move({ direction = "left" }))
-bind("SUPER + SHIFT + right", "Move right", hl.dsp.window.move({ direction = "right" }))
-bind("SUPER + SHIFT + up", "Move up", hl.dsp.window.move({ direction = "up" }))
-bind("SUPER + SHIFT + down", "Move down", hl.dsp.window.move({ direction = "down" }))
+bind("SUPER + left", "Focus the window to the left", hl.dsp.focus({ direction = "left" }))
+bind("SUPER + right", "Focus the window to the right", hl.dsp.focus({ direction = "right" }))
+bind("SUPER + up", "Focus the window above", hl.dsp.focus({ direction = "up" }))
+bind("SUPER + down", "Focus the window below", hl.dsp.focus({ direction = "down" }))
+bind("SUPER + SHIFT + left", "Move the focused window left", hl.dsp.window.move({ direction = "left" }))
+bind("SUPER + SHIFT + right", "Move the focused window right", hl.dsp.window.move({ direction = "right" }))
+bind("SUPER + SHIFT + up", "Move the focused window up", hl.dsp.window.move({ direction = "up" }))
+bind("SUPER + SHIFT + down", "Move the focused window down", hl.dsp.window.move({ direction = "down" }))
 
 -- =============================================================================
 -- KEYBINDS: WORKSPACES
 -- =============================================================================
 
-bind("SUPER + 1", "Workspace 1", hl.dsp.focus({ workspace = 1 }))
-bind("SUPER + 2", "Workspace 2", hl.dsp.focus({ workspace = 2 }))
-bind("SUPER + 3", "Workspace 3", hl.dsp.focus({ workspace = 3 }))
-bind("SUPER + 4", "Workspace 4", hl.dsp.focus({ workspace = 4 }))
-bind("SUPER + 5", "Workspace 5", hl.dsp.focus({ workspace = 5 }))
-bind("SUPER + 6", "Workspace 6", hl.dsp.focus({ workspace = 6 }))
-bind("SUPER + 7", "Workspace 7", hl.dsp.focus({ workspace = 7 }))
-bind("SUPER + 8", "Workspace 8", hl.dsp.focus({ workspace = 8 }))
-bind("SUPER + 9", "Workspace 9", hl.dsp.focus({ workspace = 9 }))
+bind("SUPER + 1", "Switch to workspace 1", hl.dsp.focus({ workspace = 1 }))
+bind("SUPER + 2", "Switch to workspace 2", hl.dsp.focus({ workspace = 2 }))
+bind("SUPER + 3", "Switch to workspace 3", hl.dsp.focus({ workspace = 3 }))
+bind("SUPER + 4", "Switch to workspace 4", hl.dsp.focus({ workspace = 4 }))
+bind("SUPER + 5", "Switch to workspace 5", hl.dsp.focus({ workspace = 5 }))
+bind("SUPER + 6", "Switch to workspace 6", hl.dsp.focus({ workspace = 6 }))
+bind("SUPER + 7", "Switch to workspace 7", hl.dsp.focus({ workspace = 7 }))
+bind("SUPER + 8", "Switch to workspace 8", hl.dsp.focus({ workspace = 8 }))
+bind("SUPER + 9", "Switch to workspace 9", hl.dsp.focus({ workspace = 9 }))
 
-bind("SUPER + SHIFT + 1", "Move to workspace 1", hl.dsp.window.move({ workspace = 1 }))
-bind("SUPER + SHIFT + 2", "Move to workspace 2", hl.dsp.window.move({ workspace = 2 }))
-bind("SUPER + SHIFT + 3", "Move to workspace 3", hl.dsp.window.move({ workspace = 3 }))
-bind("SUPER + SHIFT + 4", "Move to workspace 4", hl.dsp.window.move({ workspace = 4 }))
-bind("SUPER + SHIFT + 5", "Move to workspace 5", hl.dsp.window.move({ workspace = 5 }))
-bind("SUPER + SHIFT + 6", "Move to workspace 6", hl.dsp.window.move({ workspace = 6 }))
-bind("SUPER + SHIFT + 7", "Move to workspace 7", hl.dsp.window.move({ workspace = 7 }))
-bind("SUPER + SHIFT + 8", "Move to workspace 8", hl.dsp.window.move({ workspace = 8 }))
-bind("SUPER + SHIFT + 9", "Move to workspace 9", hl.dsp.window.move({ workspace = 9 }))
+bind("SUPER + SHIFT + 1", "Move focused window to workspace 1", hl.dsp.window.move({ workspace = 1 }))
+bind("SUPER + SHIFT + 2", "Move focused window to workspace 2", hl.dsp.window.move({ workspace = 2 }))
+bind("SUPER + SHIFT + 3", "Move focused window to workspace 3", hl.dsp.window.move({ workspace = 3 }))
+bind("SUPER + SHIFT + 4", "Move focused window to workspace 4", hl.dsp.window.move({ workspace = 4 }))
+bind("SUPER + SHIFT + 5", "Move focused window to workspace 5", hl.dsp.window.move({ workspace = 5 }))
+bind("SUPER + SHIFT + 6", "Move focused window to workspace 6", hl.dsp.window.move({ workspace = 6 }))
+bind("SUPER + SHIFT + 7", "Move focused window to workspace 7", hl.dsp.window.move({ workspace = 7 }))
+bind("SUPER + SHIFT + 8", "Move focused window to workspace 8", hl.dsp.window.move({ workspace = 8 }))
+bind("SUPER + SHIFT + 9", "Move focused window to workspace 9", hl.dsp.window.move({ workspace = 9 }))
 
 -- =============================================================================
 -- KEYBINDS: RESIZE, SCREENSHOTS, AND APPEARANCE
@@ -440,47 +440,47 @@ bind("SUPER + SHIFT + 9", "Move to workspace 9", hl.dsp.window.move({ workspace 
 
 bind(
 	"SUPER + equal",
-	"Wider window",
+	"Increase the focused window width",
 	hl.dsp.window.resize({ x = 75, y = 0, relative = true }),
 	{ repeating = true }
 )
 bind(
 	"SUPER + minus",
-	"Narrower window",
+	"Decrease the focused window width",
 	hl.dsp.window.resize({ x = -75, y = 0, relative = true }),
 	{ repeating = true }
 )
 bind(
 	"SUPER + SHIFT + minus",
-	"Taller window",
+	"Increase the focused window height",
 	hl.dsp.window.resize({ x = 0, y = 75, relative = true }),
 	{ repeating = true }
 )
 bind(
 	"SUPER + SHIFT + equal",
-	"Shorter window",
+	"Decrease the focused window height",
 	hl.dsp.window.resize({ x = 0, y = -75, relative = true }),
 	{ repeating = true }
 )
-bind("SUPER + mouse:272", "Drag window", hl.dsp.window.drag(), { mouse = true })
-bind("SUPER + mouse:273", "Resize window", hl.dsp.window.resize(), { mouse = true })
+bind("SUPER + mouse:272", "Drag the focused window", hl.dsp.window.drag(), { mouse = true })
+bind("SUPER + mouse:273", "Resize the focused window", hl.dsp.window.resize(), { mouse = true })
 bind(
 	"SUPER + SHIFT + K",
-	"Colour picker",
+	"Pick a colour and copy its hex value",
 	hl.dsp.exec_cmd("hyprpicker --autocopy --format=hex --lowercase-hex")
 )
-bind("SUPER + SHIFT + S", "Screenshot region", hl.dsp.exec_cmd(screenshot_command))
-bind("SUPER + M", "Max width", toggle_aspect_ratio)
-bind("SUPER + backspace", "Window opacity", toggle_window_opacity)
-bind("SUPER + SHIFT + backspace", "Window gaps", toggle_window_gaps)
+bind("SUPER + SHIFT + S", "Capture a selected screen region", hl.dsp.exec_cmd(screenshot_command))
+bind("SUPER + M", "Toggle the single-window width limit", toggle_aspect_ratio)
+bind("SUPER + backspace", "Toggle opacity override for focused window", toggle_window_opacity)
+bind("SUPER + SHIFT + backspace", "Toggle spacing between windows", toggle_window_gaps)
 
 -- =============================================================================
 -- KEYBINDS: CLIPBOARD
 -- =============================================================================
 
-bind("SUPER + X", "Cut", send_shortcut_once("CTRL", "X"))
-bind("SUPER + C", "Copy", universal_clipboard_shortcut("CTRL", "C", "CTRL", "Insert"))
-bind("SUPER + V", "Paste", universal_clipboard_shortcut("CTRL", "V", "SHIFT", "Insert"))
+bind("SUPER + X", "Cut the selection to the clipboard", send_shortcut_once("CTRL", "X"))
+bind("SUPER + C", "Copy the selection to the clipboard", universal_clipboard_shortcut("CTRL", "C", "CTRL", "Insert"))
+bind("SUPER + V", "Paste content from the clipboard", universal_clipboard_shortcut("CTRL", "V", "SHIFT", "Insert"))
 
 -- =============================================================================
 -- KEYBINDS: AUDIO AND BRIGHTNESS
@@ -488,25 +488,25 @@ bind("SUPER + V", "Paste", universal_clipboard_shortcut("CTRL", "V", "SHIFT", "I
 
 bind(
 	"XF86AudioRaiseVolume",
-	"Volume up",
+	"Increase the output volume",
 	hl.dsp.exec_cmd("qs ipc call audio outputUp"),
 	{ locked = true, repeating = true }
 )
 bind(
 	"XF86AudioLowerVolume",
-	"Volume down",
+	"Decrease the output volume",
 	hl.dsp.exec_cmd("qs ipc call audio outputDown"),
 	{ locked = true, repeating = true }
 )
 bind(
 	"XF86AudioMute",
-	"Mute audio",
+	"Toggle output audio mute",
 	hl.dsp.exec_cmd("qs ipc call audio toggleOutputMute"),
 	{ locked = true, repeating = true }
 )
 bind(
 	"XF86AudioMicMute",
-	"Mute mic",
+	"Toggle microphone mute",
 	hl.dsp.exec_cmd("qs ipc call audio toggleInputMute"),
 	{ locked = true, repeating = true }
 )
@@ -516,13 +516,13 @@ bind(
 -- fires. One step per tap, accelerated shell-side in DisplayService.
 bind(
 	"XF86MonBrightnessUp",
-	"Brightness up",
+	"Increase display brightness",
 	hl.dsp.exec_cmd("qs ipc call display brightnessUp"),
 	{ locked = true }
 )
 bind(
 	"XF86MonBrightnessDown",
-	"Brightness down",
+	"Decrease display brightness",
 	hl.dsp.exec_cmd("qs ipc call display brightnessDown"),
 	{ locked = true }
 )
@@ -531,25 +531,25 @@ bind(
 -- KEYBINDS: DICTATION AND UI
 -- =============================================================================
 
-bind("SUPER + SHIFT + V", "Toggle Dictation", hl.dsp.exec_cmd("voxtype record toggle"))
-bind("F9", "Start dictation", hl.dsp.exec_cmd("voxtype record start"))
-bind("F9", "Stop dictation", hl.dsp.exec_cmd("voxtype record stop"), { release = true })
+bind("SUPER + SHIFT + V", "Toggle voice dictation recording", hl.dsp.exec_cmd("voxtype record toggle"))
+bind("F9", "Start voice dictation recording", hl.dsp.exec_cmd("voxtype record start"))
+bind("F9", "Stop voice dictation recording", hl.dsp.exec_cmd("voxtype record stop"), { release = true })
 
 -- Dispatch directly to Quickshell's registered global shortcut. This avoids
 -- starting the ~50 ms `qs` Qt IPC client on every invocation.
-bind("SUPER + space", "App launcher", hl.dsp.global("quickshell:launcher"))
-bind("SUPER + CTRL + K", "Keybinds", hl.dsp.global("quickshell:keybinds"))
-bind("SUPER + CTRL + W", "Wallpaper picker", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"))
-bind("SUPER + CTRL + A", "Theme picker", hl.dsp.exec_cmd("qs ipc call theme toggle"))
-bind("SUPER + CTRL + C", "Clock", hl.dsp.exec_cmd("qs ipc call panels toggle clock"))
-bind("SUPER + CTRL + L", "Night light", hl.dsp.exec_cmd("qs ipc call panels toggle nightlight"))
-bind("SUPER + CTRL + T", "Timer", hl.dsp.exec_cmd("qs ipc call panels toggle timer"))
-bind("SUPER + CTRL + R", "System tray", hl.dsp.exec_cmd("qs ipc call panels toggle tray"))
-bind("SUPER + CTRL + V", "Volume", hl.dsp.exec_cmd("qs ipc call panels toggle volume"))
-bind("SUPER + CTRL + B", "Bluetooth", hl.dsp.exec_cmd("qs ipc call panels toggle bluetooth"))
-bind("SUPER + CTRL + D", "Display", hl.dsp.exec_cmd("qs ipc call panels toggle display"))
-bind("SUPER + CTRL + N", "Network", hl.dsp.exec_cmd("qs ipc call panels toggle network"))
-bind("SUPER + CTRL + P", "Battery", hl.dsp.exec_cmd("qs ipc call panels toggle battery"))
-bind("SUPER + CTRL + S", "Stay awake", hl.dsp.exec_cmd("qs ipc call stayawake toggle"))
-bind("SUPER + CTRL + SHIFT + D", "Do not disturb", hl.dsp.exec_cmd("qs ipc call dnd toggle"))
-bind("SUPER + SHIFT + space", "Status bar", hl.dsp.exec_cmd("qs ipc call bar toggle"))
+bind("SUPER + space", "Open or close the application launcher", hl.dsp.global("quickshell:launcher"))
+bind("SUPER + CTRL + K", "Browse configured keyboard shortcuts", hl.dsp.global("quickshell:keybinds"))
+bind("SUPER + CTRL + W", "Choose the desktop wallpaper", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"))
+bind("SUPER + CTRL + A", "Choose the shell colour theme", hl.dsp.exec_cmd("qs ipc call theme toggle"))
+bind("SUPER + CTRL + C", "Open or close the clock panel", hl.dsp.exec_cmd("qs ipc call panels toggle clock"))
+bind("SUPER + CTRL + L", "Open or close the night-light panel", hl.dsp.exec_cmd("qs ipc call panels toggle nightlight"))
+bind("SUPER + CTRL + T", "Open or close the timer panel", hl.dsp.exec_cmd("qs ipc call panels toggle timer"))
+bind("SUPER + CTRL + R", "Open or close the system tray", hl.dsp.exec_cmd("qs ipc call panels toggle tray"))
+bind("SUPER + CTRL + V", "Open or close the volume panel", hl.dsp.exec_cmd("qs ipc call panels toggle volume"))
+bind("SUPER + CTRL + B", "Open or close the Bluetooth panel", hl.dsp.exec_cmd("qs ipc call panels toggle bluetooth"))
+bind("SUPER + CTRL + D", "Open or close the display panel", hl.dsp.exec_cmd("qs ipc call panels toggle display"))
+bind("SUPER + CTRL + N", "Open or close the network panel", hl.dsp.exec_cmd("qs ipc call panels toggle network"))
+bind("SUPER + CTRL + P", "Open or close the battery panel", hl.dsp.exec_cmd("qs ipc call panels toggle battery"))
+bind("SUPER + CTRL + S", "Toggle automatic sleep inhibition", hl.dsp.exec_cmd("qs ipc call stayawake toggle"))
+bind("SUPER + CTRL + SHIFT + D", "Toggle notification do-not-disturb", hl.dsp.exec_cmd("qs ipc call dnd toggle"))
+bind("SUPER + SHIFT + space", "Show or hide the status bar", hl.dsp.exec_cmd("qs ipc call bar toggle"))

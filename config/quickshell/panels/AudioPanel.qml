@@ -309,22 +309,12 @@ Item {
         ShellText {
             anchors.left: deviceIcon.right
             anchors.leftMargin: 10
-            anchors.right: defaultIcon.left
-            anchors.rightMargin: 10
+            anchors.right: parent.right
+            anchors.rightMargin: 16
             anchors.verticalCenter: parent.verticalCenter
             text: root.nodeLabel(deviceRow.node)
             size: 12
             elide: Text.ElideRight
-        }
-
-        ShellText {
-            id: defaultIcon
-            anchors.right: parent.right
-            anchors.rightMargin: 16
-            anchors.verticalCenter: parent.verticalCenter
-            visible: deviceRow.selected
-            text: "󰄬"
-            size: 12
         }
 
         MouseArea {

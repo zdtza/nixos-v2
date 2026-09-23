@@ -31,9 +31,12 @@ PanelWindow {
     WlrLayershell.keyboardFocus: root.open
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
-    // Concrete surfaces define their own anchors. Keep cards one Hyprland
-    // outer gap clear of both the bottom bar and the screen edge.
-    margins.bottom: PanelService.panelBarInset + PanelService.panelGap
+    // Concrete surfaces define their horizontal anchors. Keep cards one Hyprland
+    // outer gap clear of the configured bar edge.
+    margins.top: PanelService.barAtTop
+        ? PanelService.panelBarInset + PanelService.panelGap : 0
+    margins.bottom: PanelService.barAtTop
+        ? 0 : PanelService.panelBarInset + PanelService.panelGap
 
     mask: Region {
         width: surfaceClip.height > 0 ? root.width : 0
@@ -62,7 +65,8 @@ PanelWindow {
     Item {
         id: surfaceClip
         anchors {
-            bottom: parent.bottom
+            top: PanelService.barAtTop ? parent.top : undefined
+            bottom: PanelService.barAtTop ? undefined : parent.bottom
             left: parent.left
             right: parent.right
         }

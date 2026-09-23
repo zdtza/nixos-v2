@@ -101,11 +101,15 @@ Scope {
 
         anchors {
             right: true
-            bottom: true
+            top: PanelService.barAtTop
+            bottom: !PanelService.barAtTop
         }
 
-        // Float above the bar and clear of the right screen edge.
-        margins.bottom: PanelService.panelBarInset + PanelService.panelGap
+        // Float beside the bar and clear of the right screen edge.
+        margins.top: PanelService.barAtTop
+            ? PanelService.panelBarInset + PanelService.panelGap : 0
+        margins.bottom: PanelService.barAtTop
+            ? 0 : PanelService.panelBarInset + PanelService.panelGap
         margins.right: PanelService.panelGap + PanelService.gapRightOffset
 
         // One shared panel background behind the whole stack.

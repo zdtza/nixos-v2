@@ -114,9 +114,14 @@ Scope {
         WlrLayershell.namespace: "quickshell:osd"
         WlrLayershell.layer: WlrLayer.Overlay
 
-        anchors.bottom: true
-        margins.bottom: PanelService.panelBarInset
-            + PanelService.panelGap + PanelService.gapBottomOffset
+        anchors.top: PanelService.barAtTop
+        anchors.bottom: !PanelService.barAtTop
+        margins.top: PanelService.barAtTop
+            ? PanelService.panelBarInset + PanelService.panelGap
+                + PanelService.gapBottomOffset : 0
+        margins.bottom: PanelService.barAtTop ? 0
+            : PanelService.panelBarInset + PanelService.panelGap
+                + PanelService.gapBottomOffset
 
         Rectangle {
             anchors.fill: parent

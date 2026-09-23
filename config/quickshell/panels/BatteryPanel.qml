@@ -213,14 +213,14 @@ Item {
                     labelText: root.thresholdActive ? "Charge limit"
                         : (root.discharging ? "Time left" : "Time to full")
                     valueText: root.thresholdActive ? (BatteryService.chargeThreshold || "—")
-                        : (root.fullyCharged ? "—"
+                        : (root.fullyCharged ? ""
                             : BatteryService.formatDuration(BatteryService.secondsRemaining))
                 }
                 InfoPair {
                     labelText: root.thresholdActive ? "Battery state"
                         : (root.discharging ? "Discharging" : "Charging")
                     valueText: root.thresholdActive ? "Holding"
-                        : (root.fullyCharged ? "—"
+                        : (root.fullyCharged ? "Holding"
                             : (BatteryService.changeRate > 0
                                 ? BatteryService.changeRate.toFixed(1).replace(/\\.0$/, "") + "W" : "—"))
                 }

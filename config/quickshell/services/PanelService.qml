@@ -31,6 +31,10 @@ Item {
     property int handoffGeneration: 0
     property var registeredPanels: ({})
 
+    // Change this one line to "top" or "bottom" to place the bar and its panels.
+    property string barPosition: "bottom"
+    readonly property bool barAtTop: barPosition === "top"
+
     // Whether the status bar is currently shown (toggled via `qs ipc call bar toggle/hide/show`).
     property bool barVisible: true
     readonly property bool focusedAppFullscreen: !!Hyprland.activeToplevel
@@ -43,7 +47,7 @@ Item {
     readonly property real popupParentOffset: barVisible && focusedAppFullscreen
         ? barHeight : 0
 
-    // Shared bottom-bar geometry keeps standalone panels aligned with popups.
+    // Shared bar geometry keeps standalone panels aligned with popups.
     property real barHeight: 34
     // Single source for the gap between every bar button/toggle and the clock, so the bar's groups all read as evenly spaced.
     property real barSpacing: 4

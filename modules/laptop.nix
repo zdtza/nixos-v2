@@ -24,6 +24,12 @@
     # exposing tlp via power-profiles d-bus, so quickshell can switch profiles.
     pd.enable = true;
     settings = {
+      # TLP 1.10 defaults battery operation to its Balanced profile even though
+      # the _BAT settings are power-conscious. Select Power Saver explicitly so
+      # tlp-pd (and therefore Quickshell) reports and applies that profile.
+      TLP_AUTO_SWITCH = 1;
+      TLP_PROFILE_AC = "PRF";
+      TLP_PROFILE_BAT = "SAV";
       CPU_SCALING_GOVERNOR_ON_AC = "performance";
       CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
       CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
@@ -31,7 +37,7 @@
       CPU_MIN_PERF_ON_AC = 0;
       CPU_MAX_PERF_ON_AC = 100;
       CPU_MIN_PERF_ON_BAT = 0;
-      CPU_MAX_PERF_ON_BAT = 60; # Balanced profile cap; Performance uses ON_AC.
+      CPU_MAX_PERF_ON_BAT = 60; # Battery/Power Saver cap; Performance uses ON_AC.
     };
     };
   };

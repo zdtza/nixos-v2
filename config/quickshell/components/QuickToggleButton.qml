@@ -10,6 +10,7 @@ Item {
     property bool active: false
     property color activeColor: Theme.base05
     property color inactiveColor: Theme.base04
+    property real iconSize: 14
     property bool interactive: true
 
     signal clicked()
@@ -34,7 +35,7 @@ Item {
         anchors.verticalCenterOffset: -1
         text: root.icon
         color: root.active ? root.activeColor : root.inactiveColor
-        size: 14
+        size: root.iconSize
 
         Behavior on color { ColorAnimation { duration: 120 } }
     }

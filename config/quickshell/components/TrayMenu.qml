@@ -151,20 +151,24 @@ PopupWindow {
     anchor {
         id: popupAnchor
 
-        edges: Edges.Bottom | Edges.Left
-        gravity: menu.submenu ? Edges.Bottom | Edges.Right : Edges.Top | Edges.Right
+        edges: menu.submenu ? Edges.Bottom | Edges.Left
+            : (PanelService.barAtTop ? Edges.Top | Edges.Left : Edges.Bottom | Edges.Left)
+        gravity: menu.submenu ? Edges.Bottom | Edges.Right
+            : (PanelService.barAtTop ? Edges.Bottom | Edges.Right : Edges.Top | Edges.Right)
         // Vertical sliding honors compositor outer gaps.
         adjustment: !menu.submenu && !PanelService.barAffectsPanels
             ? PopupAdjustment.SlideX : PopupAdjustment.Slide
         // Anchor rect is a 1x1 point in the anchor item's local coordinates, used only as the pivot the popup grows from.
         rect.x: menu.submenu ? -2 : 0
         rect.y: menu.submenu ? -10
-            : PanelService.popupParentOffset - PanelService.panelGap
+            : (PanelService.barAtTop
+                ? PanelService.panelBarInset + PanelService.panelGap
+                : PanelService.popupParentOffset - PanelService.panelGap)
         rect.width: 1
-        // Top-level menus grow upward from a point just above the bottom bar.
+        // Top-level menus grow away from a point just beyond the configured bar edge.
         rect.height: menu.submenu ? 1 : 0
 
-        // Center above the bar item while honoring horizontal screen gaps.
+        // Center on the bar item while honoring horizontal screen gaps.
         onAnchoring: {
             if (menu.submenu || !menu.anchorWindow)
                 return;

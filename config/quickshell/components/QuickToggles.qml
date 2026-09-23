@@ -29,22 +29,20 @@ Item {
         QuickToggleSlot {
             shown: StayAwakeService.enabled
 
-            ShellText {
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: -1
-                text: "󰅶"
-                size: 14
+            QuickToggleButton {
+                icon: "󰅶"
+                active: true
+                onClicked: StayAwakeService.toggle()
             }
         }
 
         QuickToggleSlot {
             shown: DoNotDisturbService.enabled
 
-            ShellText {
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: -1
-                text: "󰂛"
-                size: 14
+            QuickToggleButton {
+                icon: "󰂛"
+                active: true
+                onClicked: DoNotDisturbService.toggle()
             }
         }
 
@@ -63,11 +61,11 @@ Item {
         QuickToggleSlot {
             shown: NightLightService.enabled
 
-            ShellText {
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: -1
-                text: ""
-                size: 12
+            QuickToggleButton {
+                icon: ""
+                iconSize: 12
+                active: true
+                onClicked: PanelService.toggle(nightLightControl)
             }
         }
     }

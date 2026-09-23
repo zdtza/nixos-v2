@@ -4,7 +4,8 @@ import "../services"
 // Floating drawer used by right-side system panels.
 ShellSurface {
     anchors {
-        bottom: true
+        top: PanelService.barAtTop
+        bottom: !PanelService.barAtTop
         right: true
     }
 

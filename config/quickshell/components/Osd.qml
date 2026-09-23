@@ -122,8 +122,8 @@ Scope {
             anchors.fill: parent
             color: Theme.base01
             radius: 0
-            border.width: PanelService.panelBorderWidth
-            border.color: Theme.base04
+            border.width: PanelService.chromeBorderWidth
+            border.color: PanelService.chromeBorderColor
 
             Row {
                 anchors {

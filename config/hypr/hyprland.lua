@@ -66,7 +66,7 @@ hl.curve("fast", {
 })
 
 local animations = {
-	{ enabled = true, leaf = "workspaces", speed = 1.5, bezier = "fast" },
+	{ enabled = false, leaf = "workspaces", speed = 1.5, bezier = "fast" },
 	{ enabled = true, leaf = "windows", speed = 100, spring = "spring" },
 	{ enabled = true, leaf = "windowsOut", speed = 100, spring = "spring" },
 	{ enabled = true, leaf = "specialWorkspace", speed = 1.5, bezier = "fast", style = "slidevert" },

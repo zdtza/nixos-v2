@@ -60,6 +60,18 @@ PanelWindow {
     }
     margins.bottom: PanelService.barVisible ? 0 : -1
 
+    Rectangle {
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+        }
+        height: PanelService.chromeBorderWidth
+        color: PanelService.chromeBorderColor
+        visible: PanelService.barVisible
+        z: 1
+    }
+
     // Popup focus grabs include bar so controls remain directly clickable.
     MouseArea {
         anchors.fill: parent
@@ -115,17 +127,19 @@ PanelWindow {
         Tray { id: tray }
 
         QuickToggles { id: quickToggles }
+        
 
-        VolumePanel {
+        AudioPanel {
             id: volume
             screen: bar.screen
         }
 
         BluetoothPanel { id: bluetooth }
 
+        BatteryPanel { id: battery }
+
         NetworkPanel { id: network }
 
-        BatteryPanel { id: battery }
 
         TimerBadge {
             id: timerBadge
@@ -134,8 +148,8 @@ PanelWindow {
 
         Clock {
             id: clock
-            Layout.rightMargin: -4
-            Layout.leftMargin: -6
+            Layout.rightMargin: -8
+            Layout.leftMargin: -10
         }
     }
 

@@ -18,6 +18,9 @@ Item {
 
     implicitWidth: indicators.implicitWidth
     implicitHeight: 26
+    // RowLayout otherwise retains a spacing slot on both sides when every
+    // collapsible toggle has zero width.
+    visible: implicitWidth > 0
 
     Row {
         id: indicators

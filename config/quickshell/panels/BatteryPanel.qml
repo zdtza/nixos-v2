@@ -104,6 +104,7 @@ Item {
         panel: root
         text: root.batteryIcon()
         textColor: root.low ? Theme.base08 : Theme.base05
+        textSize: 12
         onClicked: PanelService.toggle(root)
     }
 

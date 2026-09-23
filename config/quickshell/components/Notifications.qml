@@ -14,6 +14,9 @@ Scope {
 
     // Only the monitor *name* is cached, never a screen object.
     property string targetScreenName: Quickshell.screens.length > 0 ? Quickshell.screens[0].name : ""
+    // Notification app names are often generic (e.g. `notify-send`). Capture
+    // the focused client at delivery time as the reliable click target.
+    property var notificationOrigins: ({})
 
     function focusedMonitorName(): string {
         return Hyprland.focusedMonitor?.name ?? "";
@@ -50,6 +53,19 @@ Scope {
                 return;
             }
             root.targetScreenName = root.focusedMonitorName();
+            const source = Hyprland.activeToplevel;
+            if (source?.address) {
+                // QML's JS engine does not support object spread. Copy the map
+                // explicitly so assigning it still emits a property change.
+                const origins = {};
+                for (const key in root.notificationOrigins)
+                    origins[key] = root.notificationOrigins[key];
+                origins[String(notification.id)] = {
+                    address: String(source.address),
+                    workspaceId: Number(source.workspace?.id ?? 0)
+                };
+                root.notificationOrigins = origins;
+            }
             notification.tracked = true;
         }
     }
@@ -100,8 +116,8 @@ Scope {
             height: window.panelHeight
             color: Theme.base01
             radius: 0
-            border.width: PanelService.panelBorderWidth
-            border.color: Theme.base04
+            border.width: PanelService.chromeBorderWidth
+            border.color: PanelService.chromeBorderColor
 
             Column {
                 id: notificationColumn
@@ -153,24 +169,47 @@ Scope {
                 .replace(/\.desktop$/, "").replace(/[^a-z0-9]/g, "");
         }
 
+        function focusToplevel(toplevel: var): bool {
+            let address = String(toplevel?.address ?? "");
+            if (address === "")
+                return false;
+            if (!address.startsWith("0x"))
+                address = `0x${address}`;
+
+            // This is the Lua-dispatch form used by the rest of the Hyprland
+            // configuration. Focusing by address also selects the window's
+            // workspace, avoiding a race between separate workspace/window
+            // dispatches. Hyprland requires the 0x address prefix.
+            Quickshell.execDetached(["hyprctl", "dispatch",
+                `hl.dsp.focus({ window = 'address:${address}' })`]);
+            return true;
+        }
+
         function focusOrigin(): bool {
+            // Prefer sender metadata when it identifies a real application.
+            // This handles notifications emitted by background applications.
             const candidates = [card.notification.desktopEntry, card.notification.appName]
                 .map(value => card.normalizedIdentity(value)).filter(value => value.length > 0);
-
             for (const toplevel of Hyprland.toplevels.values) {
                 const ipc = toplevel.lastIpcObject ?? {};
                 const identities = [toplevel.wayland?.appId ?? "", ipc.class ?? "",
                     ipc.initialClass ?? ""].map(value => card.normalizedIdentity(value));
+                if (candidates.some(candidate => identities.some(identity => identity === candidate
+                    || (candidate.length >= 4 && identity.length >= 4
+                        && (identity.includes(candidate) || candidate.includes(identity))))))
+                    return focusToplevel(toplevel);
+            }
 
-                for (const candidate of candidates) {
-                    const match = identities.some(identity => identity === candidate
-                        || (candidate.length >= 4 && identity.length >= 4
-                            && (identity.includes(candidate) || candidate.includes(identity))));
-                    if (match && toplevel.wayland) {
-                        toplevel.wayland.activate();
-                        return true;
-                    }
-                }
+            // Utilities such as notify-send identify themselves rather than
+            // the terminal that invoked them. For those, use the exact window
+            // which was focused when the notification arrived.
+            const captured = root.notificationOrigins[String(card.notification.id)];
+            if (captured?.address) {
+                const wanted = String(captured.address).replace(/^0x/, "");
+                const source = Hyprland.toplevels.values.find(toplevel =>
+                    String(toplevel.address ?? "").replace(/^0x/, "") === wanted);
+                if (source)
+                    return focusToplevel(source);
             }
             return false;
         }
@@ -184,11 +223,17 @@ Scope {
         }
 
         function activate(): void {
-            const action = card.defaultAction();
-            if (action)
-                action.invoke();
-            else
+            const actions = notification.actions ?? [];
+            // A notification with no actions behaves like a window switcher.
+            // When actions are supplied, only its advertised default action is
+            // invoked; never substitute a focus action for a sender action.
+            if (actions.length === 0)
                 card.focusOrigin();
+            else {
+                const action = card.defaultAction();
+                if (action)
+                    action.invoke();
+            }
             card.close(false);
         }
 
@@ -252,7 +297,7 @@ Scope {
                 wrapMode: Text.Wrap
                 elide: Text.ElideRight
                 maximumLineCount: 4
-                color: Theme.base04
+                opacity: 0.7
                 font.pixelSize: 12
                 lineHeight: 1.1
             }

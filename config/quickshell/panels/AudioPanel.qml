@@ -116,6 +116,7 @@ Item {
         anchors.centerIn: parent
         panel: root
         text: AudioService.outputIcon
+        textSize: 15
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton)

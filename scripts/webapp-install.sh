@@ -8,8 +8,21 @@ icons_dir="$repo_dir/assets/icons"
 
 read -r -p 'Web App Name: ' app_name
 read -r -p 'Web App URL: ' app_url
-read -r -p 'Isolated session? [y/N]: ' private_answer
-[[ "$private_answer" =~ ^[Yy] ]] && app_private=true || app_private=false
+read -r -p 'Browser [firefox/chromium] (firefox): ' browser_answer
+case "${browser_answer,,}" in
+  '' | firefox | f) app_browser=firefox ;;
+  chromium | c) app_browser=chromium ;;
+  *)
+    printf 'Browser must be chromium or firefox.\n' >&2
+    exit 1
+    ;;
+esac
+
+app_private=false
+if [[ "$app_browser" == chromium ]]; then
+  read -r -p 'Isolated Chromium session? [y/N]: ' private_answer
+  [[ "$private_answer" =~ ^[Yy] ]] && app_private=true
+fi
 
 [[ -n "$app_name" && -n "$app_url" ]] || {
   printf 'Name and URL are required.\n' >&2
@@ -95,13 +108,13 @@ done
   exit 1
 }
 
-python3 - "$apps_file" "$app_id" "$app_name" "$app_url" "$app_private" <<'PY'
+python3 - "$apps_file" "$app_id" "$app_name" "$app_url" "$app_browser" "$app_private" <<'PY'
 import json
 import sys
 from pathlib import Path
 
 path = Path(sys.argv[1])
-app_id, name, url, isolated = sys.argv[2:]
+app_id, name, url, browser, isolated = sys.argv[2:]
 marker = "    # WEBAPPS"
 text = path.read_text()
 if marker not in text:
@@ -112,6 +125,7 @@ entry = (
     f"      id = {q(app_id)};\n"
     f"      name = {q(name)};\n"
     f"      url = {q(url)};\n"
+    f"      browser = {q(browser)};\n"
     + ("      isolated = true;\n" if isolated == "true" else "")
     + "    }\n"
 )

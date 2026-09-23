@@ -239,13 +239,20 @@ Item {
                         implicitHeight: 26
 
                         Rectangle {
-                            anchors.fill: parent
-                            radius: 4
+                            anchors.bottom: parent.bottom
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: 16
+                            height: 2
+                            radius: PanelService.rounding
                             // menuLoader.trayItem still points at the last item clicked, so the Windows menu has to be excluded here or that item lights up alongside it.
-                            color: itemMouse.containsMouse
+                            visible: opacity > 0
+                            opacity: itemMouse.containsMouse
                                 || (root.opened && root.selectedItemIndex === entry.index)
                                 || (root.opened && !root.windowsMenuOpen && menuLoader.trayItem === entry.modelData)
-                                ? Utils.alpha(Theme.base05, 0.16) : "transparent"
+                                ? 1 : 0
+                            color: Theme.base05
+
+                            Behavior on opacity { NumberAnimation { duration: 120 } }
                         }
 
                         Image {
@@ -303,12 +310,19 @@ Item {
                     implicitHeight: 26
 
                     Rectangle {
-                        anchors.fill: parent
-                        radius: 4
-                        color: windowsMouse.containsMouse
+                        anchors.bottom: parent.bottom
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 16
+                        height: 2
+                        radius: PanelService.rounding
+                        visible: opacity > 0
+                        opacity: windowsMouse.containsMouse
                             || (root.opened && root.selectedItemIndex === root.items.length)
                             || (root.opened && root.windowsMenuOpen)
-                            ? Utils.alpha(Theme.base05, 0.16) : "transparent"
+                            ? 1 : 0
+                        color: Theme.base05
+
+                        Behavior on opacity { NumberAnimation { duration: 120 } }
                     }
 
                     Image {

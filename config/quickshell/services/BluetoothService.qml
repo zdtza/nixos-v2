@@ -10,7 +10,11 @@ Item {
 
     readonly property var adapter: Bluetooth.defaultAdapter
     readonly property bool available: !!adapter
-    readonly property bool enabled: available && adapter.enabled
+    // Quickshell can start before it receives BlueZ's Powered update. A
+    // connected device is definitive evidence that the adapter is powered, so
+    // do not render Bluetooth as off while that initial property is stale.
+    readonly property bool enabled: available
+        && (adapter.enabled || connectedDevices.length > 0)
     readonly property var deviceObjects: Bluetooth.devices ? Bluetooth.devices.values : []
     readonly property var devices: sortedDevices()
     readonly property var connectedDevices: devices.filter(device => isConnected(device))

@@ -315,8 +315,9 @@ Item {
         width: parent.width
         height: root.deviceRowHeight
         radius: PanelService.rounding
-        color: device.connected
-            ? Utils.alpha(Theme.base05, 0.08) : "transparent"
+        // Connection state is conveyed by its dedicated section; the fill and border both indicate hover or keyboard selection.
+        color: keyboardSelected
+            ? Utils.alpha(Theme.base05, 0.10) : "transparent"
         border.width: keyboardSelected ? 1 : 0
         border.color: Utils.alpha(Theme.base05, 0.25)
 

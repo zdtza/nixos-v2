@@ -23,10 +23,16 @@ Item {
     }
 
     Rectangle {
-        anchors.fill: parent
+        anchors.bottom: parent.bottom
+        anchors.left: label.left
+        anchors.right: label.right
+        height: 2
         radius: PanelService.rounding
-        color: root.opened || root.timerOpened || mouseArea.containsMouse
-            ? Utils.alpha(Theme.base05, 0.10) : "transparent"
+        visible: opacity > 0
+        opacity: root.opened || root.timerOpened || mouseArea.containsMouse ? 1 : 0
+        color: Theme.base05
+
+        Behavior on opacity { NumberAnimation { duration: 120 } }
     }
 
     ShellText {

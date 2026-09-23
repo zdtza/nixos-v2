@@ -29,8 +29,8 @@ Item {
         if (outputVolume >= 0.6)
             return "󰕾";
         if (outputVolume >= 0.2)
-            return "󰖀";
-        return "󰕿";
+            return "󰕾";
+        return "󰕾";
     }
 
     signal volumeIpcInvoked(bool input)

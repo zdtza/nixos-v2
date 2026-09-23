@@ -346,27 +346,6 @@ Scope {
                             }
                         }
 
-                        // Accent outline on the selected slice.
-                        Shape {
-                            anchors.fill: parent
-                            visible: slice.selected
-                            antialiasing: true
-                            preferredRendererType: Shape.CurveRenderer
-
-                            ShapePath {
-                                fillColor: "transparent"
-                                strokeColor: Theme.accent
-                                strokeWidth: 3
-                                startX: slice.topLeft
-                                startY: 0
-
-                                PathLine { x: slice.topRight; y: 0 }
-                                PathLine { x: slice.bottomRight; y: slice.height }
-                                PathLine { x: slice.bottomLeft; y: slice.height }
-                                PathLine { x: slice.topLeft; y: 0 }
-                            }
-                        }
-
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
@@ -379,19 +358,6 @@ Scope {
                         }
                     }
                 }
-            }
-
-            // Selected item's name, with the typed letters highlighted.
-            ShellText {
-                visible: root.showCaption
-                anchors {
-                    bottom: parent.bottom
-                    horizontalCenter: parent.horizontalCenter
-                }
-                size: 16
-                font.weight: Font.DemiBold
-                textFormat: Text.StyledText
-                text: root.captionMarkup()
             }
         }
 

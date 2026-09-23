@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell.Hyprland
 import Quickshell.Io
+import ".."
 
 // Coordinates bar panels so only one instance is open across all screens.
 Item {
@@ -43,9 +44,9 @@ Item {
         ? barHeight : 0
 
     // Shared bottom-bar geometry keeps standalone panels aligned with popups.
-    property real barHeight: 30
+    property real barHeight: 34
     // Single source for the gap between every bar button/toggle and the clock, so the bar's groups all read as evenly spaced.
-    property real barSpacing: 6
+    property real barSpacing: 4
     // Hyprland's outer gap, also used to inset floating shell panels.
     property real barGap: 9
     readonly property real panelGap: barGap
@@ -55,8 +56,9 @@ Item {
     property real gapRightOffset: 0
     // Shared speed for animated bar controls.
     property int slideDuration: 150
-    // Set this back to 2 to restore borders around shell panels.
-    property real panelBorderWidth: 0
+    // Shared subtle border used by the bar and every shell panel.
+    readonly property real chromeBorderWidth: 1
+    readonly property color chromeBorderColor: Utils.alpha(Theme.base05, 0.15)
     // Internal controls use a small, stable radius independent of Hyprland.
     readonly property real rounding: 2
 

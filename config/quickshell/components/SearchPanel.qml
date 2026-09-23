@@ -163,8 +163,8 @@ Scope {
             clip: true
             radius: 0
             color: Theme.base01
-            border.width: PanelService.panelBorderWidth
-            border.color: Theme.base04
+            border.width: PanelService.chromeBorderWidth
+            border.color: PanelService.chromeBorderColor
             opacity: root.open ? 1 : 0
 
             MouseArea {

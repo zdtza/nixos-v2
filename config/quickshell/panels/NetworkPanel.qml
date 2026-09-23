@@ -266,6 +266,7 @@ Item {
         anchors.centerIn: parent
         panel: root
         text: NetworkService.icon
+        textSize: 15
         onClicked: root.toggle()
     }
 
@@ -411,11 +412,11 @@ Item {
                             width: parent.width
                             // Passphrase entry takes over this row in place rather than growing it, so opening a prompt never reflows the list or the panel height.
                             height: root.networkRowHeight
-                            // Navigation only moves the outline; connection state owns the fill.
+                            // Hover and keyboard selection share one highlight; connection state is conveyed by its dedicated section.
                             color: rowMouse.pressed && !passwordOpen
                                 ? Utils.alpha(Theme.base05, 0.22)
-                                : networkRow.modelData.connected
-                                    ? Utils.alpha(Theme.base05, 0.08) : "transparent"
+                                : networkRow.keyboardSelected && !passwordOpen
+                                    ? Utils.alpha(Theme.base05, 0.10) : "transparent"
                             border.width: networkRow.keyboardSelected && !passwordOpen ? 1 : 0
                             border.color: Utils.alpha(Theme.base05, 0.25)
                             radius: PanelService.rounding

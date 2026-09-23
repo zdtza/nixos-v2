@@ -138,9 +138,12 @@ Item {
                 readonly property var primary: root.representative(tasks)
                 readonly property var displayedTasks: [primary]
 
-                width: 28
+                width: tasksRow.implicitWidth
+                // Keep all workspace slots at icon-row height; smaller empty
+                // indicators are centered in this space instead of top-aligned.
+                height: 26
                 implicitWidth: width
-                implicitHeight: tasksRow.implicitHeight
+                implicitHeight: height
                 clip: true
 
                 Row {
@@ -149,6 +152,9 @@ Item {
                     anchors {
                         left: parent.left
                         verticalCenter: parent.verticalCenter
+                        // Bias empty indicators down three pixels so their active
+                        // underline aligns with occupied workspaces.
+                        verticalCenterOffset: workspaceGroup.primary ? 0 : 3
                     }
                     spacing: 2
 
@@ -163,13 +169,29 @@ Item {
                         readonly property var entry: root.desktopEntry(toplevel)
                         readonly property bool urgent: !!toplevel && toplevel.urgent
 
-                        width: 28
-                        height: 26
+                        // Keep workspace slots the same width whether empty or
+                        // occupied so opening/closing a window cannot shift them.
+                        width: 26
+                        height: taskButton.toplevel ? 26
+                            : Math.max(workspaceNumber.implicitWidth + 12,
+                                workspaceNumber.implicitHeight + 2)
                         radius: 4
-                        color: workspaceGroup.active || taskMouse.containsMouse
-                            ? Utils.alpha(Theme.base05, 0.16) : "transparent"
+                        color: "transparent"
                         border.width: urgent ? 1 : 0
                         border.color: Theme.base08
+
+                        Rectangle {
+                            anchors.bottom: parent.bottom
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: Math.min(16, parent.width)
+                            height: 2
+                            radius: PanelService.rounding
+                            visible: opacity > 0
+                            opacity: workspaceGroup.active || taskMouse.containsMouse ? 1 : 0
+                            color: Theme.base05
+
+                            Behavior on opacity { NumberAnimation { duration: 120 } }
+                        }
 
                         Image {
                             id: appIcon
@@ -188,12 +210,17 @@ Item {
                         }
 
                         ShellText {
+                            id: workspaceNumber
+
                             anchors.centerIn: parent
+                            // Compensate for the number glyph's visual right bias
+                            // and lift it without moving the active underline.
+                            anchors.horizontalCenterOffset: -1
+                            anchors.verticalCenterOffset: -2
                             visible: !taskButton.toplevel
-                            // Empty workspace placeholder; keep the bar icon-only.
-                            text: ""
-                            color: workspaceGroup.active ? Theme.base05 : Theme.base04
-                            size: 12
+                            text: workspaceGroup.workspaceId
+                            color: Theme.base04
+                            size: Theme.fontSize
                         }
 
                         MouseArea {

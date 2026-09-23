@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import "../services"
+import ".."
 
 PopupWindow {
     id: menu
@@ -157,7 +158,7 @@ PopupWindow {
             ? PopupAdjustment.SlideX : PopupAdjustment.Slide
         // Anchor rect is a 1x1 point in the anchor item's local coordinates, used only as the pivot the popup grows from.
         rect.x: menu.submenu ? -2 : 0
-        rect.y: menu.submenu ? 0
+        rect.y: menu.submenu ? -10
             : PanelService.popupParentOffset - PanelService.panelGap
         rect.width: 1
         // Top-level menus grow upward from a point just above the bottom bar.
@@ -237,8 +238,8 @@ PopupWindow {
             anchors.fill: parent
             color: Theme.base01
             radius: 0
-            border.width: PanelService.panelBorderWidth
-            border.color: Theme.base04
+            border.width: PanelService.chromeBorderWidth
+            border.color: PanelService.chromeBorderColor
 
             Column {
                 id: column
@@ -291,7 +292,7 @@ PopupWindow {
                 width: column.width
                 implicitHeight: menu.menuTitle === "" ? 0 : 1
                 visible: implicitHeight > 0
-                color: Theme.base03
+                color: PanelService.chromeBorderColor
             }
 
             Item {
@@ -321,7 +322,7 @@ PopupWindow {
                         anchors.centerIn: parent
                         width: parent.width
                         height: 1
-                        color: Theme.base03
+                        color: PanelService.chromeBorderColor
                     }
 
                     // --- entry or section heading ---.
@@ -334,7 +335,7 @@ PopupWindow {
                         }
                         radius: 0
                         color: menu.selectedEntryIndex === row.index
-                            && row.interactive ? Theme.base02 : "transparent"
+                            && row.interactive ? Utils.alpha(Theme.base05, 0.10) : "transparent"
 
 
                         ShellText {

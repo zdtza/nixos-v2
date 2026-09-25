@@ -1,6 +1,6 @@
 # Generated from ~/omarchy/themes/ristretto (colors.toml, neovim.lua, vscode.json).
 {
-  wallpaper = ./wallpapers/0-launch.jpg;
+  wallpaper = ./wallpapers/2-coffee-beans.jpg;
   polarity = "dark";
   colors = {
     base00 = "#2c2525"; # background

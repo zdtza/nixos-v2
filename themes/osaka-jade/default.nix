@@ -1,6 +1,6 @@
 # Generated from ~/omarchy/themes/osaka-jade (colors.toml, neovim.lua, vscode.json).
 {
-  wallpaper = ./wallpapers/1-glowing-city.jpg;
+  wallpaper = ./wallpapers/2-shaded-entrance.jpg;
   polarity = "dark";
   colors = {
     base00 = "#111c18"; # background

@@ -284,7 +284,7 @@ PopupWindow {
                     anchors.topMargin: 26
                     visible: menu.menuStatus !== ""
                     text: menu.menuStatus.toUpperCase()
-                    color: Theme.base04
+                    color: Theme.textSecondary
                     elide: Text.ElideRight
                     size: 9
                     font.weight: Font.Medium
@@ -353,7 +353,8 @@ PopupWindow {
 
                             text: row.sectionLabel ? row.entry.text.toUpperCase() : row.entry.text
                             elide: Text.ElideRight
-                            color: row.sectionLabel ? Theme.base03 : (row.interactive ? Theme.base05 : Theme.base04)
+                            color: row.sectionLabel ? Theme.textMuted
+                                : (row.interactive ? Theme.textPrimary : Theme.textSecondary)
                             size: row.sectionLabel ? 9 : 12
                             font.weight: row.sectionLabel ? Font.Medium : Font.Normal
                             font.letterSpacing: row.sectionLabel ? 1.8 : 0.1
@@ -376,7 +377,7 @@ PopupWindow {
                                     return "󰄬";
                                 return "";
                             }
-                            color: Theme.base04
+                            color: Theme.textSecondary
                             size: Theme.fontSize
                         }
 

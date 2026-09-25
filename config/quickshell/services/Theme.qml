@@ -24,6 +24,12 @@ Item {
     property color base0D: "#7aa2f7"
     property color base0E: "#ad8ee6"
     property color base0F: "#75493d"
+
+    // Text hierarchy always derives from the foreground instead of theme gray slots.
+    readonly property color textPrimary: base05
+    readonly property color textSecondary: Qt.rgba(base05.r, base05.g, base05.b, 0.65)
+    readonly property color textMuted: Qt.rgba(base05.r, base05.g, base05.b, 0.4)
+
     // per-theme accent slot (themes/*/accent)
     property color accent: "#7aa2f7"
     property url wallpaper: ""

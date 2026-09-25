@@ -270,7 +270,7 @@ Item {
                                 ? "No available devices" : "Bluetooth is turned off"
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
-                            color: Theme.base04
+                            color: Theme.textSecondary
                             size: 12
                         }
 
@@ -366,7 +366,7 @@ Item {
                     }
                     return deviceRow.device.paired ? "Paired" : "Available";
                 }
-                color: Theme.base04
+                color: Theme.textSecondary
                 size: 11
                 elide: Text.ElideRight
             }
@@ -402,7 +402,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: BluetoothService.isConnected(deviceRow.device) ? "󰂱"
                 : (deviceRow.device.paired ? "󰌾" : "")
-            color: Theme.base04
+            color: Theme.textSecondary
             size: 12
         }
 

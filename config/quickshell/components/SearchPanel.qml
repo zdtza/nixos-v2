@@ -196,7 +196,7 @@ Scope {
                             verticalCenter: parent.verticalCenter
                         }
                         text: "󰍉"
-                        color: Theme.base04
+                        color: Theme.textSecondary
                         size: 14
                     }
 
@@ -215,9 +215,9 @@ Scope {
                         focus: true
                         selectByMouse: true
                         clip: true
-                        color: Theme.base05
+                        color: Theme.textPrimary
                         selectionColor: Theme.base02
-                        selectedTextColor: Theme.base05
+                        selectedTextColor: Theme.textPrimary
                         font.family: Theme.monospace
                         font.pixelSize: Utils.scaledFont(14)
 
@@ -231,7 +231,7 @@ Scope {
                             verticalAlignment: Text.AlignVCenter
                             visible: search.text === ""
                             text: root.placeholder
-                            color: Theme.base04
+                            color: Theme.textSecondary
                             size: 14
                         }
 

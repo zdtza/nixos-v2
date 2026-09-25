@@ -219,7 +219,7 @@ Item {
                             anchors.verticalCenterOffset: -2
                             visible: !taskButton.toplevel
                             text: workspaceGroup.workspaceId
-                            color: Theme.base04
+                            color: Theme.textSecondary
                             size: Theme.fontSize
                         }
 

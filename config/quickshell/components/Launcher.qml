@@ -674,7 +674,7 @@ Scope {
                         id: searchIcon
                         anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter }
                         text: "󰍉"
-                        color: Theme.base04
+                        color: Theme.textSecondary
                         size: 15
                     }
 
@@ -689,9 +689,9 @@ Scope {
                     focus: true
                     selectByMouse: true
                     clip: true
-                    color: Theme.base05
+                    color: Theme.textPrimary
                     selectionColor: Theme.base02
-                    selectedTextColor: Theme.base05
+                    selectedTextColor: Theme.textPrimary
                     font.family: Theme.monospace
                     font.pixelSize: Utils.scaledFont(13)
                     cursorDelegate: Rectangle { width: 1; color: Theme.base05 }
@@ -701,7 +701,7 @@ Scope {
                         verticalAlignment: Text.AlignVCenter
                         visible: search.text === ""
                         text: root.keybindMode ? "Search keybindings" : "Search for apps"
-                        color: Theme.base04
+                        color: Theme.textSecondary
                         size: 13
                     }
 
@@ -901,7 +901,7 @@ Scope {
                         anchors { top: mostUsedTitle.bottom; left: parent.left; topMargin: 22; leftMargin: 10 }
                         visible: root.mostUsedEntries.length === 0
                         text: "Apps you open will appear here"
-                        color: Theme.base04
+                        color: Theme.textSecondary
                         size: 12
                     }
 
@@ -916,7 +916,7 @@ Scope {
                             id: clearSearchLabel
                             anchors.centerIn: parent
                             text: "CLEAR"
-                            color: Theme.base04
+                            color: Theme.textSecondary
                             size: 10
                         }
                         MouseArea {
@@ -1009,7 +1009,7 @@ Scope {
                     ShellText {
                         anchors { right: parent.right; verticalCenter: backButton.verticalCenter }
                         text: `${root.entries.length} APPLICATIONS`
-                        color: Theme.base04; size: 11; font.letterSpacing: 1
+                        color: Theme.textSecondary; size: 11; font.letterSpacing: 1
                     }
                     ListView {
                         id: allAppsList
@@ -1176,19 +1176,19 @@ Scope {
                             elide: Text.ElideRight
                             text: root.selectedItem?.entry?.comment
                                 || root.selectedItem?.entry?.genericName || "Application"
-                            color: Theme.base04; size: 11
+                            color: Theme.textSecondary; size: 11
                         }
                         ShellText {
                             id: detailMetadata
                             anchors {
                                 top: detailDescription.bottom
                                 left: parent.left; right: parent.right
-                                topMargin: 12; leftMargin: 20; rightMargin: 20
+                                topMargin: 8; leftMargin: 20; rightMargin: 20
                             }
                             horizontalAlignment: Text.AlignHCenter
                             text: root.categoryText(root.selectedItem)
                             visible: text !== ""
-                            color: Theme.base04
+                            color: Theme.textSecondary
                             elide: Text.ElideRight
                             size: 10
                         }
@@ -1240,7 +1240,7 @@ Scope {
                         anchors.centerIn: parent
                         visible: root.results.length === 0
                         text: root.entries.length === 0 ? "LOADING APPLICATIONS…" : "NO MATCHES"
-                        color: Theme.base04; font.letterSpacing: 1; size: 12
+                        color: Theme.textSecondary; font.letterSpacing: 1; size: 12
                     }
                 }
 
@@ -1306,7 +1306,7 @@ Scope {
                                         bottomMargin: 9; leftMargin: 12; rightMargin: 12
                                     }
                                     text: keybindRow.modelData.description
-                                    color: Theme.base04
+                                    color: Theme.textSecondary
                                     elide: Text.ElideRight
                                     size: 10
                                 }
@@ -1360,7 +1360,7 @@ Scope {
                             }
                             horizontalAlignment: Text.AlignHCenter
                             text: root.selectedKeybind?.description ?? ""
-                            color: Theme.base04
+                            color: Theme.textSecondary
                             wrapMode: Text.Wrap
                             maximumLineCount: 3
                             elide: Text.ElideRight
@@ -1376,7 +1376,7 @@ Scope {
                             }
                             horizontalAlignment: Text.AlignHCenter
                             text: root.keybindOptions(root.selectedKeybind)
-                            color: Theme.base04
+                            color: Theme.textSecondary
                             wrapMode: Text.Wrap
                             size: 10
                         }
@@ -1403,7 +1403,7 @@ Scope {
                                     ShellText {
                                         anchors { left: parent.left; verticalCenter: parent.verticalCenter }
                                         text: modelData.label
-                                        color: Theme.base04
+                                        color: Theme.textSecondary
                                         font.bold: true
                                         font.letterSpacing: 1
                                         size: 9
@@ -1427,7 +1427,7 @@ Scope {
                         anchors.centerIn: parent
                         visible: root.bindsLoadError !== ""
                         text: root.bindsLoadError
-                        color: Theme.base04
+                        color: Theme.textSecondary
                         size: 12
                     }
                 }

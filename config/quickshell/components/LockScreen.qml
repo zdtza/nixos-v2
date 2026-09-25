@@ -76,6 +76,14 @@ Scope {
         }
     }
 
+    // Hyprland boots into an empty "startup-lock" keybind submap. Do not
+    // restore normal desktop shortcuts until the compositor has acknowledged
+    // the secure session lock.
+    Process {
+        id: releaseStartupInputGuard
+        command: ["hyprctl", "dispatch", "hl.dsp.submap(\"reset\")"]
+    }
+
     IpcHandler {
         target: "lock"
 
@@ -110,6 +118,9 @@ Scope {
 
     WlSessionLock {
         id: sessionLock
+
+        onSecureChanged: if (secure && !releaseStartupInputGuard.running)
+            releaseStartupInputGuard.running = true
 
         WlSessionLockSurface {
             id: lockSurface

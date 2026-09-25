@@ -142,7 +142,7 @@ Item {
         visible: root.showButton
         panel: root
         text: "󱎫"
-        textColor: TimerService.running ? Theme.base05 : Theme.base04
+        textColor: TimerService.running ? Theme.textPrimary : Theme.textSecondary
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton)
@@ -267,9 +267,9 @@ Item {
                     if (root.inputReady && !root.updatingInput && root.durationParts(text))
                         TimerService.rememberDuration(root.parseDuration(text));
                 }
-                color: Theme.base05
+                color: Theme.textPrimary
                 selectionColor: Theme.base02
-                selectedTextColor: Theme.base05
+                selectedTextColor: Theme.textPrimary
                 font.family: Theme.monospace
                 font.pixelSize: Utils.scaledFont(36)
                 font.weight: Font.Medium
@@ -302,7 +302,7 @@ Item {
                 text: "No running timers"
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                color: Theme.base04
+                color: Theme.textSecondary
                 size: 12
             }
 

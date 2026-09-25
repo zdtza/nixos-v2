@@ -103,7 +103,7 @@ Item {
         anchors.centerIn: parent
         panel: root
         text: root.batteryIcon()
-        textColor: root.low ? Theme.base08 : Theme.base05
+        textColor: Theme.textPrimary
         textSize: 12
         onClicked: PanelService.toggle(root)
     }

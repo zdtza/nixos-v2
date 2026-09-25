@@ -53,7 +53,7 @@ Item {
                 anchors.centerIn: parent
                 anchors.verticalCenterOffset: -1
                 text: ""
-                color: Theme.base08
+                color: Theme.textPrimary
                 size: 14
             }
         }

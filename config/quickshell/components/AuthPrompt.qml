@@ -65,9 +65,9 @@ Item {
             echoMode: root.responseVisible ? TextInput.Normal : TextInput.Password
             passwordCharacter: "●"
             // Keep the caret visible so both lock-screen and Polkit prompts clearly indicate that they are ready for keyboard input.
-            color: Theme.base05
+            color: Theme.textPrimary
             selectionColor: Theme.base02
-            selectedTextColor: Theme.base05
+            selectedTextColor: Theme.textPrimary
             font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(22)
             font.letterSpacing: 2

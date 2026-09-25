@@ -245,7 +245,7 @@ done
             }
             visible: zoneInput.text.length === 0
             text: "Time code, e.g. PST or CET"
-            color: Theme.base04
+            color: Theme.textSecondary
             size: 12
         }
 
@@ -259,9 +259,9 @@ done
             verticalAlignment: TextInput.AlignVCenter
             activeFocusOnPress: true
             selectByMouse: true
-            color: Theme.base05
+            color: Theme.textPrimary
             selectionColor: Theme.base02
-            selectedTextColor: Theme.base05
+            selectedTextColor: Theme.textPrimary
             font.family: Theme.monospace
             font.pixelSize: Utils.scaledFont(12)
 
@@ -279,7 +279,7 @@ done
             }
             visible: root.addError.length > 0
             text: root.addError
-            color: Theme.base08
+            color: Theme.textPrimary
             size: 10
         }
     }

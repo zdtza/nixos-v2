@@ -8,8 +8,8 @@ Item {
 
     property string icon: ""
     property bool active: false
-    property color activeColor: Theme.base05
-    property color inactiveColor: Theme.base04
+    property color activeColor: Theme.textPrimary
+    property color inactiveColor: Theme.textSecondary
     property real iconSize: 14
     property bool interactive: true
 

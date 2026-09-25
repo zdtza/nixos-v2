@@ -9,7 +9,7 @@ Item {
     required property var panel
     property string text: ""
     property real textSize: 14
-    property color textColor: Theme.base05
+    property color textColor: Theme.textPrimary
     property int acceptedButtons: Qt.LeftButton
     property bool showPanelIndicator: true
 

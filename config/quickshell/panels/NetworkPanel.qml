@@ -337,14 +337,14 @@ Item {
             }
             DetailValue {
                 text: root.formatPing()
-                valueColor: NetworkService.packetLoss > 0 ? Theme.base08 : Theme.base05
+                valueColor: Theme.textPrimary
             }
             InfoLabel {
                 text: "Packet Loss"
             }
             DetailValue {
                 text: NetworkService.pingSamples.length > 0 ? NetworkService.packetLoss + "%" : "--"
-                valueColor: NetworkService.packetLoss > 0 ? Theme.base08 : Theme.base05
+                valueColor: Theme.textPrimary
             }
 
             InfoLabel {
@@ -481,7 +481,7 @@ Item {
                                             : networkRow.modelData.connected ? "Connected"
                                             : networkRow.modelData.known ? "Known network"
                                             : NetworkService.securityLabel(networkRow.modelData.security)
-                                        color: Theme.base04
+                                        color: Theme.textSecondary
                                         size: 11
                                         elide: Text.ElideRight
                                     }
@@ -516,7 +516,7 @@ Item {
                                     anchors.rightMargin: 16
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: NetworkService.securityRequiresPassword(networkRow.modelData.security) ? "󰌾" : ""
-                                    color: Theme.base04
+                                    color: Theme.textSecondary
                                     size: 12
                                 }
 
@@ -563,7 +563,7 @@ Item {
                                         }
                                         visible: passwordInput.text === ""
                                         text: root.failureText !== "" ? root.failureText : "Password"
-                                        color: root.failureText !== "" ? Theme.base08 : Theme.base04
+                                        color: root.failureText !== "" ? Theme.textPrimary : Theme.textSecondary
                                         size: 12
                                     }
 
@@ -576,9 +576,9 @@ Item {
                                         text: root.passwordText
                                         onTextChanged: root.passwordText = text
                                         echoMode: TextInput.Password
-                                        color: Theme.base05
+                                        color: Theme.textPrimary
                                         selectionColor: Theme.base04
-                                        selectedTextColor: Theme.base00
+                                        selectedTextColor: Theme.textPrimary
                                         font.family: Theme.monospace
                                         font.pixelSize: Utils.scaledFont(12)
                                         font.letterSpacing: 2
@@ -680,7 +680,7 @@ Item {
                             ? "No available networks" : "Wi-Fi is turned off"
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-                        color: Theme.base04
+                        color: Theme.textSecondary
                         size: 12
                     }
 
@@ -700,7 +700,7 @@ Item {
 
     component DetailValue: ShellText {
         property bool copyable: false
-        property color valueColor: Theme.base05
+        property color valueColor: Theme.textPrimary
 
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignRight

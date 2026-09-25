@@ -16,7 +16,7 @@ Item {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         text: root.title
-        color: Qt.darker(Theme.base05, 1.4)
+        color: Theme.textSecondary
         size: 11
         font.bold: true
         font.letterSpacing: 1
@@ -28,7 +28,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: root.detail
         visible: text !== ""
-        color: Theme.base04
+        color: Theme.textSecondary
         size: 11
         font.bold: true
         font.letterSpacing: 1

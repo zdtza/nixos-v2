@@ -34,7 +34,7 @@ Item {
         panel: root
         text: ""
         textSize: 12
-        textColor: NightLightService.enabled ? Theme.base05 : Theme.base04
+        textColor: NightLightService.enabled ? Theme.textPrimary : Theme.textSecondary
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton)

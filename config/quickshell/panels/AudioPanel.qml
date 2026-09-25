@@ -183,7 +183,7 @@ Item {
                 height: AudioService.outputs.length === 0 ? implicitHeight : 0
                 visible: AudioService.outputs.length === 0
                 text: "No audio outputs"
-                color: Theme.base04
+                color: Theme.textSecondary
                 size: 12
             }
 
@@ -254,7 +254,7 @@ Item {
                 height: AudioService.inputs.length === 0 ? implicitHeight : 0
                 visible: AudioService.inputs.length === 0
                 text: "No audio inputs"
-                color: Theme.base04
+                color: Theme.textSecondary
                 size: 12
             }
 

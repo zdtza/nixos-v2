@@ -45,7 +45,7 @@ Item {
             id: statusText
             width: parent.width
             text: root.status
-            color: Qt.darker(Theme.base05, 1.4)
+            color: Theme.textSecondary
             size: 11
             font.bold: true
             font.letterSpacing: 1.2

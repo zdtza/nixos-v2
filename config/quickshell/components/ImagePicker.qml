@@ -248,7 +248,7 @@ Scope {
                     anchors.centerIn: parent
                     visible: root.shownItems.length === 0
                     size: 28
-                    color: Theme.base03
+                    color: Theme.textMuted
                     text: root.filter !== "" ? "No matches" : "No images"
                 }
 

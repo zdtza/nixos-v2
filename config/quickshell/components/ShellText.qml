@@ -6,7 +6,7 @@ import ".."
 Text {
     property real size: Theme.fontSize
 
-    color: Theme.base05
+    color: Theme.textPrimary
     font.family: Theme.monospace
     font.pixelSize: Utils.scaledFont(size)
 }

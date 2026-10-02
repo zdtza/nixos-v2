@@ -457,8 +457,8 @@ Scope {
                 bottomMargin: PanelService.barAtTop
                     ? 0 : PanelService.panelBarInset + PanelService.panelGap
             }
-            width: Math.min(680, parent.width - PanelService.panelGap * 2)
-            height: Math.min(755, parent.height - PanelService.panelBarInset
+            width: Math.min(640, parent.width - PanelService.panelGap * 2)
+            height: Math.min(695, parent.height - PanelService.panelBarInset
                 - PanelService.panelGap * 2)
             color: Theme.base01
             // The overlay border at the end of this component is the single

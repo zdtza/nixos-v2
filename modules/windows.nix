@@ -24,7 +24,7 @@ in
     username = stringOption cfg.user;
     password = stringOption "windows";
     ramSize = stringOption "8G";
-    cpuCores = stringOption "8";
+    cpuCores = stringOption "6";
     diskSize = stringOption "64G";
     imageTag = stringOption "6.05";
 
@@ -188,10 +188,16 @@ in
           done
 
           mark_installed
-          exec xfreerdp \
+          # The SDL client runs natively on Wayland, avoiding XWayland's extra
+          # presentation step. Prefer the high-quality local-network graphics
+          # path since this connection never leaves the host.
+          exec sdl-freerdp \
             "/v:${host}:${rdpPort}" \
             "/u:${cfg.username}" \
             "/p:${cfg.password}" \
+            /network:lan \
+            /gfx:AVC444:on,AVC420:on,progressive:on \
+            /bpp:32 \
             -grab-keyboard \
             /cert:ignore \
             /dynamic-resolution \
@@ -206,6 +212,7 @@ in
           ${helpers}
           notify 'Windows' 'Reconnecting...'
           pkill -x xfreerdp || true
+          pkill -x sdl-freerdp || true
           sleep 1
           exec windows-launch
         '';

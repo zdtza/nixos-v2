@@ -24,7 +24,7 @@ hl.config({
 		rounding = 0,
 		active_opacity = 0.99,
 		inactive_opacity = 0.96,
-		blur = { enabled = false, xray = false, special = true, passes = 2, size = 3 },
+		blur = { enabled = true, xray = false, special = true, passes = 2, size = 3 },
 		shadow = { enabled = false },
 	},
 	animations = { enabled = true },
@@ -136,6 +136,14 @@ hl.window_rule({
 	match = { float = true },
 	-- Override global opacity: active, inactive, fullscreen.
 	opacity = "0.99 override 0.98 override 1.0 override",
+})
+
+-- Keep normal translucent windows sharp; the special workspace backdrop uses
+-- decoration.blur.special independently of per-window blur.
+hl.window_rule({
+	name = "disable-regular-window-blur",
+	match = { class = ".*" },
+	no_blur = true,
 })
 
 -- =============================================================================

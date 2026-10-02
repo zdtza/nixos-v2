@@ -3,11 +3,17 @@
 let
   # this host's one user, referenced below instead of repeating it everywhere.
   user = "zdtza";
+  # Select the system and Home Manager theme in one place.
+  themeName = "tokyo-night";
 
   localHosts = [
     "management-local.pmis.servicesseta.org.za"
     "partner-local.pmis.servicesseta.org.za"
     "learner-local.pmis.servicesseta.org.za"
+  ];
+  dotnet = pkgs.dotnetCorePackages.combinePackages [
+    pkgs.dotnetCorePackages.sdk_8_0
+    pkgs.dotnetCorePackages.sdk_10_0
   ];
 in
 {
@@ -21,21 +27,28 @@ in
     ../../modules/laptop.nix
     ../../modules/gpu-nvidia.nix
     ../../modules/postgresql.nix
+    ../../modules/sql-vpn.nix
     ../../modules/windows.nix
   ];
 
   windows.user = user;
 
-  # Quickshell locks the session immediately after autologin.
-  wayland-desktop.autoLoginUser = user;
+  wayland-desktop = {
+    # Quickshell locks the session immediately after autologin.
+    autoLoginUser = user;
+    themeName = themeName;
+  };
 
   # Home environment and theme.
   home-manager.users.${user} = {
     home.stateVersion = "26.05";
     imports = [ ../../home ];
 
-    # Select from themes/; apply user-only changes with `sw`.
-    theme.name = "tokyo-night";
+    theme.name = themeName;
+
+    # SQL Database Projects looks for $HOME/dotnet on Linux.
+    home.file."dotnet".source = "${dotnet}/share/dotnet";
+    home.sessionVariables.DOTNET_ROOT = "${dotnet}/share/dotnet";
   };
 
   # time zone.
@@ -98,7 +111,7 @@ in
     font-awesome # icon fonts
     fastfetch # system info tool
     audacity # audio editor
-    dotnet-sdk_10 # .NET SDK
+    dotnet # combined .NET 8 and 10 SDKs
     mkcert # local dev certs
     steam # gaming platform
     gnome-calculator # calculator
@@ -123,6 +136,8 @@ in
     papers # document viewer / editor
     beekeeper-studio # data-base management tool
     bruno # api management tool
+    woeusb # windows usb creation tool
+    ntfs3g # NTFS support required by WoeUSB
   ];
 
   networking = {

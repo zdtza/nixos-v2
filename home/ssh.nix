@@ -20,6 +20,16 @@ in
 
       # Create: `ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa_azure`; copy with `wl-copy < ~/.ssh/id_rsa_azure.pub`.
       "ssh.dev.azure.com" = gitHost "~/.ssh/id_rsa_azure";
+
+      "pmis-windows-vpn" = {
+        HostName = "127.0.0.1";
+        User = "zdtza";
+        Port = 2222;
+        DynamicForward = "127.0.0.1:1080";
+        ExitOnForwardFailure = true;
+        ServerAliveInterval = 30;
+        ServerAliveCountMax = 3;
+      };
     };
   };
 

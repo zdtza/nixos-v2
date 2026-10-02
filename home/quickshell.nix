@@ -1,19 +1,11 @@
 {
   pkgs,
   config,
-  lib,
   ...
 }:
 
 let
   colors = config.lib.stylix.colors.withHashtag;
-  themes = (import ../themes).themes;
-  # WallpaperPicker lists sibling images, so use the repo path, not the store.
-  wallpaperPath = "${config.home.homeDirectory}/.src/nixos/themes/${config.theme.name}/wallpapers/${
-    baseNameOf themes.${config.theme.name}.wallpaper
-  }";
-
-  # Theme.qml watches this JSON in place.
   themeJson = pkgs.writeText "quickshell-theme.json" (
     builtins.toJSON {
       inherit (colors)
@@ -35,24 +27,18 @@ let
         base0F
         ;
       # themes/*/accent, same slot hyprland's active border and yazi's folder icons use (home/hyprland.nix, home/yazi.nix)
-      accent = colors.${themes.${config.theme.name}.accent};
-      wallpaper = wallpaperPath;
+      accent = colors.${config.theme.current.accent};
+      wallpaper = config.theme.current.wallpaper;
       monospace = config.stylix.fonts.monospace.name;
     }
   );
 
 in
 {
-  home = {
-    # Preserve the inode so Theme.qml's file watch survives activation.
-    activation.quickshellTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      run mkdir -p "$HOME/.cache/quickshell"
-      # first cp ever creates the file inheriting the Nix store source's read-only mode -- force it writable before every copy, in place.
-      run touch "$HOME/.cache/quickshell/theme.json"
-      run chmod u+w "$HOME/.cache/quickshell/theme.json"
-      run cp ${themeJson} "$HOME/.cache/quickshell/theme.json"
-    '';
+  # Quickshell reads the selected theme when it starts.
+  xdg.configFile."quickshell-theme.json".source = themeJson;
 
+  home = {
     # Pass the system time zone to Quickshell.
     sessionVariables.TZDIR = "/etc/zoneinfo";
 

@@ -2,7 +2,7 @@
 
 let
   # Same slot yazi/hyprland accent with (themes/*/accent).
-  accent = config.lib.stylix.colors.withHashtag.${(import ../themes).themes.${config.theme.name}.accent};
+  accent = config.lib.stylix.colors.withHashtag.${config.theme.current.accent};
   options = "--color=bg:-1,fg:-1,bg+:8,fg+:15,hl:${accent},hl+:${accent},pointer:${accent},marker:${accent},info:${accent},prompt:${accent},spinner:${accent},header:${accent}";
 in
 {

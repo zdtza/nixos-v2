@@ -8,7 +8,7 @@
 let
   # Home-manager selection overrides the NixOS Stylix fallback.
   themes = (import ../themes).themes;
-  theme = themes.${config.theme.name};
+  theme = config.theme.current;
 
   # Static: one Yaru variant for every theme.
   iconTheme = "Yaru-dark";
@@ -73,10 +73,19 @@ let
     '';
 in
 {
-  options.theme.name = lib.mkOption {
-    type = lib.types.enum (builtins.attrNames themes);
-    default = "tokyo-night";
-    description = "Selected preset from the themes/ folder (one subfolder per theme).";
+  options.theme = {
+    name = lib.mkOption {
+      type = lib.types.enum (builtins.attrNames themes);
+      description = "Selected preset from the themes/ folder (one subfolder per theme).";
+    };
+
+    current = lib.mkOption {
+      type = lib.types.attrs;
+      internal = true;
+      readOnly = true;
+      default = themes.${config.theme.name};
+      description = "Resolved data for the selected theme.";
+    };
   };
 
   config = {
@@ -97,19 +106,6 @@ in
 
     # Relink on home activation instead of requiring a system-profile rebuild.
     xdg.dataFile."icons/${folderThemeName}".source = folderIcons;
-
-    # Expose the theme and wallpaper selectors on PATH.
-    home.packages = [
-      (pkgs.writeShellScriptBin "select-theme" ''
-        export THEME_TMUX=${lib.getExe pkgs.tmux}
-        export THEME_TERMINAL=${lib.getExe pkgs.kitty}
-        export THEME_NOTIFY_SEND=${lib.getExe' pkgs.libnotify "notify-send"}
-        exec ${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.src/nixos/scripts/select-theme.sh "$@"
-      '')
-      (pkgs.writeShellScriptBin "select-wallpaper" ''
-        exec ${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.src/nixos/scripts/select-wallpaper.sh "$@"
-      '')
-    ];
 
     # Stylix owns color-scheme via polarity.
     gtk.iconTheme = {

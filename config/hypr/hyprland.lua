@@ -539,8 +539,6 @@ bind("F9", "Stop voice dictation recording", hl.dsp.exec_cmd("voxtype record sto
 -- starting the ~50 ms `qs` Qt IPC client on every invocation.
 bind("SUPER + space", "Open or close the application launcher", hl.dsp.global("quickshell:launcher"))
 bind("SUPER + CTRL + K", "Browse configured keyboard shortcuts", hl.dsp.global("quickshell:keybinds"))
-bind("SUPER + CTRL + W", "Choose the desktop wallpaper", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"))
-bind("SUPER + CTRL + A", "Choose the shell colour theme", hl.dsp.exec_cmd("qs ipc call theme toggle"))
 bind("SUPER + CTRL + C", "Open or close the clock panel", hl.dsp.exec_cmd("qs ipc call panels toggle clock"))
 bind("SUPER + CTRL + L", "Open or close the night-light panel", hl.dsp.exec_cmd("qs ipc call panels toggle nightlight"))
 bind("SUPER + CTRL + T", "Open or close the timer panel", hl.dsp.exec_cmd("qs ipc call panels toggle timer"))

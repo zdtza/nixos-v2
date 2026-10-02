@@ -20,7 +20,6 @@
     ./yazi.nix
     ./npm.nix
     ./quickshell.nix
-    ./vscode.nix
     ./onepassword.nix
   ];
 }

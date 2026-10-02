@@ -7,17 +7,24 @@
 }:
 let
   cfg = config.wayland-desktop;
-  # System-level fallback; home-manager's theme.name overrides the user palette.
-  fallbackTheme = (import ../themes).themes.tokyo-night;
+  themes = (import ../themes).themes;
+  theme = themes.${cfg.themeName};
   session = {
     command = "uwsm start hyprland-uwsm.desktop";
     user = cfg.autoLoginUser;
   };
 in
 {
-  options.wayland-desktop.autoLoginUser = lib.mkOption {
-    type = lib.types.str;
-    description = "User to auto-login directly into Hyprland.";
+  options.wayland-desktop = {
+    autoLoginUser = lib.mkOption {
+      type = lib.types.str;
+      description = "User to auto-login directly into Hyprland.";
+    };
+
+    themeName = lib.mkOption {
+      type = lib.types.enum (builtins.attrNames themes);
+      description = "Theme used by the system-level Stylix configuration.";
+    };
   };
 
   config = {
@@ -98,9 +105,9 @@ in
 
     stylix = {
       enable = true;
-      polarity = "dark";
-      base16Scheme = fallbackTheme.colors;
-      image = fallbackTheme.wallpaper;
+      polarity = theme.polarity;
+      base16Scheme = theme.colors;
+      image = theme.wallpaper;
 
       # keeping boot and virtual consoles on their default palette.
       targets = {

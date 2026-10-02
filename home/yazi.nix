@@ -1,10 +1,10 @@
-{ config, lib, ... }:
+{ config, ... }:
 
 let
   colors = config.lib.stylix.colors.withHashtag;
 
   # themes/*/accent names the base16 slot this theme accents with; same value drives hyprland's active border (home/hyprland.nix).
-  accent = colors.${(import ../themes).themes.${config.theme.name}.accent};
+  accent = colors.${config.theme.current.accent};
 in
 {
   # custom theme.toml below renders semantic colors directly.
@@ -44,15 +44,6 @@ in
       };
     };
   };
-
-  # yazi parses theme.toml once at startup, so a theme switch has to be pushed into instances that are already open.
-  home.activation.yaziTheme = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    ya=${lib.getExe' config.programs.yazi.package "ya"}
-    # nothing running is the normal case, don't nag about it.
-    if run $ya emit-to 0 app:theme 2>/dev/null; then
-      run $ya emit-to 0 app:resume 2>/dev/null || true
-    fi
-  '';
 
   # custom yazi theme.
   xdg = {

@@ -1,11 +1,6 @@
-{ pkgs, lib, ... }:
+{ ... }:
 
 {
-  # enabling manually to allow stylix targeting it.
+  # Enable manually to allow Stylix to target it.
   programs.btop.enable = true;
-
-  # SIGUSR2 reloads config and theme in running instances.
-  home.activation.btopTheme = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    run ${pkgs.procps}/bin/pkill -USR2 -x btop || true
-  '';
 }

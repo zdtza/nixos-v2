@@ -12,47 +12,17 @@ Item {
     id: root
 
     property var screen: null
-    property int minVisible: 3
 
     readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
     readonly property string monitorName: String(monitor?.name ?? screen?.name ?? "")
     readonly property int activeWorkspaceId: Number(monitor?.activeWorkspace?.id ?? 0)
 
-    // The workspace/task strip is global on every bar. This lets an occupied
-    // workspace 9 retain placeholder slots for 1 through 8 even when those
-    // workspaces are assigned to another monitor.
-    readonly property var allWorkspaces: Hyprland.workspaces.values
-        .filter(workspace => workspace.id > 0)
+    // Persistent workspace rules keep empty assigned workspaces in Hyprland's
+    // IPC model, so each bar can show only the workspaces belonging to it.
+    readonly property var workspaces: Hyprland.workspaces.values
+        .filter(workspace => workspace.id > 0
+            && String(workspace.monitor?.name ?? "") === root.monitorName)
         .sort((a, b) => a.id - b.id)
-
-    // Hyprland does not expose every empty persistent workspace through IPC.
-    // Find the highest workspace that matters, then synthesize every numeric
-    // slot below it so gaps such as 6, 7, and 8 cannot collapse before 9.
-    readonly property int highestVisibleWorkspaceId: {
-        let highest = root.minVisible;
-        for (const workspace of root.allWorkspaces) {
-            if (workspace.active || workspace.id === root.activeWorkspaceId
-                    || workspace.urgent || root.tasksFor(workspace).length > 0)
-                highest = Math.max(highest, workspace.id);
-        }
-        return highest;
-    }
-    readonly property var workspaces: {
-        const existing = {};
-        for (const workspace of root.allWorkspaces)
-            existing[workspace.id] = workspace;
-
-        const contiguous = [];
-        for (let id = 1; id <= root.highestVisibleWorkspaceId; id++) {
-            contiguous.push(existing[id] ?? {
-                id,
-                active: false,
-                urgent: false,
-                toplevels: { values: [] }
-            });
-        }
-        return contiguous;
-    }
 
     function isSteamPopup(toplevel: var): bool {
         const ipc = toplevel?.lastIpcObject ?? {};

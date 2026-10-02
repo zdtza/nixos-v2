@@ -9,8 +9,8 @@
 let
   picker = inputs.hyprland-preview-share-picker.packages.${pkgs.stdenv.hostPlatform.system}.default;
   colors = config.lib.stylix.colors.withHashtag;
-  # themes/*/accent, the same slot quickshell's pickers and hyprland's active border use.
-  accent = colors.${(import ../themes).themes.${config.theme.name}.accent};
+  # themes/*/accent, the same slot Quickshell and Hyprland use.
+  accent = colors.${config.theme.current.accent};
   font = config.stylix.fonts.monospace.name;
 
   yamlFormat = pkgs.formats.yaml { };

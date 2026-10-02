@@ -1,6 +1,6 @@
 {
-  # Active wallpaper, rewritten by scripts/select-wallpaper.sh -- always a file in ./wallpapers.
-  wallpaper = ./wallpapers/1-quattro.jpg;
+  # Select the desktop wallpaper from this theme's wallpapers directory.
+  wallpaper = ./wallpapers/0-winding-road.jpg;
   polarity = "dark";
   colors = {
     base00 = "#1a1b26"; # background
@@ -26,7 +26,6 @@
     colorscheme = "tokyonight-night";
     lualine = "tokyonight";
   };
-  vscode = "Tokyo Night";
   # base16 slot used as this theme's accent: yazi's folder icons/border and hyprland's active window border (home/yazi.nix, home/hyprland.nix)
   accent = "base0D";
 }

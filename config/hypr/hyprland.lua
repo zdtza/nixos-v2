@@ -194,13 +194,10 @@ local configured_monitors = {
 	},
 }
 
-local all_workspaces = {}
-local workspace_scroll
 local aspect_ratio_enabled = true
 
 local function assign_workspaces(monitor, workspaces)
 	for _, workspace in ipairs(workspaces) do
-		table.insert(all_workspaces, workspace)
 		hl.workspace_rule({
 			workspace = tostring(workspace),
 			monitor = monitor,
@@ -208,33 +205,6 @@ local function assign_workspaces(monitor, workspaces)
 			persistent = true,
 		})
 	end
-end
-
-local function scroll_workspace(offset)
-	local monitor = hl.get_active_monitor()
-	if not monitor or not monitor.active_workspace then
-		return
-	end
-
-	local index = workspace_scroll and workspace_scroll.index
-	if not index then
-		for current_index, id in ipairs(all_workspaces) do
-			if id == monitor.active_workspace.id then
-				index = current_index
-				break
-			end
-		end
-	end
-
-	local target_index = index and index + offset
-	local target = target_index and all_workspaces[target_index]
-	if not target then
-		return
-	end
-
-	local generation = (workspace_scroll and workspace_scroll.generation or 0) + 1
-	workspace_scroll = { index = target_index, generation = generation }
-	hl.dispatch(hl.dsp.focus({ workspace = target }))
 end
 
 local function toggle_aspect_ratio()
@@ -267,8 +237,6 @@ for _, monitor in ipairs(configured_monitors) do
 		scale = monitor.scale,
 	})
 end
-
-table.sort(all_workspaces)
 
 -- =============================================================================
 -- KEYBIND HELPERS
@@ -347,14 +315,6 @@ local function open_floating_terminal()
 	hl.dispatch(hl.dsp.exec_cmd("launch-terminal-cwd --class floating-terminal"))
 end
 
-local function focus_next_workspace()
-	scroll_workspace(1)
-end
-
-local function focus_previous_workspace()
-	scroll_workspace(-1)
-end
-
 local function bind(keys, description, dispatcher, options)
 	assert(description and description ~= "", "Keybind description is required for " .. keys)
 	options = options or {}
@@ -394,8 +354,6 @@ bind("SUPER + J", "Toggle the next split direction", hl.dsp.layout("togglesplit"
 bind("SUPER + T", "Toggle floating mode for focused window", hl.dsp.window.float({ action = "toggle" }))
 bind("SUPER + F", "Toggle fullscreen for focused window", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 bind("SUPER + Tab", "Switch to the previously used workspace", hl.dsp.focus({ workspace = "previous" }))
-bind("SUPER + mouse_up", "Switch to the next workspace", focus_next_workspace)
-bind("SUPER + mouse_down", "Switch to the previous workspace", focus_previous_workspace)
 
 -- =============================================================================
 -- KEYBINDS: WINDOW FOCUS AND MOVEMENT

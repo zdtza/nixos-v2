@@ -629,12 +629,11 @@ Scope {
             id: panel
 
             anchors {
-                left: parent.left
+                horizontalCenter: parent.horizontalCenter
                 bottom: parent.bottom
-                leftMargin: PanelService.panelGap + PanelService.gapLeftOffset
                 bottomMargin: PanelService.panelBarInset + PanelService.panelGap
             }
-            width: Math.min(680, parent.width - anchors.leftMargin - PanelService.panelGap)
+            width: Math.min(680, parent.width - PanelService.panelGap * 2)
             height: Math.min(780, parent.height - anchors.bottomMargin - PanelService.panelGap)
             color: Theme.base01
             // The overlay border at the end of this component is the single

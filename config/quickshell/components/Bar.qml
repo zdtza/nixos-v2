@@ -103,18 +103,10 @@ PanelWindow {
         sourceComponent: bar.activeKeyboardProxy
     }
 
-    // --- left ---.
-    RowLayout {
-        spacing: PanelService.barSpacing
-        anchors {
-            leftMargin: 6
-            left: parent.left
-            verticalCenter: parent.verticalCenter
-        }
-
-        Workspaces {
-            screen: bar.screen
-        }
+    // --- center ---.
+    Workspaces {
+        screen: bar.screen
+        anchors.centerIn: parent
     }
 
     // --- right ---.

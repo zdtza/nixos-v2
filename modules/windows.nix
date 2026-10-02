@@ -261,11 +261,7 @@ in
             stop
             remove
           ];
-          file.".local/share/icons/hicolor/scalable/apps/windows.svg".text = ''
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-              <path fill="#0078d4" d="M4 4h18v18H4zm22 0h18v18H26zM4 26h18v18H4zm22 0h18v18H26z"/>
-            </svg>
-          '';
+          file.".local/share/icons/hicolor/512x512/apps/windows.png".source = ../assets/icons/windows.png;
         };
 
         xdg.desktopEntries.windows = {

@@ -8,15 +8,15 @@ import Quickshell.Io
 Item {
     id: root
 
-    property bool enabled: false
+    property bool active: false
 
     function setEnabled(value: bool): void {
-        enabled = value;
+        active = value;
         stateFile.setText(value ? "true\n" : "false\n");
     }
 
     function toggle(): void {
-        setEnabled(!enabled);
+        setEnabled(!active);
     }
 
     FileView {
@@ -25,7 +25,7 @@ Item {
         preload: true
         atomicWrites: true
         printErrors: false
-        onLoaded: root.enabled = String(text() || "").trim() === "true"
+        onLoaded: root.active = String(text() || "").trim() === "true"
         onLoadFailed: stateFile.setText("false\n")
     }
 
@@ -35,6 +35,6 @@ Item {
         function toggle(): void { root.toggle(); }
         function enable(): void { root.setEnabled(true); }
         function disable(): void { root.setEnabled(false); }
-        function isEnabled(): bool { return root.enabled; }
+        function isEnabled(): bool { return root.active; }
     }
 }

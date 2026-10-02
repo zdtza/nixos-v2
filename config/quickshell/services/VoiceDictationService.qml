@@ -2,7 +2,6 @@ pragma Singleton
 
 // Voxtype voice dictation state.
 import QtQuick
-import Quickshell
 import Quickshell.Io
 
 Item {

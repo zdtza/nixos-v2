@@ -7,7 +7,6 @@ Item {
     id: root
 
     property real value: 0
-    property bool enabled: true
     property color fillColor: Theme.base05
 
     signal valueEdited(real value)

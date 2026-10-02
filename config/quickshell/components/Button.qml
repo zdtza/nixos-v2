@@ -1,6 +1,5 @@
 import QtQuick
 import "../services"
-import ".."
 
 // Fixed-width bar button shared by panel-backed status controls.
 Item {

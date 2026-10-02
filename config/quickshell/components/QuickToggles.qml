@@ -27,7 +27,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
 
         QuickToggleSlot {
-            shown: StayAwakeService.enabled
+            shown: StayAwakeService.active
 
             QuickToggleButton {
                 icon: "󰅶"
@@ -37,7 +37,7 @@ Item {
         }
 
         QuickToggleSlot {
-            shown: DoNotDisturbService.enabled
+            shown: DoNotDisturbService.active
 
             QuickToggleButton {
                 icon: "󰂛"
@@ -59,7 +59,7 @@ Item {
         }
 
         QuickToggleSlot {
-            shown: NightLightService.enabled
+            shown: NightLightService.active
 
             QuickToggleButton {
                 icon: ""

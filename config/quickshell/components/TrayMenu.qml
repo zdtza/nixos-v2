@@ -135,22 +135,20 @@ PopupWindow {
 
     // PopupAnchor.item and .window are mutually exclusive in quickshell's native implementation, and its internal onItemWindowChanged() dereferences the anchor item.
     Binding {
-        target: popupAnchor
+        target: menu.anchor
         property: "item"
         value: menu.anchorItem
         when: menu.submenu
     }
 
     Binding {
-        target: popupAnchor
+        target: menu.anchor
         property: "window"
         value: menu.anchorWindow
         when: !menu.submenu
     }
 
     anchor {
-        id: popupAnchor
-
         edges: menu.submenu ? Edges.Bottom | Edges.Left
             : (PanelService.barAtTop ? Edges.Top | Edges.Left : Edges.Bottom | Edges.Left)
         gravity: menu.submenu ? Edges.Bottom | Edges.Right
@@ -181,7 +179,7 @@ PopupWindow {
             point.x = Math.max(PanelService.panelGap + PanelService.gapLeftOffset,
                 Math.min(point.x, menu.anchorWindow.width - menu.implicitWidth
                     - PanelService.panelGap - PanelService.gapRightOffset));
-            popupAnchor.rect.x = Math.round(point.x);
+            menu.anchor.rect.x = Math.round(point.x);
         }
     }
 

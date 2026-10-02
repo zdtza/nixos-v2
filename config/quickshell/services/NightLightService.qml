@@ -9,7 +9,7 @@ Item {
     id: root
 
     property bool available: false
-    property bool enabled: false
+    property bool active: false
     property bool desiredEnabled: false
     property bool writingEnabled: false
     property bool stateLoaded: false
@@ -32,14 +32,14 @@ Item {
     function setEnabled(value: bool): void {
         stateLoaded = true;
         desiredEnabled = value;
-        enabled = value;
+        active = value;
         available = true;
         stateFile.setText(value ? "true\n" : "false\n");
         dispatchDesired();
     }
 
     function toggle(): void {
-        setEnabled(!enabled);
+        setEnabled(!active);
     }
 
     function setTemperature(value: int): void {
@@ -56,7 +56,7 @@ Item {
 
     function restoreEnabled(raw: string): void {
         desiredEnabled = String(raw || "").trim() === "true";
-        enabled = desiredEnabled;
+        active = desiredEnabled;
         stateLoaded = true;
         dispatchDesired();
     }
@@ -86,7 +86,7 @@ Item {
         if (!stateLoaded) {
             stateLoaded = true;
             desiredEnabled = actualEnabled;
-            enabled = actualEnabled;
+            active = actualEnabled;
             stateFile.setText(actualEnabled ? "true\n" : "false\n");
             if (actualEnabled)
                 dispatchDesired();
@@ -94,10 +94,10 @@ Item {
         }
 
         if (actualEnabled !== desiredEnabled) {
-            enabled = desiredEnabled;
+            active = desiredEnabled;
             dispatchDesired();
         } else {
-            enabled = actualEnabled;
+            active = actualEnabled;
             desiredEnabled = actualEnabled;
         }
     }
@@ -168,7 +168,7 @@ Item {
         function toggle(): void { root.toggle(); }
         function enable(): void { root.setEnabled(true); }
         function disable(): void { root.setEnabled(false); }
-        function isEnabled(): bool { return root.enabled; }
+        function isEnabled(): bool { return root.active; }
         function setTemperature(value: int): void { root.setTemperature(value); }
         function getTemperature(): int { return root.temperature; }
     }

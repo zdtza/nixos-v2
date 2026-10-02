@@ -6,7 +6,6 @@ import Quickshell
 import Quickshell.Hyprland
 import "../components"
 import "../services"
-import ".."
 
 Item {
     id: root

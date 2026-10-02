@@ -19,7 +19,7 @@ Item {
     function temperatureStatus(): string {
         if (!NightLightService.available)
             return "UNAVAILABLE";
-        if (!NightLightService.enabled)
+        if (!NightLightService.active)
             return "OFF";
         if (NightLightService.temperature <= 3000)
             return "EMBER GLOW";
@@ -34,7 +34,7 @@ Item {
         panel: root
         text: ""
         textSize: 12
-        textColor: NightLightService.enabled ? Theme.textPrimary : Theme.textSecondary
+        textColor: NightLightService.active ? Theme.textPrimary : Theme.textSecondary
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton)
@@ -93,7 +93,7 @@ Item {
 
             ToggleSwitch {
                 anchors.fill: parent
-                checked: NightLightService.enabled
+                checked: NightLightService.active
                 available: NightLightService.available
                 onToggled: NightLightService.toggle()
             }

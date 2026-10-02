@@ -2,7 +2,6 @@ pragma Singleton
 
 // Shared PipeWire state plus IPC controls for UI and window-manager keybinds.
 import QtQuick
-import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Pipewire
 

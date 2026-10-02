@@ -8,7 +8,7 @@ import Quickshell.Io
 Item {
     id: root
 
-    property bool enabled: false
+    property bool active: false
     property bool desiredEnabled: false
     property bool writingEnabled: false
     property bool stateLoaded: false
@@ -26,19 +26,19 @@ Item {
     function setEnabled(value: bool): void {
         stateLoaded = true;
         desiredEnabled = value;
-        enabled = value;
+        active = value;
         stateFile.setText(value ? "true\n" : "false\n");
         dispatchDesired();
     }
 
     function toggle(): void {
-        setEnabled(!enabled);
+        setEnabled(!active);
     }
 
     function restore(raw: string): void {
         const value = String(raw || "").trim();
         desiredEnabled = value === "true";
-        enabled = desiredEnabled;
+        active = desiredEnabled;
         stateLoaded = true;
         dispatchDesired();
     }
@@ -75,16 +75,16 @@ Item {
             if (!root.stateLoaded) {
                 root.stateLoaded = true;
                 root.desiredEnabled = actualEnabled;
-                root.enabled = actualEnabled;
+                root.active = actualEnabled;
                 stateFile.setText(actualEnabled ? "true\n" : "false\n");
                 return;
             }
 
             if (actualEnabled !== root.desiredEnabled) {
-                root.enabled = root.desiredEnabled;
+                root.active = root.desiredEnabled;
                 root.dispatchDesired();
             } else {
-                root.enabled = actualEnabled;
+                root.active = actualEnabled;
             }
         }
     }
@@ -109,6 +109,6 @@ Item {
         function toggle(): void { root.toggle(); }
         function enable(): void { root.setEnabled(true); }
         function disable(): void { root.setEnabled(false); }
-        function isEnabled(): bool { return root.enabled; }
+        function isEnabled(): bool { return root.active; }
     }
 }

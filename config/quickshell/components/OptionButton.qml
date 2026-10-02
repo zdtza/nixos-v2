@@ -8,7 +8,6 @@ Rectangle {
 
     property bool keyboardFocused: false
     property bool active: false
-    property bool enabled: true
     readonly property alias hovered: mouseArea.containsMouse
     // Hover and keyboard share one focus cursor.
     readonly property bool highlighted: keyboardFocused

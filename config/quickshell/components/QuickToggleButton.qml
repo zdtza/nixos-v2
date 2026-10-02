@@ -1,6 +1,5 @@
 import QtQuick
 import "../services"
-import ".."
 
 // Icon-only control inside a QuickToggleSlot.
 Item {

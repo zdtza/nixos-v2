@@ -4,7 +4,6 @@ import Quickshell
 import Quickshell.Hyprland
 import "../panels"
 import "../services"
-import ".."
 
 Item {
     id: root

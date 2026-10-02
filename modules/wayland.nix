@@ -124,7 +124,7 @@ in
       fonts = {
         sizes = {
           applications = 11;
-          terminal = 11.5;
+          terminal = 12.5;
           desktop = 11;
           popups = 11;
         };

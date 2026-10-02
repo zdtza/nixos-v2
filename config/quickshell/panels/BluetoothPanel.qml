@@ -16,9 +16,9 @@ Item {
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     readonly property var devices: BluetoothService.devices
-    readonly property var connectedDevices: BluetoothService.enabled
+    readonly property var connectedDevices: BluetoothService.powered
         ? devices.filter(device => BluetoothService.isConnected(device)) : []
-    readonly property var availableDevices: BluetoothService.enabled
+    readonly property var availableDevices: BluetoothService.powered
         ? devices.filter(device => !BluetoothService.isConnected(device)) : []
     readonly property int deviceRowHeight: 48
     readonly property int deviceRowSpacing: 8
@@ -29,7 +29,7 @@ Item {
         "MOVING THROUGH THE AIR", "TALKING WIRELESSLY"
     ]
     readonly property string statusText: {
-        if (!BluetoothService.enabled) return "BLUETOOTH OFF";
+        if (!BluetoothService.powered) return "BLUETOOTH OFF";
         for (const device of devices) {
             if (device.pairing) return "PAIRING";
             if (device.state === BluetoothDeviceState.Connecting) return "CONNECTING";
@@ -133,7 +133,7 @@ Item {
 
     StatusRotator {
         target: bluetoothHero.statusLabel
-        running: root.opened && BluetoothService.enabled
+        running: root.opened && BluetoothService.powered
             && root.connectedDevices.length > 0
         onAdvance: root.phraseIndex = (root.phraseIndex + 1) % root.phrases.length
     }
@@ -194,7 +194,7 @@ Item {
 
             ToggleSwitch {
                 anchors.fill: parent
-                checked: BluetoothService.enabled
+                checked: BluetoothService.powered
                 onToggled: BluetoothService.toggle()
             }
         }
@@ -266,7 +266,7 @@ Item {
                             width: parent.width
                             height: root.emptyStateHeight
                             visible: root.availableDevices.length === 0
-                            text: BluetoothService.enabled
+                            text: BluetoothService.powered
                                 ? "No available devices" : "Bluetooth is turned off"
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter

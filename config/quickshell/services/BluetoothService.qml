@@ -13,13 +13,12 @@ Item {
     // Quickshell can start before it receives BlueZ's Powered update. A
     // connected device is definitive evidence that the adapter is powered, so
     // do not render Bluetooth as off while that initial property is stale.
-    readonly property bool enabled: available
-        && (adapter.enabled || connectedDevices.length > 0)
+    readonly property bool powered: available && (adapter.enabled || connectedDevices.length > 0)
     readonly property var deviceObjects: Bluetooth.devices ? Bluetooth.devices.values : []
     readonly property var devices: sortedDevices()
     readonly property var connectedDevices: devices.filter(device => isConnected(device))
     readonly property var connectedDevice: connectedDevices.length > 0 ? connectedDevices[0] : null
-    readonly property string icon: !enabled ? "󰂲" : connectedDevices.length > 0 ? "󰂱" : "󰂯"
+    readonly property string icon: !powered ? "󰂲" : connectedDevices.length > 0 ? "󰂱" : "󰂯"
 
     property int scannerUsers: 0
     property bool scannerActive: false
@@ -100,7 +99,7 @@ Item {
     }
 
     function activate(device: var): void {
-        if (!enabled || !device || isConnected(device) || device.pairing) return;
+        if (!powered || !device || isConnected(device) || device.pairing) return;
         // Explicit selection is consent to trust device for future reconnects.
         device.trusted = true;
         if (device.paired) device.connect();

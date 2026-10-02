@@ -28,7 +28,7 @@ Scope {
     }
 
     Component.onCompleted: {
-        if (DoNotDisturbService.enabled)
+        if (DoNotDisturbService.active)
             Qt.callLater(root.clearNotifications);
     }
 
@@ -48,7 +48,7 @@ Scope {
         inlineReplySupported: false
 
         onNotification: notification => {
-            if (DoNotDisturbService.enabled) {
+            if (DoNotDisturbService.active) {
                 notification.dismiss();
                 return;
             }
@@ -72,8 +72,8 @@ Scope {
 
     Connections {
         target: DoNotDisturbService
-        function onEnabledChanged(): void {
-            if (DoNotDisturbService.enabled)
+        function onActiveChanged(): void {
+            if (DoNotDisturbService.active)
                 root.clearNotifications();
         }
     }
@@ -82,7 +82,7 @@ Scope {
         id: window
 
         screen: Utils.screenForMonitor(root.targetScreenName)
-        visible: !DoNotDisturbService.enabled
+        visible: !DoNotDisturbService.active
             && server.trackedNotifications.values.length > 0
         color: "transparent"
         implicitWidth: 450

@@ -6,7 +6,6 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Services.SystemTray
 import "../services"
-import ".."
 
 Item {
     id: root
@@ -155,7 +154,7 @@ Item {
     }
 
     function menuStatus(item: SystemTrayItem): string {
-        const description = item?.tooltipDescription?.trim() ?? "";
+        const description = item?.tooltipDescription.trim() ?? "";
         if (description !== "")
             return description;
         if (item?.status === Status.NeedsAttention)

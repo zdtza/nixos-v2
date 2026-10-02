@@ -67,11 +67,7 @@ in
     };
 
     Service = {
-      Environment = [
-        "TZDIR=${config.home.sessionVariables.TZDIR}"
-        # Lock on every service start, including crash recovery.
-        "QS_AUTOLOCK=1"
-      ];
+      Environment = [ "TZDIR=${config.home.sessionVariables.TZDIR}" ];
       ExecStart = "${pkgs.quickshell}/bin/quickshell";
       Restart = "on-failure";
     };

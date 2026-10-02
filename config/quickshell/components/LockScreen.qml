@@ -18,25 +18,8 @@ Scope {
     property bool pamAvailable: false
     readonly property bool locked: sessionLock.locked
 
-    // Plain properties don't survive Quickshell's live reload.
-    PersistentProperties {
-        id: persist
-        reloadableId: "lockScreenAutoLock"
-        property bool autoLockHandled: false
-
-        onLoaded: {
-            if (persist.autoLockHandled)
-                return;
-            persist.autoLockHandled = true;
-            // Lock in-process when launched as the real session shell (QS_AUTOLOCK=1, set by the systemd service).
-            if (Quickshell.env("QS_AUTOLOCK") === "1"
-                    && Quickshell.env("QS_DEV_NO_AUTOLOCK") !== "1")
-                root.lock();
-        }
-    }
-
     function lock(): void {
-        // Fired as early as possible so the compositor grabs the session lock before anything else gets a frame.
+        // Request the compositor's secure session lock.
         if (sessionLock.locked) return;
         password = "";
         pendingPassword = "";
@@ -76,14 +59,6 @@ Scope {
         }
     }
 
-    // Hyprland boots into an empty "startup-lock" keybind submap. Do not
-    // restore normal desktop shortcuts until the compositor has acknowledged
-    // the secure session lock.
-    Process {
-        id: releaseStartupInputGuard
-        command: ["hyprctl", "dispatch", "hl.dsp.submap(\"reset\")"]
-    }
-
     IpcHandler {
         target: "lock"
 
@@ -118,9 +93,6 @@ Scope {
 
     WlSessionLock {
         id: sessionLock
-
-        onSecureChanged: if (secure && !releaseStartupInputGuard.running)
-            releaseStartupInputGuard.running = true
 
         WlSessionLockSurface {
             id: lockSurface

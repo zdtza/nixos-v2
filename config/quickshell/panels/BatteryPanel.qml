@@ -11,6 +11,7 @@ import ".."
 Item {
     id: root
 
+    property bool showButton: true
     readonly property bool available: BatteryService.available
     readonly property real fraction: BatteryService.fraction
     readonly property int percent: BatteryService.chargePercent
@@ -43,7 +44,7 @@ Item {
         : activePhrases.length > 0 ? activePhrases[phraseIndex % activePhrases.length] : "Battery"
 
     visible: available
-    implicitWidth: available ? label.implicitWidth : 0
+    implicitWidth: available && showButton ? label.implicitWidth : 0
     implicitHeight: label.implicitHeight
 
     function batteryIcon(): string {
@@ -101,6 +102,7 @@ Item {
     Button {
         id: label
         anchors.centerIn: parent
+        visible: root.showButton
         panel: root
         text: root.batteryIcon()
         textColor: Theme.textPrimary

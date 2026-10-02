@@ -25,7 +25,6 @@ Item {
     function brightnessStatus(): string {
         if (!DisplayService.available) return "DISPLAY READY";
         const value = DisplayService.level;
-        if (value > 100) return "BEYOND DAYLIGHT";
         if (value <= 10) return "THE GLOAMING";
         if (value <= 30) return "MOONLIGHT HAZE";
         if (value <= 50) return "SOFT MORNING";
@@ -115,7 +114,6 @@ Item {
                 ? DisplayService.level + "%" : "UNAVAILABLE"
         }
 
-        // Full travel is 0-150%: the last third is gamma overdrive on top of a maxed backlight, so the 100% hardware ceiling sits at two thirds.
         Slider {
             width: parent.width
             enabled: DisplayService.available

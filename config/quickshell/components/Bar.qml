@@ -1,6 +1,5 @@
 // Configurable top/bottom layer-shell bar.
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import "../panels"
@@ -11,32 +10,26 @@ PanelWindow {
 
     required property var modelData
 
-    function panelEntries(): var {
-        return [
-            ["clock", clock],
-            ["nightlight", quickToggles.nightLightPanel],
-            ["timer", clock.timerPanel],
-            ["tray", tray],
-            ["volume", volume],
-            ["bluetooth", bluetooth],
-            ["display", display],
-            ["network", network],
-            ["battery", battery]
-        ];
-    }
+    readonly property var panelEntries: [
+        ["clock", clock],
+        ["nightlight", quickToggles.nightLightPanel],
+        ["timer", clock.timerPanel],
+        ["tray", tray],
+        ["volume", volume],
+        ["bluetooth", bluetooth],
+        ["display", display],
+        ["network", network],
+        ["battery", battery]
+    ]
 
-    function registerPanels(): void {
-        for (const entry of panelEntries())
+    Component.onCompleted: {
+        for (const entry of panelEntries)
             PanelService.registerPanel(entry[0], entry[1], bar.screen);
     }
-
-    function unregisterPanels(): void {
-        for (const entry of panelEntries())
+    Component.onDestruction: {
+        for (const entry of panelEntries)
             PanelService.unregisterPanel(entry[0], entry[1]);
     }
-
-    Component.onCompleted: registerPanels()
-    Component.onDestruction: unregisterPanels()
 
     screen: modelData
     // Layer-shell surfaces cannot stay mapped at zero height.
@@ -110,7 +103,7 @@ PanelWindow {
     }
 
     // --- right ---.
-    RowLayout {
+    Row {
         spacing: PanelService.barSpacing
         anchors {
             right: parent.right
@@ -121,30 +114,25 @@ PanelWindow {
         Tray { id: tray }
 
         QuickToggles { id: quickToggles }
-        
 
         AudioPanel {
             id: volume
             screen: bar.screen
+            showButton: false
         }
 
-        BluetoothPanel { id: bluetooth }
+        BluetoothPanel {
+            id: bluetooth
+            showButton: false
+        }
 
         BatteryPanel { id: battery }
 
         NetworkPanel { id: network }
 
+        TimerBadge { panelTarget: clock.timerPanel }
 
-        TimerBadge {
-            id: timerBadge
-            panelTarget: clock.timerPanel
-        }
-
-        Clock {
-            id: clock
-            Layout.rightMargin: -8
-            Layout.leftMargin: -10
-        }
+        Clock { id: clock }
     }
 
     // The display panel remains registered for Super+Ctrl+D, but has no bar button.

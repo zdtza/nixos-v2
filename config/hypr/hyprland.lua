@@ -1,16 +1,11 @@
--- Stylix generates this bridge from the selected theme.
-local stylix = dofile(os.getenv("HOME") .. "/.config/hypr/stylix.lua")
-_G.ACTIVE_BORDER_COLOR = stylix.active_border_color
-_G.INACTIVE_BORDER_COLOR = stylix.inactive_border_color
-
 -- =============================================================================
--- CORE SETTINGS
+-- general
 -- =============================================================================
 
 hl.config({
 	input = {
 		sensitivity = 0.2,
-		repeat_rate = 35,
+		repeat_rate = 30,
 		repeat_delay = 200,
 		touchpad = {
 			natural_scroll = true,
@@ -23,10 +18,6 @@ hl.config({
 		gaps_in = 3,
 		gaps_out = 6,
 		border_size = 0,
-		col = {
-			active_border = ACTIVE_BORDER_COLOR,
-			inactive_border = INACTIVE_BORDER_COLOR,
-		},
 		layout = "dwindle",
 	},
 	decoration = {
@@ -50,7 +41,7 @@ hl.config({
 })
 
 -- =============================================================================
--- ANIMATIONS
+-- animations
 -- =============================================================================
 
 hl.curve("spring", {
@@ -78,11 +69,9 @@ for _, animation in ipairs(animations) do
 end
 
 -- =============================================================================
--- LAYER RULES
+-- layers
 -- =============================================================================
 
--- Quickshell launcher stays mapped with an empty input region while closed.
--- Keep layer animations disabled so opacity changes remain immediate.
 local quickshell_layers = {
 	"quickshell:background",
 	"quickshell:bar",
@@ -101,8 +90,28 @@ for _, namespace in ipairs(quickshell_layers) do
 end
 
 -- =============================================================================
--- WINDOW RULES
+-- window rules
 -- =============================================================================
+
+-- Floating application windows.
+local floating_windows = {
+	{ class = "xdg-desktop-portal-gtk", center = true },
+	{ title = "termfilechooser", center = true },
+	{ class = "1password", center = true },
+	{ class = "^com.gabm.satty$", center = true }, -- screenshot annotator (StartupWMClass)
+	{ name = "gnome-calculator", class = "^org.gnome.Calculator$", size = { 360, 616 } },
+	{ name = "floating-terminal", class = "^floating-terminal$" },
+}
+
+for _, window in ipairs(floating_windows) do
+	hl.window_rule({
+		name = window.name,
+		match = window.title and { title = window.title } or { class = window.class },
+		float = true,
+		center = window.center,
+		size = window.size or { 1300, 800 },
+	})
+end
 
 -- Apps (Electron/GTK mostly) request maximize on launch and take the whole
 -- screen; tiling already sizes them.
@@ -110,49 +119,6 @@ hl.window_rule({
 	name = "suppress-maximize-events",
 	match = { class = ".*" },
 	suppress_event = "maximize",
-})
-
--- Generic float/center rules for picker-style windows.
-local picker_windows = {
-	{ class = "xdg-desktop-portal-gtk" },
-	{ title = "termfilechooser" },
-	{ class = "1password" },
-	{ class = "^com.gabm.satty$" }, -- screenshot annotator (StartupWMClass)
-}
-
-for _, window in ipairs(picker_windows) do
-	hl.window_rule({
-		match = window.title and { title = window.title } or { class = window.class },
-		float = true,
-		center = true,
-		size = window.size or { 1300, 800 },
-	})
-end
-
--- FreeRDP's dynamic-resolution channel can miss the final configure event when
--- its tiled window is resized through the opening animation. Map it directly
--- at its settled size so the initial desktop resolution is applied immediately.
-hl.window_rule({
-	name = "windows-rdp",
-	match = { class = "^windows$" },
-	no_anim = true,
-})
-
-hl.window_rule({
-	name = "gnome-calculator",
-	match = { class = "^org.gnome.Calculator$" },
-	float = true,
-	size = { 360, 616 },
-})
-
--- Matched by open_floating_terminal's `--class` below, kept floating instead
--- of tiling in like a normal launch-terminal-cwd window.
-hl.window_rule({
-	name = "floating-terminal",
-	match = { class = "^floating-terminal$" },
-	float = true,
-	center = true,
-	size = { 900, 600 },
 })
 
 -- Hide Teams' screen-sharing indicator without stealing focus.
@@ -173,10 +139,9 @@ hl.window_rule({
 })
 
 -- =============================================================================
--- MONITORS AND WORKSPACES
+-- monitors & workspaces
 -- =============================================================================
 
--- Built-in display and external ultrawide, each with assigned workspaces.
 local configured_monitors = {
 	{
 		output = "eDP-1",
@@ -219,17 +184,6 @@ end
 for _, monitor in ipairs(configured_monitors) do
 	assign_workspaces(monitor.output, monitor.workspaces)
 
-	-- Route each screensaver instance before it maps. Its title contains output
-	-- name, allowing all instances to launch concurrently without focus changes.
-	hl.window_rule({
-		name = "tte-screensaver-" .. monitor.output,
-		match = {
-			class = "^tte-screensaver$",
-			title = "^tte-screensaver-" .. monitor.output .. "$",
-		},
-		monitor = monitor.output,
-	})
-
 	hl.monitor({
 		output = monitor.output,
 		mode = monitor.mode,
@@ -239,7 +193,7 @@ for _, monitor in ipairs(configured_monitors) do
 end
 
 -- =============================================================================
--- KEYBIND HELPERS
+-- keybind functions / helpers
 -- =============================================================================
 
 local gaps_enabled = true
@@ -292,8 +246,12 @@ local function universal_clipboard_shortcut(default_mods, default_key, terminal_
 	end
 end
 
--- Toggles focused window's `opaque` prop, bypassing configured opacity until
--- toggled back.
+
+
+local function open_terminal()
+	hl.dispatch(hl.dsp.exec_cmd("launch-terminal-cwd"))
+end
+
 local function toggle_window_opacity()
 	local window = hl.get_active_window()
 	if not window then
@@ -307,10 +265,6 @@ local function toggle_window_opacity()
 	}))
 end
 
-local function open_terminal()
-	hl.dispatch(hl.dsp.exec_cmd("launch-terminal-cwd"))
-end
-
 local function open_floating_terminal()
 	hl.dispatch(hl.dsp.exec_cmd("launch-terminal-cwd --class floating-terminal"))
 end
@@ -322,31 +276,26 @@ local function bind(keys, description, dispatcher, options)
 	return hl.bind(keys, dispatcher, options)
 end
 
--- Capture, copy and notify; clicking opens satty (home/screenshot.nix).
-local screenshot_command = "screenshot"
-
 -- =============================================================================
--- GESTURES
+-- gestures
 -- =============================================================================
 
 hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 
 -- =============================================================================
--- KEYBINDS: SYSTEM
+-- keysbinds - system
 -- =============================================================================
 
 bind("SUPER + L", "Lock the current session", hl.dsp.exec_cmd("qs ipc call lock activate"))
 bind("switch:on:Lid Switch", "Suspend, then hibernate after timeout", hl.dsp.exec_cmd("systemctl suspend-then-hibernate"), { locked = true })
 
 -- =============================================================================
--- KEYBINDS: APPS AND WINDOW ACTIONS
+-- keybinds - window management
 -- =============================================================================
 
 bind("SUPER + S", "Toggle the terminal workspace", hl.dsp.workspace.toggle_special("terminal"))
 bind("SUPER + CTRL + SHIFT + S", "Move focused window to terminal workspace", hl.dsp.window.move({ workspace = "special:terminal" }))
--- This path does not pass through an interactive shell, so inject fzf's
--- stable options file explicitly rather than relying on Fish session vars.
-bind("SUPER + E", "Open Yazi file manager", hl.dsp.exec_cmd("env -u FZF_DEFAULT_OPTS FZF_DEFAULT_OPTS_FILE=$HOME/.config/fzf/options launch-terminal-cwd yazi"))
+bind("SUPER + E", "Open Yazi file manager", hl.dsp.exec_cmd("launch-terminal-cwd yazi"))
 bind("SUPER + Return", "Open terminal in current directory", open_terminal)
 bind("SUPER + CTRL + Return", "Open a floating terminal", open_floating_terminal)
 bind("SUPER + W", "Close the focused window", hl.dsp.window.close())
@@ -356,7 +305,7 @@ bind("SUPER + F", "Toggle fullscreen for focused window", hl.dsp.window.fullscre
 bind("SUPER + Tab", "Switch to the previously used workspace", hl.dsp.focus({ workspace = "previous" }))
 
 -- =============================================================================
--- KEYBINDS: WINDOW FOCUS AND MOVEMENT
+-- keybinds - window focus and movement
 -- =============================================================================
 
 bind("SUPER + left", "Focus the window to the left", hl.dsp.focus({ direction = "left" }))
@@ -369,7 +318,7 @@ bind("SUPER + SHIFT + up", "Move the focused window up", hl.dsp.window.move({ di
 bind("SUPER + SHIFT + down", "Move the focused window down", hl.dsp.window.move({ direction = "down" }))
 
 -- =============================================================================
--- KEYBINDS: WORKSPACES
+-- keybinds - workspaces
 -- =============================================================================
 
 bind("SUPER + 1", "Switch to workspace 1", hl.dsp.focus({ workspace = 1 }))
@@ -393,47 +342,23 @@ bind("SUPER + SHIFT + 8", "Move focused window to workspace 8", hl.dsp.window.mo
 bind("SUPER + SHIFT + 9", "Move focused window to workspace 9", hl.dsp.window.move({ workspace = 9 }))
 
 -- =============================================================================
--- KEYBINDS: RESIZE, SCREENSHOTS, AND APPEARANCE
+-- keybinds - window resizing and dragging
 -- =============================================================================
 
-bind(
-	"SUPER + equal",
-	"Increase the focused window width",
-	hl.dsp.window.resize({ x = 75, y = 0, relative = true }),
-	{ repeating = true }
-)
-bind(
-	"SUPER + minus",
-	"Decrease the focused window width",
-	hl.dsp.window.resize({ x = -75, y = 0, relative = true }),
-	{ repeating = true }
-)
-bind(
-	"SUPER + SHIFT + minus",
-	"Increase the focused window height",
-	hl.dsp.window.resize({ x = 0, y = 75, relative = true }),
-	{ repeating = true }
-)
-bind(
-	"SUPER + SHIFT + equal",
-	"Decrease the focused window height",
-	hl.dsp.window.resize({ x = 0, y = -75, relative = true }),
-	{ repeating = true }
-)
+bind("SUPER + equal", "Increase the focused window width", hl.dsp.window.resize({ x = 75, y = 0, relative = true }), { repeating = true })
+bind("SUPER + minus", "Decrease the focused window width", hl.dsp.window.resize({ x = -75, y = 0, relative = true }), { repeating = true })
+bind("SUPER + SHIFT + minus", "Increase the focused window height", hl.dsp.window.resize({ x = 0, y = 75, relative = true }), { repeating = true })
+bind("SUPER + SHIFT + equal", "Decrease the focused window height", hl.dsp.window.resize({ x = 0, y = -75, relative = true }), { repeating = true })
 bind("SUPER + mouse:272", "Drag the focused window", hl.dsp.window.drag(), { mouse = true })
 bind("SUPER + mouse:273", "Resize the focused window", hl.dsp.window.resize(), { mouse = true })
-bind(
-	"SUPER + SHIFT + K",
-	"Pick a colour and copy its hex value",
-	hl.dsp.exec_cmd("hyprpicker --autocopy --format=hex --lowercase-hex")
-)
-bind("SUPER + SHIFT + S", "Capture a selected screen region", hl.dsp.exec_cmd(screenshot_command))
+bind("SUPER + SHIFT + K", "Pick a colour and copy its hex value", hl.dsp.exec_cmd("hyprpicker --autocopy --format=hex --lowercase-hex"))
+bind("SUPER + SHIFT + S", "Capture a selected screen region", hl.dsp.exec_cmd("screenshot"))
 bind("SUPER + M", "Toggle the single-window width limit", toggle_aspect_ratio)
 bind("SUPER + backspace", "Toggle opacity override for focused window", toggle_window_opacity)
 bind("SUPER + SHIFT + backspace", "Toggle spacing between windows", toggle_window_gaps)
 
 -- =============================================================================
--- KEYBINDS: CLIPBOARD
+-- keybinds - clipboard
 -- =============================================================================
 
 bind("SUPER + X", "Cut the selection to the clipboard", send_shortcut_once("CTRL", "X"))
@@ -441,60 +366,28 @@ bind("SUPER + C", "Copy the selection to the clipboard", universal_clipboard_sho
 bind("SUPER + V", "Paste content from the clipboard", universal_clipboard_shortcut("CTRL", "V", "SHIFT", "Insert"))
 
 -- =============================================================================
--- KEYBINDS: AUDIO AND BRIGHTNESS
+-- keybinds - audio and brightness
 -- =============================================================================
 
-bind(
-	"XF86AudioRaiseVolume",
-	"Increase the output volume",
-	hl.dsp.exec_cmd("qs ipc call audio outputUp"),
-	{ locked = true, repeating = true }
-)
-bind(
-	"XF86AudioLowerVolume",
-	"Decrease the output volume",
-	hl.dsp.exec_cmd("qs ipc call audio outputDown"),
-	{ locked = true, repeating = true }
-)
-bind(
-	"XF86AudioMute",
-	"Toggle output audio mute",
-	hl.dsp.exec_cmd("qs ipc call audio toggleOutputMute"),
-	{ locked = true, repeating = true }
-)
-bind(
-	"XF86AudioMicMute",
-	"Toggle microphone mute",
-	hl.dsp.exec_cmd("qs ipc call audio toggleInputMute"),
-	{ locked = true, repeating = true }
-)
--- No `repeating` flag on these two: the brightness keys are firmware taps
--- (press plus a release ~30ms later, auto-repeated by the EC), so the key is
--- never held as far as the compositor is concerned and bind repeat never
--- fires. One step per tap, accelerated shell-side in DisplayService.
-bind(
-	"XF86MonBrightnessUp",
-	"Increase display brightness",
-	hl.dsp.exec_cmd("qs ipc call display brightnessUp"),
-	{ locked = true }
-)
-bind(
-	"XF86MonBrightnessDown",
-	"Decrease display brightness",
-	hl.dsp.exec_cmd("qs ipc call display brightnessDown"),
-	{ locked = true }
-)
+bind("XF86AudioRaiseVolume", "Increase the output volume", hl.dsp.exec_cmd("qs ipc call audio outputUp"), { locked = true, repeating = true })
+bind("XF86AudioLowerVolume", "Decrease the output volume", hl.dsp.exec_cmd("qs ipc call audio outputDown"), { locked = true, repeating = true })
+bind("XF86AudioMute", "Toggle output audio mute", hl.dsp.exec_cmd("qs ipc call audio toggleOutputMute"), { locked = true, repeating = true })
+bind("XF86AudioMicMute", "Toggle microphone mute", hl.dsp.exec_cmd("qs ipc call audio toggleInputMute"), { locked = true, repeating = true })
+bind("XF86MonBrightnessUp", "Increase display brightness", hl.dsp.exec_cmd("qs ipc call display brightnessUp"), { locked = true })
+bind("XF86MonBrightnessDown", "Decrease display brightness", hl.dsp.exec_cmd("qs ipc call display brightnessDown"), { locked = true })
 
 -- =============================================================================
--- KEYBINDS: DICTATION AND UI
+-- keybinds - voice dictation
 -- =============================================================================
 
 bind("SUPER + SHIFT + V", "Toggle voice dictation recording", hl.dsp.exec_cmd("voxtype record toggle"))
 bind("F9", "Start voice dictation recording", hl.dsp.exec_cmd("voxtype record start"))
 bind("F9", "Stop voice dictation recording", hl.dsp.exec_cmd("voxtype record stop"), { release = true })
 
--- Dispatch directly to Quickshell's registered global shortcut. This avoids
--- starting the ~50 ms `qs` Qt IPC client on every invocation.
+-- =============================================================================
+-- keybinds - quickshell and panels
+-- =============================================================================
+
 bind("SUPER + space", "Open or close the application launcher", hl.dsp.global("quickshell:launcher"))
 bind("SUPER + CTRL + K", "Browse configured keyboard shortcuts", hl.dsp.global("quickshell:keybinds"))
 bind("SUPER + CTRL + C", "Open or close the clock panel", hl.dsp.exec_cmd("qs ipc call panels toggle clock"))

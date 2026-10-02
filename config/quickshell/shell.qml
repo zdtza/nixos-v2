@@ -9,9 +9,7 @@ import "services"
 ShellRoot {
     id: root
 
-    // Construct the secure lock before any desktop surfaces. At boot this
-    // requests the ext-session-lock immediately; the rest of the shell may
-    // continue loading behind it.
+    // Manual session lock exposed through the `lock` IPC target.
     LockScreen {}
 
     Variants {

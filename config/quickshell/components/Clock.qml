@@ -8,12 +8,13 @@ import "../services"
 Item {
     id: root
 
+    property bool showButton: true
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool timerOpened: PanelService.activePanel === timerControl
     readonly property bool requiresKeyboardFocus: true
     readonly property alias timerPanel: timerControl
 
-    implicitWidth: label.implicitWidth + 16
+    implicitWidth: showButton ? label.implicitWidth + 16 : 0
     implicitHeight: 26
 
     SystemClock {
@@ -22,12 +23,12 @@ Item {
     }
 
     Rectangle {
+        visible: root.showButton && opacity > 0
         anchors.bottom: parent.bottom
         anchors.left: label.left
         anchors.right: label.right
         height: 2
         radius: PanelService.rounding
-        visible: opacity > 0
         opacity: root.opened || root.timerOpened || mouseArea.containsMouse ? 1 : 0
         color: Theme.base05
 
@@ -37,6 +38,7 @@ Item {
     ShellText {
         id: label
 
+        visible: root.showButton
         anchors.centerIn: parent
         anchors.verticalCenterOffset: -1
         text: Qt.formatDateTime(clock.date, "HH:mm")
@@ -46,6 +48,7 @@ Item {
     MouseArea {
         id: mouseArea
         anchors.fill: parent
+        enabled: root.showButton
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         cursorShape: Qt.PointingHandCursor

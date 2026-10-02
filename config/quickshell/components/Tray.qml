@@ -10,6 +10,7 @@ import "../services"
 Item {
     id: root
 
+    property bool showButton: true
     readonly property var items: SystemTray.items.values
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
@@ -189,6 +190,7 @@ Item {
         Button {
             id: chevron
 
+            visible: root.showButton
             panel: root
             showPanelIndicator: false
             text: ""

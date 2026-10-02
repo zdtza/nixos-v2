@@ -3,7 +3,7 @@
 {
   home.packages = [ pkgs.hyprsunset ];
 
-  # starting hyprsunset as an identity transform, quickshell drives it over hyprland ipc. gamma_max 150 raises the ipc gamma.
+  # Start with a neutral transform; quickshell controls the night-light temperature over Hyprland IPC.
   systemd.user.services.hyprsunset = {
     Unit = {
       Description = "Hyprland blue-light filter";
@@ -12,7 +12,7 @@
     };
 
     Service = {
-      ExecStart = "${pkgs.hyprsunset}/bin/hyprsunset --identity --gamma_max 150";
+      ExecStart = "${pkgs.hyprsunset}/bin/hyprsunset --identity";
       Restart = "on-failure";
       RestartSec = 2;
     };

@@ -254,7 +254,7 @@ Scope {
         search.text = "";
         if (root.binds.length === 0 && !bindsProcess.running)
             bindsProcess.running = true;
-        search.forceActiveFocus();
+        search.focusInput();
     }
 
     readonly property var results: {
@@ -417,7 +417,7 @@ Scope {
         search.text = "";
         root.currentIndex = 0;
         if (root.open)
-            search.forceActiveFocus();
+            search.focusInput();
     }
     onActiveModelChanged: root.currentIndex = root.activeModel.length > 0 ? 0 : -1
 
@@ -656,99 +656,18 @@ Scope {
                 height: footer.height
                 color: Theme.base00
 
-                Rectangle {
-                    id: searchBox
+                LauncherSearchBox {
+                    id: search
                     anchors {
                         left: parent.left; right: parent.right
                         leftMargin: 28; rightMargin: 29
                         verticalCenter: parent.verticalCenter
                     }
-                    height: 34
-                    color: Theme.base01
-                    radius: height / 2
-                    border.width: 1
-                    border.color: PanelService.chromeBorderColor
-
-                    ShellText {
-                        id: searchIcon
-                        anchors { left: parent.left; leftMargin: 14; verticalCenter: parent.verticalCenter }
-                        text: "󰍉"
-                        color: Theme.textSecondary
-                        size: 15
-                    }
-
-                    TextInput {
-                    id: search
-                    anchors {
-                        left: searchIcon.right; right: parent.right
-                        leftMargin: 11; rightMargin: 14; verticalCenter: parent.verticalCenter
-                    }
-                    height: 26
-                    verticalAlignment: TextInput.AlignVCenter
-                    focus: true
-                    selectByMouse: true
-                    clip: true
-                    color: Theme.textPrimary
-                    selectionColor: Theme.base02
-                    selectedTextColor: Theme.textPrimary
-                    font.family: Theme.monospace
-                    font.pixelSize: Utils.scaledFont(13)
-                    cursorDelegate: Rectangle { width: 1; color: Theme.base05 }
-
-                    ShellText {
-                        anchors.fill: parent
-                        verticalAlignment: Text.AlignVCenter
-                        visible: search.text === ""
-                        text: root.keybindMode ? "Search keybindings" : "Search for apps"
-                        color: Theme.textSecondary
-                        size: 13
-                    }
-
-                    Keys.onPressed: event => {
-                        if (event.key === Qt.Key_Escape) {
-                            if (root.pinMenuOpen) {
-                                root.pinMenuOpen = false;
-                            } else if (root.powerMenuOpen) {
-                                root.powerMenuOpen = false;
-                            } else if (root.keybindMode) {
-                                root.open = false;
-                            } else if (search.text !== "") {
-                                search.text = "";
-                                root.currentIndex = 0;
-                            } else if (root.allApps) {
-                                root.allApps = false;
-                                root.currentIndex = 0;
-                            } else {
-                                root.open = false;
-                            }
-                        } else if (event.key === Qt.Key_Down) {
-                            root.moveSelection(root.keybindMode || root.allApps
-                                || search.text !== "" ? 1 : 4);
-                        } else if (event.key === Qt.Key_Up) {
-                            root.moveSelection(root.keybindMode || root.allApps
-                                || search.text !== "" ? -1 : -4);
-                        } else if (!root.keybindMode && search.text === ""
-                                && !root.allApps && event.key === Qt.Key_Right) {
-                            root.moveSelection(1);
-                        } else if (!root.keybindMode && search.text === ""
-                                && !root.allApps && event.key === Qt.Key_Left) {
-                            root.moveSelection(-1);
-                        } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
-                                && !root.keybindMode) {
-                            root.activate(root.selectedItem);
-                        } else if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
-                            search.text = "";
-                        } else {
-                            return;
-                        }
-                        event.accepted = true;
-                    }
+                    launcher: root
                 }
-            }
             }
 
             Item {
-                id: page
                 anchors {
                     top: header.bottom; bottom: footer.top
                     left: parent.left; right: parent.right
@@ -756,7 +675,6 @@ Scope {
                 }
 
                 Item {
-                    id: startPage
                     anchors.fill: parent
                     visible: !root.keybindMode && search.text === "" && !root.allApps
 
@@ -783,7 +701,7 @@ Scope {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: { root.allApps = true; root.currentIndex = 0; search.forceActiveFocus(); }
+                            onClicked: { root.allApps = true; root.currentIndex = 0; search.focusInput(); }
                         }
                     }
 
@@ -818,7 +736,6 @@ Scope {
                                 spacing: 10
 
                                 Image {
-                                    id: pinnedIcon
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: 40; height: 40
                                     source: modelData.entry.icon ? Quickshell.iconPath(modelData.entry.icon, true) : ""
@@ -1002,7 +919,7 @@ Scope {
                         MouseArea {
                             id: backMouse
                             anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                            onClicked: { root.allApps = false; root.currentIndex = 0; search.forceActiveFocus(); }
+                            onClicked: { root.allApps = false; root.currentIndex = 0; search.focusInput(); }
                         }
                     }
                     ShellText {
@@ -1010,63 +927,15 @@ Scope {
                         text: `${root.entries.length} APPLICATIONS`
                         color: Theme.textSecondary; size: 11; font.letterSpacing: 1
                     }
-                    ListView {
+                    LauncherAppList {
                         id: allAppsList
                         anchors { top: backButton.bottom; bottom: parent.bottom; left: parent.left; right: parent.right; topMargin: 12 }
+                        launcher: root
                         model: root.entries
-                        spacing: 2
-                        clip: true
-                        currentIndex: root.currentIndex
-                        boundsBehavior: Flickable.StopAtBounds
-                        maximumFlickVelocity: 12000
-
-                        WheelHandler {
-                            blocking: true
-                            onWheel: event => root.scrollListByWheel(allAppsList, event)
-                        }
-
-                        delegate: Rectangle {
-                            id: allApp
-                            required property var modelData
-                            required property int index
-                            width: ListView.view.width; height: 50
-                            radius: PanelService.rounding
-                            color: allApp.ListView.isCurrentItem ? Utils.alpha(Theme.base05, 0.11) : "transparent"
-                            Image {
-                                id: allIcon
-                                anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
-                                width: 28; height: 28
-                                source: modelData.entry.icon ? Quickshell.iconPath(modelData.entry.icon, true) : ""
-                                sourceSize.width: 48; sourceSize.height: 48
-                                asynchronous: true; smooth: true
-                            }
-                            ShellText {
-                                anchors {
-                                    left: allIcon.right; right: parent.right
-                                    leftMargin: 12; rightMargin: 12
-                                    verticalCenter: parent.verticalCenter
-                                }
-                                text: modelData.entry.name; elide: Text.ElideRight; size: 13
-                            }
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                cursorShape: Qt.PointingHandCursor
-                                onEntered: root.currentIndex = allApp.index
-                                onClicked: mouse => {
-                                    if (mouse.button === Qt.RightButton)
-                                        root.showPinMenu(allApp.modelData, allApp, mouse.x, mouse.y);
-                                    else
-                                        root.activate(allApp.modelData);
-                                }
-                            }
-                        }
                     }
                 }
 
                 Item {
-                    id: searchPage
                     anchors.fill: parent
                     visible: !root.keybindMode && search.text !== ""
 
@@ -1082,157 +951,28 @@ Scope {
                             font.letterSpacing: 1
                             size: 11
                         }
-                        ListView {
+                        LauncherAppList {
                             id: searchResults
                             anchors { top: resultTitle.bottom; bottom: parent.bottom; left: parent.left; right: parent.right; topMargin: 10 }
+                            launcher: root
                             model: root.results
                             spacing: 3
-                            clip: true
-                            currentIndex: root.currentIndex
-                            boundsBehavior: Flickable.StopAtBounds
-                            maximumFlickVelocity: 12000
-
-                            WheelHandler {
-                                blocking: true
-                                onWheel: event => root.scrollListByWheel(searchResults, event)
-                            }
-
-                            delegate: Rectangle {
-                                id: resultApp
-                                required property var modelData
-                                required property int index
-                                width: ListView.view.width; height: 58
-                                radius: PanelService.rounding
-                                color: resultApp.ListView.isCurrentItem ? Utils.alpha(Theme.base05, 0.12) : "transparent"
-                                Image {
-                                    id: resultIcon
-                                    anchors { left: parent.left; leftMargin: 10; verticalCenter: parent.verticalCenter }
-                                    width: 30; height: 30
-                                    source: modelData.entry.icon ? Quickshell.iconPath(modelData.entry.icon, true) : ""
-                                    sourceSize.width: 48; sourceSize.height: 48
-                                    asynchronous: true; smooth: true
-                                }
-                                ShellText {
-                                    anchors {
-                                        left: resultIcon.right; right: parent.right
-                                        leftMargin: 11; rightMargin: 10
-                                        verticalCenter: parent.verticalCenter
-                                    }
-                                    text: modelData.entry.name; elide: Text.ElideRight; size: 13
-                                }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                    cursorShape: Qt.PointingHandCursor
-                                    onEntered: root.currentIndex = resultApp.index
-                                    onClicked: mouse => {
-                                        if (mouse.button === Qt.RightButton)
-                                            root.showPinMenu(resultApp.modelData, resultApp, mouse.x, mouse.y);
-                                        else
-                                            root.activate(resultApp.modelData);
-                                    }
-                                }
-                            }
+                            rowHeight: 58
+                            iconSize: 30
+                            iconLeftMargin: 10
+                            textLeftMargin: 11
+                            textRightMargin: 10
+                            selectedColor: Utils.alpha(Theme.base05, 0.12)
                         }
                     }
 
-                    Rectangle {
+                    LauncherAppDetails {
                         anchors {
                             top: parent.top; bottom: parent.bottom
                             left: resultColumn.right; right: parent.right
                             topMargin: 16; bottomMargin: 16; leftMargin: 16
                         }
-                        color: Theme.base00
-                        radius: PanelService.rounding
-                        border.width: 1
-                        border.color: PanelService.chromeBorderColor
-                        visible: root.selectedItem !== null
-
-                        Image {
-                            id: detailIcon
-                            anchors { top: parent.top; horizontalCenter: parent.horizontalCenter; topMargin: 54 }
-                            width: 64; height: 64
-                            source: root.selectedItem?.entry?.icon
-                                ? Quickshell.iconPath(root.selectedItem.entry.icon, true) : ""
-                            sourceSize.width: 96; sourceSize.height: 96
-                            asynchronous: true; smooth: true
-                        }
-                        ShellText {
-                            id: detailName
-                            anchors { top: detailIcon.bottom; left: parent.left; right: parent.right; topMargin: 18; leftMargin: 18; rightMargin: 18 }
-                            horizontalAlignment: Text.AlignHCenter
-                            text: root.selectedItem?.entry?.name ?? ""
-                            elide: Text.ElideRight
-                            font.bold: true; size: 16
-                        }
-                        ShellText {
-                            id: detailDescription
-                            anchors { top: detailName.bottom; left: parent.left; right: parent.right; topMargin: 8; leftMargin: 24; rightMargin: 24 }
-                            horizontalAlignment: Text.AlignHCenter
-                            wrapMode: Text.Wrap
-                            maximumLineCount: 3
-                            elide: Text.ElideRight
-                            text: root.selectedItem?.entry?.comment
-                                || root.selectedItem?.entry?.genericName || "Application"
-                            color: Theme.textSecondary; size: 11
-                        }
-                        ShellText {
-                            id: detailMetadata
-                            anchors {
-                                top: detailDescription.bottom
-                                left: parent.left; right: parent.right
-                                topMargin: 8; leftMargin: 20; rightMargin: 20
-                            }
-                            horizontalAlignment: Text.AlignHCenter
-                            text: root.categoryText(root.selectedItem)
-                            visible: text !== ""
-                            color: Theme.textSecondary
-                            elide: Text.ElideRight
-                            size: 10
-                        }
-
-                        Column {
-                            anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 22 }
-                            spacing: 8
-
-                            Rectangle {
-                                width: parent.width
-                                height: 40
-                                color: openMouse.containsMouse ? Utils.alpha(Theme.base05, 0.16) : Theme.base02
-                                radius: PanelService.rounding
-                                border.width: 1; border.color: PanelService.chromeBorderColor
-                                ShellText { anchors.centerIn: parent; text: "OPEN  ↗"; font.bold: true; size: 12 }
-                                MouseArea {
-                                    id: openMouse
-                                    anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.activate(root.selectedItem)
-                                }
-                            }
-
-                            Rectangle {
-                                width: parent.width
-                                height: visible ? 36 : 0
-                                visible: root.selectedItem !== null && !root.selectedItem.isFallback
-                                    && !root.selectedItem.isSystemAction
-                                color: detailPinMouse.containsMouse
-                                    ? Utils.alpha(Theme.base05, 0.12) : "transparent"
-                                radius: PanelService.rounding
-                                border.width: 1
-                                border.color: PanelService.chromeBorderColor
-                                ShellText {
-                                    anchors.centerIn: parent
-                                    text: root.isPinned(root.selectedItem)
-                                        ? "UNPIN FROM START" : "PIN TO START"
-                                    size: 11
-                                }
-                                MouseArea {
-                                    id: detailPinMouse
-                                    anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.togglePinned(root.selectedItem)
-                                }
-                            }
-                        }
+                        launcher: root
                     }
 
                     ShellText {
@@ -1261,165 +1001,24 @@ Scope {
                             size: 11
                         }
 
-                        ListView {
+                        LauncherKeybindList {
                             id: keybindList
                             anchors {
                                 top: keybindTitle.bottom; bottom: parent.bottom
                                 left: parent.left; right: parent.right
                                 topMargin: 10
                             }
-                            model: root.keybindRows
-                            spacing: 2
-                            clip: true
-                            currentIndex: root.currentIndex
-                            boundsBehavior: Flickable.StopAtBounds
-                            maximumFlickVelocity: 12000
-
-                            WheelHandler {
-                                blocking: true
-                                onWheel: event => root.scrollListByWheel(keybindList, event)
-                            }
-
-                            delegate: Rectangle {
-                                id: keybindRow
-                                required property var modelData
-                                required property int index
-                                width: ListView.view.width
-                                height: 58
-                                radius: PanelService.rounding
-                                color: keybindRow.ListView.isCurrentItem
-                                    ? Utils.alpha(Theme.base05, 0.11) : "transparent"
-
-                                ShellText {
-                                    anchors {
-                                        top: parent.top; left: parent.left; right: parent.right
-                                        topMargin: 9; leftMargin: 12; rightMargin: 12
-                                    }
-                                    text: keybindRow.modelData.chord
-                                    elide: Text.ElideRight
-                                    size: 12
-                                }
-                                ShellText {
-                                    anchors {
-                                        bottom: parent.bottom; left: parent.left; right: parent.right
-                                        bottomMargin: 9; leftMargin: 12; rightMargin: 12
-                                    }
-                                    text: keybindRow.modelData.description
-                                    color: Theme.textSecondary
-                                    elide: Text.ElideRight
-                                    size: 10
-                                }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    onEntered: root.currentIndex = keybindRow.index
-                                }
-                            }
+                            launcher: root
                         }
                     }
 
-                    Rectangle {
+                    LauncherKeybindDetails {
                         anchors {
                             top: parent.top; bottom: parent.bottom
                             left: keybindResultColumn.right; right: parent.right
                             topMargin: 16; bottomMargin: 16; leftMargin: 16
                         }
-                        visible: root.selectedKeybind !== null
-                        color: Theme.base00
-                        radius: PanelService.rounding
-                        border.width: 1
-                        border.color: PanelService.chromeBorderColor
-
-                        ShellText {
-                            id: keybindSummaryIcon
-                            anchors { top: parent.top; horizontalCenter: parent.horizontalCenter; topMargin: 54 }
-                            text: root.keybindType(root.selectedKeybind) === "Mouse" ? "󰍽"
-                                : (root.keybindType(root.selectedKeybind) === "Switch" ? "󰜎" : "󰌌")
-                            size: 42
-                        }
-                        ShellText {
-                            id: keybindSummaryChord
-                            anchors {
-                                top: keybindSummaryIcon.bottom
-                                left: parent.left; right: parent.right
-                                topMargin: 18; leftMargin: 20; rightMargin: 20
-                            }
-                            horizontalAlignment: Text.AlignHCenter
-                            text: root.selectedKeybind?.chord ?? ""
-                            elide: Text.ElideRight
-                            font.bold: true
-                            size: 15
-                        }
-                        ShellText {
-                            id: keybindSummaryDescription
-                            anchors {
-                                top: keybindSummaryChord.bottom
-                                left: parent.left; right: parent.right
-                                topMargin: 10; leftMargin: 24; rightMargin: 24
-                            }
-                            horizontalAlignment: Text.AlignHCenter
-                            text: root.selectedKeybind?.description ?? ""
-                            color: Theme.textSecondary
-                            wrapMode: Text.Wrap
-                            maximumLineCount: 3
-                            elide: Text.ElideRight
-                            size: 11
-                        }
-
-                        ShellText {
-                            id: keybindSummaryOptions
-                            anchors {
-                                top: keybindSummaryDescription.bottom
-                                left: parent.left; right: parent.right
-                                topMargin: 10; leftMargin: 24; rightMargin: 24
-                            }
-                            horizontalAlignment: Text.AlignHCenter
-                            text: root.keybindOptions(root.selectedKeybind)
-                            color: Theme.textSecondary
-                            wrapMode: Text.Wrap
-                            size: 10
-                        }
-
-                        Column {
-                            anchors {
-                                top: keybindSummaryOptions.bottom
-                                left: parent.left; right: parent.right
-                                topMargin: 34; leftMargin: 24; rightMargin: 24
-                            }
-                            spacing: 16
-
-                            Repeater {
-                                model: [
-                                    { label: "TYPE", value: root.keybindType(root.selectedKeybind) },
-                                    { label: "TRIGGER", value: root.keybindTrigger(root.selectedKeybind) },
-                                    { label: "MODIFIERS", value: root.modifierText(root.selectedKeybind) },
-                                    { label: "KEY", value: root.keyName(String(root.selectedKeybind?.key ?? "")) }
-                                ]
-                                delegate: Item {
-                                    required property var modelData
-                                    width: parent.width
-                                    height: 28
-                                    ShellText {
-                                        anchors { left: parent.left; verticalCenter: parent.verticalCenter }
-                                        text: modelData.label
-                                        color: Theme.textSecondary
-                                        font.bold: true
-                                        font.letterSpacing: 1
-                                        size: 9
-                                    }
-                                    ShellText {
-                                        anchors {
-                                            left: parent.left; right: parent.right
-                                            leftMargin: 86; verticalCenter: parent.verticalCenter
-                                        }
-                                        text: modelData.value
-                                        horizontalAlignment: Text.AlignRight
-                                        elide: Text.ElideRight
-                                        size: 11
-                                    }
-                                }
-                            }
-                        }
+                        launcher: root
                     }
 
                     ShellText {
@@ -1432,34 +1031,10 @@ Scope {
                 }
             }
 
-            Rectangle {
+            LauncherFooter {
                 id: footer
                 anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-                height: 58
-                color: Theme.base00
-                border.width: 0
-
-                Rectangle {
-                    anchors { left: parent.left; leftMargin: 28; verticalCenter: parent.verticalCenter }
-                    width: 30; height: 30; radius: 15
-                    color: Theme.base02
-                    ShellText { anchors.centerIn: parent; text: "󰀄"; size: 14 }
-                }
-                ShellText {
-                    anchors { left: parent.left; leftMargin: 70; verticalCenter: parent.verticalCenter }
-                    text: Quickshell.env("USER") || "user"; size: 12
-                }
-                Rectangle {
-                    anchors { right: parent.right; rightMargin: 24; verticalCenter: parent.verticalCenter }
-                    width: 34; height: 34; radius: PanelService.rounding
-                    color: powerMouse.containsMouse || root.powerMenuOpen ? Utils.alpha(Theme.base05, 0.12) : "transparent"
-                    ShellText { anchors.centerIn: parent; text: "󰐥"; size: 16 }
-                    MouseArea {
-                        id: powerMouse
-                        anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                        onClicked: root.powerMenuOpen = !root.powerMenuOpen
-                    }
-                }
+                launcher: root
             }
 
             MouseArea {
@@ -1469,45 +1044,10 @@ Scope {
                 onClicked: root.powerMenuOpen = false
             }
 
-            Rectangle {
+            LauncherPowerMenu {
                 anchors { right: parent.right; bottom: footer.top; rightMargin: 24; bottomMargin: 6 }
-                width: 170; height: 198
-                visible: root.powerMenuOpen
-                color: Theme.base01
-                border.width: 1; border.color: PanelService.chromeBorderColor
-                radius: PanelService.rounding
+                launcher: root
                 z: 20
-                Column {
-                    anchors.fill: parent; anchors.margins: 5; spacing: 2
-                    Repeater {
-                        model: [
-                            { icon: "󰌾", label: "Lock", command: ["qs", "ipc", "call", "lock", "activate"] },
-                            { icon: "󰒲", label: "Sleep", command: ["systemctl", "suspend"] },
-                            { icon: "󰤄", label: "Hibernate", command: ["systemctl", "hibernate"] },
-                            { icon: "󰜉", label: "Restart", command: ["systemctl", "reboot"] },
-                            { icon: "󰐥", label: "Shut down", command: ["systemctl", "poweroff"] }
-                        ]
-                        delegate: Rectangle {
-                            id: powerAction
-                            required property var modelData
-                            width: parent.width; height: 36; radius: PanelService.rounding
-                            color: actionMouse.containsMouse ? Utils.alpha(Theme.base05, 0.11) : "transparent"
-                            ShellText {
-                                anchors { left: parent.left; leftMargin: 10; verticalCenter: parent.verticalCenter }
-                                text: modelData.icon; size: 13
-                            }
-                            ShellText {
-                                anchors { left: parent.left; leftMargin: 38; verticalCenter: parent.verticalCenter }
-                                text: modelData.label; size: 12
-                            }
-                            MouseArea {
-                                id: actionMouse
-                                anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                onClicked: { root.open = false; Quickshell.execDetached(modelData.command); }
-                            }
-                        }
-                    }
-                }
             }
 
             MouseArea {
@@ -1517,51 +1057,9 @@ Scope {
                 onClicked: root.pinMenuOpen = false
             }
 
-            Rectangle {
-                x: root.pinMenuX
-                y: root.pinMenuY
-                width: 180
-                height: 44
-                visible: root.pinMenuOpen && root.pinMenuItem !== null
-                color: Theme.base01
-                border.width: 1
-                border.color: PanelService.chromeBorderColor
-                radius: PanelService.rounding
+            LauncherPinMenu {
+                launcher: root
                 z: 30
-
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: 4
-                    radius: PanelService.rounding
-                    color: contextPinMouse.containsMouse
-                        ? Utils.alpha(Theme.base05, 0.11) : "transparent"
-                    ShellText {
-                        anchors { left: parent.left; leftMargin: 12; verticalCenter: parent.verticalCenter }
-                        text: root.isPinned(root.pinMenuItem) ? "󰤱" : "󰐃"
-                        size: 13
-                    }
-                    ShellText {
-                        anchors {
-                            left: parent.left; right: parent.right
-                            leftMargin: 40; rightMargin: 12
-                            verticalCenter: parent.verticalCenter
-                        }
-                        text: root.isPinned(root.pinMenuItem)
-                            ? "Unpin from Start" : "Pin to Start"
-                        elide: Text.ElideRight
-                        size: 11
-                    }
-                    MouseArea {
-                        id: contextPinMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            root.togglePinned(root.pinMenuItem);
-                            root.pinMenuOpen = false;
-                        }
-                    }
-                }
             }
 
             // Keep the outer chrome above edge-to-edge children such as the footer,

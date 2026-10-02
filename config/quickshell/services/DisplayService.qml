@@ -10,8 +10,7 @@ Item {
     id: root
 
     readonly property int brightnessStep: 5
-    // Matches --gamma_max in home/hyprsunset.nix; hyprsunset rejects more.
-    readonly property int maxLevel: 150
+    readonly property int maxLevel: 100
     // Held brightness keys repeat every ~40ms and a slider drag emits faster still.
     readonly property int writeDelay: 150
     readonly property var monitors: Hyprland.monitors ? Hyprland.monitors.values : []
@@ -22,12 +21,7 @@ Item {
     property int pendingBrightness: 0
     property int writingBrightness: 0
 
-    // hyprsunset gamma in percent; 100 is neutral, above it is overdrive.
-    property int gammaPercent: 100
-    property int pendingGamma: 100
-    property int writingGamma: 100
-
-    readonly property int level: gammaPercent > 100 ? gammaPercent : brightnessPercent
+    readonly property int level: brightnessPercent
 
     property real lastStepMs: 0
     property int fastSteps: 0
@@ -38,20 +32,8 @@ Item {
         return Math.max(1, Math.min(100, Math.round(Number(percent))));
     }
 
-    function clampLevel(percent: int): int {
-        return Math.max(1, Math.min(maxLevel, Math.round(Number(percent))));
-    }
-
-    // Single entry point for anything user-facing.
     function setLevel(percent: int): void {
-        const next = clampLevel(percent);
-        if (next > 100) {
-            setBrightness(100);
-            setGamma(next);
-        } else {
-            setGamma(100);
-            setBrightness(next);
-        }
+        setBrightness(percent);
     }
 
     function adjustLevel(delta: int): void {
@@ -66,33 +48,6 @@ Item {
         adjustLevel(direction * brightnessStep
             * Math.min(3, 1 + Math.floor(fastSteps / 4)));
         brightnessIpcInvoked();
-    }
-
-    function setGamma(percent: int): void {
-        const next = Math.max(100, Math.min(maxLevel, Math.round(Number(percent))));
-        // Every sub-100 level call parks gamma at neutral, so skip the hyprctl round trip when it is already there.
-        if (next === pendingGamma)
-            return;
-        pendingGamma = next;
-        gammaPercent = next;
-        gammaDebounce.restart();
-    }
-
-    function parseGamma(raw: string): void {
-        const parsed = Number(String(raw || "").trim());
-        if (!Number.isFinite(parsed) || gammaWriteProcess.running
-                || gammaDebounce.running)
-            return;
-        gammaPercent = Math.max(100, Math.min(maxLevel, Math.round(parsed)));
-        pendingGamma = gammaPercent;
-        enforceGammaCeiling();
-    }
-
-    // The invariant, checked against what the backlight actually reports and not what we asked for.
-    function enforceGammaCeiling(): void {
-        if (gammaPercent > 100 && available && brightnessPercent < 100
-                && !writeProcess.running && !writeDebounce.running)
-            setGamma(100);
     }
 
     function parseBrightness(raw: string): void {
@@ -110,18 +65,15 @@ Item {
             return;
         brightnessPercent = clampBrightness(parsed);
         pendingBrightness = brightnessPercent;
-        enforceGammaCeiling();
     }
 
     function refresh(): void {
         if (!readProcess.running) readProcess.running = true;
-        if (!gammaReadProcess.running && !gammaWriteProcess.running)
-            gammaReadProcess.running = true;
     }
 
     function setBrightness(percent: int): void {
         const next = clampBrightness(percent);
-        // Boost steps all target a pinned 100% backlight; don't respawn brightnessctl for a value the panel already reports.
+        // Don't respawn brightnessctl for a value the panel already reports.
         if (next === pendingBrightness && next === brightnessPercent)
             return;
         pendingBrightness = next;
@@ -176,31 +128,6 @@ Item {
         }
     }
 
-    Process {
-        id: gammaReadProcess
-        command: ["hyprctl", "hyprsunset", "gamma"]
-        stdout: StdioCollector {
-            waitForEnd: true
-            onStreamFinished: root.parseGamma(text)
-        }
-    }
-
-    Process {
-        id: gammaWriteProcess
-        command: ["hyprctl", "hyprsunset", "gamma", String(root.writingGamma)]
-        onExited: if (root.pendingGamma !== root.writingGamma) gammaDebounce.restart()
-    }
-
-    Timer {
-        id: gammaDebounce
-        interval: root.writeDelay
-        onTriggered: {
-            if (gammaWriteProcess.running) return;
-            root.writingGamma = root.pendingGamma;
-            gammaWriteProcess.running = true;
-        }
-    }
-
     Timer {
         id: refreshAfterWrite
         interval: 80
@@ -232,7 +159,6 @@ Item {
             root.brightnessIpcInvoked();
         }
         function brightness(): int { return root.level; }
-        function gamma(): int { return root.gammaPercent; }
         function setScale(scale: real): void { root.setScale(scale); }
     }
 }

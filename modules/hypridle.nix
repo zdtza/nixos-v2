@@ -34,33 +34,33 @@ in
   ];
 
   systemd.user.services = {
-  # Caffeine blocks idle actions only.
+    # Caffeine blocks idle actions only.
     stay-awake = {
-    Unit = {
-      Description = "Inhibit idle actions while caffeine mode is enabled";
-      PartOf = [ "graphical-session.target" ];
-      After = [ "graphical-session.target" ];
+      Unit = {
+        Description = "Inhibit idle actions while caffeine mode is enabled";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+      };
+      Service = {
+        ExecStart = "${pkgs.systemd}/bin/systemd-inhibit --what=idle --mode=block --who=Quickshell --why=Stay-awake ${pkgs.coreutils}/bin/sleep infinity";
+        KillMode = "control-group";
+      };
     };
-    Service = {
-      ExecStart = "${pkgs.systemd}/bin/systemd-inhibit --what=idle --mode=block --who=Quickshell --why=Stay-awake ${pkgs.coreutils}/bin/sleep infinity";
-      KillMode = "control-group";
-    };
-  };
 
     hypridle = {
-    Unit = {
-      Description = "Hyprland idle manager";
-      PartOf = [ "graphical-session.target" ];
-      After = [ "graphical-session.target" ];
-    };
+      Unit = {
+        Description = "Hyprland idle manager";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+      };
 
-    Service = {
-      ExecStart = "${pkgs.hypridle}/bin/hypridle --config ${configFile}";
-      Restart = "on-failure";
-      RestartSec = 2;
-    };
+      Service = {
+        ExecStart = "${pkgs.hypridle}/bin/hypridle --config ${configFile}";
+        Restart = "on-failure";
+        RestartSec = 2;
+      };
 
-    Install.WantedBy = [ "graphical-session.target" ];
+      Install.WantedBy = [ "graphical-session.target" ];
     };
   };
 }

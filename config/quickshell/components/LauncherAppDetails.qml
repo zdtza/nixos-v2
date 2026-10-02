@@ -90,31 +90,5 @@ Rectangle {
                 onClicked: details.launcher.activate(details.selectedItem)
             }
         }
-
-        Rectangle {
-            width: parent.width
-            height: visible ? 36 : 0
-            visible: details.selectedItem !== null && !details.selectedItem.isFallback
-                && !details.selectedItem.isSystemAction
-            color: pinMouse.containsMouse ? Utils.alpha(Theme.base05, 0.12) : "transparent"
-            radius: PanelService.rounding
-            border.width: 1
-            border.color: PanelService.chromeBorderColor
-
-            ShellText {
-                anchors.centerIn: parent
-                text: details.launcher.isPinned(details.selectedItem)
-                    ? "UNPIN FROM START" : "PIN TO START"
-                size: 11
-            }
-
-            MouseArea {
-                id: pinMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: details.launcher.togglePinned(details.selectedItem)
-            }
-        }
     }
 }

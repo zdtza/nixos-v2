@@ -12,6 +12,8 @@ ListView {
     model: launcher.keybindRows
     spacing: 2
     clip: true
+    header: Item { height: 16 }
+    footer: Item { height: 16 }
     currentIndex: launcher.currentIndex
     boundsBehavior: Flickable.StopAtBounds
     maximumFlickVelocity: 12000
@@ -65,7 +67,7 @@ ListView {
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
-            onEntered: list.launcher.currentIndex = row.index
+            onPositionChanged: list.launcher.currentIndex = row.index
         }
     }
 }

@@ -22,14 +22,12 @@ in
     ./hardware-configuration.nix
 
     # feature modules this host uses.
-    ../../modules/base.nix
-    ../../modules/wayland.nix
+    ../../modules/core.nix
     ../../modules/laptop.nix
-    ../../modules/gpu-nvidia.nix
-    ../../modules/postgresql.nix
-    ../../modules/sql-vpn.nix
     ../../modules/windows.nix
   ];
+
+  gpu = "nvidia";
 
   windows.user = user;
 
@@ -42,7 +40,7 @@ in
   # Home environment and theme.
   home-manager.users.${user} = {
     home.stateVersion = "26.05";
-    imports = [ ../../home ];
+    imports = [ ../../modules/home.nix ];
 
     theme.name = themeName;
 

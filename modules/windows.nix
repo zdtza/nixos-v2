@@ -47,10 +47,6 @@ in
         type = lib.types.port;
         default = 3389;
       };
-      ssh = lib.mkOption {
-        type = lib.types.port;
-        default = 2222;
-      };
     };
   };
 
@@ -82,7 +78,6 @@ in
             "127.0.0.1:${toString cfg.ports.web}:8006"
             "127.0.0.1:${toString cfg.ports.rdp}:3389/tcp"
             "127.0.0.1:${toString cfg.ports.rdp}:3389/udp"
-            "127.0.0.1:${toString cfg.ports.ssh}:22/tcp"
           ];
           devices = [
             "/dev/kvm"

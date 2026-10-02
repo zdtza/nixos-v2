@@ -96,9 +96,19 @@ PanelWindow {
         sourceComponent: bar.activeKeyboardProxy
     }
 
-    // --- center ---.
+    // --- left ---.
     Workspaces {
         screen: bar.screen
+        anchors {
+            left: parent.left
+            leftMargin: 12
+            verticalCenter: parent.verticalCenter
+        }
+    }
+
+    // --- center ---.
+    Clock {
+        id: clock
         anchors.centerIn: parent
     }
 
@@ -131,8 +141,6 @@ PanelWindow {
         NetworkPanel { id: network }
 
         TimerBadge { panelTarget: clock.timerPanel }
-
-        Clock { id: clock }
     }
 
     // The display panel remains registered for Super+Ctrl+D, but has no bar button.

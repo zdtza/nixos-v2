@@ -47,7 +47,6 @@
 
         startw = "uwsm start hyprland-uwsm.desktop";
         ff = "fastfetch";
-        sqlvpn = "ssh -N pmis-windows-vpn";
       };
     };
 

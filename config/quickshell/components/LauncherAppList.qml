@@ -18,7 +18,11 @@ ListView {
 
     spacing: 2
     clip: true
+    header: Item { height: 16 }
+    footer: Item { height: 16 }
     currentIndex: launcher.currentIndex
+    highlightMoveDuration: 0
+    highlightResizeDuration: 0
     boundsBehavior: Flickable.StopAtBounds
     maximumFlickVelocity: 12000
 
@@ -72,15 +76,12 @@ ListView {
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            acceptedButtons: Qt.LeftButton
             cursorShape: Qt.PointingHandCursor
-            onEntered: list.launcher.currentIndex = row.index
-            onClicked: mouse => {
-                if (mouse.button === Qt.RightButton)
-                    list.launcher.showPinMenu(row.modelData, row, mouse.x, mouse.y);
-                else
-                    list.launcher.activate(row.modelData);
-            }
+            // A stationary pointer must not select a different result when
+            // typing replaces the rows underneath it.
+            onPositionChanged: list.launcher.currentIndex = row.index
+            onClicked: list.launcher.activate(row.modelData)
         }
     }
 }

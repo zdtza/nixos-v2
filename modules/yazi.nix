@@ -3,7 +3,7 @@
 let
   colors = config.lib.stylix.colors.withHashtag;
 
-  # themes/*/accent names the base16 slot this theme accents with; same value drives hyprland's active border (home/hyprland.nix).
+  # themes/*/accent names the base16 slot this theme accents with; same value drives hyprland's active border (modules/hyprland.nix).
   accent = colors.${config.theme.current.accent};
 in
 {

@@ -58,23 +58,13 @@ Rectangle {
 
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Escape) {
-                if (box.launcher.pinMenuOpen)
-                    box.launcher.pinMenuOpen = false;
-                else if (box.launcher.powerMenuOpen)
+                if (box.launcher.powerMenuOpen)
                     box.launcher.powerMenuOpen = false;
                 else
                     box.launcher.open = false;
             } else if (event.key === Qt.Key_Down) {
-                box.launcher.moveSelection(box.launcher.keybindMode
-                    || box.launcher.allApps || input.text !== "" ? 1 : 4);
-            } else if (event.key === Qt.Key_Up) {
-                box.launcher.moveSelection(box.launcher.keybindMode
-                    || box.launcher.allApps || input.text !== "" ? -1 : -4);
-            } else if (!box.launcher.keybindMode && input.text === ""
-                    && !box.launcher.allApps && event.key === Qt.Key_Right) {
                 box.launcher.moveSelection(1);
-            } else if (!box.launcher.keybindMode && input.text === ""
-                    && !box.launcher.allApps && event.key === Qt.Key_Left) {
+            } else if (event.key === Qt.Key_Up) {
                 box.launcher.moveSelection(-1);
             } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
                     && !box.launcher.keybindMode) {

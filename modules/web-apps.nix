@@ -110,7 +110,9 @@ let
       # Chromium includes the URL path in an app window's XWayland class:
       # chrome-<host>_<path-with-slashes-replaced-by-underscores>-Default.
       # Match that full class so Quickshell can locate the desktop entry icon.
-      startupWMClass = app.startupWMClass or "chrome-${builtins.elemAt urlParts 0}_${lib.replaceStrings [ "/" ] [ "_" ] urlPath}-Default";
+      startupWMClass =
+        app.startupWMClass
+          or "chrome-${builtins.elemAt urlParts 0}_${lib.replaceStrings [ "/" ] [ "_" ] urlPath}-Default";
       exec =
         if isChromium then
           ''${pkgs.chromium}/bin/chromium ${profileFlag}${chromiumFlags}"--app=${url}"''

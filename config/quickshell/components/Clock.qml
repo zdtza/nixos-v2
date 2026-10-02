@@ -41,7 +41,7 @@ Item {
         visible: root.showButton
         anchors.centerIn: parent
         anchors.verticalCenterOffset: -1
-        text: Qt.formatDateTime(clock.date, "HH:mm")
+        text: Qt.formatDateTime(clock.date, "dddd HH:mm")
         font.pixelSize: 13
     }
 

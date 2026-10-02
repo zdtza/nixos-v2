@@ -32,7 +32,7 @@ Item {
     property var registeredPanels: ({})
 
     // Change this one line to "top" or "bottom" to place the bar and its panels.
-    property string barPosition: "bottom"
+    property string barPosition: "top"
     readonly property bool barAtTop: barPosition === "top"
 
     // Whether the status bar is currently shown (toggled via `qs ipc call bar toggle/hide/show`).
@@ -48,7 +48,7 @@ Item {
         ? barHeight : 0
 
     // Shared bar geometry keeps standalone panels aligned with popups.
-    property real barHeight: 34
+    property real barHeight: 32
     // Single source for the gap between every bar button/toggle and the clock, so the bar's groups all read as evenly spaced.
     property real barSpacing: 4
     // Hyprland's outer gap, also used to inset floating shell panels.

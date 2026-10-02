@@ -17,11 +17,17 @@ Item {
     readonly property int activeWorkspaceId: Number(monitor?.activeWorkspace?.id ?? 0)
 
     // Persistent workspace rules keep empty assigned workspaces in Hyprland's
-    // IPC model, so each bar can show only the workspaces belonging to it.
-    readonly property var workspaces: Hyprland.workspaces.values
+    // IPC model. Treat each monitor's sorted list independently so its first
+    // three slots are always visible, then reveal every slot through the active
+    // workspace when it lies beyond those defaults.
+    readonly property var monitorWorkspaces: Hyprland.workspaces.values
         .filter(workspace => workspace.id > 0
             && String(workspace.monitor?.name ?? "") === root.monitorName)
         .sort((a, b) => a.id - b.id)
+    readonly property int activeWorkspaceIndex: monitorWorkspaces
+        .findIndex(workspace => workspace.id === root.activeWorkspaceId)
+    readonly property var workspaces: monitorWorkspaces.slice(0,
+        Math.max(3, activeWorkspaceIndex + 1))
 
     function isSteamPopup(toplevel: var): bool {
         const ipc = toplevel?.lastIpcObject ?? {};

@@ -26,6 +26,6 @@
     colorscheme = "tokyonight-night";
     lualine = "tokyonight";
   };
-  # base16 slot used as this theme's accent: yazi's folder icons/border and hyprland's active window border (home/yazi.nix, home/hyprland.nix)
+  # base16 slot used as this theme's accent: yazi's folder icons/border and hyprland's active window border (modules/yazi.nix, modules/hyprland.nix)
   accent = "base0D";
 }

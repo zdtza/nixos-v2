@@ -14,25 +14,16 @@ Scope {
 
     property var terminal: ["kitty"]
     property bool open: false
-    property bool allApps: false
     property bool keybindMode: false
     property var binds: []
     property string bindsLoadError: ""
     property bool powerMenuOpen: false
-    property bool pinMenuOpen: false
-    property var pinMenuItem: null
-    property real pinMenuX: 0
-    property real pinMenuY: 0
     property string openedMonitorName: ""
     property int currentIndex: 0
     property string pendingLaunchName: ""
     property string pendingLaunchIcon: "application-x-executable"
     property string launchBaselineActiveAddress: ""
     property var launchBaselineAddresses: ({})
-    property var appUsage: ({})
-    property var pinnedAppIds: []
-    property bool pinStateLoaded: false
-    property bool pinsInitialized: false
 
     readonly property var entries: {
         const applications = [];
@@ -47,144 +38,6 @@ Scope {
             });
         }
         return applications.sort((a, b) => a.entry.name.localeCompare(b.entry.name));
-    }
-
-    readonly property var pinnedEntries: {
-        const pinned = [];
-        for (const id of root.pinnedAppIds) {
-            const item = root.entries.find(candidate => candidate.entry.id === id);
-            if (item)
-                pinned.push(item);
-        }
-        return pinned;
-    }
-
-    function initializeDefaultPins(): void {
-        if (root.pinsInitialized || root.entries.length === 0)
-            return;
-        const preferred = [
-            "firefox", "kitty", "files", "nautilus", "yazi", "code", "vscode",
-            "1password", "spotify", "discord", "calculator", "settings"
-        ];
-        const defaults = [];
-        for (const needle of preferred) {
-            const found = root.entries.find(item => !defaults.includes(item.entry.id)
-                && (`${item.entry.id} ${item.entry.name}`).toLowerCase().includes(needle));
-            if (found)
-                defaults.push(found.entry.id);
-            if (defaults.length === 8)
-                break;
-        }
-        for (const item of root.entries) {
-            if (defaults.length === 8)
-                break;
-            if (!defaults.includes(item.entry.id))
-                defaults.push(item.entry.id);
-        }
-        root.pinnedAppIds = defaults;
-        root.pinsInitialized = true;
-        pinnedAppsState.setText(JSON.stringify(defaults) + "\n");
-    }
-
-    function restorePinnedApps(value: string): void {
-        try {
-            const stored = JSON.parse(String(value).trim());
-            if (Array.isArray(stored)) {
-                root.pinnedAppIds = stored.map(id => String(id)).slice(0, 8);
-                root.pinsInitialized = true;
-                return;
-            }
-        } catch (error) {
-        }
-        root.initializeDefaultPins();
-    }
-
-    function isPinned(item: var): bool {
-        return !!item && !item.isFallback && !item.isSystemAction && !!item.entry
-            && root.pinnedAppIds.includes(String(item.entry.id));
-    }
-
-    function togglePinned(item: var): void {
-        if (!item || item.isFallback || !item.entry)
-            return;
-        const id = String(item.entry.id);
-        const pins = root.pinnedAppIds.slice();
-        const index = pins.indexOf(id);
-        if (index !== -1)
-            pins.splice(index, 1);
-        else if (pins.length < 8)
-            pins.push(id);
-        else
-            return;
-        root.pinnedAppIds = pins;
-        root.pinsInitialized = true;
-        pinnedAppsState.setText(JSON.stringify(pins) + "\n");
-    }
-
-    function showPinMenu(item: var, source: Item, x: real, y: real): void {
-        if (!item || item.isFallback || item.isSystemAction || !item.entry)
-            return;
-        const point = source.mapToItem(panel, x, y);
-        root.pinMenuItem = item;
-        root.pinMenuX = Math.max(8, Math.min(panel.width - 188, point.x));
-        root.pinMenuY = Math.max(8, Math.min(panel.height - 52, point.y));
-        root.powerMenuOpen = false;
-        root.pinMenuOpen = true;
-    }
-
-    function movePinned(from: int, to: int): void {
-        if (from < 0 || from >= root.pinnedAppIds.length
-                || to < 0 || to >= root.pinnedAppIds.length || from === to)
-            return;
-        const pins = root.pinnedAppIds.slice();
-        pins.splice(to, 0, pins.splice(from, 1)[0]);
-        root.pinnedAppIds = pins;
-        pinnedAppsState.setText(JSON.stringify(pins) + "\n");
-    }
-
-    onEntriesChanged: if (root.pinStateLoaded && !root.pinsInitialized)
-        root.initializeDefaultPins()
-
-    readonly property var mostUsedEntries: root.entries
-        .filter(item => Number(root.appUsage[item.entry.id] ?? 0) > 0)
-        .sort((a, b) => Number(root.appUsage[b.entry.id]) - Number(root.appUsage[a.entry.id])
-            || a.entry.name.localeCompare(b.entry.name))
-        .slice(0, 10)
-
-    function rememberApp(entry: DesktopEntry): void {
-        if (!entry)
-            return;
-        const id = String(entry.id);
-        const usage = Object.assign({}, root.appUsage);
-        usage[id] = Number(usage[id] ?? 0) + 1;
-        root.appUsage = usage;
-        appUsageState.setText(JSON.stringify(root.appUsage) + "\n");
-    }
-
-    function forgetAppUsage(item: var): void {
-        if (!item || !item.entry)
-            return;
-        const usage = Object.assign({}, root.appUsage);
-        delete usage[String(item.entry.id)];
-        root.appUsage = usage;
-        appUsageState.setText(JSON.stringify(usage) + "\n");
-    }
-
-    function restoreAppUsage(value: string): void {
-        try {
-            const stored = JSON.parse(String(value).trim());
-            if (Array.isArray(stored)) {
-                // Migrate the previous recently-opened list into initial usage data.
-                const migrated = {};
-                for (const id of stored)
-                    migrated[String(id)] = 1;
-                root.appUsage = migrated;
-            } else if (stored && typeof stored === "object") {
-                root.appUsage = stored;
-            }
-        } catch (error) {
-            root.appUsage = {};
-        }
     }
 
     function matchTier(item: var, token: string): int {
@@ -248,7 +101,6 @@ Scope {
     function showKeybinds(): void {
         if (!root.open)
             root.show();
-        root.allApps = false;
         root.keybindMode = true;
         root.currentIndex = 0;
         search.text = "";
@@ -260,7 +112,7 @@ Scope {
     readonly property var results: {
         const tokens = search.text.toLowerCase().split(" ").filter(token => token !== "");
         if (tokens.length === 0)
-            return [];
+            return root.entries;
         const matches = [];
         const keybindingsItem = {
             isSystemAction: true,
@@ -290,15 +142,11 @@ Scope {
                 matches.push({ item, tier });
         }
         const found = matches.sort((a, b) => a.tier - b.tier
-            || Number(root.appUsage[b.item.entry.id] ?? 0)
-                - Number(root.appUsage[a.item.entry.id] ?? 0)
             || a.item.entry.name.localeCompare(b.item.entry.name)).map(match => match.item);
         return found.length > 0 || root.entries.length === 0 ? found : root.fallbackResults();
     }
 
-    readonly property var activeModel: root.keybindMode ? root.keybindRows
-        : (search.text !== "" ? root.results
-            : (root.allApps ? root.entries : root.pinnedEntries))
+    readonly property var activeModel: root.keybindMode ? root.keybindRows : root.results
     readonly property var selectedItem: root.activeModel[root.currentIndex] ?? null
     readonly property var selectedKeybind: root.keybindMode
         ? root.keybindRows[root.currentIndex] ?? null : null
@@ -367,10 +215,8 @@ Scope {
     function show(): void {
         root.openedMonitorName = String(Hyprland.focusedMonitor?.name ?? "");
         PanelService.closeActive();
-        root.allApps = false;
         root.keybindMode = false;
         root.powerMenuOpen = false;
-        root.pinMenuOpen = false;
         root.currentIndex = 0;
         root.open = true;
     }
@@ -405,19 +251,20 @@ Scope {
             Math.max(0, root.currentIndex) + offset));
         if (root.keybindMode)
             keybindList.positionViewAtIndex(root.currentIndex, ListView.Contain);
-        else if (search.text !== "")
-            searchResults.positionViewAtIndex(root.currentIndex, ListView.Contain);
-        else if (root.allApps)
-            allAppsList.positionViewAtIndex(root.currentIndex, ListView.Contain);
         else
-            pinnedGrid.positionViewAtIndex(root.currentIndex, GridView.Contain);
+            searchResults.positionViewAtIndex(root.currentIndex, ListView.Contain);
     }
 
     onOpenChanged: {
         search.text = "";
         root.currentIndex = 0;
-        if (root.open)
+        if (root.open) {
+            Qt.callLater(() => {
+                if (root.open)
+                    searchResults.positionViewAtBeginning();
+            });
             search.focusInput();
+        }
     }
     onActiveModelChanged: root.currentIndex = root.activeModel.length > 0 ? 0 : -1
 
@@ -455,7 +302,6 @@ Scope {
     function launch(entry: DesktopEntry): void {
         if (!entry)
             return;
-        root.rememberApp(entry);
         root.beginLaunchTracking(entry);
         root.launchDetached(entry.runInTerminal
             ? [...root.terminal, "--class", entry.id, "--", ...entry.command]
@@ -558,32 +404,6 @@ Scope {
         }
     }
 
-    FileView {
-        id: pinnedAppsState
-        path: Quickshell.statePath("launcher-pinned-apps")
-        preload: true
-        atomicWrites: true
-        printErrors: false
-        onLoaded: {
-            root.pinStateLoaded = true;
-            root.restorePinnedApps(text());
-        }
-        onLoadFailed: {
-            root.pinStateLoaded = true;
-            root.initializeDefaultPins();
-        }
-    }
-
-    FileView {
-        id: appUsageState
-        // Retain the old path so existing recent-app state can migrate in place.
-        path: Quickshell.statePath("launcher-recent-apps")
-        preload: true
-        atomicWrites: true
-        printErrors: false
-        onLoaded: root.restoreAppUsage(text())
-    }
-
     Timer {
         id: slowLaunchTimer
         interval: 3000
@@ -630,11 +450,16 @@ Scope {
 
             anchors {
                 horizontalCenter: parent.horizontalCenter
-                bottom: parent.bottom
-                bottomMargin: PanelService.panelBarInset + PanelService.panelGap
+                top: PanelService.barAtTop ? parent.top : undefined
+                bottom: PanelService.barAtTop ? undefined : parent.bottom
+                topMargin: PanelService.barAtTop
+                    ? PanelService.panelBarInset + PanelService.panelGap : 0
+                bottomMargin: PanelService.barAtTop
+                    ? 0 : PanelService.panelBarInset + PanelService.panelGap
             }
             width: Math.min(680, parent.width - PanelService.panelGap * 2)
-            height: Math.min(780, parent.height - anchors.bottomMargin - PanelService.panelGap)
+            height: Math.min(755, parent.height - PanelService.panelBarInset
+                - PanelService.panelGap * 2)
             color: Theme.base01
             // The overlay border at the end of this component is the single
             // source of outer chrome, avoiding doubled edges beside transparent content.
@@ -676,284 +501,15 @@ Scope {
 
                 Item {
                     anchors.fill: parent
-                    visible: !root.keybindMode && search.text === "" && !root.allApps
-
-                    ShellText {
-                        id: pinnedTitle
-                        y: 22
-                        text: "PINNED"
-                        font.bold: true
-                        font.letterSpacing: 1
-                        size: 11
-                    }
-
-                    Rectangle {
-                        anchors { right: parent.right; verticalCenter: pinnedTitle.verticalCenter }
-                        width: allAppsLabel.width + 20
-                        height: 28
-                        radius: PanelService.rounding
-                        color: allAppsMouse.containsMouse
-                            ? Utils.alpha(Theme.base05, 0.07) : "transparent"
-                        border.width: 0
-                        ShellText { id: allAppsLabel; anchors.centerIn: parent; text: "ALL APPS  →"; size: 11 }
-                        MouseArea {
-                            id: allAppsMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: { root.allApps = true; root.currentIndex = 0; search.focusInput(); }
-                        }
-                    }
-
-                    GridView {
-                        id: pinnedGrid
-                        anchors { top: pinnedTitle.bottom; left: parent.left; right: parent.right; topMargin: 12 }
-                        height: cellWidth * 1.7
-                        model: root.pinnedEntries
-                        cellWidth: width / 4
-                        cellHeight: cellWidth * 0.85
-                        interactive: false
-                        currentIndex: root.currentIndex
-
-                        delegate: Rectangle {
-                            id: pinnedApp
-                            required property var modelData
-                            required property int index
-                            property bool wasDragged: false
-                            property real dragOriginX: 0
-                            property real dragOriginY: 0
-                            width: GridView.view.cellWidth - 6
-                            height: GridView.view.cellHeight - 6
-                            radius: PanelService.rounding
-                            z: pinnedMouse.drag.active ? 10 : 0
-                            color: pinnedApp.GridView.isCurrentItem
-                                ? Utils.alpha(Theme.base05, 0.11)
-                                : (pinnedMouse.containsMouse ? Utils.alpha(Theme.base05, 0.07) : "transparent")
-
-                            Column {
-                                anchors.centerIn: parent
-                                width: parent.width - 24
-                                spacing: 10
-
-                                Image {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    width: 40; height: 40
-                                    source: modelData.entry.icon ? Quickshell.iconPath(modelData.entry.icon, true) : ""
-                                    sourceSize.width: 64; sourceSize.height: 64
-                                    asynchronous: true; smooth: true
-                                }
-                                ShellText {
-                                    width: parent.width
-                                    horizontalAlignment: Text.AlignHCenter
-                                    text: modelData.entry.name
-                                    elide: Text.ElideRight
-                                    size: 12
-                                }
-                            }
-                            MouseArea {
-                                id: pinnedMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-                                cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.PointingHandCursor
-                                drag.target: pinnedApp
-                                drag.axis: Drag.XAndYAxis
-                                drag.minimumX: 0
-                                drag.maximumX: pinnedGrid.width - pinnedApp.width
-                                drag.minimumY: 0
-                                drag.maximumY: pinnedGrid.height - pinnedApp.height
-                                onPressed: {
-                                    pinnedApp.wasDragged = false;
-                                    pinnedApp.dragOriginX = pinnedApp.x;
-                                    pinnedApp.dragOriginY = pinnedApp.y;
-                                }
-                                onPositionChanged: if (drag.active) pinnedApp.wasDragged = true
-                                onEntered: root.currentIndex = pinnedApp.index
-                                onReleased: {
-                                    if (!pinnedApp.wasDragged)
-                                        return;
-                                    const column = Math.max(0, Math.min(3,
-                                        Math.floor((pinnedApp.x + pinnedApp.width / 2)
-                                            / pinnedGrid.cellWidth)));
-                                    const row = Math.max(0, Math.min(1,
-                                        Math.floor((pinnedApp.y + pinnedApp.height / 2)
-                                            / pinnedGrid.cellHeight)));
-                                    const target = Math.min(root.pinnedAppIds.length - 1,
-                                        row * 4 + column);
-                                    if (target === pinnedApp.index) {
-                                        pinnedApp.x = pinnedApp.dragOriginX;
-                                        pinnedApp.y = pinnedApp.dragOriginY;
-                                    } else {
-                                        root.movePinned(pinnedApp.index, target);
-                                        root.currentIndex = target;
-                                    }
-                                    pinnedGrid.forceLayout();
-                                }
-                                onClicked: mouse => {
-                                    if (pinnedApp.wasDragged)
-                                        return;
-                                    if (mouse.button === Qt.MiddleButton)
-                                        root.togglePinned(modelData);
-                                    else if (mouse.button === Qt.RightButton)
-                                        root.showPinMenu(pinnedApp.modelData,
-                                            pinnedApp, mouse.x, mouse.y);
-                                    else
-                                        root.activate(modelData);
-                                }
-                            }
-                        }
-                    }
-
-                    ShellText {
-                        id: mostUsedTitle
-                        anchors { top: pinnedGrid.bottom; left: parent.left; topMargin: 18 }
-                        text: "RECENT"
-                        font.bold: true
-                        font.letterSpacing: 1
-                        size: 11
-                    }
-
-                    ShellText {
-                        anchors { top: mostUsedTitle.bottom; left: parent.left; topMargin: 22; leftMargin: 10 }
-                        visible: root.mostUsedEntries.length === 0
-                        text: "Apps you open will appear here"
-                        color: Theme.textSecondary
-                        size: 12
-                    }
-
-                    Rectangle {
-                        anchors { right: parent.right; verticalCenter: mostUsedTitle.verticalCenter }
-                        width: clearSearchLabel.width + 18
-                        height: 26
-                        visible: root.mostUsedEntries.length > 0
-                        radius: PanelService.rounding
-                        color: clearSearchMouse.containsMouse ? Utils.alpha(Theme.base05, 0.10) : "transparent"
-                        ShellText {
-                            id: clearSearchLabel
-                            anchors.centerIn: parent
-                            text: "CLEAR"
-                            color: Theme.textSecondary
-                            size: 10
-                        }
-                        MouseArea {
-                            id: clearSearchMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.appUsage = {};
-                                appUsageState.setText("{}\n");
-                            }
-                        }
-                    }
-
-                    GridView {
-                        anchors { top: mostUsedTitle.bottom; bottom: parent.bottom; left: parent.left; right: parent.right; topMargin: 10 }
-                        model: root.mostUsedEntries
-                        cellWidth: width / 2
-                        cellHeight: 58
-                        interactive: false
-                        delegate: Rectangle {
-                            id: recentApp
-                            required property var modelData
-                            width: GridView.view.cellWidth - 5
-                            height: 54
-                            radius: PanelService.rounding
-                            color: recentAppMouse.containsMouse ? Utils.alpha(Theme.base05, 0.08) : "transparent"
-                            Image {
-                                id: recentAppIcon
-                                anchors { left: parent.left; leftMargin: 10; verticalCenter: parent.verticalCenter }
-                                width: 28; height: 28
-                                source: modelData.entry.icon ? Quickshell.iconPath(modelData.entry.icon, true) : ""
-                                sourceSize.width: 48; sourceSize.height: 48
-                                asynchronous: true; smooth: true
-                            }
-                            ShellText {
-                                anchors { left: recentAppIcon.right; right: parent.right; leftMargin: 10; rightMargin: 8; verticalCenter: parent.verticalCenter }
-                                text: modelData.entry.name
-                                elide: Text.ElideRight
-                                size: 12
-                            }
-                            MouseArea {
-                                id: recentAppMouse
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: mouse => {
-                                    if (mouse.button === Qt.MiddleButton)
-                                        root.forgetAppUsage(modelData);
-                                    else if (mouse.button === Qt.RightButton)
-                                        root.showPinMenu(recentApp.modelData,
-                                            recentApp, mouse.x, mouse.y);
-                                    else
-                                        root.activate(modelData);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Item {
-                    anchors.fill: parent
-                    visible: !root.keybindMode && search.text === "" && root.allApps
-
-                    Rectangle {
-                        id: backButton
-                        // Align the centred label itself, rather than the larger hover target,
-                        // with the other section headers at y=22.
-                        y: 22 - Math.round((height - backLabel.implicitHeight) / 2)
-                        width: backLabel.width + 20; height: 28
-                        radius: PanelService.rounding
-                        color: backMouse.containsMouse
-                            ? Utils.alpha(Theme.base05, 0.07) : "transparent"
-                        border.width: 0
-                        ShellText {
-                            id: backLabel
-                            anchors.centerIn: parent
-                            text: "←  PINNED"
-                            font.bold: true
-                            font.letterSpacing: 1
-                            size: 11
-                        }
-                        MouseArea {
-                            id: backMouse
-                            anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                            onClicked: { root.allApps = false; root.currentIndex = 0; search.focusInput(); }
-                        }
-                    }
-                    ShellText {
-                        anchors { right: parent.right; verticalCenter: backButton.verticalCenter }
-                        text: `${root.entries.length} APPLICATIONS`
-                        color: Theme.textSecondary; size: 11; font.letterSpacing: 1
-                    }
-                    LauncherAppList {
-                        id: allAppsList
-                        anchors { top: backButton.bottom; bottom: parent.bottom; left: parent.left; right: parent.right; topMargin: 12 }
-                        launcher: root
-                        model: root.entries
-                    }
-                }
-
-                Item {
-                    anchors.fill: parent
-                    visible: !root.keybindMode && search.text !== ""
+                    visible: !root.keybindMode
 
                     Item {
                         id: resultColumn
                         anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
                         width: parent.width * 0.49
-                        ShellText {
-                            id: resultTitle
-                            y: 22
-                            text: "BEST MATCH"
-                            font.bold: true
-                            font.letterSpacing: 1
-                            size: 11
-                        }
                         LauncherAppList {
                             id: searchResults
-                            anchors { top: resultTitle.bottom; bottom: parent.bottom; left: parent.left; right: parent.right; topMargin: 10 }
+                            anchors { top: parent.top; bottom: parent.bottom; left: parent.left; right: parent.right }
                             launcher: root
                             model: root.results
                             spacing: 3
@@ -992,21 +548,11 @@ Scope {
                         anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
                         width: parent.width * 0.49
 
-                        ShellText {
-                            id: keybindTitle
-                            y: 22
-                            text: "BEST MATCHES"
-                            font.bold: true
-                            font.letterSpacing: 1
-                            size: 11
-                        }
-
                         LauncherKeybindList {
                             id: keybindList
                             anchors {
-                                top: keybindTitle.bottom; bottom: parent.bottom
+                                top: parent.top; bottom: parent.bottom
                                 left: parent.left; right: parent.right
-                                topMargin: 10
                             }
                             launcher: root
                         }
@@ -1048,18 +594,6 @@ Scope {
                 anchors { right: parent.right; bottom: footer.top; rightMargin: 24; bottomMargin: 6 }
                 launcher: root
                 z: 20
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                visible: root.pinMenuOpen
-                z: 29
-                onClicked: root.pinMenuOpen = false
-            }
-
-            LauncherPinMenu {
-                launcher: root
-                z: 30
             }
 
             // Keep the outer chrome above edge-to-edge children such as the footer,

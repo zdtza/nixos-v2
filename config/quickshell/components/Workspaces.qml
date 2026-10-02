@@ -17,17 +17,32 @@ Item {
     readonly property int activeWorkspaceId: Number(monitor?.activeWorkspace?.id ?? 0)
 
     // Persistent workspace rules keep empty assigned workspaces in Hyprland's
-    // IPC model. Treat each monitor's sorted list independently so its first
-    // three slots are always visible, then reveal every slot through the active
-    // workspace when it lies beyond those defaults.
+    // IPC model. Show three slots by default, extending through the furthest
+    // active or occupied workspace so there are no gaps before its icon.
     readonly property var monitorWorkspaces: Hyprland.workspaces.values
         .filter(workspace => workspace.id > 0
             && String(workspace.monitor?.name ?? "") === root.monitorName)
         .sort((a, b) => a.id - b.id)
-    readonly property int activeWorkspaceIndex: monitorWorkspaces
-        .findIndex(workspace => workspace.id === root.activeWorkspaceId)
-    readonly property var workspaces: monitorWorkspaces.slice(0,
-        Math.max(3, activeWorkspaceIndex + 1))
+    readonly property int firstWorkspaceId: monitorWorkspaces.length > 0
+        ? monitorWorkspaces[0].id : 1
+    readonly property int lastVisibleWorkspaceId: {
+        let workspaceId = firstWorkspaceId + 2;
+        if (activeWorkspaceId >= firstWorkspaceId)
+            workspaceId = Math.max(workspaceId, activeWorkspaceId);
+        for (const workspace of monitorWorkspaces) {
+            if (root.tasksFor(workspace).length > 0)
+                workspaceId = Math.max(workspaceId, workspace.id);
+        }
+        return workspaceId;
+    }
+    readonly property var workspaces: {
+        const result = [];
+        for (let id = firstWorkspaceId; id <= lastVisibleWorkspaceId; ++id) {
+            const workspace = monitorWorkspaces.find(item => item.id === id);
+            result.push(workspace ?? { id: id, toplevels: { values: [] } });
+        }
+        return result;
+    }
 
     function isSteamPopup(toplevel: var): bool {
         const ipc = toplevel?.lastIpcObject ?? {};

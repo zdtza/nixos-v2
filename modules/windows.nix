@@ -24,7 +24,7 @@ in
     username = stringOption cfg.user;
     password = stringOption "windows";
     ramSize = stringOption "8G";
-    cpuCores = stringOption "4";
+    cpuCores = stringOption "8";
     diskSize = stringOption "64G";
     imageTag = stringOption "6.05";
 

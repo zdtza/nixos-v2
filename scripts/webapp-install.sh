@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Add a web app entry to modules/web-apps.nix.
+# Add a web app entry to modules/home/web-apps.nix.
 set -euo pipefail
 
 repo_dir=$HOME/.src/nixos
-apps_file="$repo_dir/modules/web-apps.nix"
+apps_file="$repo_dir/modules/home/web-apps.nix"
 icons_dir="$repo_dir/assets/icons"
 
 read -r -p 'Web App Name: ' app_name

@@ -26,7 +26,7 @@ let
         base0E
         base0F
         ;
-      # themes/*/accent, same slot hyprland's active border and yazi's folder icons use (modules/hyprland.nix, modules/yazi.nix)
+      # themes/*/accent, same slot hyprland's active border and yazi's folder icons use (modules/home/hyprland.nix, modules/home/yazi.nix)
       accent = colors.${config.theme.current.accent};
       wallpaper = config.theme.current.wallpaper;
       monospace = config.stylix.fonts.monospace.name;

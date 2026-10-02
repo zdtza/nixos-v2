@@ -78,7 +78,7 @@ let
     # WEBAPPS
   ];
 
-  iconDir = ../assets/icons;
+  iconDir = ../../assets/icons;
 
   # importing the custom install / remove scripts.
   mkWebappCommand =

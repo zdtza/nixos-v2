@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Remove a web app entry from modules/web-apps.nix.
+# Remove a web app entry from modules/home/web-apps.nix.
 set -euo pipefail
 
 repo_dir=$HOME/.src/nixos
-apps_file="$repo_dir/modules/web-apps.nix"
+apps_file="$repo_dir/modules/home/web-apps.nix"
 icons_dir="$repo_dir/assets/icons"
 
 mapfile -t entries < <(

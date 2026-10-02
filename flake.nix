@@ -22,7 +22,7 @@
       ...
     }:
     let
-      # Every host's default.nix imports whichever ./modules/*.nix files it needs directly and sets its own home-manager.users.<user>.imports.
+      # Hosts import system modules from ./modules and Home Manager modules from ./modules/home.
       hostNames = [ "legion" ];
 
       mkHost =

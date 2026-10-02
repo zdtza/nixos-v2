@@ -40,7 +40,7 @@ in
   # Home environment and theme.
   home-manager.users.${user} = {
     home.stateVersion = "26.05";
-    imports = [ ../../modules/home.nix ];
+    imports = [ ../../modules/home ];
 
     theme.name = themeName;
 

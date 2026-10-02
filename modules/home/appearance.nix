@@ -7,7 +7,7 @@
 
 let
   # Home-manager selection overrides the NixOS Stylix fallback.
-  themes = (import ../themes).themes;
+  themes = (import ../../themes).themes;
   theme = config.theme.current;
 
   # Static: one Yaru variant for every theme.

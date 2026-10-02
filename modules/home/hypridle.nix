@@ -34,15 +34,15 @@ in
   ];
 
   systemd.user.services = {
-    # Caffeine blocks idle actions only.
+    # Caffeine blocks idle actions and logind's lid-switch handling.
     stay-awake = {
       Unit = {
-        Description = "Inhibit idle actions while caffeine mode is enabled";
+        Description = "Inhibit idle actions and lid switch while caffeine mode is enabled";
         PartOf = [ "graphical-session.target" ];
         After = [ "graphical-session.target" ];
       };
       Service = {
-        ExecStart = "${pkgs.systemd}/bin/systemd-inhibit --what=idle --mode=block --who=Quickshell --why=Stay-awake ${pkgs.coreutils}/bin/sleep infinity";
+        ExecStart = "${pkgs.systemd}/bin/systemd-inhibit --what=idle:handle-lid-switch --mode=block --who=Quickshell --why=Stay-awake ${pkgs.coreutils}/bin/sleep infinity";
         KillMode = "control-group";
       };
     };

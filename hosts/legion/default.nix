@@ -134,8 +134,6 @@ in
     papers # document viewer / editor
     beekeeper-studio # data-base management tool
     bruno # api management tool
-    woeusb # windows usb creation tool
-    ntfs3g # NTFS support required by WoeUSB
   ];
 
   networking = {

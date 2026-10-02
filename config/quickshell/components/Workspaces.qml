@@ -15,6 +15,7 @@ Item {
     readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
     readonly property string monitorName: String(monitor?.name ?? screen?.name ?? "")
     readonly property int activeWorkspaceId: Number(monitor?.activeWorkspace?.id ?? 0)
+    readonly property int graveWorkspaceId: 11
 
     // Persistent workspace rules keep empty assigned workspaces in Hyprland's
     // IPC model. Show three slots by default, extending through the furthest
@@ -27,10 +28,12 @@ Item {
         ? monitorWorkspaces[0].id : 1
     readonly property int lastVisibleWorkspaceId: {
         let workspaceId = firstWorkspaceId + 2;
-        if (activeWorkspaceId >= firstWorkspaceId)
+        if (activeWorkspaceId >= firstWorkspaceId
+                && activeWorkspaceId !== graveWorkspaceId)
             workspaceId = Math.max(workspaceId, activeWorkspaceId);
         for (const workspace of monitorWorkspaces) {
-            if (root.tasksFor(workspace).length > 0)
+            if (workspace.id !== graveWorkspaceId
+                    && root.tasksFor(workspace).length > 0)
                 workspaceId = Math.max(workspaceId, workspace.id);
         }
         return workspaceId;
@@ -41,6 +44,14 @@ Item {
             const workspace = monitorWorkspaces.find(item => item.id === id);
             result.push(workspace ?? { id: id, toplevels: { values: [] } });
         }
+
+        // Workspace 11 is bound to the grave key. Keep it left of workspace 1
+        // and hide it unless it is active or contains a task.
+        const graveWorkspace = monitorWorkspaces.find(
+            item => item.id === graveWorkspaceId);
+        if (graveWorkspace && (activeWorkspaceId === graveWorkspaceId
+                || root.tasksFor(graveWorkspace).length > 0))
+            result.unshift(graveWorkspace);
         return result;
     }
 
@@ -96,6 +107,14 @@ Item {
         // a terminal.
         const applications = tasks.filter(toplevel => !root.isKitty(toplevel));
         return applications.length > 0 ? applications[0] : tasks[0];
+    }
+
+    function workspaceLabel(workspaceId: int): string {
+        if (workspaceId === 10)
+            return "0";
+        if (workspaceId === graveWorkspaceId)
+            return "~";
+        return String(workspaceId);
     }
 
     function focusWorkspace(workspaceId: int): void {
@@ -208,7 +227,7 @@ Item {
                             anchors.horizontalCenterOffset: -1
                             anchors.verticalCenterOffset: -2
                             visible: !taskButton.toplevel
-                            text: workspaceGroup.workspaceId
+                            text: root.workspaceLabel(workspaceGroup.workspaceId)
                             color: Theme.textSecondary
                             size: Theme.fontSize
                         }

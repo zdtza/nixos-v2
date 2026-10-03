@@ -280,6 +280,23 @@ local function toggle_window_opacity()
 	}))
 end
 
+local function toggle_centered_floating()
+	local window = hl.get_active_window()
+	if not window then
+		return
+	end
+
+	local selector = "address:" .. window.address
+	if window.floating then
+		hl.dispatch(hl.dsp.window.float({ action = "unset", window = selector }))
+		return
+	end
+
+	hl.dispatch(hl.dsp.window.float({ action = "set", window = selector }))
+	hl.dispatch(hl.dsp.window.resize({ x = 1300, y = 800, window = selector }))
+	hl.dispatch(hl.dsp.window.center({ window = selector }))
+end
+
 local function open_floating_terminal()
 	hl.dispatch(hl.dsp.exec_cmd("launch-terminal-cwd --class floating-terminal"))
 end
@@ -315,7 +332,7 @@ bind("SUPER + Return", "Open terminal in current directory", open_terminal)
 bind("SUPER + CTRL + Return", "Open a floating terminal", open_floating_terminal)
 bind("SUPER + W", "Close the focused window", hl.dsp.window.close())
 bind("SUPER + J", "Toggle the next split direction", hl.dsp.layout("togglesplit"))
-bind("SUPER + T", "Toggle floating mode for focused window", hl.dsp.window.float({ action = "toggle" }))
+bind("SUPER + T", "Toggle a centered floating window", toggle_centered_floating)
 bind("SUPER + F", "Toggle fullscreen for focused window", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 bind("SUPER + Tab", "Switch to the previously used workspace", hl.dsp.focus({ workspace = "previous" }))
 

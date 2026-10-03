@@ -65,6 +65,12 @@ Item {
             && String(ipc.initialTitle ?? "") === "";
     }
 
+    function normalizedIdentifier(value: var): string {
+        // Some applications use slightly different window and desktop-entry
+        // identifiers (for example, "Audacity4" versus "Audacity 4").
+        return String(value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    }
+
     function desktopEntry(toplevel: var): var {
         if (!toplevel)
             return null;
@@ -75,6 +81,19 @@ Item {
         for (const candidate of candidates) {
             const entry = DesktopEntries.heuristicLookup(candidate);
             if (entry)
+                return entry;
+        }
+
+        // Quickshell's heuristic requires punctuation and spacing to match.
+        // Fall back to normalized equality against the metadata intended for
+        // associating windows with desktop entries.
+        const candidateKeys = candidates.map(
+            value => root.normalizedIdentifier(value));
+        for (const entry of DesktopEntries.applications.values) {
+            const entryKeys = [entry.id, entry.name, entry.startupClass]
+                .map(value => root.normalizedIdentifier(value))
+                .filter(value => value !== "");
+            if (candidateKeys.some(key => entryKeys.includes(key)))
                 return entry;
         }
         return null;

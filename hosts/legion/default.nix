@@ -53,7 +53,7 @@ in
   time.timeZone = "Africa/Johannesburg";
 
   nixpkgs.config.permittedInsecurePackages = [
-    "beekeeper-studio-6.0.5"
+    "beekeeper-studio-6.1.1"
   ];
 
   # locale.

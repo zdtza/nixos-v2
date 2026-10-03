@@ -70,6 +70,7 @@ ListView {
             }
             text: row.modelData.entry.name
             elide: Text.ElideRight
+            font.weight: Font.Medium
             size: 13
         }
 

@@ -27,7 +27,7 @@ hl.config({
 		blur = { enabled = true, xray = false, special = true, passes = 2, size = 3 },
 		shadow = { enabled = false },
 	},
-	animations = { enabled = true },
+	animations = { enabled = true, workspace_wraparound = true },
 	layout = { single_window_aspect_ratio = { 16, 9 } },
 
 	dwindle = {

@@ -12,7 +12,7 @@ Item {
 
     required property var screen
     property bool showButton: true
-    readonly property bool available: DisplayService.available || DisplayService.monitors.length > 0
+    readonly property bool available: MonitorService.available || MonitorService.monitors.length > 0
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     readonly property var scales: [1, 1.33, 1.6, 2, 3.13, 4]
@@ -23,8 +23,8 @@ Item {
     implicitHeight: indicator.implicitHeight
 
     function brightnessStatus(): string {
-        if (!DisplayService.available) return "DISPLAY READY";
-        const value = DisplayService.level;
+        if (!MonitorService.available) return "MONITOR READY";
+        const value = MonitorService.level;
         if (value <= 10) return "THE GLOAMING";
         if (value <= 30) return "MOONLIGHT HAZE";
         if (value <= 50) return "SOFT MORNING";
@@ -38,8 +38,8 @@ Item {
             .replace(/0$/, "") + "x";
     }
 
-    onOpenedChanged: if (opened && DisplayService.focusedMonitor) {
-        const currentScale = Number(DisplayService.focusedMonitor.scale);
+    onOpenedChanged: if (opened && MonitorService.focusedMonitor) {
+        const currentScale = Number(MonitorService.focusedMonitor.scale);
         const index = scales.findIndex(scale => Math.abs(Number(scale) - currentScale) < 0.01);
         selectedScaleIndex = Math.max(0, index);
     }
@@ -47,12 +47,12 @@ Item {
     PanelShortcut {
         enabled: root.opened
         sequences: ["Up"]
-        onActivated: DisplayService.adjustLevel(DisplayService.brightnessStep)
+        onActivated: MonitorService.adjustLevel(MonitorService.brightnessStep)
     }
     PanelShortcut {
         enabled: root.opened
         sequences: ["Down"]
-        onActivated: DisplayService.adjustLevel(-DisplayService.brightnessStep)
+        onActivated: MonitorService.adjustLevel(-MonitorService.brightnessStep)
     }
     PanelShortcut {
         enabled: root.opened
@@ -66,9 +66,9 @@ Item {
             root.selectedScaleIndex + 1)
     }
     PanelShortcut {
-        enabled: root.opened && !!DisplayService.focusedMonitor
+        enabled: root.opened && !!MonitorService.focusedMonitor
         sequences: ["Return", "Enter"]
-        onActivated: DisplayService.setScale(Number(root.scales[root.selectedScaleIndex]))
+        onActivated: MonitorService.setScale(Number(root.scales[root.selectedScaleIndex]))
     }
 
     Button {
@@ -78,14 +78,14 @@ Item {
         panel: root
         text: "󰍹"
         onClicked: PanelService.toggle(root)
-        onWheeled: wheel => DisplayService.adjustLevel(
-            wheel.angleDelta.y > 0 ? DisplayService.brightnessStep : -DisplayService.brightnessStep)
+        onWheeled: wheel => MonitorService.adjustLevel(
+            wheel.angleDelta.y > 0 ? MonitorService.brightnessStep : -MonitorService.brightnessStep)
     }
 
     HyprlandFocusGrab {
-        active: root.opened
+        active: root.opened && !PanelService.refocusing
         windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
+        onCleared: if (!PanelService.refocusing) PanelService.close(root)
     }
 
     Drawer {
@@ -102,7 +102,7 @@ Item {
         Hero {
             width: parent.width
             icon: "󰍹"
-            title: "Display"
+            title: "Monitor"
             status: root.brightnessStatus()
         }
 
@@ -110,24 +110,24 @@ Item {
 
         SectionHeader {
             title: "BRIGHTNESS"
-            detail: DisplayService.available
-                ? DisplayService.level + "%" : "UNAVAILABLE"
+            detail: MonitorService.available
+                ? MonitorService.level + "%" : "UNAVAILABLE"
         }
 
         Slider {
             width: parent.width
-            enabled: DisplayService.available
-            value: DisplayService.level / DisplayService.maxLevel
-            onValueEdited: value => DisplayService.setLevel(
-                Math.round(value * DisplayService.maxLevel))
+            enabled: MonitorService.available
+            value: MonitorService.level / MonitorService.maxLevel
+            onValueEdited: value => MonitorService.setLevel(
+                Math.round(value * MonitorService.maxLevel))
         }
 
         Separator {}
 
         SectionHeader {
             title: "SCALE"
-            detail: DisplayService.focusedMonitor
-                ? root.scaleLabel(DisplayService.focusedMonitor.scale) : "—"
+            detail: MonitorService.focusedMonitor
+                ? root.scaleLabel(MonitorService.focusedMonitor.scale) : "—"
         }
 
         Row {
@@ -147,15 +147,15 @@ Item {
 
                     width: scaleRow.cellWidth
                     keyboardFocused: scaleButton.index === root.selectedScaleIndex
-                    active: !!DisplayService.focusedMonitor
+                    active: !!MonitorService.focusedMonitor
                         && Math.abs(Number(scaleButton.modelData)
-                            - Number(DisplayService.focusedMonitor.scale)) < 0.01
-                    enabled: !!DisplayService.focusedMonitor
+                            - Number(MonitorService.focusedMonitor.scale)) < 0.01
+                    enabled: !!MonitorService.focusedMonitor
                     onHoveredChanged: if (hovered && PanelService.hoverSelectReady)
                         root.selectedScaleIndex = scaleButton.index
                     onActivated: {
                         root.selectedScaleIndex = scaleButton.index;
-                        DisplayService.setScale(Number(scaleButton.modelData));
+                        MonitorService.setScale(Number(scaleButton.modelData));
                     }
 
                     ShellText {
@@ -170,9 +170,9 @@ Item {
         Separator {}
 
         SectionHeader {
-            title: "DISPLAYS"
-            detail: DisplayService.monitors.length > 1
-                ? DisplayService.monitors.length + " ACTIVE" : ""
+            title: "MONITORS"
+            detail: MonitorService.monitors.length > 1
+                ? MonitorService.monitors.length + " ACTIVE" : ""
         }
 
         Column {
@@ -180,12 +180,12 @@ Item {
             spacing: 4
 
             Repeater {
-                model: DisplayService.monitors
+                model: MonitorService.monitors
 
                 Rectangle {
                     id: monitorRow
                     required property var modelData
-                    readonly property bool focused: DisplayService.focusedMonitor === modelData
+                    readonly property bool focused: MonitorService.focusedMonitor === modelData
 
                     width: parent.width
                     height: 36

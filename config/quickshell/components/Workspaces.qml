@@ -158,9 +158,8 @@ Item {
                 readonly property var displayedTasks: [primary]
 
                 width: tasksRow.implicitWidth
-                // Keep all workspace slots at icon-row height; smaller empty
-                // indicators are centered in this space instead of top-aligned.
-                height: 26
+                // Full bar height, so the active underline sits on the bar's bottom edge.
+                height: PanelService.barItemHeight
                 implicitWidth: width
                 implicitHeight: height
                 clip: true
@@ -171,9 +170,6 @@ Item {
                     anchors {
                         left: parent.left
                         verticalCenter: parent.verticalCenter
-                        // Bias empty indicators down three pixels so their active
-                        // underline aligns with occupied workspaces.
-                        verticalCenterOffset: workspaceGroup.primary ? 0 : 3
                     }
                     spacing: 2
 
@@ -191,13 +187,23 @@ Item {
                         // Keep workspace slots the same width whether empty or
                         // occupied so opening/closing a window cannot shift them.
                         width: 26
-                        height: taskButton.toplevel ? 26
-                            : Math.max(workspaceNumber.implicitWidth + 12,
-                                workspaceNumber.implicitHeight + 2)
-                        radius: 4
+                        height: PanelService.barItemHeight
                         color: "transparent"
-                        border.width: urgent ? 1 : 0
-                        border.color: Theme.base08
+
+                        // Urgency outline keeps the original slot size inside the full-height button.
+                        Rectangle {
+                            anchors.centerIn: parent
+                            anchors.verticalCenterOffset: taskButton.toplevel ? 0 : 3
+                            width: parent.width
+                            height: taskButton.toplevel ? 26
+                                : Math.max(workspaceNumber.implicitWidth + 12,
+                                    workspaceNumber.implicitHeight + 2)
+                            radius: 4
+                            color: "transparent"
+                            visible: taskButton.urgent
+                            border.width: 1
+                            border.color: Theme.base08
+                        }
 
                         Rectangle {
                             anchors.bottom: parent.bottom
@@ -235,7 +241,7 @@ Item {
                             // Compensate for the number glyph's visual right bias
                             // and lift it without moving the active underline.
                             anchors.horizontalCenterOffset: -1
-                            anchors.verticalCenterOffset: -2
+                            anchors.verticalCenterOffset: 1
                             visible: !taskButton.toplevel
                             text: root.workspaceLabel(workspaceGroup.workspaceId)
                             color: Theme.textSecondary

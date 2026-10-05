@@ -15,7 +15,7 @@ Item {
     readonly property alias timerPanel: timerControl
 
     implicitWidth: showButton ? label.implicitWidth + 16 : 0
-    implicitHeight: 26
+    implicitHeight: PanelService.barItemHeight
 
     SystemClock {
         id: clock
@@ -61,9 +61,9 @@ Item {
     }
 
     HyprlandFocusGrab {
-        active: root.opened
+        active: root.opened && !PanelService.refocusing
         windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
+        onCleared: if (!PanelService.refocusing) PanelService.close(root)
     }
 
     TimerTogglePanel {

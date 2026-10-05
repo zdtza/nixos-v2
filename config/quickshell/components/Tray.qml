@@ -171,7 +171,7 @@ Item {
     visible: items.length > 0 || WindowsService.running
         || hasInactiveQuickToggles
     implicitWidth: row.implicitWidth
-    implicitHeight: 26
+    implicitHeight: PanelService.barItemHeight
 
     HoverHandler {
         id: hover
@@ -214,7 +214,7 @@ Item {
             clip: true
 
             implicitWidth: root.expanded ? icons.implicitWidth : 0
-            implicitHeight: 26
+            implicitHeight: PanelService.barItemHeight
             opacity: root.expanded ? 1 : 0
 
             Behavior on implicitWidth {
@@ -241,7 +241,7 @@ Item {
                         required property int index
 
                         implicitWidth: 28
-                        implicitHeight: 26
+                        implicitHeight: PanelService.barItemHeight
 
                         Rectangle {
                             anchors.bottom: parent.bottom
@@ -312,7 +312,7 @@ Item {
 
                     visible: WindowsService.running
                     implicitWidth: visible ? 28 : 0
-                    implicitHeight: 26
+                    implicitHeight: PanelService.barItemHeight
 
                     Rectangle {
                         anchors.bottom: parent.bottom
@@ -410,13 +410,13 @@ Item {
 
     // Grabs input while a menu is open: a click anywhere outside the menu (and its submenus) clears the grab and dismisses it.
     HyprlandFocusGrab {
-        active: root.opened
+        active: root.opened && !PanelService.refocusing
         // Keep bar in grab scope so clicks can transfer directly to another tray menu or panel without an intermediate dismissing click.
         windows: [root.QsWindow.window]
             .concat(menuLoader.item?.openWindows ?? [])
             .concat(windowsMenuLoader.item?.openWindows ?? [])
 
-        onCleared: PanelService.close(root)
+        onCleared: if (!PanelService.refocusing) PanelService.close(root)
     }
 
     Loader {

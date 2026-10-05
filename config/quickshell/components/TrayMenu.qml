@@ -240,8 +240,6 @@ PopupWindow {
             anchors.fill: parent
             color: Theme.base01
             radius: 0
-            border.width: PanelService.chromeBorderWidth
-            border.color: PanelService.chromeBorderColor
 
             Column {
                 id: column

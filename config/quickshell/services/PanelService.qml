@@ -49,6 +49,9 @@ Item {
 
     // Shared bar geometry keeps standalone panels aligned with popups.
     property real barHeight: 32
+    // Every bar control spans the full bar height, so hover/active underlines
+    // anchored to a control's bottom sit exactly on the bar's bottom edge.
+    readonly property real barItemHeight: barHeight
     // Single source for the gap between every bar button/toggle and the clock, so the bar's groups all read as evenly spaced.
     property real barSpacing: 4
     // Hyprland's outer gap, also used to inset floating shell panels.
@@ -97,6 +100,26 @@ Item {
             if (event.name === "configreloaded")
                 root.refreshBarGap();
         }
+        // Switching workspace (e.g. Super+5) refocuses the target workspace and
+        // strips keyboard focus from the bar, so a keyboard panel goes deaf.
+        // Briefly releasing the bar's keyboard interactivity and focus grab, then
+        // restoring both, makes Hyprland hand focus back without closing the panel.
+        function onFocusedWorkspaceChanged(): void {
+            if (!root.activePanel?.requiresKeyboardFocus)
+                return;
+            root.refocusing = true;
+            refocusTimer.restart();
+        }
+    }
+
+    // While true, bars drop keyboard interactivity and panel focus grabs stand down
+    // (ignoring the resulting clear) so the panel stays open.
+    property bool refocusing: false
+
+    Timer {
+        id: refocusTimer
+        interval: 50
+        onTriggered: root.refocusing = false
     }
 
     function open(panel: var): void {
@@ -163,18 +186,36 @@ Item {
             activePanel = null;
     }
 
-    function toggleNamed(name: string): bool {
+    // Panel registered under `name` on the focused monitor, else the first one.
+    function panelFor(name: string): var {
         const panels = registeredPanels[name] ?? [];
         if (panels.length === 0)
-            return false;
+            return null;
 
         const focusedName = String(Hyprland.focusedMonitor?.name ?? "");
-        const candidate = panels.find(entry => String(entry.screen?.name ?? "") === focusedName)
-            ?? panels[0];
-        if (typeof candidate.panel.toggleFromIpc === "function")
-            candidate.panel.toggleFromIpc();
+        return (panels.find(entry => String(entry.screen?.name ?? "") === focusedName)
+            ?? panels[0]).panel;
+    }
+
+    function toggleNamed(name: string): bool {
+        const panel = panelFor(name);
+        if (!panel)
+            return false;
+
+        if (typeof panel.toggleFromIpc === "function")
+            panel.toggleFromIpc();
         else
-            toggle(candidate.panel);
+            toggle(panel);
+        return true;
+    }
+
+    // Calls a named method on the panel registered under `name`.
+    function callNamed(name: string, method: string): bool {
+        const panel = panelFor(name);
+        if (!panel || typeof panel[method] !== "function")
+            return false;
+
+        panel[method]();
         return true;
     }
 }

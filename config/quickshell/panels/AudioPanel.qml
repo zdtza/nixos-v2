@@ -131,9 +131,9 @@ Item {
     }
 
     HyprlandFocusGrab {
-        active: root.opened
+        active: root.opened && !PanelService.refocusing
         windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
+        onCleared: if (!PanelService.refocusing) PanelService.close(root)
     }
 
     Drawer {

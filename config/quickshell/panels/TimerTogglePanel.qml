@@ -25,7 +25,7 @@ Item {
     readonly property Component keyboardProxy: durationProxy
 
     implicitWidth: showButton ? 28 : 0
-    implicitHeight: 26
+    implicitHeight: PanelService.barItemHeight
 
     function durationParts(value: string): var {
         const match = /^(\d{2}):(\d{2})$/.exec(String(value));
@@ -153,9 +153,9 @@ Item {
     }
 
     HyprlandFocusGrab {
-        active: root.opened
+        active: root.opened && !PanelService.refocusing
         windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
+        onCleared: if (!PanelService.refocusing) PanelService.close(root)
     }
 
     Drawer {

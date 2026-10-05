@@ -54,6 +54,6 @@ ShellRoot {
 
     Polkit {}
 
-    // Single instance, toggled over IPC: `qs ipc call launcher toggle`
-    Launcher {}
+    // Launcher shortcuts and IPC (`qs ipc call launcher toggle`); the panel lives in the bar.
+    LauncherControls {}
 }

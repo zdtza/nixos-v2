@@ -5,8 +5,11 @@ let
     ${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.dpms({ action = "enable" })'
 
     # A blanket DPMS enable must not restore the closed laptop panel to the
-    # compositor layout. Monitor configuration is Lua state, not a dispatcher.
-    if ${pkgs.gnugrep}/bin/grep -q closed /proc/acpi/button/lid/*/state; then
+    # compositor layout, but only when an external monitor remains: disabling
+    # the sole output leaves the compositor with none. Monitor configuration is
+    # Lua state, not a dispatcher.
+    if ${pkgs.gnugrep}/bin/grep -q closed /proc/acpi/button/lid/*/state \
+      && ${pkgs.hyprland}/bin/hyprctl monitors -j | ${pkgs.jq}/bin/jq -e 'any(.[]; .name != "eDP-1")' >/dev/null; then
       ${pkgs.hyprland}/bin/hyprctl eval 'hl.monitor({ output = "eDP-1", disabled = true })'
     fi
   '';

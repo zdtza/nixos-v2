@@ -6,6 +6,7 @@ Item {
     id: root
 
     property string icon: ""
+    property real iconSize: 20
     property string title: ""
     property string status: ""
     property real trailingWidth: 0
@@ -21,7 +22,7 @@ Item {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         text: root.icon
-        size: 26
+        size: root.iconSize
     }
 
     Column {

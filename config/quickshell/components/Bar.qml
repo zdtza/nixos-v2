@@ -11,13 +11,14 @@ PanelWindow {
     required property var modelData
 
     readonly property var panelEntries: [
+        ["launcher", launcher],
         ["clock", clock],
         ["nightlight", quickToggles.nightLightPanel],
         ["timer", clock.timerPanel],
         ["tray", tray],
-        ["volume", volume],
+        ["audio", audio],
         ["bluetooth", bluetooth],
-        ["display", display],
+        ["monitor", monitor],
         ["network", network],
         ["battery", battery]
     ]
@@ -44,7 +45,9 @@ PanelWindow {
 
     WlrLayershell.namespace: "quickshell:bar"
     WlrLayershell.keyboardFocus: PanelService.activePanel?.requiresKeyboardFocus
+        && !PanelService.refocusing
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+
 
     anchors {
         top: PanelService.barAtTop
@@ -97,11 +100,20 @@ PanelWindow {
     }
 
     // --- left ---.
+    LauncherPanel {
+        id: launcher
+        anchors {
+            left: parent.left
+            leftMargin: 6
+            verticalCenter: parent.verticalCenter
+        }
+    }
+
     Workspaces {
         screen: bar.screen
         anchors {
-            left: parent.left
-            leftMargin: 12
+            left: launcher.right
+            leftMargin: 2
             verticalCenter: parent.verticalCenter
         }
     }
@@ -134,7 +146,7 @@ PanelWindow {
         }
 
         AudioPanel {
-            id: volume
+            id: audio
             screen: bar.screen
             showButton: true
         }
@@ -146,9 +158,9 @@ PanelWindow {
         TimerBadge { panelTarget: clock.timerPanel }
     }
 
-    // The display panel remains registered for Super+Ctrl+D, but has no bar button.
-    DisplayPanel {
-        id: display
+    // The monitor panel remains registered for Super+Ctrl+M, but has no bar button.
+    MonitorPanel {
+        id: monitor
         screen: bar.screen
         showButton: false
         anchors {

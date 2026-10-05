@@ -17,6 +17,16 @@ Scope {
     // Notification app names are often generic (e.g. `notify-send`). Capture
     // the focused client at delivery time as the reliable click target.
     property var notificationOrigins: ({})
+    // Shared clock for the cards' relative "2m" timestamps.
+    property double now: Date.now()
+
+    Timer {
+        interval: 30000
+        repeat: true
+        running: server.trackedNotifications.values.length > 0
+        triggeredOnStart: true
+        onTriggered: root.now = Date.now()
+    }
 
     function focusedMonitorName(): string {
         return Hyprland.focusedMonitor?.name ?? "";
@@ -89,12 +99,10 @@ Scope {
         implicitHeight: Math.max(1, window.panelHeight)
         exclusionMode: ExclusionMode.Ignore
 
-        readonly property int panelPadding: 8
-        readonly property int panelTopPadding: 8
         // Round up to the surface's integer pixel size so its lower edge is not
         // placed just outside the window and clipped.
         readonly property int panelHeight: notificationColumn.implicitHeight > 0
-            ? Math.ceil(notificationColumn.implicitHeight + panelTopPadding + panelPadding) : 0
+            ? Math.ceil(notificationColumn.implicitHeight) : 0
         // Bounding box for the whole row, not just the panel rect.
         mask: Region { width: window.panelHeight > 0 ? window.width : 0; height: window.height }
 
@@ -114,41 +122,22 @@ Scope {
             ? 0 : PanelService.panelBarInset + PanelService.panelGap
         margins.right: PanelService.panelGap + PanelService.gapRightOffset
 
-        // One shared panel background behind the whole stack.
-        Rectangle {
-            id: panelBg
+        // Each notification is its own card; the window itself stays transparent.
+        Column {
+            id: notificationColumn
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+            }
+            spacing: 6
 
-            anchors.fill: parent
-            color: Theme.base01
-            radius: 0
-            border.width: PanelService.chromeBorderWidth
-            border.color: PanelService.chromeBorderColor
+            Repeater {
+                model: server.trackedNotifications
 
-            Column {
-                id: notificationColumn
-                anchors {
-                    top: parent.top
-                    left: parent.left
-                    right: parent.right
-                    margins: window.panelPadding
-                    topMargin: window.panelTopPadding
-                }
-                spacing: 2
-
-                Repeater {
-                    model: server.trackedNotifications
-
-                    Column {
-                        id: rowWrapper
-                        required property Notification modelData
-                        required property int index
-                        width: notificationColumn.width
-                        spacing: 2
-
-                        Separator { visible: rowWrapper.index > 0 }
-
-                        NotificationCard { notification: rowWrapper.modelData }
-                    }
+                NotificationCard {
+                    required property Notification modelData
+                    notification: modelData
                 }
             }
         }
@@ -252,67 +241,67 @@ Scope {
                 notification.dismiss();
         }
 
-        width: notificationColumn.width
-        implicitHeight: textContent.implicitHeight + 12
-        height: implicitHeight
+        readonly property bool critical: notification.urgency === NotificationUrgency.Critical
+        readonly property double arrivedAt: Date.now()
+        readonly property var extraActions: Array.from(notification.actions ?? [])
+            .filter(action => action.identifier !== "default" && action.text !== "")
+        // Fraction of the timeout still left; drives the countdown bar.
+        property real remaining: 1
 
-        Timer {
-            interval: card.timeoutMs
-            running: interval > 0 && !card.closing && !notificationMouse.containsMouse
-            onTriggered: card.close(true)
+        readonly property string iconSource: {
+            // notify-send style icons arrive pre-resolved as `image` (image://icon/...).
+            if (String(notification.image || "") !== "")
+                return notification.image;
+            let name = String(notification.appIcon || "");
+            if (name === "" && notification.desktopEntry !== "")
+                name = String(DesktopEntries.byId(notification.desktopEntry)?.icon ?? "");
+            if (name === "" && notification.appName !== "")
+                name = String(DesktopEntries.heuristicLookup(notification.appName)?.icon ?? "");
+            if (name === "")
+                return "";
+            if (name.startsWith("/"))
+                return "file://" + name;
+            if (name.includes("://"))
+                return name;
+            return Quickshell.iconPath(name, true);
         }
 
-        // Plain hover highlight, same treatment as rows in the other panels (e.g. network list entries), no per-card background.
+        function relativeTime(): string {
+            const seconds = Math.max(0, (root.now - card.arrivedAt) / 1000);
+            if (seconds < 60) return "NOW";
+            if (seconds < 3600) return `${Math.floor(seconds / 60)}M`;
+            return `${Math.floor(seconds / 3600)}H`;
+        }
+
+        width: notificationColumn.width
+        implicitHeight: content.implicitHeight + 28
+        height: implicitHeight
+
+        NumberAnimation {
+            target: card
+            property: "remaining"
+            from: 1
+            to: 0
+            duration: card.timeoutMs
+            running: card.timeoutMs > 0 && !card.closing
+            paused: running && cardHover.hovered
+            onFinished: card.close(true)
+        }
+
+        HoverHandler {
+            id: cardHover
+        }
+
         Rectangle {
             anchors.fill: parent
-            radius: 0
-            color: notificationMouse.containsMouse ? Utils.alpha(Theme.base05, 0.08) : "transparent"
+            color: cardHover.hovered ? Qt.tint(Theme.base01, Utils.alpha(Theme.base05, 0.04)) : Theme.base01
 
             Behavior on color { ColorAnimation { duration: 120 } }
         }
 
-        Column {
-            id: textContent
-            anchors {
-                left: parent.left
-                right: parent.right
-                top: parent.top
-                leftMargin: 10
-                rightMargin: 10
-                topMargin: 6
-            }
-            spacing: 6
-
-            ShellText {
-                width: parent.width
-                text: card.notification.summary
-                visible: text !== ""
-                wrapMode: Text.Wrap
-                elide: Text.ElideRight
-                maximumLineCount: 2
-                font.pixelSize: 13
-                font.weight: Font.DemiBold
-            }
-
-            ShellText {
-                width: parent.width
-                text: card.notification.body
-                visible: text !== ""
-                textFormat: Text.StyledText
-                wrapMode: Text.Wrap
-                elide: Text.ElideRight
-                maximumLineCount: 4
-                opacity: 0.7
-                font.pixelSize: 12
-                lineHeight: 1.1
-            }
-        }
-
         MouseArea {
-            id: notificationMouse
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.RightButton
-            hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: mouse => {
                 if (mouse.button === Qt.RightButton)
@@ -320,6 +309,166 @@ Scope {
                 else
                     card.activate();
             }
+        }
+
+        Column {
+            id: content
+            anchors {
+                left: parent.left; right: parent.right; top: parent.top
+                leftMargin: 16; rightMargin: 16; topMargin: 14
+            }
+            spacing: 10
+
+            // App icon, app name, age and a close button.
+            Item {
+                width: parent.width
+                height: 18
+
+                Image {
+                    id: appIcon
+                    anchors { left: parent.left; verticalCenter: parent.verticalCenter }
+                    width: 16
+                    height: 16
+                    source: card.iconSource
+                    sourceSize.width: 32
+                    sourceSize.height: 32
+                    asynchronous: true
+                    smooth: true
+                    visible: status === Image.Ready
+                }
+
+                ShellText {
+                    id: fallbackIcon
+                    anchors.centerIn: appIcon
+                    visible: !appIcon.visible
+                    text: "󰂚"
+                    color: Theme.textSecondary
+                    size: 13
+                }
+
+                ShellText {
+                    anchors {
+                        left: appIcon.right; leftMargin: 10
+                        right: age.left; rightMargin: 10
+                        verticalCenter: parent.verticalCenter
+                    }
+                    text: String(card.notification.appName || "Notification").toUpperCase()
+                    color: Theme.textSecondary
+                    size: 10
+                    font.letterSpacing: 1.2
+                    elide: Text.ElideRight
+                }
+
+                ShellText {
+                    id: age
+                    anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                    // The close button takes this spot while the card is hovered.
+                    opacity: cardHover.hovered ? 0 : 1
+                    text: card.relativeTime()
+                    color: Theme.textMuted
+                    size: 10
+                    font.letterSpacing: 1.2
+
+                    Behavior on opacity { NumberAnimation { duration: 120 } }
+                }
+
+                ShellText {
+                    id: closeButton
+                    anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                    text: "󰅖"
+                    color: closeMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary
+                    opacity: cardHover.hovered ? 1 : 0
+                    size: 13
+
+                    Behavior on opacity { NumberAnimation { duration: 120 } }
+
+                    MouseArea {
+                        id: closeMouse
+                        anchors { fill: parent; margins: -6 }
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: card.close(false)
+                    }
+                }
+            }
+
+            Column {
+                width: parent.width
+                spacing: 4
+
+                ShellText {
+                    width: parent.width
+                    text: card.notification.summary
+                    visible: text !== ""
+                    wrapMode: Text.Wrap
+                    elide: Text.ElideRight
+                    maximumLineCount: 2
+                    size: 13
+                    font.bold: true
+                }
+
+                ShellText {
+                    width: parent.width
+                    text: card.notification.body
+                    visible: text !== ""
+                    textFormat: Text.StyledText
+                    wrapMode: Text.Wrap
+                    elide: Text.ElideRight
+                    maximumLineCount: 4
+                    color: Theme.textSecondary
+                    size: 12
+                    lineHeight: 1.15
+                }
+            }
+
+            // Sender-defined actions other than the click-to-activate default.
+            Row {
+                visible: card.extraActions.length > 0
+                spacing: 6
+
+                Repeater {
+                    model: card.extraActions
+
+                    Rectangle {
+                        id: actionButton
+
+                        required property var modelData
+
+                        width: actionLabel.implicitWidth + 20
+                        height: 26
+                        radius: PanelService.rounding
+                        color: actionMouse.containsMouse
+                            ? Utils.alpha(Theme.base05, 0.14) : Utils.alpha(Theme.base05, 0.07)
+
+                        ShellText {
+                            id: actionLabel
+                            anchors.centerIn: parent
+                            text: actionButton.modelData.text
+                            size: 11
+                        }
+
+                        MouseArea {
+                            id: actionMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                actionButton.modelData.invoke();
+                                card.close(false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Countdown to auto-dismiss; pauses while hovered.
+        Rectangle {
+            anchors { left: parent.left; bottom: parent.bottom }
+            height: 2
+            width: parent.width * card.remaining
+            visible: card.timeoutMs > 0
+            color: card.critical ? Theme.base08 : Utils.alpha(Theme.base05, 0.35)
         }
     }
 }

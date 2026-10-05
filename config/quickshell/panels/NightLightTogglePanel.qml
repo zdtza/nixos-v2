@@ -14,7 +14,7 @@ Item {
     readonly property int temperatureStep: 100
 
     implicitWidth: showButton ? 28 : 0
-    implicitHeight: 26
+    implicitHeight: PanelService.barItemHeight
 
     function temperatureStatus(): string {
         if (!NightLightService.available)
@@ -66,9 +66,9 @@ Item {
     }
 
     HyprlandFocusGrab {
-        active: root.opened
+        active: root.opened && !PanelService.refocusing
         windows: [panel, root.QsWindow.window]
-        onCleared: PanelService.close(root)
+        onCleared: if (!PanelService.refocusing) PanelService.close(root)
     }
 
     Drawer {

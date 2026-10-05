@@ -22,6 +22,7 @@ let
       lib.makeBinPath [
         pkgs.grim
         pkgs.slurp
+        pkgs.wayfreeze
         pkgs.wl-clipboard
         pkgs.libnotify
         pkgs.coreutils
@@ -32,11 +33,31 @@ let
     dir="${config.home.homeDirectory}/Screenshots"
     mkdir -p "$dir"
 
-    # slurp exits non-zero on escape, set -e aborts here before anything is written.
+    # Freeze a copy of the desktop before showing the region selector. This keeps
+    # transient UI in place, and the EXIT trap always restores the live desktop
+    # when slurp is cancelled or this script is interrupted.
+    freeze_pid=""
+    cleanup() {
+      if [ -n "$freeze_pid" ]; then
+        kill "$freeze_pid" 2>/dev/null || true
+        wait "$freeze_pid" 2>/dev/null || true
+      fi
+    }
+    trap cleanup EXIT
+
+    wayfreeze --hide-cursor &
+    freeze_pid=$!
+    sleep 0.1
+
+    # slurp exits non-zero on escape, causing the EXIT trap to unfreeze the screen.
     region=$(slurp)
     file="$dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
 
     grim -g "$region" "$file"
+    cleanup
+    freeze_pid=""
+    trap - EXIT
+
     wl-copy --type image/png <"$file"
 
     action=$(notify-send --app-name=Screenshot --action=default=Edit -t 4000 \

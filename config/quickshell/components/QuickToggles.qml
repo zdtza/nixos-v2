@@ -17,7 +17,7 @@ Item {
     readonly property bool recordingActive: recordingNodes.length > 0
 
     implicitWidth: indicators.implicitWidth
-    implicitHeight: 26
+    implicitHeight: PanelService.barItemHeight
     // RowLayout otherwise retains a spacing slot on both sides when every
     // collapsible toggle has zero width.
     visible: implicitWidth > 0

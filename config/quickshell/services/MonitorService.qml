@@ -150,7 +150,7 @@ Item {
     Component.onCompleted: refresh()
 
     IpcHandler {
-        target: "display"
+        target: "monitor"
 
         function brightnessUp(): void { root.stepLevel(1); }
         function brightnessDown(): void { root.stepLevel(-1); }

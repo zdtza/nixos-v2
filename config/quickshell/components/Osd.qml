@@ -92,11 +92,11 @@ Scope {
     }
 
     Connections {
-        target: DisplayService
+        target: MonitorService
 
         function onBrightnessIpcInvoked(): void {
-            root.show("󰍹", DisplayService.level / DisplayService.maxLevel,
-                Theme.base05, DisplayService.level);
+            root.show("󰍹", MonitorService.level / MonitorService.maxLevel,
+                Theme.base05, MonitorService.level);
         }
     }
 
@@ -124,8 +124,6 @@ Scope {
             anchors.fill: parent
             color: Theme.base01
             radius: 0
-            border.width: PanelService.chromeBorderWidth
-            border.color: PanelService.chromeBorderColor
 
             Row {
                 anchors {

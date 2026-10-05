@@ -312,10 +312,19 @@ hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 -- =============================================================================
 
 bind("SUPER + L", "Lock the current session", hl.dsp.exec_cmd("qs ipc call lock activate"))
-bind("switch:on:Lid Switch", "Disable the laptop display when the lid closes", function()
-	hl.monitor({ output = "eDP-1", disabled = true })
-end, { locked = true })
-bind("switch:off:Lid Switch", "Enable the laptop display when the lid opens", function()
+-- Never leave the compositor without an output: with the lid closed on the
+-- laptop alone, the system is suspending anyway, and an output-less compositor
+-- orphans workspaces and strands layer-shell surfaces on stale screens.
+local function external_monitor_connected()
+	for _, monitor in ipairs(hl.get_monitors()) do
+		if monitor.name ~= "eDP-1" then
+			return true
+		end
+	end
+	return false
+end
+
+local function enable_laptop_display()
 	hl.monitor({
 		output = "eDP-1",
 		disabled = false,
@@ -323,10 +332,23 @@ bind("switch:off:Lid Switch", "Enable the laptop display when the lid opens", fu
 		position = "0x0",
 		scale = 1,
 	})
-	-- Rejoin the output before enabling DPMS.
+end
+
+bind("switch:on:Lid Switch", "Disable the laptop display when the lid closes (external monitor only)", function()
+	if external_monitor_connected() then
+		hl.monitor({ output = "eDP-1", disabled = true })
+	end
+end, { locked = true })
+bind("switch:off:Lid Switch", "Enable the laptop display when the lid opens", function()
+	enable_laptop_display()
+	-- Rejoin the output before enabling DPMS, then re-apply once the GPU has
+	-- settled after resume in case the first modeset raced the wake-up.
 	hl.timer(function()
 		hl.dispatch(hl.dsp.dpms({ action = "enable", monitor = "eDP-1" }))
 	end, { timeout = 250, type = "oneshot" })
+	hl.timer(function()
+		enable_laptop_display()
+	end, { timeout = 1500, type = "oneshot" })
 end, { locked = true })
 
 -- =============================================================================
@@ -415,8 +437,8 @@ bind("XF86AudioRaiseVolume", "Increase the output volume", hl.dsp.exec_cmd("qs i
 bind("XF86AudioLowerVolume", "Decrease the output volume", hl.dsp.exec_cmd("qs ipc call audio outputDown"), { locked = true, repeating = true })
 bind("XF86AudioMute", "Toggle output audio mute", hl.dsp.exec_cmd("qs ipc call audio toggleOutputMute"), { locked = true, repeating = true })
 bind("XF86AudioMicMute", "Toggle microphone mute", hl.dsp.exec_cmd("qs ipc call audio toggleInputMute"), { locked = true, repeating = true })
-bind("XF86MonBrightnessUp", "Increase display brightness", hl.dsp.exec_cmd("qs ipc call display brightnessUp"), { locked = true })
-bind("XF86MonBrightnessDown", "Decrease display brightness", hl.dsp.exec_cmd("qs ipc call display brightnessDown"), { locked = true })
+bind("XF86MonBrightnessUp", "Increase display brightness", hl.dsp.exec_cmd("qs ipc call monitor brightnessUp"), { locked = true })
+bind("XF86MonBrightnessDown", "Decrease display brightness", hl.dsp.exec_cmd("qs ipc call monitor brightnessDown"), { locked = true })
 
 -- =============================================================================
 -- keybinds - voice dictation
@@ -431,16 +453,18 @@ bind("F9", "Stop voice dictation recording", hl.dsp.exec_cmd("voxtype record sto
 -- =============================================================================
 
 bind("SUPER + space", "Open or close the application launcher", hl.dsp.global("quickshell:launcher"))
+bind("SUPER + grave", "Open or close the application launcher", hl.dsp.global("quickshell:launcher"))
 bind("SUPER + CTRL + K", "Browse configured keyboard shortcuts", hl.dsp.global("quickshell:keybinds"))
 bind("SUPER + CTRL + C", "Open or close the clock panel", hl.dsp.exec_cmd("qs ipc call panels toggle clock"))
 bind("SUPER + CTRL + L", "Open or close the night-light panel", hl.dsp.exec_cmd("qs ipc call panels toggle nightlight"))
 bind("SUPER + CTRL + T", "Open or close the timer panel", hl.dsp.exec_cmd("qs ipc call panels toggle timer"))
 bind("SUPER + CTRL + R", "Open or close the system tray", hl.dsp.exec_cmd("qs ipc call panels toggle tray"))
-bind("SUPER + CTRL + V", "Open or close the volume panel", hl.dsp.exec_cmd("qs ipc call panels toggle volume"))
+bind("SUPER + CTRL + A", "Open or close the audio panel", hl.dsp.exec_cmd("qs ipc call panels toggle audio"))
 bind("SUPER + CTRL + B", "Open or close the Bluetooth panel", hl.dsp.exec_cmd("qs ipc call panels toggle bluetooth"))
-bind("SUPER + CTRL + D", "Open or close the display panel", hl.dsp.exec_cmd("qs ipc call panels toggle display"))
+bind("SUPER + CTRL + M", "Open or close the monitor panel", hl.dsp.exec_cmd("qs ipc call panels toggle monitor"))
 bind("SUPER + CTRL + N", "Open or close the network panel", hl.dsp.exec_cmd("qs ipc call panels toggle network"))
 bind("SUPER + CTRL + P", "Open or close the battery panel", hl.dsp.exec_cmd("qs ipc call panels toggle battery"))
 bind("SUPER + CTRL + S", "Toggle automatic sleep inhibition", hl.dsp.exec_cmd("qs ipc call stayawake toggle"))
-bind("SUPER + CTRL + SHIFT + D", "Toggle notification do-not-disturb", hl.dsp.exec_cmd("qs ipc call dnd toggle"))
+bind("SUPER + CTRL + SHIFT + L", "Toggle night light", hl.dsp.exec_cmd("qs ipc call nightlight toggle"))
+bind("SUPER + CTRL + D", "Toggle notification do-not-disturb", hl.dsp.exec_cmd("qs ipc call dnd toggle"))
 bind("SUPER + SHIFT + space", "Show or hide the status bar", hl.dsp.exec_cmd("qs ipc call bar toggle"))

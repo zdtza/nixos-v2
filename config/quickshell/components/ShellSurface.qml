@@ -78,8 +78,6 @@ PanelWindow {
             enabled: root.open
             color: Theme.base01
             radius: 0
-            border.width: PanelService.chromeBorderWidth
-            border.color: PanelService.chromeBorderColor
 
             MouseArea {
                 anchors.fill: parent

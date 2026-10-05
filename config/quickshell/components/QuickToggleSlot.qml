@@ -10,7 +10,7 @@ Item {
 
     width: implicitWidth
     implicitWidth: shown ? 28 : 0
-    implicitHeight: 26
+    implicitHeight: PanelService.barItemHeight
     clip: true
 
     Behavior on implicitWidth {
@@ -22,6 +22,6 @@ Item {
         id: holder
         anchors.right: parent.right
         width: 28
-        height: 26
+        height: PanelService.barItemHeight
     }
 }

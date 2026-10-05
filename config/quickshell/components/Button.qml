@@ -18,7 +18,7 @@ Item {
     signal wheeled(var wheel)
 
     implicitWidth: 22
-    implicitHeight: 26
+    implicitHeight: PanelService.barItemHeight
     clip: true
 
     Rectangle {

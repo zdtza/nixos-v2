@@ -154,10 +154,10 @@ Item {
                         color: dayHover.hovered
                             ? Utils.alpha(Theme.base05, 0.12)
                             : dayCell.currentDay
-                                ? Utils.alpha(Theme.accent, 0.18) : "transparent"
+                                ? Utils.alpha(Theme.base05, 0.18) : "transparent"
                         border.width: dayCell.currentDay || dayHover.hovered ? 1 : 0
                         border.color: dayCell.currentDay
-                            ? Utils.alpha(Theme.accent, 0.8)
+                            ? Utils.alpha(Theme.base05, 0.8)
                             : Utils.alpha(Theme.base05, 0.3)
 
                         ShellText {

@@ -121,19 +121,22 @@ PanelWindow {
             verticalCenter: parent.verticalCenter
         }
 
-        Tray { id: tray }
+        Tray {
+            id: tray
+            nightLightPanel: quickToggles.nightLightPanel
+        }
 
         QuickToggles { id: quickToggles }
+
+        BluetoothPanel {
+            id: bluetooth
+            showButton: true
+        }
 
         AudioPanel {
             id: volume
             screen: bar.screen
-            showButton: false
-        }
-
-        BluetoothPanel {
-            id: bluetooth
-            showButton: false
+            showButton: true
         }
 
         BatteryPanel { id: battery }

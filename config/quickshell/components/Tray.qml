@@ -11,7 +11,10 @@ Item {
     id: root
 
     property bool showButton: true
+    property var nightLightPanel: null
     readonly property var items: SystemTray.items.values
+    readonly property bool hasInactiveQuickToggles: !StayAwakeService.active
+        || !DoNotDisturbService.active || !NightLightService.active
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     property bool pinned: false
@@ -166,6 +169,7 @@ Item {
     }
 
     visible: items.length > 0 || WindowsService.running
+        || hasInactiveQuickToggles
     implicitWidth: row.implicitWidth
     implicitHeight: 26
 
@@ -356,6 +360,47 @@ Item {
                             root.windowsMenuOpen = true;
                             windowsMenuLoader.anchorItem = windowsEntry;
                             PanelService.open(root);
+                        }
+                    }
+                }
+
+                // Inactive quick toggles follow the regular tray entries.
+                QuickToggleSlot {
+                    shown: !StayAwakeService.active
+
+                    QuickToggleButton {
+                        icon: "󰅶"
+                        inactiveColor: Theme.textMuted
+                        onClicked: {
+                            root.pinned = false;
+                            StayAwakeService.toggle();
+                        }
+                    }
+                }
+
+                QuickToggleSlot {
+                    shown: !DoNotDisturbService.active
+
+                    QuickToggleButton {
+                        icon: "󰂛"
+                        inactiveColor: Theme.textMuted
+                        onClicked: {
+                            root.pinned = false;
+                            DoNotDisturbService.toggle();
+                        }
+                    }
+                }
+
+                QuickToggleSlot {
+                    shown: !NightLightService.active
+
+                    QuickToggleButton {
+                        icon: ""
+                        iconSize: 12
+                        inactiveColor: Theme.textMuted
+                        onClicked: {
+                            root.pinned = false;
+                            PanelService.toggle(root.nightLightPanel);
                         }
                     }
                 }

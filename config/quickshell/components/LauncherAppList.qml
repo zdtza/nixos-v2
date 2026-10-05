@@ -26,10 +26,7 @@ ListView {
     boundsBehavior: Flickable.StopAtBounds
     maximumFlickVelocity: 12000
 
-    WheelHandler {
-        blocking: true
-        onWheel: event => list.launcher.scrollListByWheel(list, event)
-    }
+    FastScroll { view: list }
 
     delegate: Rectangle {
         id: row
@@ -74,14 +71,16 @@ ListView {
             size: 13
         }
 
+        HoverHandler {
+            cursorShape: Qt.PointingHandCursor
+            onPointChanged: if (list.launcher.hoverSelectReady)
+                list.launcher.currentIndex = row.index
+        }
+
         MouseArea {
             anchors.fill: parent
-            hoverEnabled: true
             acceptedButtons: Qt.LeftButton
             cursorShape: Qt.PointingHandCursor
-            // A stationary pointer must not select a different result when
-            // typing replaces the rows underneath it.
-            onPositionChanged: list.launcher.currentIndex = row.index
             onClicked: list.launcher.activate(row.modelData)
         }
     }

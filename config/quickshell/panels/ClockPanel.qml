@@ -11,6 +11,8 @@ import ".."
 Drawer {
     id: root
 
+    centeredHorizontally: true
+
     property bool addingZone: false
     property string addError: ""
     property var zoneTimes: ({})
@@ -69,15 +71,17 @@ Drawer {
         (anchorWindow && anchorWindow.screen ? anchorWindow.screen.height : 800) - 55)
     readonly property real desiredZoneHeight: ClockService.timeZones.length * zoneRowHeight
         + Math.max(0, ClockService.timeZones.length - 1) * zoneRowSpacing
-    readonly property real zoneViewportHeight: Math.min(470, desiredZoneHeight)
+    readonly property real fixedCalendarHeight: contentTopMargin + contentBottomMargin
+        + clockHero.implicitHeight + monthCalendar.implicitHeight + 2
+        + contentSpacing * 4 + (addingZone ? 46 + contentSpacing : 0)
+    readonly property real zoneViewportHeight: Math.min(470, desiredZoneHeight,
+        Math.max(zoneRowHeight, maximumHeight - fixedCalendarHeight))
 
     contentSpacing: 14
     closeOnEscape: !addingZone
     implicitWidth: 420
     implicitHeight: Math.min(maximumHeight,
-        contentTopMargin + contentBottomMargin + clockHero.implicitHeight + 1
-            + zoneViewportHeight + contentSpacing * 2
-            + (addingZone ? 46 + contentSpacing : 0))
+        fixedCalendarHeight + zoneViewportHeight)
 
     function displayName(zone: string): string {
         return zone.length === 0 ? "Local time" : zone.replace(/_/g, " ");
@@ -128,6 +132,7 @@ Drawer {
 
     onOpenChanged: {
         if (open) {
+            monthCalendar.resetToToday();
             refreshTimes();
         } else {
             addingZone = false;
@@ -298,6 +303,8 @@ done
             flickableDirection: Flickable.VerticalFlick
             clip: true
 
+            FastScroll { view: zoneList }
+
             Column {
                 id: zoneColumn
                 width: parent.width
@@ -415,5 +422,12 @@ done
                 }
             }
         }
+    }
+
+    Separator {}
+
+    MonthCalendar {
+        id: monthCalendar
+        width: parent.width
     }
 }

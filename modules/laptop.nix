@@ -6,8 +6,9 @@
   services = {
     logind.settings.Login = {
       HandlePowerKey = "suspend-then-hibernate";
-      HandleLidSwitch = "suspend-then-hibernate";
-      HandleLidSwitchExternalPower = "suspend-then-hibernate";
+      HandleLidSwitch = "ignore";
+      HandleLidSwitchExternalPower = "ignore";
+      HandleLidSwitchDocked = "ignore";
     };
 
     upower = {

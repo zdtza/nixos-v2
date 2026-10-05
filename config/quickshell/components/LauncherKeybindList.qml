@@ -18,10 +18,7 @@ ListView {
     boundsBehavior: Flickable.StopAtBounds
     maximumFlickVelocity: 12000
 
-    WheelHandler {
-        blocking: true
-        onWheel: event => list.launcher.scrollListByWheel(list, event)
-    }
+    FastScroll { view: list }
 
     delegate: Rectangle {
         id: row
@@ -64,10 +61,9 @@ ListView {
             size: 10
         }
 
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            onPositionChanged: list.launcher.currentIndex = row.index
+        HoverHandler {
+            onPointChanged: if (list.launcher.hoverSelectReady)
+                list.launcher.currentIndex = row.index
         }
     }
 }

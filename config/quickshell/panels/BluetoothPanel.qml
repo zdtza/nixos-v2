@@ -217,6 +217,8 @@ Item {
                 boundsBehavior: Flickable.StopAtBounds
                 flickableDirection: Flickable.VerticalFlick
 
+                FastScroll { view: deviceList }
+
                 Column {
                     id: deviceColumn
                     width: deviceList.width

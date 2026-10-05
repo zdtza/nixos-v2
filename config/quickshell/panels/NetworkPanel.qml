@@ -664,6 +664,8 @@ Item {
                 flickableDirection: Flickable.VerticalFlick
                 activeFocusOnTab: true
 
+                FastScroll { view: networkList }
+
                 HoverHandler {
                     onHoveredChanged: if (hovered && root.passwordSsid === "")
                         networkList.forceActiveFocus()

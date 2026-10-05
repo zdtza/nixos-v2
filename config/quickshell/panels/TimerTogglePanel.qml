@@ -317,6 +317,8 @@ Item {
                 flickableDirection: Flickable.VerticalFlick
                 activeFocusOnTab: true
 
+                FastScroll { view: timerList }
+
                 Keys.onUpPressed: root.selectTimer(-1)
                 Keys.onDownPressed: root.selectTimer(1)
                 Keys.onDeletePressed: root.removeSelectedTimer()

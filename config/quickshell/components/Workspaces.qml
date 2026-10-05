@@ -15,11 +15,9 @@ Item {
     readonly property var monitor: screen ? Hyprland.monitorFor(screen) : null
     readonly property string monitorName: String(monitor?.name ?? screen?.name ?? "")
     readonly property int activeWorkspaceId: Number(monitor?.activeWorkspace?.id ?? 0)
-    readonly property int graveWorkspaceId: 11
 
-    // Persistent workspace rules keep empty assigned workspaces in Hyprland's
-    // IPC model. Show three slots by default, extending through the furthest
-    // active or occupied workspace so there are no gaps before its icon.
+    // Show three slots by default, extending through the furthest active or
+    // occupied workspace so there are no gaps before its icon.
     readonly property var monitorWorkspaces: Hyprland.workspaces.values
         .filter(workspace => workspace.id > 0
             && String(workspace.monitor?.name ?? "") === root.monitorName)
@@ -28,12 +26,10 @@ Item {
         ? monitorWorkspaces[0].id : 1
     readonly property int lastVisibleWorkspaceId: {
         let workspaceId = firstWorkspaceId + 2;
-        if (activeWorkspaceId >= firstWorkspaceId
-                && activeWorkspaceId !== graveWorkspaceId)
+        if (activeWorkspaceId >= firstWorkspaceId)
             workspaceId = Math.max(workspaceId, activeWorkspaceId);
         for (const workspace of monitorWorkspaces) {
-            if (workspace.id !== graveWorkspaceId
-                    && root.tasksFor(workspace).length > 0)
+            if (root.tasksFor(workspace).length > 0)
                 workspaceId = Math.max(workspaceId, workspace.id);
         }
         return workspaceId;
@@ -44,14 +40,6 @@ Item {
             const workspace = monitorWorkspaces.find(item => item.id === id);
             result.push(workspace ?? { id: id, toplevels: { values: [] } });
         }
-
-        // Workspace 11 is bound to the grave key. Keep it left of workspace 1
-        // and hide it unless it is active or contains a task.
-        const graveWorkspace = monitorWorkspaces.find(
-            item => item.id === graveWorkspaceId);
-        if (graveWorkspace && (activeWorkspaceId === graveWorkspaceId
-                || root.tasksFor(graveWorkspace).length > 0))
-            result.unshift(graveWorkspace);
         return result;
     }
 
@@ -105,11 +93,8 @@ Item {
     }
 
     function tasksFor(workspace: var): var {
-        // Keep terminals at the end while preserving compositor order within
-        // the application and terminal groups.
         return workspace.toplevels.values
-            .filter(toplevel => root.usable(toplevel))
-            .sort((a, b) => Number(root.isKitty(a)) - Number(root.isKitty(b)));
+            .filter(toplevel => root.usable(toplevel));
     }
 
     function isKitty(toplevel: var): bool {
@@ -118,21 +103,27 @@ Item {
             .some(value => String(value ?? "").toLowerCase() === "kitty");
     }
 
+    function focusHistoryRank(toplevel: var): int {
+        const rank = Number(toplevel?.lastIpcObject?.focusHistoryID);
+        return Number.isFinite(rank) && rank >= 0 ? rank : 2147483647;
+    }
+
     function representative(tasks: var): var {
         if (tasks.length === 0)
             return null;
 
-        // A terminal may represent a workspace only when every logical task is
-        // a terminal.
+        // Use the most recently used application as the workspace icon. A
+        // terminal is eligible only when the workspace has no other app.
         const applications = tasks.filter(toplevel => !root.isKitty(toplevel));
-        return applications.length > 0 ? applications[0] : tasks[0];
+        const candidates = applications.length > 0 ? applications : tasks;
+        return candidates.reduce((best, toplevel) =>
+            root.focusHistoryRank(toplevel) < root.focusHistoryRank(best)
+                ? toplevel : best, candidates[0]);
     }
 
     function workspaceLabel(workspaceId: int): string {
         if (workspaceId === 10)
             return "0";
-        if (workspaceId === graveWorkspaceId)
-            return "~";
         return String(workspaceId);
     }
 

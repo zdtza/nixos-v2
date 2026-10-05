@@ -114,14 +114,11 @@ Scope {
         WlrLayershell.namespace: "quickshell:osd"
         WlrLayershell.layer: WlrLayer.Overlay
 
-        anchors.top: PanelService.barAtTop
-        anchors.bottom: !PanelService.barAtTop
-        margins.top: PanelService.barAtTop
-            ? PanelService.panelBarInset + PanelService.panelGap
-                + PanelService.gapBottomOffset : 0
-        margins.bottom: PanelService.barAtTop ? 0
-            : PanelService.panelBarInset + PanelService.panelGap
-                + PanelService.gapBottomOffset
+        // The OSD always lives at the bottom. Only make room for the bar when
+        // it is also at the bottom and currently affects panel geometry.
+        anchors.bottom: true
+        margins.bottom: PanelService.panelGap + PanelService.gapBottomOffset
+            + (PanelService.barAtTop ? 0 : PanelService.panelBarInset)
 
         Rectangle {
             anchors.fill: parent

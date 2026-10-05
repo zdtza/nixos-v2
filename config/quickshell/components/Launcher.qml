@@ -20,6 +20,10 @@ Scope {
     property bool powerMenuOpen: false
     property string openedMonitorName: ""
     property int currentIndex: 0
+    // Ignore hover selection until the pointer genuinely moves. This prevents
+    // freshly filtered rows under a stationary cursor from replacing index 0.
+    property bool hoverSelectReady: false
+    property var hoverArmPosition: null
     property string pendingLaunchName: ""
     property string pendingLaunchIcon: "application-x-executable"
     property string launchBaselineActiveAddress: ""
@@ -212,6 +216,18 @@ Scope {
         ];
     }
 
+    function resetHoverSelect(): void {
+        root.hoverSelectReady = false;
+        root.hoverArmPosition = null;
+    }
+
+    function armHoverSelect(x: real, y: real): void {
+        if (root.hoverArmPosition === null)
+            root.hoverArmPosition = Qt.point(x, y);
+        else if (x !== root.hoverArmPosition.x || y !== root.hoverArmPosition.y)
+            root.hoverSelectReady = true;
+    }
+
     function show(): void {
         root.openedMonitorName = String(Hyprland.focusedMonitor?.name ?? "");
         PanelService.closeActive();
@@ -228,20 +244,6 @@ Scope {
             root.show();
     }
 
-    function scrollListByWheel(view: var, event: var): void {
-        let delta = Number(event.pixelDelta.y);
-        if (delta === 0)
-            delta = Number(event.angleDelta.y) / 120 * 100;
-        if (event.inverted)
-            delta = -delta;
-        const minimum = Number(view.originY);
-        const maximum = Math.max(minimum,
-            minimum + Number(view.contentHeight) - Number(view.height));
-        view.contentY = Math.max(minimum,
-            Math.min(maximum, Number(view.contentY) - delta));
-        event.accepted = true;
-    }
-
     function moveSelection(offset: int): void {
         if (root.activeModel.length === 0) {
             root.currentIndex = -1;
@@ -256,6 +258,7 @@ Scope {
     }
 
     onOpenChanged: {
+        root.resetHoverSelect();
         search.text = "";
         root.currentIndex = 0;
         if (root.open) {
@@ -266,7 +269,10 @@ Scope {
             search.focusInput();
         }
     }
-    onActiveModelChanged: root.currentIndex = root.activeModel.length > 0 ? 0 : -1
+    onActiveModelChanged: {
+        root.resetHoverSelect();
+        root.currentIndex = root.activeModel.length > 0 ? 0 : -1;
+    }
 
     function normalizedAddress(address: var): string {
         return String(address ?? "").replace(/^0x/, "");
@@ -469,6 +475,12 @@ Scope {
             clip: true
             enabled: root.open
             opacity: root.open ? 1 : 0
+
+            HoverHandler {
+                enabled: root.open && !root.hoverSelectReady
+                acceptedDevices: PointerDevice.AllDevices
+                onPointChanged: root.armHoverSelect(point.position.x, point.position.y)
+            }
 
             MouseArea {
                 anchors.fill: parent

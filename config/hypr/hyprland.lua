@@ -31,7 +31,7 @@ hl.config({
 	layout = { single_window_aspect_ratio = { 16, 9 } },
 
 	dwindle = {
-		preserve_split = true,
+		preserve_split = false,
 	},
 	misc = {
 		disable_hyprland_logo = true,
@@ -156,15 +156,14 @@ local configured_monitors = {
 		mode = "1920x1080@60",
 		position = "0x0",
 		scale = 1,
-		workspaces = { 1, 2, 3 },
-		transient_workspaces = { 11 },
+		workspaces = { 7, 8, 9 },
 	},
 	{
 		output = "HDMI-A-1",
 		mode = "3440x1440@59.96Hz",
 		position = "1920x0",
 		scale = 1,
-		workspaces = { 4, 5, 6, 7, 8, 9, 10 },
+		workspaces = { 1, 2, 3, 4, 5, 6},
 	},
 }
 
@@ -192,12 +191,6 @@ end
 
 for _, monitor in ipairs(configured_monitors) do
 	assign_workspaces(monitor.output, monitor.workspaces)
-	for _, workspace in ipairs(monitor.transient_workspaces or {}) do
-		hl.workspace_rule({
-			workspace = tostring(workspace),
-			monitor = monitor.output,
-		})
-	end
 
 	hl.monitor({
 		output = monitor.output,
@@ -206,6 +199,17 @@ for _, monitor in ipairs(configured_monitors) do
 		scale = monitor.scale,
 	})
 end
+
+-- Quickshell's layer-shell windows retain invalid Qt screen objects after an
+-- output disappears. Recreate them once the compositor's output list settles.
+local function restart_quickshell_after_monitor_change()
+	hl.timer(function()
+		hl.dispatch(hl.dsp.exec_cmd("systemctl --user restart quickshell.service"))
+	end, { timeout = 500, type = "oneshot" })
+end
+
+hl.on("monitor.added", restart_quickshell_after_monitor_change)
+hl.on("monitor.removed", restart_quickshell_after_monitor_change)
 
 -- =============================================================================
 -- keybind functions / helpers
@@ -319,7 +323,24 @@ hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 -- =============================================================================
 
 bind("SUPER + L", "Lock the current session", hl.dsp.exec_cmd("qs ipc call lock activate"))
--- logind handles the lid switch so Stay Awake's handle-lid-switch inhibitor can suppress it.
+bind("switch:on:Lid Switch", "Disable the laptop display when the lid closes", function()
+	hl.monitor({ output = "eDP-1", disabled = true })
+end, { locked = true })
+bind("switch:off:Lid Switch", "Enable the laptop display when the lid opens", function()
+	hl.monitor({
+		output = "eDP-1",
+		disabled = false,
+		mode = "1920x1080@60",
+		position = "0x0",
+		scale = 1,
+	})
+	-- The output must rejoin the layout before DPMS can target it reliably.
+	hl.timer(function()
+		hl.dispatch(hl.dsp.dpms({ action = "enable", monitor = "eDP-1" }))
+	end, { timeout = 250, type = "oneshot" })
+end, { locked = true })
+-- logind always ignores the lid switch; these bindings exclusively manage the
+-- laptop panel and restore it when the lid opens.
 
 -- =============================================================================
 -- keybinds - window management
@@ -363,7 +384,6 @@ bind("SUPER + 7", "Switch to workspace 7", hl.dsp.focus({ workspace = 7 }))
 bind("SUPER + 8", "Switch to workspace 8", hl.dsp.focus({ workspace = 8 }))
 bind("SUPER + 9", "Switch to workspace 9", hl.dsp.focus({ workspace = 9 }))
 bind("SUPER + 0", "Switch to workspace 0", hl.dsp.focus({ workspace = 10 }))
-bind("SUPER + grave", "Switch to the grave workspace", hl.dsp.focus({ workspace = 11 }))
 
 bind("SUPER + SHIFT + 1", "Move focused window to workspace 1", hl.dsp.window.move({ workspace = 1 }))
 bind("SUPER + SHIFT + 2", "Move focused window to workspace 2", hl.dsp.window.move({ workspace = 2 }))
@@ -375,7 +395,6 @@ bind("SUPER + SHIFT + 7", "Move focused window to workspace 7", hl.dsp.window.mo
 bind("SUPER + SHIFT + 8", "Move focused window to workspace 8", hl.dsp.window.move({ workspace = 8 }))
 bind("SUPER + SHIFT + 9", "Move focused window to workspace 9", hl.dsp.window.move({ workspace = 9 }))
 bind("SUPER + SHIFT + 0", "Move focused window to workspace 0", hl.dsp.window.move({ workspace = 10 }))
-bind("SUPER + SHIFT + grave", "Move focused window to the grave workspace", hl.dsp.window.move({ workspace = 11 }))
 
 -- =============================================================================
 -- keybinds - window resizing and dragging

@@ -80,6 +80,12 @@ in
       enable = true;
       polkitPolicyOwners = [ user ];
     };
+
+    # Install Solaar, grant access to Logitech hidraw devices, and start it in the tray.
+    solaar = {
+      enable = true;
+      userService.enable = true;
+    };
   };
 
   security = {

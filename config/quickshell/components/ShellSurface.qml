@@ -43,10 +43,25 @@ PanelWindow {
         height: surfaceClip.height
     }
 
+    // Panel keyboard proxy, mounted here as well as in the bar window: Hyprland
+    // hands keyboard focus to whichever of the two is under the pointer
+    // (follow_mouse), so typing must work from either.
+    readonly property Component keyboardProxy: root.anchorItem?.keyboardProxy ?? null
+
     Item {
         width: 1
         height: 1
-        focus: root.open
+        focus: root.open && !root.keyboardProxy
+    }
+
+    Loader {
+        x: -10
+        width: 1
+        height: 1
+        opacity: 0
+        active: root.open && !!root.keyboardProxy
+        focus: active
+        sourceComponent: root.keyboardProxy
     }
 
     PanelShortcut {

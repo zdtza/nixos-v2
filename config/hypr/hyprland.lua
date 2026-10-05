@@ -4,7 +4,9 @@
 
 hl.config({
 	input = {
-		sensitivity = 0.2,
+		sensitivity = 0.4,
+		-- No pointer acceleration for mice; the touchpad keeps it below.
+		accel_profile = "flat",
 		repeat_rate = 30,
 		repeat_delay = 200,
 		touchpad = {
@@ -39,6 +41,8 @@ hl.config({
 		focus_on_activate = true,
 	},
 })
+
+hl.device({ name = "msft0001:01-06cb:cd5f-touchpad", accel_profile = "adaptive", sensitivity = 0.2 })
 
 -- =============================================================================
 -- animations

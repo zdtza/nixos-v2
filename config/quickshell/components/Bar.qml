@@ -104,7 +104,7 @@ PanelWindow {
         id: launcher
         anchors {
             left: parent.left
-            leftMargin: 6
+            leftMargin: 8
             verticalCenter: parent.verticalCenter
         }
     }
@@ -113,7 +113,7 @@ PanelWindow {
         screen: bar.screen
         anchors {
             left: launcher.right
-            leftMargin: 2
+            leftMargin: 4
             verticalCenter: parent.verticalCenter
         }
     }

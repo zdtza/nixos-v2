@@ -210,7 +210,6 @@ in
 
         restart = mkApp "windows-restart" [ pkgs.procps launch ] ''
           ${helpers}
-          notify 'Windows' 'Reconnecting...'
           pkill -x xfreerdp || true
           pkill -x sdl-freerdp || true
           sleep 1
@@ -229,15 +228,11 @@ in
 
         stop = mkApp "windows-stop" [ ] ''
           ${helpers}
-          if ! running; then
-            notify 'Windows' 'Already stopped.'
-            exit 0
-          fi
+          running || exit 0
           if ! rdp_ready && [[ ! -f ${marker} ]]; then
             notify 'Windows Setup is still running' 'Refusing to stop: it would restart the install.'
             exit 1
           fi
-          notify 'Windows' 'Shutting down...'
           systemctl stop ${unit}
         '';
 
@@ -251,7 +246,7 @@ in
           [[ $reply == [Yy]* ]] || exit 0
           systemctl start ${wipeUnit}
           rm -f ${marker}
-          notify 'Windows erased' 'Run windows-install to set it up again.'
+          echo 'Windows erased. Run windows-install to set it up again.'
         '';
       in
       {

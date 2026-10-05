@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 
 let
   # this host's one user, referenced below instead of repeating it everywhere.
@@ -47,6 +47,56 @@ in
     # SQL Database Projects looks for $HOME/dotnet on Linux.
     home.file."dotnet".source = "${dotnet}/share/dotnet";
     home.sessionVariables.DOTNET_ROOT = "${dotnet}/share/dotnet";
+
+    # making sure that npm lib folder exists for npm link commands.
+    home.file.".npm/lib/.keep".text = "";
+
+    programs = {
+      # Enable manually to allow Stylix to target it.
+      btop.enable = true;
+      npm.enable = true;
+
+      # setting up default git credentials for private github.
+      git = {
+        enable = true;
+        settings = {
+          user.name = "Connor du Toit";
+          user.email = "connordutoit@gmail.com";
+          init.defaultBranch = "main";
+        };
+      };
+    };
+
+    # Hide launcher entries for tools that are only opened from other apps.
+    xdg.desktopEntries =
+      lib.genAttrs
+        [
+          "uuctl"
+          "qt5ct"
+          "qt6ct"
+          "nvidia-settings"
+        ]
+        (name: {
+          inherit name;
+          noDisplay = true;
+        });
+
+    # Binary comes from the system-level programs._1password-gui below. --silent starts it in the tray.
+    systemd.user.services."1password" = {
+      Unit = {
+        Description = "1Password";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+      };
+
+      Service = {
+        ExecStart = "/run/current-system/sw/bin/1password --silent";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
   };
 
   # time zone.

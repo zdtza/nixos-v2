@@ -1,6 +1,5 @@
 {
   imports = [
-    ./desktop.nix
     ./xdg-mimeapps.nix
     ./appearance.nix
     ./kitty.nix
@@ -11,15 +10,11 @@
     ./screen-share.nix
     ./screenshot.nix
     ./voxtype.nix
-    ./btop.nix
     ./nvim.nix
-    ./git.nix
     ./ssh.nix
     ./web-apps.nix
     ./fzf.nix
     ./yazi.nix
-    ./npm.nix
     ./quickshell.nix
-    ./onepassword.nix
   ];
 }

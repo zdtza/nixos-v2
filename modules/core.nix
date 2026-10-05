@@ -63,20 +63,21 @@ in
           dates = "weekly";
           options = "--delete-older-than 7d";
         };
-        settings.experimental-features = [
-          "nix-command"
-          "flakes"
-        ];
+        settings = {
+          experimental-features = [
+            "nix-command"
+            "flakes"
+          ];
+          # Hard-link identical store files to save disk space.
+          auto-optimise-store = true;
+        };
       };
       nixpkgs.config.allowUnfree = true;
 
       programs = {
-        # D-Bus settings let running GTK apps pick up appearance changes.
-        dconf.enable = true;
         fish.enable = true;
         hyprland = {
           enable = true;
-          xwayland.enable = true;
           withUWSM = true;
         };
         neovim = {
@@ -108,10 +109,7 @@ in
 
       security = {
         rtkit.enable = true;
-        polkit = {
-          enable = true;
-          enablePkexecWrapper = true;
-        };
+        polkit.enablePkexecWrapper = true;
       };
 
       services = {
@@ -128,7 +126,9 @@ in
           pulse.enable = true;
         };
 
-        udisks2.enable = true;
+        # Weekly TRIM keeps SSD write performance up.
+        fstrim.enable = true;
+
         gvfs.enable = true;
 
         # CUPS provides its web UI; Avahi discovers network printers.
@@ -153,7 +153,6 @@ in
       };
 
       xdg.portal = {
-        enable = true;
         # Hyprland's module adds GTK automatically, forcing exact backends for the terminal file picker.
         extraPortals = lib.mkForce (
           with pkgs;

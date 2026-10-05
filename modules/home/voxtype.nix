@@ -1,8 +1,7 @@
 { pkgs, ... }:
 
 let
-  package = pkgs.voxtype-vulkan;
-  # fetching a medium sized model for voice recognition, other models are too slow.
+  # fetching the base English model for voice recognition, larger models are too slow.
   model = pkgs.fetchurl {
     url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin";
     hash = "sha256-oDd5yG3zMjB19eeWyyzlAp8A7Ihp7uP9+4l6/jbG0AI=";
@@ -47,28 +46,8 @@ let
   };
 in
 {
-  home.packages = [ package ];
+  # On PATH for the Hyprland and Quickshell dictation controls; the daemon runs from modules/home/services.nix.
+  home.packages = [ pkgs.voxtype-vulkan ];
 
   xdg.configFile."voxtype/config.toml".source = configFile;
-
-  # starting voxtype on boot with systemd.
-  systemd.user.services.voxtype = {
-    Unit = {
-      Description = "Voxtype voice-to-text daemon";
-      PartOf = [ "graphical-session.target" ];
-      After = [
-        "graphical-session.target"
-        "pipewire.service"
-        "pipewire-pulse.service"
-      ];
-    };
-
-    Service = {
-      ExecStart = "${package}/bin/voxtype daemon";
-      Restart = "on-failure";
-      RestartSec = 5;
-    };
-
-    Install.WantedBy = [ "graphical-session.target" ];
-  };
 }

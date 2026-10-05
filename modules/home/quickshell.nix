@@ -39,7 +39,7 @@ in
   xdg.configFile."quickshell-theme.json".source = themeJson;
 
   home = {
-    # Pass the system time zone to Quickshell.
+    # Pass the system time zone to Quickshell (also set on its service).
     sessionVariables.TZDIR = "/etc/zoneinfo";
 
     # Panel tools and timer sounds. pw-play comes from the system PipeWire package.
@@ -55,23 +55,6 @@ in
     ];
 
     file.".config/quickshell".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.src/nixos/config/quickshell";
-  };
-
-  # starting the quickshell service on login after graphical session.
-  systemd.user.services.quickshell = {
-    Unit = {
-      Description = "Quickshell desktop shell";
-      PartOf = [ "graphical-session.target" ];
-      After = [ "graphical-session.target" ];
-    };
-
-    Service = {
-      Environment = [ "TZDIR=${config.home.sessionVariables.TZDIR}" ];
-      ExecStart = "${pkgs.quickshell}/bin/quickshell";
-      Restart = "on-failure";
-    };
-
-    Install.WantedBy = [ "graphical-session.target" ];
+      config.lib.file.mkOutOfStoreSymlink "${config.repoPath}/config/quickshell";
   };
 }

@@ -30,10 +30,9 @@ in
     sessionVariables.NVIM_THEME_LUA = themeLua;
 
     file = {
-      ".config/nvim".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.src/nixos/config/nvim";
+      ".config/nvim".source = config.lib.file.mkOutOfStoreSymlink "${config.repoPath}/config/nvim";
       ".config/lazygit/config.yml".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.src/nixos/config/nvim/lazygit/config.yml";
+        config.lib.file.mkOutOfStoreSymlink "${config.repoPath}/config/nvim/lazygit/config.yml";
     };
   };
 

@@ -11,7 +11,7 @@ in
   home.file = {
     # Keep the hand-written Hyprland configuration directly editable.
     ".config/hypr/hyprland.lua".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.src/nixos/config/hypr/hyprland.lua";
+      config.lib.file.mkOutOfStoreSymlink "${config.repoPath}/config/hypr/hyprland.lua";
 
     # Bridge the selected Stylix theme into the Lua configuration.
     ".config/hypr/stylix.lua".text = ''

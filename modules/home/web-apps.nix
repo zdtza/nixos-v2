@@ -85,7 +85,7 @@ let
     command:
     pkgs.writeShellScriptBin command ''
       export WEBAPP_MAGICK=${lib.getExe pkgs.imagemagick}
-      exec ${lib.getExe pkgs.bash} ${config.home.homeDirectory}/.src/nixos/scripts/${command}.sh "$@"
+      exec ${lib.getExe pkgs.bash} ${config.repoPath}/scripts/${command}.sh "$@"
     '';
   # generating the desktop entries for the web apps.
   mkEntry =
@@ -93,9 +93,6 @@ let
     let
       profileFlag = lib.optionalString (app.isolated or false
       ) "--user-data-dir=${config.xdg.dataHome}/chromium-webapps/${app.id} ";
-      chromiumFlags = lib.optionalString (
-        app ? chromiumFlags
-      ) "${lib.concatStringsSep " " app.chromiumFlags} ";
       url = lib.replaceStrings [ "%" "\"" ] [ "%%" "\\\"" ] app.url;
       icon = app.icon or (iconDir + "/${app.id}.png");
       # Chromium app windows have a per-site class, allowing the workspace
@@ -110,12 +107,12 @@ let
       # Chromium includes the URL path in an app window's XWayland class:
       # chrome-<host>_<path-with-slashes-replaced-by-underscores>-Default.
       # Match that full class so Quickshell can locate the desktop entry icon.
-      startupWMClass =
-        app.startupWMClass
-          or "chrome-${builtins.elemAt urlParts 0}_${lib.replaceStrings [ "/" ] [ "_" ] urlPath}-Default";
+      startupWMClass = "chrome-${builtins.elemAt urlParts 0}_${
+        lib.replaceStrings [ "/" ] [ "_" ] urlPath
+      }-Default";
       exec =
         if isChromium then
-          ''${pkgs.chromium}/bin/chromium ${profileFlag}${chromiumFlags}"--app=${url}"''
+          ''${pkgs.chromium}/bin/chromium ${profileFlag}"--app=${url}"''
         else if isFirefox then
           # Open in the normal Firefox browser rather than an app-mode wrapper.
           ''${pkgs.firefox}/bin/firefox --new-tab "${url}"''

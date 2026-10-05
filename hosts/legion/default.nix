@@ -80,23 +80,6 @@ in
           inherit name;
           noDisplay = true;
         });
-
-    # Binary comes from the system-level programs._1password-gui below. --silent starts it in the tray.
-    systemd.user.services."1password" = {
-      Unit = {
-        Description = "1Password";
-        PartOf = [ "graphical-session.target" ];
-        After = [ "graphical-session.target" ];
-      };
-
-      Service = {
-        ExecStart = "/run/current-system/sw/bin/1password --silent";
-        Restart = "on-failure";
-        RestartSec = 5;
-      };
-
-      Install.WantedBy = [ "graphical-session.target" ];
-    };
   };
 
   # time zone.
@@ -131,6 +114,12 @@ in
       polkitPolicyOwners = [ user ];
     };
 
+    # local file sharing; also opens its firewall ports.
+    localsend.enable = true;
+
+    # Also sets up 32-bit graphics and controller udev rules.
+    steam.enable = true;
+
     # Install Solaar, grant access to Logitech hidraw devices, and start it in the tray.
     solaar = {
       enable = true;
@@ -156,18 +145,15 @@ in
     wl-clipboard # clipboard manager
     hyprpicker # color picker
     bluetui # bluetooth manager
-    localsend # local file sharing
     pi-coding-agent # AI coding assistant
     wiremix # audio mixer
     chromium # web browser
     python3 # programming language
     file # file type identification
-    font-awesome # icon fonts
     fastfetch # system info tool
     audacity # audio editor
     dotnet # combined .NET 8 and 10 SDKs
     mkcert # local dev certs
-    steam # gaming platform
     gnome-calculator # calculator
     mpv # media player
     imv # image viewer
@@ -177,7 +163,7 @@ in
     p7zip # 7z/rar/etc archives from the terminal (nautilus extracts natively via gnome-autoar)
     lazygit # git UI
     nixfmt # Nix formatter
-    nixd # Nix daemon
+    nixd # Nix language server
     teams-for-linux # Microsoft Teams client
     gnome-disk-utility # disk management
     libreoffice # office suite
@@ -195,11 +181,6 @@ in
   networking = {
     hostName = "legion";
 
-    firewall = {
-      # local send ports.
-      allowedTCPPorts = [ 53317 ];
-      allowedUDPPorts = [ 53317 ];
-    };
     # Avoid 127.0.0.1: resolved adds ::1 for localhost aliases, causing Node dev servers to bind IPv6-only while Firefox tries IPv4.
     hosts = {
       "127.0.0.3" = localHosts;

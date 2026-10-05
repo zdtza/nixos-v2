@@ -210,7 +210,6 @@ in
 
         restart = mkApp "windows-restart" [ pkgs.procps launch ] ''
           ${helpers}
-          pkill -x xfreerdp || true
           pkill -x sdl-freerdp || true
           sleep 1
           exec windows-launch

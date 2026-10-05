@@ -94,6 +94,9 @@ in
       image = theme.wallpaper;
       polarity = theme.polarity;
 
+      # rofi is unused; its target sets a renamed option and warns on every build.
+      targets.rofi.enable = false;
+
       # Match GNOME Text Editor's document area to the surrounding GTK palette.
       targets.gtk.extraCss = ''
         page textview.editor,

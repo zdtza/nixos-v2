@@ -20,7 +20,6 @@ in
           4
           3
         ];
-        show_hidden = false;
       };
 
       # default "*/" open rule uses the "edit" opener.

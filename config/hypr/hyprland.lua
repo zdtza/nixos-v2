@@ -57,7 +57,7 @@ hl.curve("fast", {
 })
 
 local animations = {
-	{ enabled = true, leaf = "workspaces", speed = 1, bezier = "fast" },
+	{ enabled = false, leaf = "workspaces", speed = 1, bezier = "fast" },
 	{ enabled = true, leaf = "windows", speed = 100, spring = "spring" },
 	{ enabled = true, leaf = "windowsOut", speed = 100, spring = "spring" },
 	{ enabled = true, leaf = "specialWorkspace", speed = 1.5, bezier = "fast", style = "slidevert" },
@@ -200,17 +200,6 @@ for _, monitor in ipairs(configured_monitors) do
 	})
 end
 
--- Quickshell's layer-shell windows retain invalid Qt screen objects after an
--- output disappears. Recreate them once the compositor's output list settles.
-local function restart_quickshell_after_monitor_change()
-	hl.timer(function()
-		hl.dispatch(hl.dsp.exec_cmd("systemctl --user restart quickshell.service"))
-	end, { timeout = 500, type = "oneshot" })
-end
-
-hl.on("monitor.added", restart_quickshell_after_monitor_change)
-hl.on("monitor.removed", restart_quickshell_after_monitor_change)
-
 -- =============================================================================
 -- keybind functions / helpers
 -- =============================================================================
@@ -334,13 +323,11 @@ bind("switch:off:Lid Switch", "Enable the laptop display when the lid opens", fu
 		position = "0x0",
 		scale = 1,
 	})
-	-- The output must rejoin the layout before DPMS can target it reliably.
+	-- Rejoin the output before enabling DPMS.
 	hl.timer(function()
 		hl.dispatch(hl.dsp.dpms({ action = "enable", monitor = "eDP-1" }))
 	end, { timeout = 250, type = "oneshot" })
 end, { locked = true })
--- logind always ignores the lid switch; these bindings exclusively manage the
--- laptop panel and restore it when the lid opens.
 
 -- =============================================================================
 -- keybinds - window management

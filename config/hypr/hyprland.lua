@@ -157,6 +157,8 @@ local configured_monitors = {
 		position = "0x0",
 		scale = 1,
 		workspaces = { 7, 8, 9 },
+		-- Used instead when this is the only connected output.
+		laptop_only_workspaces = { 1, 2, 3 },
 	},
 	{
 		output = "HDMI-A-1",
@@ -169,14 +171,76 @@ local configured_monitors = {
 
 local aspect_ratio_enabled = true
 
-local function assign_workspaces(monitor, workspaces)
-	for _, workspace in ipairs(workspaces) do
+-- Never leave the compositor without an output: with the lid closed on the
+-- laptop alone, the system is suspending anyway, and an output-less compositor
+-- orphans workspaces and strands layer-shell surfaces on stale screens.
+local function external_monitor_connected()
+	for _, monitor in ipairs(hl.get_monitors()) do
+		if monitor.name ~= "eDP-1" then
+			return true
+		end
+	end
+	return false
+end
+
+-- Workspaces with the same name share one rule, so switching layouts redefines each rule's output.
+local function workspace_layout()
+	local docked = external_monitor_connected()
+	local layout = {}
+
+	for _, monitor in ipairs(configured_monitors) do
+		local own = docked and monitor.workspaces or monitor.laptop_only_workspaces
+		for _, workspace in ipairs(own or {}) do
+			layout[workspace] = { output = monitor.output, persistent = true }
+		end
+	end
+
+	-- Laptop alone: every other workspace opens on it on demand.
+	if not docked then
+		for _, monitor in ipairs(configured_monitors) do
+			for _, workspace in ipairs(monitor.workspaces) do
+				layout[workspace] = layout[workspace] or { output = "eDP-1", persistent = false }
+			end
+		end
+	end
+
+	return layout
+end
+
+local function apply_workspace_layout()
+	local layout = workspace_layout()
+
+	for workspace, entry in pairs(layout) do
 		hl.workspace_rule({
 			workspace = tostring(workspace),
-			monitor = monitor,
-			default = true,
-			persistent = true,
+			monitor = entry.output,
+			default = entry.persistent,
+			persistent = entry.persistent,
 		})
+	end
+
+	-- Rules only place new workspaces, so move existing ones to their output.
+	for _, workspace in ipairs(hl.get_workspaces()) do
+		local entry = layout[workspace.id]
+		if entry and workspace.monitor and workspace.monitor.name ~= entry.output and hl.get_monitor(entry.output) then
+			hl.dispatch(hl.dsp.workspace.move({ workspace = tostring(workspace.id), monitor = entry.output }))
+		end
+	end
+
+	-- Show each output's first own workspace if it is displaying a foreign one.
+	for _, monitor in ipairs(hl.get_monitors()) do
+		local current = monitor.active_workspace
+		local entry = current and layout[current.id]
+		if not entry or entry.output ~= monitor.name then
+			for _, configured in ipairs(configured_monitors) do
+				if configured.output == monitor.name then
+					local own = external_monitor_connected() and configured.workspaces or configured.laptop_only_workspaces
+					if own and own[1] then
+						hl.dispatch(hl.dsp.focus({ workspace = own[1] }))
+					end
+				end
+			end
+		end
 	end
 end
 
@@ -189,9 +253,10 @@ local function toggle_aspect_ratio()
 	})
 end
 
-for _, monitor in ipairs(configured_monitors) do
-	assign_workspaces(monitor.output, monitor.workspaces)
+-- At boot no outputs exist yet, so this starts with the laptop-only layout.
+apply_workspace_layout()
 
+for _, monitor in ipairs(configured_monitors) do
 	hl.monitor({
 		output = monitor.output,
 		mode = monitor.mode,
@@ -199,6 +264,15 @@ for _, monitor in ipairs(configured_monitors) do
 		scale = monitor.scale,
 	})
 end
+
+-- Wait for the output to settle before moving workspaces onto it.
+local function apply_workspace_layout_soon()
+	hl.timer(apply_workspace_layout, { timeout = 200, type = "oneshot" })
+end
+
+hl.on("hyprland.start", apply_workspace_layout_soon)
+hl.on("monitor.added", apply_workspace_layout_soon)
+hl.on("monitor.removed", apply_workspace_layout_soon)
 
 -- =============================================================================
 -- keybind functions / helpers
@@ -290,6 +364,50 @@ local function toggle_centered_floating()
 	hl.dispatch(hl.dsp.window.center({ window = selector }))
 end
 
+local function find_workspace(id)
+	for _, workspace in ipairs(hl.get_workspaces()) do
+		if workspace.id == id then
+			return workspace
+		end
+	end
+end
+
+local function change_workspace_id(from, to)
+	hl.dispatch(hl.dsp.workspace.change_id({ workspace = tostring(from), id = to }))
+end
+
+-- Renumber whole workspaces (target -> temp, current -> target, temp -> current) so
+-- their windows and layouts move intact; focus stays with the renumbered workspace.
+local function swap_workspace_with(target)
+	return function()
+		local current = hl.get_active_workspace()
+		if not current or current.id == target then
+			return
+		end
+
+		local source = current.id
+		local source_monitor = current.monitor and current.monitor.name
+		local target_workspace = find_workspace(target)
+		local target_monitor = target_workspace and target_workspace.monitor and target_workspace.monitor.name
+		local temp = 10000 + target
+
+		if target_workspace then
+			change_workspace_id(target, temp)
+		end
+		change_workspace_id(source, target)
+		if target_workspace then
+			change_workspace_id(temp, source)
+		end
+
+		-- Each number keeps its screen, so the contents trade screens.
+		if target_monitor and source_monitor and target_monitor ~= source_monitor then
+			hl.dispatch(hl.dsp.workspace.move({ workspace = tostring(target), monitor = target_monitor }))
+			hl.dispatch(hl.dsp.workspace.move({ workspace = tostring(source), monitor = source_monitor }))
+			hl.dispatch(hl.dsp.focus({ workspace = target }))
+		end
+	end
+end
+
 local function open_floating_terminal()
 	hl.dispatch(hl.dsp.exec_cmd("launch-terminal-cwd --class floating-terminal"))
 end
@@ -312,18 +430,6 @@ hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 -- =============================================================================
 
 bind("SUPER + L", "Lock the current session", hl.dsp.exec_cmd("qs ipc call lock activate"))
--- Never leave the compositor without an output: with the lid closed on the
--- laptop alone, the system is suspending anyway, and an output-less compositor
--- orphans workspaces and strands layer-shell surfaces on stale screens.
-local function external_monitor_connected()
-	for _, monitor in ipairs(hl.get_monitors()) do
-		if monitor.name ~= "eDP-1" then
-			return true
-		end
-	end
-	return false
-end
-
 local function enable_laptop_display()
 	hl.monitor({
 		output = "eDP-1",
@@ -404,6 +510,17 @@ bind("SUPER + SHIFT + 7", "Move focused window to workspace 7", hl.dsp.window.mo
 bind("SUPER + SHIFT + 8", "Move focused window to workspace 8", hl.dsp.window.move({ workspace = 8 }))
 bind("SUPER + SHIFT + 9", "Move focused window to workspace 9", hl.dsp.window.move({ workspace = 9 }))
 bind("SUPER + SHIFT + 0", "Move focused window to workspace 0", hl.dsp.window.move({ workspace = 10 }))
+
+bind("SUPER + CTRL + 1", "Swap the focused workspace with workspace 1", swap_workspace_with(1))
+bind("SUPER + CTRL + 2", "Swap the focused workspace with workspace 2", swap_workspace_with(2))
+bind("SUPER + CTRL + 3", "Swap the focused workspace with workspace 3", swap_workspace_with(3))
+bind("SUPER + CTRL + 4", "Swap the focused workspace with workspace 4", swap_workspace_with(4))
+bind("SUPER + CTRL + 5", "Swap the focused workspace with workspace 5", swap_workspace_with(5))
+bind("SUPER + CTRL + 6", "Swap the focused workspace with workspace 6", swap_workspace_with(6))
+bind("SUPER + CTRL + 7", "Swap the focused workspace with workspace 7", swap_workspace_with(7))
+bind("SUPER + CTRL + 8", "Swap the focused workspace with workspace 8", swap_workspace_with(8))
+bind("SUPER + CTRL + 9", "Swap the focused workspace with workspace 9", swap_workspace_with(9))
+bind("SUPER + CTRL + 0", "Swap the focused workspace with workspace 0", swap_workspace_with(10))
 
 -- =============================================================================
 -- keybinds - window resizing and dragging

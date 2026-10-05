@@ -92,9 +92,12 @@ Item {
             && root.desktopEntry(toplevel) !== null;
     }
 
+    // Match on each toplevel's own workspace: a refresh after a workspace swap
+    // reassigns it but leaves it in the old workspace's toplevels list too.
     function tasksFor(workspace: var): var {
-        return workspace.toplevels.values
-            .filter(toplevel => root.usable(toplevel));
+        return Hyprland.toplevels.values
+            .filter(toplevel => toplevel.workspace?.id === workspace.id
+                && root.usable(toplevel));
     }
 
     function isKitty(toplevel: var): bool {
@@ -132,6 +135,27 @@ Item {
         Hyprland.dispatch(Hyprland.usingLua
             ? `hl.dsp.focus({ workspace = ${workspaceId} })`
             : `workspace ${workspaceId}`);
+    }
+
+    // Workspace swaps renumber workspaces in place (changeworkspaceid), which
+    // Quickshell doesn't track. Refetch once the burst of renumbers settles,
+    // since refresh calls made while one is in flight are dropped.
+    Connections {
+        target: Hyprland
+        function onRawEvent(event: var): void {
+            if (event.name === "changeworkspaceid")
+                renumberRefresh.restart();
+        }
+    }
+
+    Timer {
+        id: renumberRefresh
+        interval: 50
+        onTriggered: {
+            Hyprland.refreshWorkspaces();
+            Hyprland.refreshMonitors();
+            Hyprland.refreshToplevels();
+        }
     }
 
     implicitWidth: workspaceRow.implicitWidth

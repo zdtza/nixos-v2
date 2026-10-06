@@ -100,8 +100,10 @@ PanelWindow {
     }
 
     // --- left ---.
+    // Opened with Super+Space only; it sits here for the drawer and keyboard proxy.
     LauncherPanel {
         id: launcher
+        showButton: false
         anchors {
             left: parent.left
             leftMargin: 8
@@ -113,7 +115,6 @@ PanelWindow {
         screen: bar.screen
         anchors {
             left: launcher.right
-            leftMargin: 4
             verticalCenter: parent.verticalCenter
         }
     }

@@ -18,11 +18,30 @@ Item {
     property var lastLaunched: ({})
 
     // Launches in flight, keyed by desktop entry id. Each lasts until its window
-    // appears or takes focus: { keys, baselineAddresses, baselineActiveAddress, startedAt }.
+    // appears: { keys, tag, classes, icon, workspace, monitor, baselineAddresses, startedAt }.
     property var launches: ({})
-    // The bar's launcher icon shows a spinner while anything is launching.
     readonly property bool launching: Object.keys(launches).length > 0
-    readonly property int launchTimeout: 15000
+    readonly property int launchTimeout: 60000
+    // Hyprland tags each launch's window with `qslaunch-<serial>`, identifying it
+    // even when its class looks nothing like the desktop entry.
+    property int launchSerial: 0
+    // Shared by every launch spinner (launcher rows, workspace slots) so they turn in step.
+    property real spinnerAngle: 0
+
+    NumberAnimation on spinnerAngle {
+        running: root.launching
+        from: 0
+        to: 360
+        duration: 900
+        loops: Animation.Infinite
+    }
+
+    // In-flight launches opening on a workspace, oldest first.
+    function launchesOn(workspaceId: int): var {
+        return Object.values(root.launches)
+            .filter(launch => launch.workspace === workspaceId)
+            .sort((a, b) => a.startedAt - b.startedAt);
+    }
 
     function isLaunching(id: string): bool {
         return launches[id] !== undefined;
@@ -116,24 +135,96 @@ Item {
             .map(root.normalizedIdentifier).filter(key => key !== "");
     }
 
-    function beginLaunchTracking(entry: DesktopEntry): void {
+    function beginLaunchTracking(entry: DesktopEntry, tag: string, workspace: int): void {
         const addresses = {};
         for (const toplevel of Hyprland.toplevels.values)
             addresses[root.normalizedAddress(toplevel.address)] = true;
         const next = Object.assign({}, root.launches);
+        // The executable's name also counts, as web apps (e.g. `firefox --new-tab`)
+        // open in a window classed after their browser rather than the entry.
+        const executable = String(entry.command[0] ?? "").split("/").pop();
+        const classes = [entry.startupClass, entry.id, executable]
+            .map(value => String(value ?? "")).filter(value => value !== "");
+        if (workspace > 0 && classes.length > 0)
+            root.setPlacementRule(entry.id, classes, workspace);
         next[entry.id] = {
-            keys: [entry.id, entry.name, entry.startupClass]
+            keys: [entry.id, entry.name, entry.startupClass, executable]
                 .map(root.normalizedIdentifier).filter(key => key !== ""),
+            tag,
+            classes: workspace > 0 ? classes : [],
+            icon: String(entry.icon ?? ""),
+            workspace,
+            monitor: String(Hyprland.focusedMonitor?.name ?? ""),
             baselineAddresses: addresses,
-            baselineActiveAddress: root.normalizedAddress(Hyprland.activeToplevel?.address),
             startedAt: Date.now()
         };
         root.launches = next;
     }
 
+    // Browsers and Electron apps (Firefox, Chromium, VS Code) hand a launch to an
+    // already running or re-executed process, so their window escapes the exec
+    // rule. A temporary rule matching the app's window class places it on the
+    // launch's workspace as it maps. Rules can only be disabled, not removed, so
+    // each entry reuses one rule name, which redeclaring replaces.
+    function placementRuleName(id: string): string {
+        return `qslaunch-${id.replace(/[^A-Za-z0-9_-]/g, "_")}`;
+    }
+
+    // Placement rules outlive their launch briefly, as apps request activation
+    // just after mapping: { [id]: { classes, at } }.
+    property var ruleDisables: ({})
+    readonly property int ruleGrace: 3000
+
+    // When each launch's window opened (ms since epoch), keyed by normalized
+    // address. Apps ask for activation as they open and again once loaded
+    // (Electron), and those refused requests mark them urgent.
+    property var launchedWindows: ({})
+    readonly property int launchUrgencyGrace: 15000
+    // Windows whose urgency came from such a request, ignored until focused.
+    property var launchUrgent: ({})
+
+    function isLaunchUrgency(address: var): bool {
+        return root.launchUrgent[root.normalizedAddress(address)] === true;
+    }
+
+    function setKey(map: var, key: string, value: var): var {
+        const next = Object.assign({}, map);
+        if (value === undefined)
+            delete next[key];
+        else
+            next[key] = value;
+        return next;
+    }
+
+    function markLaunchedWindow(address: string): void {
+        if (address !== "")
+            root.launchedWindows = root.setKey(root.launchedWindows, address, Date.now());
+    }
+
+    function setPlacementRule(id: string, classes: var, workspace: int): void {
+        if (root.ruleDisables[id]) {
+            const next = Object.assign({}, root.ruleDisables);
+            delete next[id];
+            root.ruleDisables = next;
+        }
+        const pattern = `(?i)^(${classes.map(value =>
+            value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})$`;
+        // Refusing activation keeps an app that asks for focus as it opens
+        // (Firefox) from pulling the view over to it.
+        const spec = workspace > 0
+            ? `workspace = "${workspace} silent", focus_on_activate = false` : "enabled = false";
+        Quickshell.execDetached(["hyprctl", "eval",
+            `hl.window_rule({ name = "${root.placementRuleName(id)}", ${spec}, match = { class = [==[${pattern}]==] } })`]);
+    }
+
     function finishLaunchTracking(id: string): void {
         if (!root.isLaunching(id))
             return;
+        if (root.launches[id].classes.length > 0) {
+            const disables = Object.assign({}, root.ruleDisables);
+            disables[id] = { classes: root.launches[id].classes, at: Date.now() + root.ruleGrace };
+            root.ruleDisables = disables;
+        }
         const next = Object.assign({}, root.launches);
         delete next[id];
         root.launches = next;
@@ -149,21 +240,38 @@ Item {
         return args.map(arg => "'" + String(arg).replace(/'/g, "'\\''") + "'").join(" ");
     }
 
-    function launchDetached(command: var, workingDirectory: string): void {
+    // Workspace a launch made now opens on; 0 for special workspaces (negative
+    // ids), which are left to Hyprland.
+    function launchWorkspace(): int {
+        const workspace = Number(Hyprland.focusedWorkspace?.id ?? 0);
+        return workspace > 0 ? workspace : 0;
+    }
+
+    function launchDetached(command: var, workingDirectory: string, tag: string): void {
         const cwd = workingDirectory || Quickshell.env("HOME");
         const line = `cd ${root.shellQuote([cwd])} && exec ${root.shellQuote(["uwsm", "app", "--", ...command])}`;
+        // Open the new window on the workspace it was requested from, even if
+        // focus has moved on by the time it maps, without switching back to it.
+        const rules = [];
+        const workspace = root.launchWorkspace();
+        if (workspace > 0)
+            rules.push(`workspace = "${workspace} silent"`);
+        if (tag)
+            rules.push(`tag = "+${tag}"`);
+        const ruleTable = rules.length > 0 ? `, { ${rules.join(", ")} }` : "";
         Quickshell.execDetached(["hyprctl", "dispatch",
-            `hl.dsp.exec_cmd("${line.replace(/[\\"]/g, "\\$&")}")`]);
+            `hl.dsp.exec_cmd("${line.replace(/[\\"]/g, "\\$&")}"${ruleTable})`]);
     }
 
     function launch(entry: DesktopEntry): void {
         if (!entry)
             return;
+        const tag = `qslaunch-${++root.launchSerial}`;
         root.recordLaunch(entry);
-        root.beginLaunchTracking(entry);
+        root.beginLaunchTracking(entry, tag, root.launchWorkspace());
         root.launchDetached(entry.runInTerminal
             ? [...root.terminal, "--class", entry.id, "--", ...entry.command]
-            : entry.command, entry.workingDirectory);
+            : entry.command, entry.workingDirectory, tag);
     }
 
     FileView {
@@ -184,6 +292,25 @@ Item {
     Connections {
         target: Hyprland
         function onRawEvent(event: var): void {
+            if (event.name === "urgent") {
+                const address = root.normalizedAddress(event.data);
+                const openedAt = root.launchedWindows[address];
+                // Hyprland reports a mapping window's activation request just
+                // before its openwindow event, so a window no launch has seen
+                // yet that turns up while one is in flight counts too.
+                const appearing = openedAt === undefined && Object.values(root.launches)
+                    .some(launch => !launch.baselineAddresses[address]);
+                const fromLaunch = appearing || (openedAt !== undefined
+                    && Date.now() - openedAt < root.launchUrgencyGrace);
+                if (fromLaunch !== root.isLaunchUrgency(address))
+                    root.launchUrgent = root.setKey(root.launchUrgent, address, fromLaunch || undefined);
+            } else if (event.name === "activewindowv2" && root.isLaunchUrgency(event.data)) {
+                root.launchUrgent = root.setKey(root.launchUrgent, root.normalizedAddress(event.data), undefined);
+            } else if (event.name === "closewindow") {
+                const address = root.normalizedAddress(event.data);
+                root.launchedWindows = root.setKey(root.launchedWindows, address, undefined);
+                root.launchUrgent = root.setKey(root.launchUrgent, address, undefined);
+            }
             if (!root.launching)
                 return;
             if (event.name === "openwindow") {
@@ -191,25 +318,60 @@ Item {
                 const address = root.normalizedAddress(fields[0]);
                 const matching = root.launchesMatching(root.windowKeys(address, fields[2]));
                 if (matching.length > 0) {
+                    root.markLaunchedWindow(address);
                     matching.forEach(id => root.finishLaunchTracking(id));
                 } else {
-                    // Window class unlike its desktop entry: credit it to the only
-                    // launch in flight, as there is no ambiguity.
-                    const pending = Object.keys(root.launches)
-                        .filter(id => !root.launches[id].baselineAddresses[address]);
-                    if (pending.length === 1 && Object.keys(root.launches).length === 1)
-                        root.finishLaunchTracking(pending[0]);
+                    // Window class unlike its desktop entry: look for its launch tag.
+                    root.unmatchedAddress = address;
+                    clientsQuery.running = true;
                 }
             } else if (event.name === "activewindowv2") {
+                // A single-instance app answers by raising its window from before
+                // the launch (focus_on_activate). Focus moving to a window the
+                // launch opened is irrelevant; that window's opening ended it.
                 const address = root.normalizedAddress(event.data);
-                if (address === "")
-                    return;
-                // A single-instance app may just focus its existing window. Other
-                // focus changes (e.g. switching workspace) are not the launch.
                 for (const id of root.launchesMatching(root.windowKeys(address, ""))) {
-                    if (address !== root.launches[id].baselineActiveAddress)
+                    if (root.launches[id].baselineAddresses[address])
                         root.finishLaunchTracking(id);
                 }
+            } else if (event.name === "windowtitlev2") {
+                // An already focused browser opening a web app in a new tab neither
+                // opens nor focuses a window; only its title changes.
+                const address = root.normalizedAddress(event.data.split(",")[0]);
+                for (const id of root.launchesMatching(root.windowKeys(address, "")))
+                    root.finishLaunchTracking(id);
+            }
+        }
+    }
+
+    // Most recent opened window no launch claimed by class, for the tag fallback.
+    property string unmatchedAddress: ""
+
+    Process {
+        id: clientsQuery
+        command: ["hyprctl", "clients", "-j"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let clients = [];
+                try {
+                    clients = JSON.parse(text);
+                } catch (error) {
+                    return;
+                }
+                // QML's JS engine has no Array.prototype.flatMap.
+                const tags = new Set([].concat(...clients.map(client => client.tags ?? []))
+                    .map(tag => String(tag).replace(/\*$/, "")));
+                const claimed = Object.keys(root.launches)
+                    .filter(id => tags.has(root.launches[id].tag));
+                if (claimed.length > 0 || Object.keys(root.launches).length === 1)
+                    root.markLaunchedWindow(root.unmatchedAddress);
+                claimed.forEach(id => root.finishLaunchTracking(id));
+                // Untagged (e.g. handed to an already running process) and no
+                // ambiguity: credit it to the only launch in flight.
+                const ids = Object.keys(root.launches);
+                if (claimed.length === 0 && ids.length === 1
+                    && !root.launches[ids[0]].baselineAddresses[root.unmatchedAddress])
+                    root.finishLaunchTracking(ids[0]);
             }
         }
     }
@@ -218,13 +380,23 @@ Item {
     Timer {
         interval: 1000
         repeat: true
-        running: root.launching
+        running: root.launching || Object.keys(root.ruleDisables).length > 0
         onTriggered: {
             const now = Date.now();
             for (const id of Object.keys(root.launches)) {
                 if (now - root.launches[id].startedAt > root.launchTimeout)
                     root.finishLaunchTracking(id);
             }
+            const expired = Object.keys(root.ruleDisables)
+                .filter(id => now >= root.ruleDisables[id].at);
+            if (expired.length === 0)
+                return;
+            const next = Object.assign({}, root.ruleDisables);
+            for (const id of expired) {
+                root.setPlacementRule(id, next[id].classes, 0);
+                delete next[id];
+            }
+            root.ruleDisables = next;
         }
     }
 }

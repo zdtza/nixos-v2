@@ -16,7 +16,7 @@ Item {
     readonly property string monitorName: String(monitor?.name ?? screen?.name ?? "")
     readonly property int activeWorkspaceId: Number(monitor?.activeWorkspace?.id ?? 0)
 
-    // Show three slots by default, extending through the furthest active or
+    // Show four slots by default, extending through the furthest active or
     // occupied workspace so there are no gaps before its icon.
     readonly property var monitorWorkspaces: Hyprland.workspaces.values
         .filter(workspace => workspace.id > 0
@@ -25,12 +25,18 @@ Item {
     readonly property int firstWorkspaceId: monitorWorkspaces.length > 0
         ? monitorWorkspaces[0].id : 1
     readonly property int lastVisibleWorkspaceId: {
-        let workspaceId = firstWorkspaceId + 2;
+        let workspaceId = firstWorkspaceId + 3;
         if (activeWorkspaceId >= firstWorkspaceId)
             workspaceId = Math.max(workspaceId, activeWorkspaceId);
         for (const workspace of monitorWorkspaces) {
             if (root.tasksFor(workspace).length > 0)
                 workspaceId = Math.max(workspaceId, workspace.id);
+        }
+        // A workspace an app is launching onto counts as occupied, even though
+        // Hyprland drops it while empty and unfocused.
+        for (const launch of Object.values(LauncherService.launches)) {
+            if (launch.monitor === root.monitorName && launch.workspace >= firstWorkspaceId)
+                workspaceId = Math.max(workspaceId, launch.workspace);
         }
         return workspaceId;
     }
@@ -100,10 +106,22 @@ Item {
                 && root.usable(toplevel));
     }
 
-    function isKitty(toplevel: var): bool {
+    // Apps whose icon only represents a workspace when nothing else is on it,
+    // most important first. Each lists its window classes; Chromium web apps
+    // have their own classes, so they are not hidden with the browser.
+    readonly property var unfavouredApps: [
+        ["firefox"],
+        ["chromium", "chromium-browser"],
+        ["kitty"]
+    ]
+
+    // Position in unfavouredApps, or -1 for every other app.
+    function unfavouredRank(toplevel: var): int {
         const ipc = toplevel?.lastIpcObject ?? {};
-        return [toplevel?.wayland?.appId, ipc.class, ipc.initialClass]
-            .some(value => String(value ?? "").toLowerCase() === "kitty");
+        const classes = [toplevel?.wayland?.appId, ipc.class, ipc.initialClass]
+            .map(value => String(value ?? "").toLowerCase());
+        return root.unfavouredApps.findIndex(
+            appClasses => appClasses.some(appClass => classes.includes(appClass)));
     }
 
     function focusHistoryRank(toplevel: var): int {
@@ -115,10 +133,10 @@ Item {
         if (tasks.length === 0)
             return null;
 
-        // Use the most recently used application as the workspace icon. A
-        // terminal is eligible only when the workspace has no other app.
-        const applications = tasks.filter(toplevel => !root.isKitty(toplevel));
-        const candidates = applications.length > 0 ? applications : tasks;
+        // Use the most recently used favoured application as the workspace
+        // icon, falling back through the unfavoured apps in order.
+        const bestRank = Math.min(...tasks.map(root.unfavouredRank));
+        const candidates = tasks.filter(toplevel => root.unfavouredRank(toplevel) === bestRank);
         return candidates.reduce((best, toplevel) =>
             root.focusHistoryRank(toplevel) < root.focusHistoryRank(best)
                 ? toplevel : best, candidates[0]);
@@ -179,7 +197,10 @@ Item {
                 readonly property bool active: workspaceId === root.activeWorkspaceId
                 readonly property var tasks: root.tasksFor(workspace)
                 readonly property var primary: root.representative(tasks)
-                readonly property var displayedTasks: [primary]
+                // An app launching onto this workspace takes over its slot until
+                // its window opens.
+                readonly property var pending: LauncherService.launchesOn(workspaceId)[0] ?? null
+                readonly property var displayedTasks: [pending ? { launch: pending } : primary]
 
                 width: tasksRow.implicitWidth
                 // Full bar height, so the active underline sits on the bar's bottom edge.
@@ -204,9 +225,14 @@ Item {
                         id: taskButton
 
                         required property var modelData
-                        readonly property var toplevel: modelData
+                        readonly property var launch: modelData?.launch ?? null
+                        readonly property var toplevel: launch ? null : modelData
                         readonly property var entry: root.desktopEntry(toplevel)
+                        readonly property string iconName: launch ? launch.icon : (entry?.icon ?? "")
+                        // A just-launched window's refused activation requests mark it
+                        // urgent; that is not worth flagging.
                         readonly property bool urgent: !!toplevel && toplevel.urgent
+                            && !LauncherService.isLaunchUrgency(toplevel.address)
 
                         // Keep workspace slots the same width whether empty or
                         // occupied so opening/closing a window cannot shift them.
@@ -248,14 +274,24 @@ Item {
                             anchors.centerIn: parent
                             width: 17
                             height: 17
-                            source: taskButton.entry
-                                ? Quickshell.iconPath(taskButton.entry.icon, true) : ""
+                            source: taskButton.iconName !== ""
+                                ? Quickshell.iconPath(taskButton.iconName, true) : ""
                             sourceSize.width: 34
                             sourceSize.height: 34
                             cache: true
                             asynchronous: true
                             smooth: true
-                            visible: !!taskButton.toplevel && status === Image.Ready
+                            visible: (!!taskButton.toplevel || !!taskButton.launch) && status === Image.Ready
+                            opacity: taskButton.launch ? 0.35 : 1
+                        }
+
+                        // Same look and shared rotation as the launcher row's spinner.
+                        Spinner {
+                            anchors.centerIn: appIcon
+                            size: 13
+                            visible: !!taskButton.launch
+                            selfDriven: false
+                            angle: LauncherService.spinnerAngle
                         }
 
                         ShellText {
@@ -266,7 +302,7 @@ Item {
                             // and lift it without moving the active underline.
                             anchors.horizontalCenterOffset: -1
                             anchors.verticalCenterOffset: 1
-                            visible: !taskButton.toplevel
+                            visible: !taskButton.toplevel && !taskButton.launch
                             text: root.workspaceLabel(workspaceGroup.workspaceId)
                             color: Theme.textSecondary
                             size: Theme.fontSize

@@ -182,7 +182,9 @@ Scope {
         function focusOrigin(): bool {
             // Prefer sender metadata when it identifies a real application.
             // This handles notifications emitted by background applications.
-            const candidates = [card.notification.desktopEntry, card.notification.appName]
+            const candidates = (card.webApp
+                ? [card.webApp.startupClass, card.webApp.id]
+                : [card.notification.desktopEntry, card.notification.appName])
                 .map(value => card.normalizedIdentity(value)).filter(value => value.length > 0);
             for (const toplevel of Hyprland.toplevels.values) {
                 const ipc = toplevel.lastIpcObject ?? {};
@@ -248,7 +250,40 @@ Scope {
         // Fraction of the timeout still left; drives the countdown bar.
         property real remaining: 1
 
+        // Browsers send web page notifications as themselves, naming the page's
+        // origin in the body. Resolve that origin to the web app's desktop entry,
+        // whose exec line opens the same host.
+        readonly property bool fromBrowser: ["chromium", "chromiumbrowser", "firefox"]
+            .includes(card.normalizedIdentity(notification.desktopEntry || notification.appName))
+        readonly property var webApp: {
+            if (!card.fromBrowser)
+                return null;
+            const bareHost = host => host.toLowerCase().replace(/^www\./, "");
+            const hosts = (`${notification.summary} ${notification.body}`
+                .match(/(?:[a-z0-9-]+\.)+[a-z]{2,}/gi) ?? []).map(bareHost);
+            if (hosts.length === 0)
+                return null;
+            for (const entry of DesktopEntries.applications.values) {
+                for (const arg of entry.command) {
+                    const url = String(arg).match(/^(?:--app=)?https?:\/\/([^/?#:]+)/);
+                    if (url && hosts.includes(bareHost(url[1])))
+                        return entry;
+                }
+            }
+            return null;
+        }
+        // Drop the leading origin line browsers prefix the body with (a link when
+        // hyperlinks are supported); the header already names the web app.
+        readonly property string body: card.fromBrowser
+            ? String(notification.body || "")
+                .replace(/^\s*(?:<a\b[^>]*>[^<]*<\/a>|[a-z0-9.-]+\.[a-z]{2,}(?::\d+)?)[ \t]*(?:\n+|$)/i, "")
+            : notification.body
+        readonly property string appName: card.webApp?.name
+            ?? String(notification.appName || "Notification")
+
         readonly property string iconSource: {
+            if (card.webApp?.icon)
+                return Quickshell.iconPath(card.webApp.icon, true);
             // notify-send style icons arrive pre-resolved as `image` (image://icon/...).
             if (String(notification.image || "") !== "")
                 return notification.image;
@@ -352,9 +387,9 @@ Scope {
                         right: age.left; rightMargin: 10
                         verticalCenter: parent.verticalCenter
                     }
-                    text: String(card.notification.appName || "Notification").toUpperCase()
+                    text: card.appName.toUpperCase()
                     color: Theme.textSecondary
-                    size: 10
+                    size: 11
                     font.letterSpacing: 1.2
                     elide: Text.ElideRight
                 }
@@ -409,7 +444,7 @@ Scope {
 
                 ShellText {
                     width: parent.width
-                    text: card.notification.body
+                    text: card.body
                     visible: text !== ""
                     textFormat: Text.StyledText
                     wrapMode: Text.Wrap

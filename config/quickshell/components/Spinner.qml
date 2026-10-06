@@ -8,6 +8,10 @@ Shape {
 
     property real size: 14
     property color color: Theme.textPrimary
+    // Rotation of the arc. Spinners that should turn in step (e.g. every launch
+    // indicator) bind this to a shared angle and set selfDriven to false.
+    property real angle: 0
+    property bool selfDriven: true
 
     width: size
     height: size
@@ -27,15 +31,15 @@ Shape {
             centerY: root.size / 2
             radiusX: root.size / 2 - 1
             radiusY: root.size / 2 - 1
-            startAngle: 0
+            startAngle: root.angle
             sweepAngle: 220
         }
     }
 
     NumberAnimation {
-        target: arc
-        property: "startAngle"
-        running: root.visible
+        target: root
+        property: "angle"
+        running: root.visible && root.selfDriven
         from: 0
         to: 360
         duration: 900

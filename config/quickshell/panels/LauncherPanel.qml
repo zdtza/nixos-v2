@@ -197,7 +197,7 @@ Item {
                     left: parent.left; right: parent.right
                     leftMargin: 40; rightMargin: 40
                 }
-                height: 52
+                height: 44
                 Item {
                     id: input
                     anchors {
@@ -212,7 +212,7 @@ Item {
                         id: queryText
                         anchors.verticalCenter: parent.verticalCenter
                         text: root.query
-                        size: 16
+                        size: 15
                     }
 
                     TextMetrics {
@@ -225,7 +225,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         x: cursorMetrics.advanceWidth
                         width: 1
-                        height: 20
+                        height: 18
                         color: Theme.base05
                     }
 
@@ -235,7 +235,7 @@ Item {
                         x: 2
                         text: "Search applications"
                         color: Theme.textSecondary
-                        size: 16
+                        size: 15
                     }
                 }
             }
@@ -292,6 +292,8 @@ Item {
                             anchors.centerIn: rowIcon
                             size: 24
                             visible: row.rowLaunching
+                            selfDriven: false
+                            angle: LauncherService.spinnerAngle
                         }
 
                         ShellText {
@@ -304,7 +306,7 @@ Item {
                             text: row.modelData.entry.name
                             opacity: row.rowLaunching ? 0.5 : 1
                             elide: Text.ElideRight
-                            size: 16
+                            size: 15
                         }
 
                         HoverHandler {

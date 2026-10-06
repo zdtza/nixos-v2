@@ -10,7 +10,6 @@ Rectangle {
     property bool active: false
     readonly property alias hovered: mouseArea.containsMouse
     // Hover and keyboard share one focus cursor.
-    readonly property bool highlighted: keyboardFocused
 
     signal activated()
 
@@ -21,7 +20,7 @@ Rectangle {
     color: mouseArea.pressed
         ? Utils.alpha(Theme.base05, 0.22)
         : root.active ? Utils.alpha(Theme.base05, 0.12) : "transparent"
-    border.width: root.highlighted ? 1 : 0
+    border.width: root.keyboardFocused ? 1 : 0
     border.color: Utils.alpha(Theme.base05, 0.35)
 
     MouseArea {

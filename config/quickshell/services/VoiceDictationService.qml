@@ -10,11 +10,6 @@ Item {
     // Strictly the capture window.
     property bool recording: false
 
-    function toggle(): void {
-        if (!toggleProcess.running)
-            toggleProcess.running = true;
-    }
-
     function parseStatus(raw: string): void {
         try {
             const data = JSON.parse(raw);
@@ -38,10 +33,5 @@ Item {
         id: restartDelay
         interval: 1000
         onTriggered: if (!followProcess.running) followProcess.running = true
-    }
-
-    Process {
-        id: toggleProcess
-        command: ["voxtype", "record", "toggle"]
     }
 }

@@ -19,7 +19,6 @@ Item {
     readonly property bool thresholdActive: BatteryService.thresholdActive
     readonly property bool fullyCharged: BatteryService.fullyCharged && !thresholdActive
     readonly property bool charging: BatteryService.isCharging && !thresholdActive
-    readonly property bool low: discharging && percent <= 20
     readonly property var profiles: BatteryService.availableProfiles
     readonly property string activeProfile: BatteryService.powerProfile
 

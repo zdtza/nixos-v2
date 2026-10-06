@@ -339,14 +339,12 @@ Item {
             }
             DetailValue {
                 text: root.formatPing()
-                valueColor: Theme.textPrimary
             }
             InfoLabel {
                 text: "Packet Loss"
             }
             DetailValue {
                 text: NetworkService.pingSamples.length > 0 ? NetworkService.packetLoss + "%" : "--"
-                valueColor: Theme.textPrimary
             }
 
             InfoLabel {
@@ -424,7 +422,6 @@ Item {
                             radius: PanelService.rounding
 
                             HoverHandler {
-                                id: networkHover
                                 onHoveredChanged: if (hovered && !networkRow.passwordOpen
                                         && PanelService.hoverSelectReady)
                                     root.selectedSsid = String(networkRow.modelData.ssid)
@@ -451,7 +448,6 @@ Item {
                             }
 
                             Item {
-                                id: summary
                                 anchors.fill: parent
                                 visible: !networkRow.passwordOpen
 
@@ -623,7 +619,6 @@ Item {
                     }
 
         Column {
-            id: connectedSection
             width: parent.width
             spacing: root.networkRowSpacing
             visible: root.connectedNetworks.length > 0
@@ -704,11 +699,9 @@ Item {
 
     component DetailValue: ShellText {
         property bool copyable: false
-        property color valueColor: Theme.textPrimary
 
         Layout.fillWidth: true
         horizontalAlignment: Text.AlignRight
-        color: valueColor
         size: 12
         elide: Text.ElideRight
 

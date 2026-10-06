@@ -7,15 +7,14 @@ Item {
     id: root
 
     property var panelTarget: null
-    property bool showButton: true
 
     readonly property bool active: TimerService.running
     readonly property string display: TimerService.formatDuration(TimerService.remainingSeconds)
 
-    implicitWidth: active && showButton ? content.implicitWidth + 16 : 0
+    implicitWidth: active ? content.implicitWidth + 16 : 0
     implicitHeight: 20
     clip: true
-    opacity: active && showButton ? 1 : 0
+    opacity: active ? 1 : 0
 
     Behavior on implicitWidth {
         NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
@@ -54,7 +53,7 @@ Item {
 
     MouseArea {
         anchors.fill: parent
-        enabled: root.active && root.showButton && root.panelTarget !== null
+        enabled: root.active && root.panelTarget !== null
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: PanelService.toggle(root.panelTarget)

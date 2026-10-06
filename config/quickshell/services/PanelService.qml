@@ -208,14 +208,4 @@ Item {
             toggle(panel);
         return true;
     }
-
-    // Calls a named method on the panel registered under `name`.
-    function callNamed(name: string, method: string): bool {
-        const panel = panelFor(name);
-        if (!panel || typeof panel[method] !== "function")
-            return false;
-
-        panel[method]();
-        return true;
-    }
 }

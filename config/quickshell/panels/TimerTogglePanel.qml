@@ -346,7 +346,6 @@ Item {
                             border.color: Utils.alpha(Theme.base05, 0.25)
 
                             HoverHandler {
-                                id: rowHover
                                 onHoveredChanged: if (hovered && PanelService.hoverSelectReady)
                                     root.selectedTimerIndex = timerRow.index
                             }

@@ -10,7 +10,6 @@ import "../services"
 Item {
     id: root
 
-    property bool showButton: true
     property var nightLightPanel: null
     readonly property var items: SystemTray.items.values
     readonly property bool hasInactiveQuickToggles: !StayAwakeService.active
@@ -194,7 +193,6 @@ Item {
         Button {
             id: chevron
 
-            visible: root.showButton
             panel: root
             showPanelIndicator: false
             text: ""

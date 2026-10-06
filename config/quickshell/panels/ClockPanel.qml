@@ -340,8 +340,6 @@ done
                         }
 
                         Column {
-                            id: clockColumn
-
                             anchors {
                                 left: parent.left
                                 right: parent.right
@@ -351,7 +349,6 @@ done
                             spacing: 4
 
                             ShellText {
-                                id: timeLabel
                                 width: parent.width
                                 horizontalAlignment: Text.AlignHCenter
                                 text: zoneRow.current.time

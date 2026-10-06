@@ -31,12 +31,7 @@ PanelWindow {
     WlrLayershell.keyboardFocus: root.open
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
-    // Concrete surfaces define their horizontal anchors. Keep cards one Hyprland
-    // outer gap clear of the configured bar edge.
-    margins.top: PanelService.barAtTop
-        ? PanelService.panelBarInset + PanelService.panelGap : 0
-    margins.bottom: PanelService.barAtTop
-        ? 0 : PanelService.panelBarInset + PanelService.panelGap
+    // Concrete surfaces (Drawer) define their anchors and margins.
 
     mask: Region {
         width: surfaceClip.height > 0 ? root.width : 0

@@ -10,7 +10,6 @@ Item {
     property color activeColor: Theme.textPrimary
     property color inactiveColor: Theme.textSecondary
     property real iconSize: 14
-    property bool interactive: true
 
     signal clicked()
 
@@ -43,7 +42,6 @@ Item {
         id: mouseArea
 
         anchors.fill: parent
-        enabled: root.interactive
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor

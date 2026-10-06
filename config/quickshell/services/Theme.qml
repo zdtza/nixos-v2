@@ -14,16 +14,7 @@ Item {
     property color base03: "#414868"
     property color base04: "#565f89"
     property color base05: "#a9b1d6"
-    property color base06: "#b4bee6"
-    property color base07: "#c0caf5"
     property color base08: "#f7768e"
-    property color base09: "#eb927b"
-    property color base0A: "#e0af68"
-    property color base0B: "#9ece6a"
-    property color base0C: "#4dbfd0"
-    property color base0D: "#7aa2f7"
-    property color base0E: "#ad8ee6"
-    property color base0F: "#75493d"
 
     // Text hierarchy always derives from the foreground instead of theme gray slots.
     readonly property color textPrimary: base05
@@ -43,16 +34,7 @@ Item {
         base03 = data.base03;
         base04 = data.base04;
         base05 = data.base05;
-        base06 = data.base06;
-        base07 = data.base07;
         base08 = data.base08;
-        base09 = data.base09;
-        base0A = data.base0A;
-        base0B = data.base0B;
-        base0C = data.base0C;
-        base0D = data.base0D;
-        base0E = data.base0E;
-        base0F = data.base0F;
         accent = data.accent;
         wallpaper = "file://" + data.wallpaper;
         monospace = data.monospace;

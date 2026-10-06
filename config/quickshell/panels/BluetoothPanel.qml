@@ -244,11 +244,9 @@ Item {
                                 device: modelData
                                 actionIcon: "󰅖"
                                 actionVisible: true
-                                actionLabel: "Disconnect"
                                 keyboardSelected: root.selectedDevice === modelData
                                 secondaryActionIcon: "󰆴"
                                 secondaryActionVisible: true
-                                secondaryActionLabel: "Forget"
                                 onActionTriggered: BluetoothService.disconnect(modelData)
                                 onSecondaryActionTriggered: BluetoothService.forget(modelData)
                             }
@@ -287,7 +285,6 @@ Item {
                                 clickable: !modelData.pairing
                                 actionIcon: "󰆴"
                                 actionVisible: modelData.paired
-                                actionLabel: "Forget"
                                 keyboardSelected: root.selectedDevice === modelData
                                 onActivated: BluetoothService.activate(modelData)
                                 onActionTriggered: BluetoothService.forget(modelData)
@@ -307,10 +304,8 @@ Item {
         property bool keyboardSelected: false
         property bool actionVisible: false
         property string actionIcon: ""
-        property string actionLabel: ""
         property bool secondaryActionVisible: false
         property string secondaryActionIcon: ""
-        property string secondaryActionLabel: ""
 
         signal activated()
         signal actionTriggered()
@@ -326,7 +321,6 @@ Item {
         border.color: Utils.alpha(Theme.base05, 0.25)
 
         HoverHandler {
-            id: rowHover
             onHoveredChanged: if (hovered && PanelService.hoverSelectReady)
                 root.selectedDevice = deviceRow.device
         }

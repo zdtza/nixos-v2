@@ -17,7 +17,6 @@ Item {
     readonly property var deviceObjects: Bluetooth.devices ? Bluetooth.devices.values : []
     readonly property var devices: sortedDevices()
     readonly property var connectedDevices: devices.filter(device => isConnected(device))
-    readonly property var connectedDevice: connectedDevices.length > 0 ? connectedDevices[0] : null
     readonly property string icon: !powered ? "󰂲" : connectedDevices.length > 0 ? "󰂱" : "󰂯"
 
     property int scannerUsers: 0
@@ -150,5 +149,10 @@ Item {
         scannerActive = false;
         updateScanner();
     }
-    onEnabledChanged: updateScanner()
+
+    // Stop discovery when the adapter itself is powered off.
+    Connections {
+        target: root.adapter
+        function onEnabledChanged(): void { root.updateScanner(); }
+    }
 }

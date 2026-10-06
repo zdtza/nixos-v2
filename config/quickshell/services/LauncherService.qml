@@ -1,6 +1,6 @@
 pragma Singleton
 
-// Application list, recently-launched tracking and app launching shared by every launcher panel.
+// Application list and app launching shared by every launcher panel.
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -11,12 +11,6 @@ Item {
     id: root
 
     property var terminal: ["kitty"]
-    // Number of most recently launched apps pulled out of the full list into RECENT.
-    readonly property int recentCount: 3
-
-    // Last launch time (ms since epoch) keyed by desktop entry id.
-    property var lastLaunched: ({})
-
     // Launches in flight, keyed by desktop entry id. Each lasts until its window
     // appears: { keys, tag, classes, icon, workspace, monitor, baselineAddresses, startedAt }.
     property var launches: ({})
@@ -62,13 +56,6 @@ Item {
         return applications.sort((a, b) => a.entry.name.localeCompare(b.entry.name));
     }
 
-    // Most recently launched first.
-    readonly property var recentEntries: entries
-        .filter(item => (lastLaunched[item.entry.id] ?? 0) > 0)
-        .sort((a, b) => lastLaunched[b.entry.id] - lastLaunched[a.entry.id])
-        .slice(0, recentCount)
-    readonly property var remainingEntries: entries.filter(item => !recentEntries.includes(item))
-
     function matchTier(item: var, token: string): int {
         if (item.name.startsWith(token)) return 0;
         if (item.name.includes(token)) return 1;
@@ -76,23 +63,6 @@ Item {
         if (item.categories.includes(token)) return 3;
         if (item.description.includes(token)) return 3;
         return -1;
-    }
-
-    // Short uppercase label for the right-hand side of a launcher row.
-    function categoryLabel(entry: var): string {
-        const labels = {
-            Development: "DEV", Office: "OFFICE", Game: "GAMES", Graphics: "GRAPHICS",
-            Audio: "AUDIO", AudioVideo: "AUDIO", Video: "VIDEO", Science: "SCIENCE",
-            Education: "EDU", Security: "SECURITY", Settings: "SETTINGS", System: "SYSTEM",
-            Network: "NETWORK", Utility: "UTILITY"
-        };
-        // Most specific labels first, so an editor tagged Utility reads as DEV.
-        const categories = Array.from(entry?.categories ?? []);
-        for (const category of Object.keys(labels)) {
-            if (categories.includes(category))
-                return labels[category];
-        }
-        return "APP";
     }
 
     function fallbackResults(term: string): var {
@@ -110,13 +80,6 @@ Item {
                 command: ["firefox", `https://search.nixos.org/packages?channel=unstable&query=${encodeURIComponent(term)}`]
             }
         ];
-    }
-
-    function recordLaunch(entry: DesktopEntry): void {
-        const next = Object.assign({}, root.lastLaunched);
-        next[entry.id] = Date.now();
-        root.lastLaunched = next;
-        recentFile.setText(JSON.stringify(next));
     }
 
     function normalizedAddress(address: var): string {
@@ -241,26 +204,10 @@ Item {
         if (!entry)
             return;
         const tag = `qslaunch-${++root.launchSerial}`;
-        root.recordLaunch(entry);
         root.beginLaunchTracking(entry, tag, root.launchWorkspace());
         root.launchDetached(entry.runInTerminal
             ? [...root.terminal, "--class", entry.id, "--", ...entry.command]
             : entry.command, entry.workingDirectory, tag);
-    }
-
-    FileView {
-        id: recentFile
-        path: Quickshell.statePath("launcher-last-launched.json")
-        preload: true
-        atomicWrites: true
-        printErrors: false
-        onLoaded: {
-            try {
-                root.lastLaunched = JSON.parse(text());
-            } catch (error) {
-                root.lastLaunched = ({});
-            }
-        }
     }
 
     Connections {

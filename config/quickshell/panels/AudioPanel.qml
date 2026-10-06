@@ -12,7 +12,6 @@ import ".."
 Item {
     id: root
 
-    required property var screen
     property bool showButton: true
     readonly property bool available: !!AudioService.output
     readonly property bool opened: PanelService.activePanel === root
@@ -320,7 +319,6 @@ Item {
         }
 
         MouseArea {
-            id: deviceMouse
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor

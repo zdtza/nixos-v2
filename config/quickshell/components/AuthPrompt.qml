@@ -10,12 +10,12 @@ Item {
     property bool inputEnabled: true
     property bool responseVisible: false
     property bool showWallpaper: true
-    // Independent of showWallpaper: Polkit's window is fully transparent and relies on this dim scrim alone to darken the desktop behind it.
-    property bool dimBackground: true
     property alias text: passwordInput.text
     readonly property alias input: passwordInput
 
     signal accepted()
+    // Ctrl+C emptied the field.
+    signal cleared()
     signal keyPressed(var event)
 
     Image {
@@ -28,9 +28,9 @@ Item {
         layer.enabled: true
     }
 
+    // Always drawn: Polkit's window is fully transparent and relies on this scrim alone to darken the desktop behind it.
     Rectangle {
         anchors.fill: parent
-        visible: root.dimBackground
         color: Utils.alpha(Theme.base00, root.showWallpaper ? 0.35 : Utils.scrimOpacity)
     }
 
@@ -79,6 +79,7 @@ Item {
                 if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
                     passwordInput.text = "";
                     event.accepted = true;
+                    root.cleared();
                     return;
                 }
                 root.keyPressed(event);

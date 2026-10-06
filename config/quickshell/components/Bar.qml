@@ -148,7 +148,6 @@ PanelWindow {
 
         AudioPanel {
             id: audio
-            screen: bar.screen
             showButton: true
         }
 
@@ -162,7 +161,6 @@ PanelWindow {
     // The monitor panel remains registered for Super+Ctrl+M, but has no bar button.
     MonitorPanel {
         id: monitor
-        screen: bar.screen
         showButton: false
         anchors {
             right: parent.right

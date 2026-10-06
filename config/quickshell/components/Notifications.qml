@@ -15,7 +15,8 @@ Scope {
     // Only the monitor *name* is cached, never a screen object.
     property string targetScreenName: Quickshell.screens.length > 0 ? Quickshell.screens[0].name : ""
     // Notification app names are often generic (e.g. `notify-send`). Capture
-    // the focused client at delivery time as the reliable click target.
+    // the focused client's address at delivery time as the reliable click
+    // target. Only read on click, so it is mutated in place.
     property var notificationOrigins: ({})
     // Shared clock for the cards' relative "2m" timestamps.
     property double now: Date.now()
@@ -65,16 +66,9 @@ Scope {
             root.targetScreenName = root.focusedMonitorName();
             const source = Hyprland.activeToplevel;
             if (source?.address) {
-                // QML's JS engine does not support object spread. Copy the map
-                // explicitly so assigning it still emits a property change.
-                const origins = {};
-                for (const key in root.notificationOrigins)
-                    origins[key] = root.notificationOrigins[key];
-                origins[String(notification.id)] = {
-                    address: String(source.address),
-                    workspaceId: Number(source.workspace?.id ?? 0)
-                };
-                root.notificationOrigins = origins;
+                const key = String(notification.id);
+                root.notificationOrigins[key] = String(source.address);
+                notification.closed.connect(() => delete root.notificationOrigins[key]);
             }
             notification.tracked = true;
         }
@@ -200,8 +194,8 @@ Scope {
             // the terminal that invoked them. For those, use the exact window
             // which was focused when the notification arrived.
             const captured = root.notificationOrigins[String(card.notification.id)];
-            if (captured?.address) {
-                const wanted = String(captured.address).replace(/^0x/, "");
+            if (captured) {
+                const wanted = captured.replace(/^0x/, "");
                 const source = Hyprland.toplevels.values.find(toplevel =>
                     String(toplevel.address ?? "").replace(/^0x/, "") === wanted);
                 if (source)

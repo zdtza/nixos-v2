@@ -104,17 +104,14 @@ Scope {
             AuthPrompt {
                 id: prompt
                 anchors.fill: parent
-                dimBackground: true
                 error: root.errorText.length > 0
                 inputEnabled: !root.authenticating
                 text: root.password
                 onTextChanged: root.password = text
                 onAccepted: root.submit()
+                onCleared: root.errorText = ""
                 onKeyPressed: event => {
-                    const clearInput = event.key === Qt.Key_Escape
-                        || (event.key === Qt.Key_C
-                            && (event.modifiers & Qt.ControlModifier) !== 0);
-                    if (clearInput) {
+                    if (event.key === Qt.Key_Escape) {
                         root.password = "";
                         root.errorText = "";
                         event.accepted = true;

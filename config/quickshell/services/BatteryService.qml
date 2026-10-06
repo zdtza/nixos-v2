@@ -19,7 +19,6 @@ Item {
     readonly property bool isDischarging: available && UPower.onBattery
     readonly property bool isCharging: available && !UPower.onBattery && battery.state === UPowerDeviceState.Charging
     readonly property bool fullyCharged: available && battery.state === UPowerDeviceState.FullyCharged && fraction >= 0.99
-    readonly property string batteryState: available ? UPowerDeviceState.toString(battery.state) : "Unknown"
     readonly property string powerProfile: PowerProfile.toString(PowerProfiles.profile)
     readonly property var availableProfiles: PowerProfiles.hasPerformanceProfile
         ? ["PowerSaver", "Balanced", "Performance"]
@@ -104,21 +103,18 @@ Item {
         id: cycleCountFile
         path: root.batteryPath === "" ? "" : `${root.batteryPath}/cycle_count`
         preload: true
-        watchChanges: true
         printErrors: false
     }
     FileView {
         id: thresholdStartFile
         path: root.batteryPath === "" ? "" : `${root.batteryPath}/charge_control_start_threshold`
         preload: true
-        watchChanges: true
         printErrors: false
     }
     FileView {
         id: thresholdEndFile
         path: root.batteryPath === "" ? "" : `${root.batteryPath}/charge_control_end_threshold`
         preload: true
-        watchChanges: true
         printErrors: false
     }
 

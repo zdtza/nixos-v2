@@ -10,7 +10,6 @@ import "../services"
 Item {
     id: root
 
-    required property var screen
     property bool showButton: true
     readonly property bool available: MonitorService.available || MonitorService.monitors.length > 0
     readonly property bool opened: PanelService.activePanel === root

@@ -4,14 +4,20 @@ import "../services"
 // Floating drawer used by right-side system panels.
 ShellSurface {
     property bool centeredHorizontally: false
+    property bool centeredVertically: false
     property bool leftAligned: false
 
     anchors {
-        top: PanelService.barAtTop
-        bottom: !PanelService.barAtTop
+        top: !centeredVertically && PanelService.barAtTop
+        bottom: !centeredVertically && !PanelService.barAtTop
         left: leftAligned
         right: !centeredHorizontally && !leftAligned
     }
+
+    margins.top: !centeredVertically && PanelService.barAtTop
+        ? PanelService.panelBarInset + PanelService.panelGap : 0
+    margins.bottom: !centeredVertically && !PanelService.barAtTop
+        ? PanelService.panelBarInset + PanelService.panelGap : 0
 
     margins.left: leftAligned
         ? PanelService.panelGap + PanelService.gapLeftOffset : 0

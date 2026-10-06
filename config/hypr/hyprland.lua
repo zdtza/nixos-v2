@@ -80,7 +80,6 @@ local quickshell_layers = {
 	"quickshell:background",
 	"quickshell:bar",
 	"quickshell:launcher",
-	"quickshell:keybinds",
 	"quickshell:image-picker",
 	"quickshell:center-panel",
 	"quickshell:panel-drawer",
@@ -578,7 +577,6 @@ bind("F9", "Stop voice dictation recording", hl.dsp.exec_cmd("voxtype record sto
 
 bind("SUPER + space", "Open or close the application launcher", hl.dsp.global("quickshell:launcher"))
 bind("SUPER + grave", "Open or close the application launcher", hl.dsp.global("quickshell:launcher"))
-bind("SUPER + CTRL + K", "Browse configured keyboard shortcuts", hl.dsp.global("quickshell:keybinds"))
 bind("SUPER + CTRL + C", "Open or close the clock panel", hl.dsp.exec_cmd("qs ipc call panels toggle clock"))
 bind("SUPER + CTRL + L", "Open or close the night-light panel", hl.dsp.exec_cmd("qs ipc call panels toggle nightlight"))
 bind("SUPER + CTRL + T", "Open or close the timer panel", hl.dsp.exec_cmd("qs ipc call panels toggle timer"))

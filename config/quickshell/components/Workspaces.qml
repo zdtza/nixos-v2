@@ -229,31 +229,12 @@ Item {
                         readonly property var toplevel: launch ? null : modelData
                         readonly property var entry: root.desktopEntry(toplevel)
                         readonly property string iconName: launch ? launch.icon : (entry?.icon ?? "")
-                        // A just-launched window's refused activation requests mark it
-                        // urgent; that is not worth flagging.
-                        readonly property bool urgent: !!toplevel && toplevel.urgent
-                            && !LauncherService.isLaunchUrgency(toplevel.address)
 
                         // Keep workspace slots the same width whether empty or
                         // occupied so opening/closing a window cannot shift them.
                         width: 26
                         height: PanelService.barItemHeight
                         color: "transparent"
-
-                        // Urgency outline keeps the original slot size inside the full-height button.
-                        Rectangle {
-                            anchors.centerIn: parent
-                            anchors.verticalCenterOffset: taskButton.toplevel ? 0 : 3
-                            width: parent.width
-                            height: taskButton.toplevel ? 26
-                                : Math.max(workspaceNumber.implicitWidth + 12,
-                                    workspaceNumber.implicitHeight + 2)
-                            radius: 4
-                            color: "transparent"
-                            visible: taskButton.urgent
-                            border.width: 1
-                            border.color: Theme.base08
-                        }
 
                         Rectangle {
                             anchors.bottom: parent.bottom

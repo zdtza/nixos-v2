@@ -175,32 +175,6 @@ Item {
     property var ruleDisables: ({})
     readonly property int ruleGrace: 3000
 
-    // When each launch's window opened (ms since epoch), keyed by normalized
-    // address. Apps ask for activation as they open and again once loaded
-    // (Electron), and those refused requests mark them urgent.
-    property var launchedWindows: ({})
-    readonly property int launchUrgencyGrace: 15000
-    // Windows whose urgency came from such a request, ignored until focused.
-    property var launchUrgent: ({})
-
-    function isLaunchUrgency(address: var): bool {
-        return root.launchUrgent[root.normalizedAddress(address)] === true;
-    }
-
-    function setKey(map: var, key: string, value: var): var {
-        const next = Object.assign({}, map);
-        if (value === undefined)
-            delete next[key];
-        else
-            next[key] = value;
-        return next;
-    }
-
-    function markLaunchedWindow(address: string): void {
-        if (address !== "")
-            root.launchedWindows = root.setKey(root.launchedWindows, address, Date.now());
-    }
-
     function setPlacementRule(id: string, classes: var, workspace: int): void {
         if (root.ruleDisables[id]) {
             const next = Object.assign({}, root.ruleDisables);
@@ -292,25 +266,6 @@ Item {
     Connections {
         target: Hyprland
         function onRawEvent(event: var): void {
-            if (event.name === "urgent") {
-                const address = root.normalizedAddress(event.data);
-                const openedAt = root.launchedWindows[address];
-                // Hyprland reports a mapping window's activation request just
-                // before its openwindow event, so a window no launch has seen
-                // yet that turns up while one is in flight counts too.
-                const appearing = openedAt === undefined && Object.values(root.launches)
-                    .some(launch => !launch.baselineAddresses[address]);
-                const fromLaunch = appearing || (openedAt !== undefined
-                    && Date.now() - openedAt < root.launchUrgencyGrace);
-                if (fromLaunch !== root.isLaunchUrgency(address))
-                    root.launchUrgent = root.setKey(root.launchUrgent, address, fromLaunch || undefined);
-            } else if (event.name === "activewindowv2" && root.isLaunchUrgency(event.data)) {
-                root.launchUrgent = root.setKey(root.launchUrgent, root.normalizedAddress(event.data), undefined);
-            } else if (event.name === "closewindow") {
-                const address = root.normalizedAddress(event.data);
-                root.launchedWindows = root.setKey(root.launchedWindows, address, undefined);
-                root.launchUrgent = root.setKey(root.launchUrgent, address, undefined);
-            }
             if (!root.launching)
                 return;
             if (event.name === "openwindow") {
@@ -318,7 +273,6 @@ Item {
                 const address = root.normalizedAddress(fields[0]);
                 const matching = root.launchesMatching(root.windowKeys(address, fields[2]));
                 if (matching.length > 0) {
-                    root.markLaunchedWindow(address);
                     matching.forEach(id => root.finishLaunchTracking(id));
                 } else {
                     // Window class unlike its desktop entry: look for its launch tag.
@@ -363,8 +317,6 @@ Item {
                     .map(tag => String(tag).replace(/\*$/, "")));
                 const claimed = Object.keys(root.launches)
                     .filter(id => tags.has(root.launches[id].tag));
-                if (claimed.length > 0 || Object.keys(root.launches).length === 1)
-                    root.markLaunchedWindow(root.unmatchedAddress);
                 claimed.forEach(id => root.finishLaunchTracking(id));
                 // Untagged (e.g. handed to an already running process) and no
                 // ambiguity: credit it to the only launch in flight.

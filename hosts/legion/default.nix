@@ -12,10 +12,7 @@ let
     "learner-local.pmis.servicesseta.org.za"
     "local.scrubbill.net"
   ];
-  dotnet = pkgs.dotnetCorePackages.combinePackages [
-    pkgs.dotnetCorePackages.sdk_8_0
-    pkgs.dotnetCorePackages.sdk_10_0
-  ];
+
 in
 {
   imports = [
@@ -44,10 +41,6 @@ in
     imports = [ ../../modules/home ];
 
     theme.name = themeName;
-
-    # SQL Database Projects looks for $HOME/dotnet on Linux.
-    home.file."dotnet".source = "${dotnet}/share/dotnet";
-    home.sessionVariables.DOTNET_ROOT = "${dotnet}/share/dotnet";
 
     # making sure that npm lib folder exists for npm link commands.
     home.file.".npm/lib/.keep".text = "";
@@ -153,8 +146,7 @@ in
     file # file type identification
     fastfetch # system info tool
     audacity # audio editor
-    dotnet # combined .NET 8 and 10 SDKs
-    mkcert # local dev certs
+    mkcert # local dev cert
     gnome-calculator # calculator
     mpv # media player
     imv # image viewer
@@ -177,6 +169,7 @@ in
     papers # document viewer / editor
     beekeeper-studio # data-base management tool
     bruno # api management tool
+    dotnet-sdk_10 # .NET 10 SDK
   ];
 
   networking = {

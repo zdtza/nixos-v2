@@ -4,14 +4,15 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Bluetooth
-import "../components"
+import "../components/bar"
+import "../components/panels"
+import "../components/primitives"
 import "../services"
 import ".."
 
 Item {
     id: root
 
-    property bool showButton: true
     readonly property bool available: BluetoothService.available
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
@@ -56,7 +57,7 @@ Item {
     readonly property var keyboardDevices: connectedDevices.concat(availableDevices)
 
     visible: available
-    implicitWidth: available && showButton ? indicator.implicitWidth : 0
+    implicitWidth: available ? indicator.implicitWidth : 0
     implicitHeight: indicator.implicitHeight
 
     function selectDevice(offset: int): void {
@@ -151,7 +152,6 @@ Item {
     Button {
         id: indicator
         anchors.centerIn: parent
-        visible: root.showButton
         panel: root
         text: BluetoothService.icon
         onClicked: PanelService.toggle(root)

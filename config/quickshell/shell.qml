@@ -3,7 +3,9 @@
 // Root of the shell.
 import Quickshell
 import Quickshell.Io
-import "components"
+import "components/bar"
+import "components/overlays"
+import "components/session"
 import "services"
 
 ShellRoot {

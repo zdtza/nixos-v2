@@ -3,13 +3,13 @@ pragma ComponentBehavior: Bound
 // Brightness, focused-monitor scale, and monitor overview.
 import QtQuick
 import Quickshell
-import "../components"
+import "../components/panels"
+import "../components/primitives"
 import "../services"
 
 Item {
     id: root
 
-    property bool showButton: true
     readonly property bool available: MonitorService.available || MonitorService.monitors.length > 0
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
@@ -17,8 +17,6 @@ Item {
     property int selectedScaleIndex: 0
 
     visible: available
-    implicitWidth: available && showButton ? indicator.implicitWidth : 0
-    implicitHeight: indicator.implicitHeight
 
     function brightnessStatus(): string {
         if (!MonitorService.available) return "MONITOR READY";
@@ -45,12 +43,12 @@ Item {
     PanelShortcut {
         enabled: root.opened
         sequences: ["Up"]
-        onActivated: MonitorService.adjustLevel(MonitorService.brightnessStep)
+        onActivated: MonitorService.setBrightness(MonitorService.brightnessPercent + MonitorService.brightnessStep)
     }
     PanelShortcut {
         enabled: root.opened
         sequences: ["Down"]
-        onActivated: MonitorService.adjustLevel(-MonitorService.brightnessStep)
+        onActivated: MonitorService.setBrightness(MonitorService.brightnessPercent - MonitorService.brightnessStep)
     }
     PanelShortcut {
         enabled: root.opened
@@ -67,17 +65,6 @@ Item {
         enabled: root.opened && !!MonitorService.focusedMonitor
         sequences: ["Return", "Enter"]
         onActivated: MonitorService.setScale(Number(root.scales[root.selectedScaleIndex]))
-    }
-
-    Button {
-        id: indicator
-        anchors.centerIn: parent
-        visible: root.showButton
-        panel: root
-        text: "󰍹"
-        onClicked: PanelService.toggle(root)
-        onWheeled: wheel => MonitorService.adjustLevel(
-            wheel.angleDelta.y > 0 ? MonitorService.brightnessStep : -MonitorService.brightnessStep)
     }
 
 

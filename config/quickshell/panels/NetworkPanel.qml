@@ -4,14 +4,15 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import "../components"
+import "../components/bar"
+import "../components/panels"
+import "../components/primitives"
 import "../services"
 import ".."
 
 Item {
     id: root
 
-    property bool showButton: true
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
 
@@ -43,7 +44,7 @@ Item {
     signal restorePasswordFocus
 
     visible: available
-    implicitWidth: available && showButton ? label.implicitWidth : 0
+    implicitWidth: available ? label.implicitWidth : 0
     implicitHeight: label.implicitHeight
 
     function formatBytes(bytes: real): string {
@@ -257,7 +258,6 @@ Item {
 
     Button {
         id: label
-        visible: root.showButton
         anchors.centerIn: parent
         panel: root
         text: NetworkService.icon

@@ -1,0 +1,89 @@
+import QtQuick
+import "../../services"
+import "../.."
+
+// Shared visual shell for lock-screen and Polkit authentication.
+Item {
+    id: root
+
+    property bool error: false
+    property bool inputEnabled: true
+    property bool responseVisible: false
+    property bool showWallpaper: true
+    property alias text: passwordInput.text
+    readonly property alias input: passwordInput
+
+    signal accepted()
+    // Ctrl+C emptied the field.
+    signal cleared()
+    signal keyPressed(var event)
+
+    Image {
+        anchors.fill: parent
+        source: Theme.wallpaper
+        visible: root.showWallpaper
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: true
+        cache: true
+        layer.enabled: true
+    }
+
+    // Always drawn: Polkit's window is fully transparent and relies on this scrim alone to darken the desktop behind it.
+    Rectangle {
+        anchors.fill: parent
+        color: Utils.alpha(Theme.base00, root.showWallpaper ? 0.35 : Utils.scrimOpacity)
+    }
+
+    // Clicking the scrim must not leave the user typing into nothing: every press outside the field bounces focus back to it.
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.AllButtons
+        onPressed: passwordInput.forceActiveFocus()
+    }
+
+    Rectangle {
+        anchors.centerIn: parent
+        width: Math.min(360, parent.width - 48)
+        height: 48
+        radius: PanelService.rounding
+        color: Utils.alpha(Theme.base01, 0.95)
+        border.width: 2
+        // Text entry does not change the outline; only error/checking state does.
+        border.color: root.error ? Theme.base08
+            : (root.inputEnabled ? Theme.base04 : Utils.alpha(Theme.base05, 0.4))
+
+        Behavior on border.color { ColorAnimation { duration: 120 } }
+
+        TextInput {
+            id: passwordInput
+            anchors.fill: parent
+            anchors.leftMargin: 16
+            anchors.rightMargin: 16
+            horizontalAlignment: TextInput.AlignHCenter
+            verticalAlignment: TextInput.AlignVCenter
+            enabled: root.inputEnabled
+            echoMode: root.responseVisible ? TextInput.Normal : TextInput.Password
+            passwordCharacter: "●"
+            // Keep the caret visible so both lock-screen and Polkit prompts clearly indicate that they are ready for keyboard input.
+            color: Theme.textPrimary
+            selectionColor: Theme.base02
+            selectedTextColor: Theme.textPrimary
+            font.family: Theme.monospace
+            font.pixelSize: Utils.scaledFont(22)
+            font.letterSpacing: 2
+            onAccepted: root.accepted()
+            // Anything that steals focus while the prompt is up gives it back.
+            onActiveFocusChanged: if (!activeFocus && enabled)
+                Qt.callLater(() => passwordInput.forceActiveFocus())
+            Keys.onPressed: event => {
+                if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
+                    passwordInput.text = "";
+                    event.accepted = true;
+                    root.cleared();
+                    return;
+                }
+                root.keyPressed(event);
+            }
+        }
+    }
+}

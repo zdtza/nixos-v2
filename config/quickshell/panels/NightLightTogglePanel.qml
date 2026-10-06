@@ -1,18 +1,17 @@
 // Hyprsunset toggle and persistent color-temperature panel.
 import QtQuick
 import Quickshell
-import "../components"
+import "../components/panels"
+import "../components/primitives"
 import "../services"
 
 Item {
     id: root
 
-    property bool showButton: true
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     readonly property int temperatureStep: 100
 
-    implicitWidth: showButton ? 28 : 0
     implicitHeight: PanelService.barItemHeight
 
     function temperatureStatus(): string {
@@ -25,22 +24,6 @@ Item {
         if (NightLightService.temperature <= 4500)
             return "WARM LIGHT";
         return "SOFT DAYLIGHT";
-    }
-
-    Button {
-        anchors.centerIn: parent
-        visible: root.showButton
-        panel: root
-        text: ""
-        textSize: 12
-        textColor: NightLightService.active ? Theme.textPrimary : Theme.textSecondary
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: mouse => {
-            if (mouse.button === Qt.RightButton)
-                NightLightService.toggle();
-            else
-                PanelService.toggle(root);
-        }
     }
 
     PanelShortcut {

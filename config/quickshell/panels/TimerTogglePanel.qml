@@ -3,14 +3,14 @@ pragma ComponentBehavior: Bound
 // Multiple countdown controls and duration-entry panel.
 import QtQuick
 import Quickshell
-import "../components"
+import "../components/panels"
+import "../components/primitives"
 import "../services"
 import ".."
 
 Item {
     id: root
 
-    property bool showButton: true
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     readonly property int timerRowHeight: 48
@@ -23,7 +23,6 @@ Item {
     // Mounted in the bar window while this panel is active.
     readonly property Component keyboardProxy: durationProxy
 
-    implicitWidth: showButton ? 28 : 0
     implicitHeight: PanelService.barItemHeight
 
     function durationParts(value: string): var {
@@ -60,10 +59,6 @@ Item {
             durationInput.forceActiveFocus();
             durationInput.selectAll();
         }
-    }
-
-    function startSavedTimer(): void {
-        TimerService.start(TimerService.lastDurationSeconds);
     }
 
     function selectTimer(offset: int): void {
@@ -133,21 +128,6 @@ Item {
             Keys.onDeletePressed: if (root.selectedTimerIndex >= 0)
                 root.removeSelectedTimer()
             Keys.onEscapePressed: PanelService.close(root)
-        }
-    }
-
-    Button {
-        anchors.centerIn: parent
-        visible: root.showButton
-        panel: root
-        text: "󱎫"
-        textColor: TimerService.running ? Theme.textPrimary : Theme.textSecondary
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: mouse => {
-            if (mouse.button === Qt.RightButton)
-                root.startSavedTimer();
-            else
-                PanelService.toggle(root);
         }
     }
 

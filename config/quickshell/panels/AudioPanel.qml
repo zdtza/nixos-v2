@@ -4,14 +4,15 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Services.Pipewire
-import "../components"
+import "../components/bar"
+import "../components/panels"
+import "../components/primitives"
 import "../services"
 import ".."
 
 Item {
     id: root
 
-    property bool showButton: true
     readonly property bool available: !!AudioService.output
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
@@ -21,7 +22,7 @@ Item {
     property int selectedDeviceIndex: 0
 
     visible: available
-    implicitWidth: available && showButton ? indicator.implicitWidth : 0
+    implicitWidth: available ? indicator.implicitWidth : 0
     implicitHeight: indicator.implicitHeight
 
     function moveDeviceSelection(offset: int): void {
@@ -113,7 +114,6 @@ Item {
     Button {
         id: indicator
         anchors.centerIn: parent
-        visible: root.showButton
         panel: root
         text: AudioService.outputIcon
         textSize: 15

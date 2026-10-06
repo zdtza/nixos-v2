@@ -3,14 +3,14 @@ pragma ComponentBehavior: Bound
 // Application launcher drawer, opened from the 4-square bar button or Super+Space.
 import QtQuick
 import Quickshell
-import "../components"
+import "../components/panels"
+import "../components/primitives"
 import "../services"
 import ".."
 
 Item {
     id: root
 
-    property bool showButton: true
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     readonly property bool isLauncher: true
@@ -23,7 +23,6 @@ Item {
     // keyboard focus, so the search box in the drawer only mirrors this input.
     readonly property Component keyboardProxy: searchProxy
 
-    implicitWidth: showButton ? 26 : 0
     implicitHeight: PanelService.barItemHeight
 
     // --- application results ---
@@ -142,23 +141,6 @@ Item {
                 }
             }
         }
-    }
-
-    // --- bar button ---
-    LauncherIcon {
-        anchors.centerIn: parent
-        visible: root.showButton
-        color: root.opened || buttonMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary
-        size: 16
-    }
-
-    MouseArea {
-        id: buttonMouse
-        anchors.fill: parent
-        enabled: root.showButton
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: PanelService.toggle(root)
     }
 
 

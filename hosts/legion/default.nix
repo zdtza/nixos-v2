@@ -10,6 +10,7 @@ let
     "management-local.pmis.servicesseta.org.za"
     "partner-local.pmis.servicesseta.org.za"
     "learner-local.pmis.servicesseta.org.za"
+    "local.scrubbill.net"
   ];
   dotnet = pkgs.dotnetCorePackages.combinePackages [
     pkgs.dotnetCorePackages.sdk_8_0

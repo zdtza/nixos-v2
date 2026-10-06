@@ -11,9 +11,9 @@ Shape {
 
     width: size
     height: size
+    // CurveRenderer antialiases analytically at native resolution; spinning the arc itself
+    // (not the item) keeps it re-rendered every frame instead of resampling a rotated texture.
     preferredRendererType: Shape.CurveRenderer
-    layer.enabled: true
-    layer.samples: 4
 
     ShapePath {
         strokeColor: root.color
@@ -22,6 +22,7 @@ Shape {
         capStyle: ShapePath.RoundCap
 
         PathAngleArc {
+            id: arc
             centerX: root.size / 2
             centerY: root.size / 2
             radiusX: root.size / 2 - 1
@@ -31,7 +32,9 @@ Shape {
         }
     }
 
-    RotationAnimator on rotation {
+    NumberAnimation {
+        target: arc
+        property: "startAngle"
         running: root.visible
         from: 0
         to: 360

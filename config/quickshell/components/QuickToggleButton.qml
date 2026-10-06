@@ -15,17 +15,8 @@ Item {
 
     anchors.fill: parent
 
-    Rectangle {
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: 16
-        height: 2
-        radius: PanelService.rounding
-        visible: opacity > 0
-        opacity: mouseArea.containsMouse ? 1 : 0
-        color: Theme.base05
-
-        Behavior on opacity { NumberAnimation { duration: 120 } }
+    HoverUnderline {
+        shown: mouseArea.containsMouse
     }
 
     ShellText {

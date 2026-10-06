@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 // Omarchy-style power panel backed by UPower and TLP's power-profile API.
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import "../components"
 import "../services"
 import ".."
@@ -109,23 +108,12 @@ Item {
         onClicked: PanelService.toggle(root)
     }
 
-    HyprlandFocusGrab {
-        active: root.opened && !PanelService.refocusing
-        windows: [panel, root.QsWindow.window]
-        onCleared: if (!PanelService.refocusing) PanelService.close(root)
-    }
 
     Drawer {
         id: panel
         anchorItem: root
-        anchorWindow: root.QsWindow.window
-        open: root.opened
-        onCloseRequested: PanelService.close(root)
-        contentSpacing: 14
         // Wider card gives each equal-width profile button real horizontal breathing room around its icon and longest label (Power-saver).
         implicitWidth: 420
-        implicitHeight: panelContent.implicitHeight
-            + contentTopMargin + contentBottomMargin
 
         Hero {
             id: batteryHero
@@ -133,13 +121,10 @@ Item {
             icon: root.batteryIcon()
             title: "Battery"
             status: root.statusText.toUpperCase()
-            trailingWidth: heroPercent.implicitWidth
-            trailingHeight: heroPercent.implicitHeight
             trailingMargin: 10
 
             ShellText {
                 id: heroPercent
-                anchors.centerIn: parent
                 text: root.percent + "%"
                 size: 30
                 font.bold: true

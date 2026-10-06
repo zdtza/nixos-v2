@@ -21,17 +21,8 @@ Item {
     implicitHeight: PanelService.barItemHeight
     clip: true
 
-    Rectangle {
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: 16
-        height: 2
-        radius: PanelService.rounding
-        visible: opacity > 0
-        opacity: root.showPanelIndicator && (root.panelOpen || mouseArea.containsMouse) ? 1 : 0
-        color: Theme.base05
-
-        Behavior on opacity { NumberAnimation { duration: 120 } }
+    HoverUnderline {
+        shown: root.showPanelIndicator && (root.panelOpen || mouseArea.containsMouse)
     }
 
     ShellText {

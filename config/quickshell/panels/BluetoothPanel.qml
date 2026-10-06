@@ -4,7 +4,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Bluetooth
-import Quickshell.Hyprland
 import "../components"
 import "../services"
 import ".."
@@ -40,6 +39,16 @@ Item {
             return phrases[phraseIndex % phrases.length];
         return BluetoothService.adapter && BluetoothService.adapter.discovering
             ? "SCANNING" : "READY TO CONNECT";
+    }
+
+    function deviceStatus(device: var): string {
+        if (device.pairing) return "Pairing…";
+        if (device.state === BluetoothDeviceState.Connecting) return "Connecting…";
+        if (device.state === BluetoothDeviceState.Disconnecting) return "Disconnecting…";
+        if (BluetoothService.isConnected(device))
+            return device.batteryAvailable
+                ? "Connected · " + Math.round(Number(device.battery) * 100) + "%" : "Connected";
+        return device.paired ? "Paired" : "Available";
     }
 
     property int phraseIndex: 0
@@ -148,22 +157,10 @@ Item {
         onClicked: PanelService.toggle(root)
     }
 
-    HyprlandFocusGrab {
-        active: root.opened && !PanelService.refocusing
-        windows: [panel, root.QsWindow.window]
-        onCleared: if (!PanelService.refocusing) PanelService.close(root)
-    }
 
     Drawer {
         id: panel
         anchorItem: root
-        anchorWindow: root.QsWindow.window
-        open: root.opened
-        onCloseRequested: PanelService.close(root)
-        contentSpacing: 14
-        readonly property real maximumHeight: Math.max(260,
-            (root.QsWindow.window && root.QsWindow.window.screen
-                ? root.QsWindow.window.screen.height : 800) - 55)
         readonly property real panelChromeHeight: contentTopMargin
             + contentBottomMargin + bluetoothHero.implicitHeight
             + bluetoothSeparator.height + contentSpacing * 2
@@ -191,11 +188,7 @@ Item {
             icon: BluetoothService.icon
             title: "Bluetooth"
             status: root.statusText
-            trailingWidth: 44
-            trailingHeight: 24
-
             ToggleSwitch {
-                anchors.fill: parent
                 checked: BluetoothService.powered
                 onToggled: BluetoothService.toggle()
             }
@@ -203,91 +196,83 @@ Item {
 
         Separator { id: bluetoothSeparator }
 
-        Item {
+        ScrollArea {
+            id: deviceList
             width: parent.width
             height: panel.deviceViewportHeight
-            clip: true
+            contentHeight: deviceColumn.implicitHeight
 
-            Flickable {
-                id: deviceList
-                anchors.fill: parent
-                contentHeight: deviceColumn.implicitHeight
-                clip: true
-                interactive: contentHeight > height
-                boundsBehavior: Flickable.StopAtBounds
-                flickableDirection: Flickable.VerticalFlick
-
-                FastScroll { view: deviceList }
+            Column {
+                id: deviceColumn
+                width: deviceList.width
+                spacing: root.deviceSectionSpacing
 
                 Column {
-                    id: deviceColumn
-                    width: deviceList.width
-                    spacing: root.deviceSectionSpacing
+                    width: parent.width
+                    spacing: root.deviceRowSpacing
+                    visible: root.connectedDevices.length > 0
 
-                    Column {
-                        width: parent.width
-                        spacing: root.deviceRowSpacing
-                        visible: root.connectedDevices.length > 0
+                    SectionHeader {
+                        id: connectedHeader
+                        title: "CONNECTED"
+                        detail: root.connectedDevices.length > 1
+                            ? root.connectedDevices.length + " DEVICES" : ""
+                    }
 
-                        SectionHeader {
-                            id: connectedHeader
-                            title: "CONNECTED"
-                            detail: root.connectedDevices.length > 1
-                                ? root.connectedDevices.length + " DEVICES" : ""
-                        }
+                    Repeater {
+                        model: root.connectedDevices
 
-                        Repeater {
-                            model: root.connectedDevices
+                        DeviceRow {
+                            id: connectedRow
+                            clickable: false
 
-                            DeviceRow {
-                                required property var modelData
-                                device: modelData
-                                actionIcon: "󰅖"
-                                actionVisible: true
-                                keyboardSelected: root.selectedDevice === modelData
-                                secondaryActionIcon: "󰆴"
-                                secondaryActionVisible: true
-                                onActionTriggered: BluetoothService.disconnect(modelData)
-                                onSecondaryActionTriggered: BluetoothService.forget(modelData)
+                            RowActionButton {
+                                icon: "󰅖"
+                                onClicked: BluetoothService.disconnect(connectedRow.modelData)
+                            }
+                            RowActionButton {
+                                icon: "󰆴"
+                                onClicked: BluetoothService.forget(connectedRow.modelData)
                             }
                         }
                     }
+                }
 
-                    Column {
+                Column {
+                    width: parent.width
+                    spacing: root.deviceRowSpacing
+
+                    SectionHeader {
+                        id: availableHeader
+                        title: "AVAILABLE"
+                        detail: BluetoothService.adapter && BluetoothService.adapter.discovering
+                            ? "SCANNING" : "READY"
+                    }
+
+                    ShellText {
                         width: parent.width
-                        spacing: root.deviceRowSpacing
+                        height: root.emptyStateHeight
+                        visible: root.availableDevices.length === 0
+                        text: BluetoothService.powered
+                            ? "No available devices" : "Bluetooth is turned off"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        color: Theme.textSecondary
+                        size: 12
+                    }
 
-                        SectionHeader {
-                            id: availableHeader
-                            title: "AVAILABLE"
-                            detail: BluetoothService.adapter && BluetoothService.adapter.discovering
-                                ? "SCANNING" : "READY"
-                        }
+                    Repeater {
+                        model: root.availableDevices
 
-                        ShellText {
-                            width: parent.width
-                            height: root.emptyStateHeight
-                            visible: root.availableDevices.length === 0
-                            text: BluetoothService.powered
-                                ? "No available devices" : "Bluetooth is turned off"
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            color: Theme.textSecondary
-                            size: 12
-                        }
+                        DeviceRow {
+                            id: availableRow
+                            clickable: !modelData.pairing
+                            onActivated: BluetoothService.activate(modelData)
 
-                        Repeater {
-                            model: root.availableDevices
-
-                            DeviceRow {
-                                required property var modelData
-                                device: modelData
-                                clickable: !modelData.pairing
-                                actionIcon: "󰆴"
-                                actionVisible: modelData.paired
-                                keyboardSelected: root.selectedDevice === modelData
-                                onActivated: BluetoothService.activate(modelData)
-                                onActionTriggered: BluetoothService.forget(modelData)
+                            RowActionButton {
+                                visible: availableRow.modelData.paired
+                                icon: "󰆴"
+                                onClicked: BluetoothService.forget(availableRow.modelData)
                             }
                         }
                     }
@@ -296,124 +281,16 @@ Item {
         }
     }
 
-    component DeviceRow: Rectangle {
-        id: deviceRow
+    component DeviceRow: ListRow {
+        required property var modelData
 
-        required property var device
-        property bool clickable: false
-        property bool keyboardSelected: false
-        property bool actionVisible: false
-        property string actionIcon: ""
-        property bool secondaryActionVisible: false
-        property string secondaryActionIcon: ""
-
-        signal activated()
-        signal actionTriggered()
-        signal secondaryActionTriggered()
-
-        width: parent.width
         height: root.deviceRowHeight
-        radius: PanelService.rounding
-        // Connection state is conveyed by its dedicated section; the fill and border both indicate hover or keyboard selection.
-        color: keyboardSelected
-            ? Utils.alpha(Theme.base05, 0.10) : "transparent"
-        border.width: keyboardSelected ? 1 : 0
-        border.color: Utils.alpha(Theme.base05, 0.25)
-
-        HoverHandler {
-            onHoveredChanged: if (hovered && PanelService.hoverSelectReady)
-                root.selectedDevice = deviceRow.device
-        }
-
-        ShellText {
-            id: deviceIcon
-            anchors.left: parent.left
-            anchors.leftMargin: 10
-            anchors.verticalCenter: parent.verticalCenter
-            text: BluetoothService.deviceIcon(deviceRow.device)
-            size: 16
-        }
-
-        Column {
-            anchors.left: deviceIcon.right
-            anchors.leftMargin: 10
-            anchors.right: actionRow.visible ? actionRow.left : stateIcon.left
-            anchors.rightMargin: 8
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 1
-
-            ShellText {
-                width: parent.width
-                text: BluetoothService.deviceLabel(deviceRow.device)
-                size: 12
-                elide: Text.ElideRight
-            }
-
-            ShellText {
-                width: parent.width
-                text: {
-                    if (deviceRow.device.pairing) return "Pairing…";
-                    if (deviceRow.device.state === BluetoothDeviceState.Connecting)
-                        return "Connecting…";
-                    if (deviceRow.device.state === BluetoothDeviceState.Disconnecting)
-                        return "Disconnecting…";
-                    if (BluetoothService.isConnected(deviceRow.device)) {
-                        if (deviceRow.device.batteryAvailable)
-                            return "Connected · " + Math.round(Number(deviceRow.device.battery) * 100) + "%";
-                        return "Connected";
-                    }
-                    return deviceRow.device.paired ? "Paired" : "Available";
-                }
-                color: Theme.textSecondary
-                size: 11
-                elide: Text.ElideRight
-            }
-        }
-
-        Row {
-            id: actionRow
-            z: 2
-            visible: deviceRow.keyboardSelected
-                && (deviceRow.actionVisible || deviceRow.secondaryActionVisible)
-            anchors.right: stateIcon.left
-            anchors.rightMargin: 16
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 8
-
-            RowActionButton {
-                visible: deviceRow.actionVisible
-                icon: deviceRow.actionIcon
-                onClicked: deviceRow.actionTriggered()
-            }
-
-            RowActionButton {
-                visible: deviceRow.secondaryActionVisible
-                icon: deviceRow.secondaryActionIcon
-                onClicked: deviceRow.secondaryActionTriggered()
-            }
-        }
-
-        ShellText {
-            id: stateIcon
-            anchors.right: parent.right
-            anchors.rightMargin: 16
-            anchors.verticalCenter: parent.verticalCenter
-            text: BluetoothService.isConnected(deviceRow.device) ? "󰂱"
-                : (deviceRow.device.paired ? "󰌾" : "")
-            color: Theme.textSecondary
-            size: 12
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            z: 1
-            enabled: deviceRow.clickable
-            hoverEnabled: true
-            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: {
-                root.selectedDevice = deviceRow.device;
-                deviceRow.activated();
-            }
-        }
+        icon: BluetoothService.deviceIcon(modelData)
+        title: BluetoothService.deviceLabel(modelData)
+        subtitle: root.deviceStatus(modelData)
+        trailingIcon: BluetoothService.isConnected(modelData) ? "󰂱" : (modelData.paired ? "󰌾" : "")
+        selected: root.selectedDevice === modelData
+        onHoverSelected: root.selectedDevice = modelData
+        onActivated: root.selectedDevice = modelData
     }
 }

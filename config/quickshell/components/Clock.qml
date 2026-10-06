@@ -1,7 +1,6 @@
 // Compact bar clock with a full date-and-time panel.
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import "../panels"
 import "../services"
 
@@ -57,11 +56,6 @@ Item {
         }
     }
 
-    HyprlandFocusGrab {
-        active: root.opened && !PanelService.refocusing
-        windows: [panel, root.QsWindow.window]
-        onCleared: if (!PanelService.refocusing) PanelService.close(root)
-    }
 
     TimerTogglePanel {
         id: timerControl
@@ -71,8 +65,5 @@ Item {
     ClockPanel {
         id: panel
         anchorItem: root
-        anchorWindow: root.QsWindow.window
-        open: root.opened
-        onCloseRequested: PanelService.close(root)
     }
 }

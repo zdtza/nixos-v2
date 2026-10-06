@@ -1,7 +1,6 @@
 // Hyprsunset toggle and persistent color-temperature panel.
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import "../components"
 import "../services"
 
@@ -65,34 +64,19 @@ Item {
         onActivated: NightLightService.disable()
     }
 
-    HyprlandFocusGrab {
-        active: root.opened && !PanelService.refocusing
-        windows: [panel, root.QsWindow.window]
-        onCleared: if (!PanelService.refocusing) PanelService.close(root)
-    }
 
     Drawer {
         id: panel
 
         anchorItem: root
-        anchorWindow: root.QsWindow.window
-        open: root.opened
-        onCloseRequested: PanelService.close(root)
-        contentSpacing: 14
         implicitWidth: 420
-        implicitHeight: panelContent.implicitHeight
-            + contentTopMargin + contentBottomMargin
 
         Hero {
             width: parent.width
             icon: ""
             title: "Night Light"
             status: root.temperatureStatus()
-            trailingWidth: 44
-            trailingHeight: 24
-
             ToggleSwitch {
-                anchors.fill: parent
                 checked: NightLightService.active
                 available: NightLightService.available
                 onToggled: NightLightService.toggle()

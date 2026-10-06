@@ -95,8 +95,8 @@ Scope {
         target: MonitorService
 
         function onBrightnessIpcInvoked(): void {
-            root.show("󰍹", MonitorService.level / MonitorService.maxLevel,
-                Theme.base05, MonitorService.level);
+            root.show("󰍹", MonitorService.brightnessPercent / 100,
+                Theme.base05, MonitorService.brightnessPercent);
         }
     }
 

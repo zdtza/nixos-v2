@@ -10,7 +10,6 @@ Item {
     id: root
 
     readonly property int brightnessStep: 5
-    readonly property int maxLevel: 100
     // Held brightness keys repeat every ~40ms and a slider drag emits faster still.
     readonly property int writeDelay: 150
     readonly property var monitors: Hyprland.monitors ? Hyprland.monitors.values : []
@@ -18,10 +17,7 @@ Item {
 
     property bool available: false
     property int brightnessPercent: 0
-    property int pendingBrightness: 0
     property int writingBrightness: 0
-
-    readonly property int level: brightnessPercent
 
     property real lastStepMs: 0
     property int fastSteps: 0
@@ -32,20 +28,12 @@ Item {
         return Math.max(1, Math.min(100, Math.round(Number(percent))));
     }
 
-    function setLevel(percent: int): void {
-        setBrightness(percent);
-    }
-
-    function adjustLevel(delta: int): void {
-        setLevel(level + delta);
-    }
-
     // The brightness keys on this machine are firmware taps, not held keys.
     function stepLevel(direction: int): void {
         const now = Date.now();
         fastSteps = now - lastStepMs < 150 ? fastSteps + 1 : 0;
         lastStepMs = now;
-        adjustLevel(direction * brightnessStep
+        setBrightness(brightnessPercent + direction * brightnessStep
             * Math.min(3, 1 + Math.floor(fastSteps / 4)));
         brightnessIpcInvoked();
     }
@@ -64,7 +52,6 @@ Item {
         if (writeDebounce.running || writeProcess.running)
             return;
         brightnessPercent = clampBrightness(parsed);
-        pendingBrightness = brightnessPercent;
     }
 
     function refresh(): void {
@@ -74,10 +61,9 @@ Item {
     function setBrightness(percent: int): void {
         const next = clampBrightness(percent);
         // Don't respawn brightnessctl for a value the panel already reports.
-        if (next === pendingBrightness && next === brightnessPercent)
+        if (next === brightnessPercent)
             return;
-        pendingBrightness = next;
-        brightnessPercent = pendingBrightness;
+        brightnessPercent = next;
         writeDebounce.restart();
     }
 
@@ -111,7 +97,7 @@ Item {
         command: ["brightnessctl", "--quiet", "--class=backlight", "set",
             `${root.writingBrightness}%`]
         onExited: {
-            if (root.pendingBrightness !== root.writingBrightness)
+            if (root.brightnessPercent !== root.writingBrightness)
                 writeDebounce.restart();
             else
                 refreshAfterWrite.restart();
@@ -123,7 +109,7 @@ Item {
         interval: root.writeDelay
         onTriggered: {
             if (writeProcess.running) return;
-            root.writingBrightness = root.pendingBrightness;
+            root.writingBrightness = root.brightnessPercent;
             writeProcess.running = true;
         }
     }
@@ -155,10 +141,10 @@ Item {
         function brightnessUp(): void { root.stepLevel(1); }
         function brightnessDown(): void { root.stepLevel(-1); }
         function setBrightness(percent: int): void {
-            root.setLevel(percent);
+            root.setBrightness(percent);
             root.brightnessIpcInvoked();
         }
-        function brightness(): int { return root.level; }
+        function brightness(): int { return root.brightnessPercent; }
         function setScale(scale: real): void { root.setScale(scale); }
     }
 }

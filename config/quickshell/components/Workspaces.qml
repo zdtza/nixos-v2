@@ -195,125 +195,77 @@ Item {
                 readonly property var workspace: modelData
                 readonly property int workspaceId: workspace.id
                 readonly property bool active: workspaceId === root.activeWorkspaceId
-                readonly property var tasks: root.tasksFor(workspace)
-                readonly property var primary: root.representative(tasks)
                 // An app launching onto this workspace takes over its slot until
                 // its window opens.
-                readonly property var pending: LauncherService.launchesOn(workspaceId)[0] ?? null
-                readonly property var displayedTasks: [pending ? { launch: pending } : primary]
+                readonly property var launch: LauncherService.launchesOn(workspaceId)[0] ?? null
+                readonly property var toplevel: launch ? null : root.representative(root.tasksFor(workspace))
+                readonly property var entry: root.desktopEntry(toplevel)
+                readonly property string iconName: launch ? launch.icon : (entry?.icon ?? "")
 
-                width: tasksRow.implicitWidth
+                // Keep workspace slots the same width whether empty or
+                // occupied so opening/closing a window cannot shift them.
                 // Full bar height, so the active underline sits on the bar's bottom edge.
+                width: 26
                 height: PanelService.barItemHeight
-                implicitWidth: width
-                implicitHeight: height
                 clip: true
 
-                Row {
-                    id: tasksRow
+                HoverUnderline {
+                    shown: workspaceGroup.active || taskMouse.containsMouse
+                }
 
-                    anchors {
-                        left: parent.left
-                        verticalCenter: parent.verticalCenter
-                    }
-                    spacing: 2
+                Image {
+                    id: appIcon
 
-                    Repeater {
-                    model: workspaceGroup.displayedTasks
+                    anchors.centerIn: parent
+                    width: 17
+                    height: 17
+                    source: workspaceGroup.iconName !== ""
+                        ? Quickshell.iconPath(workspaceGroup.iconName, true) : ""
+                    sourceSize.width: 34
+                    sourceSize.height: 34
+                    asynchronous: true
+                    visible: status === Image.Ready
+                    opacity: workspaceGroup.launch ? 0.35 : 1
+                }
 
-                    Rectangle {
-                        id: taskButton
+                // Same look and shared rotation as the launcher row's spinner.
+                Spinner {
+                    anchors.centerIn: appIcon
+                    size: 13
+                    visible: !!workspaceGroup.launch
+                    selfDriven: false
+                    angle: LauncherService.spinnerAngle
+                }
 
-                        required property var modelData
-                        readonly property var launch: modelData?.launch ?? null
-                        readonly property var toplevel: launch ? null : modelData
-                        readonly property var entry: root.desktopEntry(toplevel)
-                        readonly property string iconName: launch ? launch.icon : (entry?.icon ?? "")
+                ShellText {
+                    anchors.centerIn: parent
+                    // Compensate for the number glyph's visual right bias
+                    // and lift it without moving the active underline.
+                    anchors.horizontalCenterOffset: -1
+                    anchors.verticalCenterOffset: 1
+                    visible: !workspaceGroup.toplevel && !workspaceGroup.launch
+                    text: root.workspaceLabel(workspaceGroup.workspaceId)
+                    color: Theme.textSecondary
+                    size: Theme.fontSize
+                }
 
-                        // Keep workspace slots the same width whether empty or
-                        // occupied so opening/closing a window cannot shift them.
-                        width: 26
-                        height: PanelService.barItemHeight
-                        color: "transparent"
+                MouseArea {
+                    id: taskMouse
 
-                        Rectangle {
-                            anchors.bottom: parent.bottom
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            width: Math.min(16, parent.width)
-                            height: 2
-                            radius: PanelService.rounding
-                            visible: opacity > 0
-                            opacity: workspaceGroup.active || taskMouse.containsMouse ? 1 : 0
-                            color: Theme.base05
+                    anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
 
-                            Behavior on opacity { NumberAnimation { duration: 120 } }
-                        }
-
-                        Image {
-                            id: appIcon
-
-                            anchors.centerIn: parent
-                            width: 17
-                            height: 17
-                            source: taskButton.iconName !== ""
-                                ? Quickshell.iconPath(taskButton.iconName, true) : ""
-                            sourceSize.width: 34
-                            sourceSize.height: 34
-                            cache: true
-                            asynchronous: true
-                            smooth: true
-                            visible: (!!taskButton.toplevel || !!taskButton.launch) && status === Image.Ready
-                            opacity: taskButton.launch ? 0.35 : 1
-                        }
-
-                        // Same look and shared rotation as the launcher row's spinner.
-                        Spinner {
-                            anchors.centerIn: appIcon
-                            size: 13
-                            visible: !!taskButton.launch
-                            selfDriven: false
-                            angle: LauncherService.spinnerAngle
-                        }
-
-                        ShellText {
-                            id: workspaceNumber
-
-                            anchors.centerIn: parent
-                            // Compensate for the number glyph's visual right bias
-                            // and lift it without moving the active underline.
-                            anchors.horizontalCenterOffset: -1
-                            anchors.verticalCenterOffset: 1
-                            visible: !taskButton.toplevel && !taskButton.launch
-                            text: root.workspaceLabel(workspaceGroup.workspaceId)
-                            color: Theme.textSecondary
-                            size: Theme.fontSize
-                        }
-
-                        MouseArea {
-                            id: taskMouse
-
-                            anchors.fill: parent
-                            acceptedButtons: Qt.LeftButton | Qt.MiddleButton
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-
-                            onClicked: mouse => {
-                                PanelService.closeActive();
-
-                                if (!taskButton.toplevel) {
-                                    root.focusWorkspace(workspaceGroup.workspaceId);
-                                    return;
-                                }
-
-                                if (mouse.button === Qt.MiddleButton)
-                                    taskButton.toplevel.wayland?.close();
-                                else
-                                    root.focusWorkspace(workspaceGroup.workspaceId);
-                            }
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.MiddleButton && workspaceGroup.toplevel) {
+                            PanelService.closeActive();
+                            workspaceGroup.toplevel.wayland?.close();
+                        } else {
+                            root.focusWorkspace(workspaceGroup.workspaceId);
                         }
                     }
                 }
-            }
             }
         }
     }

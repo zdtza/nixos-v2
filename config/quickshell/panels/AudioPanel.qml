@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 // PipeWire audio panel: default-device selection, volume controls, and mic peak.
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Services.Pipewire
 import "../components"
 import "../services"
@@ -129,33 +128,19 @@ Item {
             wheel.angleDelta.y > 0 ? AudioService.outputStep : -AudioService.outputStep)
     }
 
-    HyprlandFocusGrab {
-        active: root.opened && !PanelService.refocusing
-        windows: [panel, root.QsWindow.window]
-        onCleared: if (!PanelService.refocusing) PanelService.close(root)
-    }
 
     Drawer {
         id: panel
         anchorItem: root
-        anchorWindow: root.QsWindow.window
-        open: root.opened
-        onCloseRequested: PanelService.close(root)
         contentSpacing: 12
         implicitWidth: 420
-        implicitHeight: panelContent.implicitHeight
-            + contentTopMargin + contentBottomMargin
 
         Hero {
             width: parent.width
             icon: AudioService.outputIcon
             title: "Audio"
             status: root.volumeStatus()
-            trailingWidth: 44
-            trailingHeight: 24
-
             ToggleSwitch {
-                anchors.fill: parent
                 checked: !AudioService.outputMuted
                 onToggled: AudioService.toggleOutputMute()
             }
@@ -192,17 +177,9 @@ Item {
                 model: AudioService.outputs
 
                 DeviceRow {
-                    id: outputDeviceRow
-                    required property var modelData
-                    required property int index
-                    node: modelData
                     icon: "󰓃"
-                    selected: AudioService.output === modelData
-                    keyboardSelected: outputDeviceRow.index === root.selectedDeviceIndex
-                    onActivated: {
-                        root.selectedDeviceIndex = outputDeviceRow.index;
-                        AudioService.selectOutput(modelData);
-                    }
+                    current: AudioService.output === modelData
+                    onActivated: AudioService.selectOutput(modelData)
                 }
             }
         }
@@ -263,72 +240,26 @@ Item {
                 model: AudioService.inputs
 
                 DeviceRow {
-                    id: inputDeviceRow
-                    required property var modelData
-                    required property int index
-                    node: modelData
                     icon: "󰍬"
-                    selected: AudioService.input === modelData
-                    keyboardSelected: AudioService.outputs.length + inputDeviceRow.index
-                        === root.selectedDeviceIndex
-                    onActivated: {
-                        root.selectedDeviceIndex = AudioService.outputs.length
-                            + inputDeviceRow.index;
-                        AudioService.selectInput(modelData);
-                    }
+                    deviceIndex: AudioService.outputs.length + index
+                    current: AudioService.input === modelData
+                    onActivated: AudioService.selectInput(modelData)
                 }
             }
         }
     }
 
-    component DeviceRow: Rectangle {
-        id: deviceRow
+    component DeviceRow: ListRow {
+        required property var modelData
+        required property int index
+        // Position in keyboardDevices: outputs first, then inputs.
+        property int deviceIndex: index
 
-        required property var node
-        property string icon: ""
-        property bool selected: false
-        property bool keyboardSelected: false
-
-        signal activated()
-
-        width: parent.width
         height: 36
-        radius: PanelService.rounding
-        color: selected ? Utils.alpha(Theme.base05, 0.08) : "transparent"
-        border.width: keyboardSelected ? 1 : 0
-        border.color: Utils.alpha(Theme.base05, 0.25)
-
-        ShellText {
-            id: deviceIcon
-            anchors.left: parent.left
-            anchors.leftMargin: 10
-            anchors.verticalCenter: parent.verticalCenter
-            text: deviceRow.icon
-            size: 14
-        }
-
-        ShellText {
-            anchors.left: deviceIcon.right
-            anchors.leftMargin: 10
-            anchors.right: parent.right
-            anchors.rightMargin: 16
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.nodeLabel(deviceRow.node)
-            size: 12
-            elide: Text.ElideRight
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onContainsMouseChanged: if (containsMouse && PanelService.hoverSelectReady) {
-                const index = AudioService.outputs.indexOf(deviceRow.node);
-                root.selectedDeviceIndex = index >= 0 ? index
-                    : AudioService.outputs.length
-                        + AudioService.inputs.indexOf(deviceRow.node);
-            }
-            onClicked: deviceRow.activated()
-        }
+        iconSize: 14
+        title: root.nodeLabel(modelData)
+        selected: deviceIndex === root.selectedDeviceIndex
+        onHoverSelected: root.selectedDeviceIndex = deviceIndex
+        onActivated: root.selectedDeviceIndex = deviceIndex
     }
 }

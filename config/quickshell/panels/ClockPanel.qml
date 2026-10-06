@@ -67,8 +67,6 @@ Drawer {
 
     readonly property int zoneRowHeight: 108
     readonly property int zoneRowSpacing: 14
-    readonly property real maximumHeight: Math.max(320,
-        (anchorWindow && anchorWindow.screen ? anchorWindow.screen.height : 800) - 55)
     readonly property real desiredZoneHeight: ClockService.timeZones.length * zoneRowHeight
         + Math.max(0, ClockService.timeZones.length - 1) * zoneRowSpacing
     readonly property real fixedCalendarHeight: contentTopMargin + contentBottomMargin
@@ -77,7 +75,6 @@ Drawer {
     readonly property real zoneViewportHeight: Math.min(470, desiredZoneHeight,
         Math.max(zoneRowHeight, maximumHeight - fixedCalendarHeight))
 
-    contentSpacing: 14
     closeOnEscape: !addingZone
     implicitWidth: 420
     implicitHeight: Math.min(maximumHeight,
@@ -200,31 +197,11 @@ done
         status: ClockService.timeZones.length === 1
             ? "LOCAL TIME"
             : String(ClockService.timeZones.length) + " TIME ZONES"
-        trailingWidth: 32
-        trailingHeight: 28
-
-        Rectangle {
-            anchors.fill: parent
-            radius: PanelService.rounding
-            color: addMouse.containsMouse
-                ? Utils.alpha(Theme.base05, 0.12)
-                : "transparent"
-            border.width: 1
-            border.color: Utils.alpha(Theme.base05, 0.3)
-
-            ShellText {
-                anchors.centerIn: parent
-                text: root.addingZone ? "󰅖" : "󰐕"
-                size: 14
-            }
-
-            MouseArea {
-                id: addMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.toggleAdd()
-            }
+        RowActionButton {
+            implicitWidth: 32
+            icon: root.addingZone ? "󰅖" : "󰐕"
+            iconSize: 14
+            onClicked: root.toggleAdd()
         }
     }
 
@@ -289,132 +266,121 @@ done
         }
     }
 
-    Item {
+    ScrollArea {
+        id: zoneList
         width: parent.width
         height: root.zoneViewportHeight
-        clip: true
+        contentHeight: zoneColumn.implicitHeight
 
-        Flickable {
-            id: zoneList
-            anchors.fill: parent
-            contentHeight: zoneColumn.implicitHeight
-            interactive: contentHeight > height
-            boundsBehavior: Flickable.StopAtBounds
-            flickableDirection: Flickable.VerticalFlick
-            clip: true
+        Column {
+            id: zoneColumn
+            width: parent.width
+            spacing: root.zoneRowSpacing
 
-            FastScroll { view: zoneList }
+            Repeater {
+                model: ClockService.timeZones
 
-            Column {
-                id: zoneColumn
-                width: parent.width
-                spacing: root.zoneRowSpacing
+                Item {
+                    id: zoneRow
 
-                Repeater {
-                    model: ClockService.timeZones
+                    required property string modelData
+                    required property int index
+                    readonly property string zone: modelData
+                    readonly property var current: root.zoneTime(zone)
+                    readonly property bool showActions: zone.length > 0
+                        && zoneHover.hovered
 
-                    Item {
-                        id: zoneRow
+                    width: zoneColumn.width
+                    // Give local time a little more breathing room while
+                    // avoiding excess space below the final entry.
+                    height: root.zoneRowHeight
+                        + (zone.length === 0 ? 4 : 0)
+                        - (index === ClockService.timeZones.length - 1 ? 4 : 0)
 
-                        required property string modelData
-                        required property int index
-                        readonly property string zone: modelData
-                        readonly property var current: root.zoneTime(zone)
-                        readonly property bool showActions: zone.length > 0
-                            && zoneHover.hovered
+                    HoverHandler { id: zoneHover }
 
-                        width: zoneColumn.width
-                        // Give local time a little more breathing room while
-                        // avoiding excess space below the final entry.
-                        height: root.zoneRowHeight
-                            + (zone.length === 0 ? 4 : 0)
-                            - (index === ClockService.timeZones.length - 1 ? 4 : 0)
+                    SectionHeader {
+                        width: parent.width
+                        title: root.displayName(zoneRow.zone).toUpperCase()
+                        detail: zoneRow.showActions
+                            ? "" : zoneRow.current.abbreviation
+                    }
 
-                        HoverHandler { id: zoneHover }
+                    Column {
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            top: parent.top
+                            topMargin: 24
+                        }
+                        spacing: 4
 
-                        SectionHeader {
+                        ShellText {
                             width: parent.width
-                            title: root.displayName(zoneRow.zone).toUpperCase()
-                            detail: zoneRow.showActions
-                                ? "" : zoneRow.current.abbreviation
+                            horizontalAlignment: Text.AlignHCenter
+                            text: zoneRow.current.time
+                            size: 30
+                            font.weight: Font.Medium
                         }
 
-                        Column {
-                            anchors {
-                                left: parent.left
-                                right: parent.right
-                                top: parent.top
-                                topMargin: 24
-                            }
-                            spacing: 4
-
-                            ShellText {
-                                width: parent.width
-                                horizontalAlignment: Text.AlignHCenter
-                                text: zoneRow.current.time
-                                size: 30
-                                font.weight: Font.Medium
-                            }
-
-                            ShellText {
-                                width: parent.width
-                                horizontalAlignment: Text.AlignHCenter
-                                text: zoneRow.current.date
-                                opacity: 0.8
-                                size: 20
-                                font.weight: Font.Medium
-                            }
+                        ShellText {
+                            width: parent.width
+                            horizontalAlignment: Text.AlignHCenter
+                            text: zoneRow.current.date
+                            opacity: 0.8
+                            size: 20
+                            font.weight: Font.Medium
                         }
+                    }
 
-                        RowActionButton {
-                            id: deleteButton
-                            z: 2
-                            visible: zoneRow.showActions
-                            anchors {
-                                top: parent.top
-                                right: parent.right
-                                rightMargin: 2
-                            }
-                            icon: "󰆴"
-                            onClicked: ClockService.removeTimeZone(zoneRow.zone)
+                    RowActionButton {
+                        id: deleteButton
+                        z: 2
+                        visible: zoneRow.showActions
+                        anchors {
+                            top: parent.top
+                            right: parent.right
+                            rightMargin: 2
                         }
+                        icon: "󰆴"
+                        onClicked: ClockService.removeTimeZone(zoneRow.zone)
+                    }
 
-                        RowActionButton {
-                            id: moveDownButton
-                            z: 2
-                            // The first remote clock moves down; every clock
-                            // beneath it exposes the complementary move-up action.
-                            visible: zoneRow.index === 1
-                                && ClockService.timeZones.length > 2
-                                && zoneRow.showActions
-                            anchors {
-                                top: parent.top
-                                right: deleteButton.left
-                                rightMargin: 6
-                            }
-                            icon: "󰁅"
-                            onClicked: ClockService.moveTimeZone(
-                                zoneRow.index, zoneRow.index + 1)
+                    RowActionButton {
+                        id: moveDownButton
+                        z: 2
+                        // The first remote clock moves down; every clock
+                        // beneath it exposes the complementary move-up action.
+                        visible: zoneRow.index === 1
+                            && ClockService.timeZones.length > 2
+                            && zoneRow.showActions
+                        anchors {
+                            top: parent.top
+                            right: deleteButton.left
+                            rightMargin: 6
                         }
+                        icon: "󰁅"
+                        onClicked: ClockService.moveTimeZone(
+                            zoneRow.index, zoneRow.index + 1)
+                    }
 
-                        RowActionButton {
-                            z: 2
-                            visible: zoneRow.index > 1 && zoneRow.showActions
-                            anchors {
-                                top: parent.top
-                                right: moveDownButton.visible
-                                    ? moveDownButton.left : deleteButton.left
-                                rightMargin: 6
-                            }
-                            icon: "󰁝"
-                            onClicked: ClockService.moveTimeZone(
-                                zoneRow.index, zoneRow.index - 1)
+                    RowActionButton {
+                        z: 2
+                        visible: zoneRow.index > 1 && zoneRow.showActions
+                        anchors {
+                            top: parent.top
+                            right: moveDownButton.visible
+                                ? moveDownButton.left : deleteButton.left
+                            rightMargin: 6
                         }
+                        icon: "󰁝"
+                        onClicked: ClockService.moveTimeZone(
+                            zoneRow.index, zoneRow.index - 1)
+                    }
 
-                        Separator {
-                            visible: zoneRow.index < ClockService.timeZones.length - 1
-                            anchors.bottom: parent.bottom
-                        }
+                    Separator {
+                        visible: zoneRow.index < ClockService.timeZones.length - 1
+                        anchors.bottom: parent.bottom
                     }
                 }
             }

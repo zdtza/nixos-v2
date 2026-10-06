@@ -18,6 +18,8 @@ PanelWindow {
     property real contentSpacing: 14
     default property alias panelChildren: contentColumn.data
     readonly property alias panelContent: contentColumn
+    // Tallest a scrolling panel may grow on its screen.
+    readonly property real maximumHeight: Math.max(320, (screen?.height ?? 800) - 55)
 
     signal closeRequested()
     signal backgroundClicked()
@@ -26,6 +28,7 @@ PanelWindow {
     visible: !!anchorWindow
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
+    implicitHeight: contentColumn.implicitHeight + contentTopMargin + contentBottomMargin
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: root.open

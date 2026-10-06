@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 // Multiple countdown controls and duration-entry panel.
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import "../components"
 import "../services"
 import ".."
@@ -152,19 +151,11 @@ Item {
         }
     }
 
-    HyprlandFocusGrab {
-        active: root.opened && !PanelService.refocusing
-        windows: [panel, root.QsWindow.window]
-        onCleared: if (!PanelService.refocusing) PanelService.close(root)
-    }
 
     Drawer {
         id: panel
 
         anchorItem: root
-        anchorWindow: root.QsWindow.window
-        open: root.opened
-        onCloseRequested: PanelService.close(root)
         onOpenChanged: {
             if (!open)
                 return;
@@ -175,10 +166,6 @@ Item {
             });
         }
 
-        contentSpacing: 14
-        readonly property real maximumHeight: Math.max(320,
-            (root.QsWindow.window && root.QsWindow.window.screen
-                ? root.QsWindow.window.screen.height : 800) - 55)
         // Derive popup size from stable controls and timer count.
         readonly property real panelChromeHeight: contentTopMargin
             + contentBottomMargin + timerHero.implicitHeight + durationHeader.implicitHeight
@@ -203,34 +190,12 @@ Item {
                 ? TimerService.timers.length + (TimerService.timers.length === 1
                     ? " TIMER RUNNING" : " TIMERS RUNNING")
                 : "READY"
-            trailingWidth: 32
-            trailingHeight: 28
-
-            Rectangle {
-                anchors.fill: parent
-                readonly property bool canStart: root.parseDuration(durationInput.text) > 0
-                radius: PanelService.rounding
-                color: addMouse.containsMouse
-                    ? Utils.alpha(Theme.base05, 0.12)
-                    : "transparent"
-                border.width: 1
-                border.color: Utils.alpha(Theme.base05, 0.3)
-                opacity: canStart ? 1 : 0.5
-
-                ShellText {
-                    anchors.centerIn: parent
-                    text: "󰐕"
-                    size: 14
-                }
-
-                MouseArea {
-                    id: addMouse
-                    anchors.fill: parent
-                    enabled: parent.canStart
-                    hoverEnabled: true
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: root.startTimer()
-                }
+            RowActionButton {
+                implicitWidth: 32
+                icon: "󰐕"
+                iconSize: 14
+                enabled: root.parseDuration(durationInput.text) > 0
+                onClicked: root.startTimer()
             }
         }
 
@@ -306,18 +271,13 @@ Item {
                 size: 12
             }
 
-            Flickable {
+            ScrollArea {
                 id: timerList
                 anchors.fill: parent
                 visible: TimerService.timers.length > 0
                 contentHeight: timerColumn.implicitHeight
-                clip: true
-                interactive: contentHeight > height
-                boundsBehavior: Flickable.StopAtBounds
-                flickableDirection: Flickable.VerticalFlick
                 activeFocusOnTab: true
 
-                FastScroll { view: timerList }
 
                 Keys.onUpPressed: root.selectTimer(-1)
                 Keys.onDownPressed: root.selectTimer(1)
@@ -332,54 +292,23 @@ Item {
                     Repeater {
                         model: TimerService.timers
 
-                        Rectangle {
+                        ListRow {
                             id: timerRow
                             required property var modelData
                             required property int index
 
-                            width: timerColumn.width
                             height: root.timerRowHeight
-                            radius: PanelService.rounding
-                            color: timerRow.index === root.selectedTimerIndex
-                                ? Utils.alpha(Theme.base05, 0.08) : "transparent"
-                            border.width: timerRow.index === root.selectedTimerIndex ? 1 : 0
-                            border.color: Utils.alpha(Theme.base05, 0.25)
-
-                            HoverHandler {
-                                onHoveredChanged: if (hovered && PanelService.hoverSelectReady)
-                                    root.selectedTimerIndex = timerRow.index
-                            }
-
-                            ShellText {
-                                id: timerIcon
-                                anchors.left: parent.left
-                                anchors.leftMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: "󱎫"
-                                size: 16
-                            }
-
-                            ShellText {
-                                anchors.left: timerIcon.right
-                                anchors.leftMargin: 12
-                                anchors.right: deleteButton.visible
-                                    ? deleteButton.left : parent.right
-                                anchors.rightMargin: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: TimerService.formatDuration(Math.max(0,
-                                    Math.ceil((timerRow.modelData.deadlineMs
-                                        - TimerService.nowMs) / 1000)))
-                                size: 24
-                                font.weight: Font.Medium
-                            }
+                            icon: "󱎫"
+                            title: TimerService.formatDuration(Math.max(0,
+                                Math.ceil((modelData.deadlineMs - TimerService.nowMs) / 1000)))
+                            titleSize: 24
+                            titleWeight: Font.Medium
+                            titleLeftMargin: 12
+                            clickable: false
+                            selected: index === root.selectedTimerIndex
+                            onHoverSelected: root.selectedTimerIndex = index
 
                             RowActionButton {
-                                id: deleteButton
-                                z: 2
-                                visible: timerRow.index === root.selectedTimerIndex
-                                anchors.right: parent.right
-                                anchors.rightMargin: 16
-                                anchors.verticalCenter: parent.verticalCenter
                                 icon: "󰆴"
                                 onClicked: {
                                     root.selectedTimerIndex = timerRow.index;

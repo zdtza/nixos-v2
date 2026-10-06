@@ -9,8 +9,6 @@ Item {
     property real iconSize: 20
     property string title: ""
     property string status: ""
-    property real trailingWidth: 0
-    property real trailingHeight: 0
     property real trailingMargin: 14
     default property alias trailingData: trailingSlot.data
     readonly property alias statusLabel: statusText
@@ -58,7 +56,7 @@ Item {
         id: trailingSlot
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        implicitWidth: root.trailingWidth
-        implicitHeight: root.trailingHeight
+        implicitWidth: childrenRect.width
+        implicitHeight: childrenRect.height
     }
 }

@@ -7,22 +7,22 @@ Rectangle {
     id: root
 
     property string icon: ""
+    property real iconSize: 12
 
     signal clicked()
 
-    width: visible ? 28 : 0
-    height: 28
+    implicitWidth: visible ? 28 : 0
+    implicitHeight: 28
     radius: PanelService.rounding
+    opacity: enabled ? 1 : 0.5
     color: mouseArea.containsMouse ? Utils.alpha(Theme.base05, 0.12) : "transparent"
-
-
     border.width: 1
     border.color: Utils.alpha(Theme.base05, 0.3)
 
     ShellText {
         anchors.centerIn: parent
         text: root.icon
-        size: 12
+        size: root.iconSize
     }
 
     MouseArea {
@@ -30,9 +30,6 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: mouse => {
-            mouse.accepted = true;
-            root.clicked();
-        }
+        onClicked: root.clicked()
     }
 }

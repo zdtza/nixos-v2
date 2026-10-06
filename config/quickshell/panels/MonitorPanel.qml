@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 // Brightness, focused-monitor scale, and monitor overview.
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import "../components"
 import "../services"
 
@@ -23,7 +22,7 @@ Item {
 
     function brightnessStatus(): string {
         if (!MonitorService.available) return "MONITOR READY";
-        const value = MonitorService.level;
+        const value = MonitorService.brightnessPercent;
         if (value <= 10) return "THE GLOAMING";
         if (value <= 30) return "MOONLIGHT HAZE";
         if (value <= 50) return "SOFT MORNING";
@@ -81,22 +80,12 @@ Item {
             wheel.angleDelta.y > 0 ? MonitorService.brightnessStep : -MonitorService.brightnessStep)
     }
 
-    HyprlandFocusGrab {
-        active: root.opened && !PanelService.refocusing
-        windows: [panel, root.QsWindow.window]
-        onCleared: if (!PanelService.refocusing) PanelService.close(root)
-    }
 
     Drawer {
         id: panel
         anchorItem: root
-        anchorWindow: root.QsWindow.window
-        open: root.opened
-        onCloseRequested: PanelService.close(root)
         contentSpacing: 12
         implicitWidth: 460
-        implicitHeight: panelContent.implicitHeight
-            + contentTopMargin + contentBottomMargin
 
         Hero {
             width: parent.width
@@ -110,15 +99,14 @@ Item {
         SectionHeader {
             title: "BRIGHTNESS"
             detail: MonitorService.available
-                ? MonitorService.level + "%" : "UNAVAILABLE"
+                ? MonitorService.brightnessPercent + "%" : "UNAVAILABLE"
         }
 
         Slider {
             width: parent.width
             enabled: MonitorService.available
-            value: MonitorService.level / MonitorService.maxLevel
-            onValueEdited: value => MonitorService.setLevel(
-                Math.round(value * MonitorService.maxLevel))
+            value: MonitorService.brightnessPercent / 100
+            onValueEdited: value => MonitorService.setBrightness(Math.round(value * 100))
         }
 
         Separator {}

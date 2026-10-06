@@ -2,39 +2,9 @@ pragma Singleton
 
 // Persistent notification suppression state.
 import QtQuick
-import Quickshell
-import Quickshell.Io
 
-Item {
-    id: root
-
-    property bool active: false
-
-    function setEnabled(value: bool): void {
-        active = value;
-        stateFile.setText(value ? "true\n" : "false\n");
-    }
-
-    function toggle(): void {
-        setEnabled(!active);
-    }
-
-    FileView {
-        id: stateFile
-        path: Quickshell.statePath("do-not-disturb-enabled")
-        preload: true
-        atomicWrites: true
-        printErrors: false
-        onLoaded: root.active = String(text() || "").trim() === "true"
-        onLoadFailed: stateFile.setText("false\n")
-    }
-
-    IpcHandler {
-        target: "dnd"
-
-        function toggle(): void { root.toggle(); }
-        function enable(): void { root.setEnabled(true); }
-        function disable(): void { root.setEnabled(false); }
-        function isEnabled(): bool { return root.active; }
-    }
+PersistentToggle {
+    stateFileName: "do-not-disturb-enabled"
+    ipcTarget: "dnd"
+    onMissing: setEnabled(false)
 }

@@ -4,7 +4,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Hyprland
 import "../components"
 import "../services"
 import ".."
@@ -77,22 +76,15 @@ Item {
             Quickshell.execDetached(["wl-copy", value]);
     }
 
-    function close(): void {
-        PanelService.close(root);
+    function clearPassword(): void {
         passwordSsid = "";
         passwordText = "";
         failureText = "";
     }
 
     function cancelPasswordEntry(): void {
-        passwordSsid = "";
-        passwordText = "";
-        failureText = "";
+        clearPassword();
         restoreNetworkListFocus();
-    }
-
-    function toggle(): void {
-        PanelService.toggle(root);
     }
 
     function activateNetwork(network: var): void {
@@ -175,6 +167,7 @@ Item {
                 selectedSsid = networks[0].ssid;
             Qt.callLater(() => networkList.forceActiveFocus());
         } else {
+            clearPassword();
             NetworkService.releaseScanner();
             NetworkService.releaseDetails();
         }
@@ -269,27 +262,15 @@ Item {
         panel: root
         text: NetworkService.icon
         textSize: 15
-        onClicked: root.toggle()
+        onClicked: PanelService.toggle(root)
     }
 
-    HyprlandFocusGrab {
-        active: root.opened && !PanelService.refocusing
-        windows: [panel, root.QsWindow.window]
-        onCleared: if (!PanelService.refocusing) root.close()
-    }
 
     Drawer {
         id: panel
         anchorItem: root
-        anchorWindow: root.QsWindow.window
-        open: root.opened
         closeOnEscape: root.passwordSsid === ""
-        onCloseRequested: root.close()
-        contentSpacing: 14
         contentBottomMargin: 12
-        readonly property real maximumHeight: Math.max(320,
-            (root.QsWindow.window && root.QsWindow.window.screen
-                ? root.QsWindow.window.screen.height : 800) - 45)
         // Connected networks and the "AVAILABLE" header are pinned, so they count toward chrome height rather than the scrollable viewport.
         readonly property real panelChromeHeight: contentTopMargin
             + contentBottomMargin + networkHero.implicitHeight
@@ -316,11 +297,7 @@ Item {
             icon: NetworkService.icon
             title: NetworkService.connectionName
             status: root.statusText
-            trailingWidth: 44
-            trailingHeight: 24
-
             ToggleSwitch {
-                anchors.fill: parent
                 checked: NetworkService.wifiEnabled
                 onToggled: NetworkService.toggleWifi()
             }
@@ -394,11 +371,10 @@ Item {
         Component {
             id: networkRowComponent
 
-            Rectangle {
+            ListRow {
                             id: networkRow
                             required property var modelData
                             readonly property bool passwordOpen: root.passwordSsid === String(modelData.ssid)
-                            readonly property bool keyboardSelected: root.selectedSsid === String(modelData.ssid)
 
                             onPasswordOpenChanged: if (passwordOpen) Qt.callLater(() => {
                                 const point = networkRow.mapToItem(networkList.contentItem, 0, 0);
@@ -409,22 +385,32 @@ Item {
                                         bottom - networkList.height));
                             })
 
-                            width: parent.width
                             // Passphrase entry takes over this row in place rather than growing it, so opening a prompt never reflows the list or the panel height.
                             height: root.networkRowHeight
-                            // Hover and keyboard selection share one highlight; connection state is conveyed by its dedicated section.
-                            color: rowMouse.pressed && !passwordOpen
-                                ? Utils.alpha(Theme.base05, 0.22)
-                                : networkRow.keyboardSelected && !passwordOpen
-                                    ? Utils.alpha(Theme.base05, 0.10) : "transparent"
-                            border.width: networkRow.keyboardSelected && !passwordOpen ? 1 : 0
-                            border.color: Utils.alpha(Theme.base05, 0.25)
-                            radius: PanelService.rounding
+                            contentHidden: passwordOpen
+                            icon: NetworkService.wifiIcon(modelData.signal)
+                            title: modelData.ssid
+                            subtitle: modelData.stateChanging ? "Connecting…"
+                                : modelData.connected ? "Connected"
+                                : modelData.known ? "Known network"
+                                : NetworkService.securityLabel(modelData.security)
+                            trailingIcon: NetworkService.securityRequiresPassword(modelData.security) ? "󰌾" : ""
+                            selected: root.selectedSsid === String(modelData.ssid)
+                            onHoverSelected: root.selectedSsid = String(modelData.ssid)
+                            onActivated: {
+                                root.selectedSsid = String(modelData.ssid);
+                                root.activateNetwork(modelData);
+                            }
 
-                            HoverHandler {
-                                onHoveredChanged: if (hovered && !networkRow.passwordOpen
-                                        && PanelService.hoverSelectReady)
-                                    root.selectedSsid = String(networkRow.modelData.ssid)
+                            RowActionButton {
+                                visible: networkRow.modelData.connected
+                                icon: "󰅖"
+                                onClicked: NetworkService.disconnect(String(networkRow.modelData.ssid))
+                            }
+                            RowActionButton {
+                                visible: networkRow.modelData.known || networkRow.modelData.connected
+                                icon: "󰆴"
+                                onClicked: NetworkService.forget(String(networkRow.modelData.ssid))
                             }
 
                             Connections {
@@ -447,92 +433,8 @@ Item {
                                 }
                             }
 
-                            Item {
-                                anchors.fill: parent
-                                visible: !networkRow.passwordOpen
-
-                                ShellText {
-                                    id: networkIcon
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 10
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: NetworkService.wifiIcon(networkRow.modelData.signal)
-                                    size: 16
-                                }
-                                Column {
-                                    anchors.left: networkIcon.right
-                                    anchors.leftMargin: 10
-                                    anchors.right: actionRow.visible ? actionRow.left : lockIcon.left
-                                    anchors.rightMargin: 8
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 1
-
-                                    ShellText {
-                                        width: parent.width
-                                        text: networkRow.modelData.ssid
-                                        size: 12
-                                        elide: Text.ElideRight
-                                    }
-                                    ShellText {
-                                        width: parent.width
-                                        text: networkRow.modelData.stateChanging ? "Connecting…"
-                                            : networkRow.modelData.connected ? "Connected"
-                                            : networkRow.modelData.known ? "Known network"
-                                            : NetworkService.securityLabel(networkRow.modelData.security)
-                                        color: Theme.textSecondary
-                                        size: 11
-                                        elide: Text.ElideRight
-                                    }
-                                }
-
-                                Row {
-                                    id: actionRow
-                                    z: 2
-                                    visible: networkRow.keyboardSelected
-                                        && (networkRow.modelData.connected || networkRow.modelData.known)
-                                    anchors.right: lockIcon.left
-                                    anchors.rightMargin: 16
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 8
-
-                                    RowActionButton {
-                                        visible: networkRow.modelData.connected
-                                        icon: "󰅖"
-                                        onClicked: NetworkService.disconnect(String(networkRow.modelData.ssid))
-                                    }
-
-                                    RowActionButton {
-                                        visible: networkRow.modelData.known || networkRow.modelData.connected
-                                        icon: "󰆴"
-                                        onClicked: NetworkService.forget(String(networkRow.modelData.ssid))
-                                    }
-                                }
-
-                                ShellText {
-                                    id: lockIcon
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: 16
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: NetworkService.securityRequiresPassword(networkRow.modelData.security) ? "󰌾" : ""
-                                    color: Theme.textSecondary
-                                    size: 12
-                                }
-
-                                MouseArea {
-                                    id: rowMouse
-                                    anchors.fill: parent
-                                    z: 1
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.selectedSsid = String(networkRow.modelData.ssid);
-                                        root.activateNetwork(networkRow.modelData);
-                                    }
-                                }
-                            }
-
-                            Row {
-                                visible: root.passwordSsid === String(networkRow.modelData.ssid)
+                            overlay: Row {
+                                visible: networkRow.passwordOpen
                                 onVisibleChanged: if (visible)
                                     Qt.callLater(() => passwordInput.forceActiveFocus())
                                 anchors {
@@ -644,49 +546,38 @@ Item {
             detail: NetworkService.wifiEnabled ? "SCANNING" : "WI-FI OFF"
         }
 
-        Item {
+        ScrollArea {
+            id: networkList
             width: parent.width
             height: panel.networkViewportHeight
-            clip: true
+            contentHeight: networkColumn.implicitHeight + root.networkEdgeInset
+            activeFocusOnTab: true
 
-            Flickable {
-                id: networkList
-                anchors.fill: parent
-                contentHeight: networkColumn.implicitHeight + root.networkEdgeInset
-                clip: true
-                interactive: contentHeight > height
-                boundsBehavior: Flickable.StopAtBounds
-                flickableDirection: Flickable.VerticalFlick
-                activeFocusOnTab: true
+            HoverHandler {
+                onHoveredChanged: if (hovered && root.passwordSsid === "")
+                    networkList.forceActiveFocus()
+            }
 
-                FastScroll { view: networkList }
+            Column {
+                id: networkColumn
+                width: networkList.width
+                spacing: root.networkRowSpacing
 
-                HoverHandler {
-                    onHoveredChanged: if (hovered && root.passwordSsid === "")
-                        networkList.forceActiveFocus()
+                ShellText {
+                    width: parent.width
+                    height: root.emptyStateHeight
+                    visible: root.availableNetworks.length === 0
+                    text: NetworkService.wifiEnabled
+                        ? "No available networks" : "Wi-Fi is turned off"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    color: Theme.textSecondary
+                    size: 12
                 }
 
-                Column {
-                    id: networkColumn
-                    width: networkList.width
-                    spacing: root.networkRowSpacing
-
-                    ShellText {
-                        width: parent.width
-                        height: root.emptyStateHeight
-                        visible: root.availableNetworks.length === 0
-                        text: NetworkService.wifiEnabled
-                            ? "No available networks" : "Wi-Fi is turned off"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        color: Theme.textSecondary
-                        size: 12
-                    }
-
-                    Repeater {
-                        model: root.availableNetworks
-                        delegate: networkRowComponent
-                    }
+                Repeater {
+                    model: root.availableNetworks
+                    delegate: networkRowComponent
                 }
             }
         }

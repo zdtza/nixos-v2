@@ -5,14 +5,13 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-Item {
+PersistentToggle {
     id: root
 
+    stateFileName: "nightlight-enabled"
+
     property bool available: false
-    property bool active: false
-    property bool desiredEnabled: false
     property bool writingEnabled: false
-    property bool stateLoaded: false
     property int temperature: 3500
     property int writingTemperature: 3500
     property bool temperatureLoaded: false
@@ -21,7 +20,7 @@ Item {
         if (controlProcess.running || !stateLoaded || !temperatureLoaded)
             return;
 
-        writingEnabled = desiredEnabled;
+        writingEnabled = active;
         writingTemperature = temperature;
         controlProcess.command = writingEnabled
             ? ["hyprctl", "hyprsunset", "temperature", String(writingTemperature)]
@@ -29,18 +28,9 @@ Item {
         controlProcess.running = true;
     }
 
-    function setEnabled(value: bool): void {
-        stateLoaded = true;
-        desiredEnabled = value;
-        active = value;
-        available = true;
-        stateFile.setText(value ? "true\n" : "false\n");
-        dispatchDesired();
-    }
-
-    function toggle(): void {
-        setEnabled(!active);
-    }
+    onActiveChanged: if (stateLoaded) dispatchDesired()
+    onRestored: dispatchDesired()
+    onMissing: refresh()
 
     function setTemperature(value: int): void {
         const next = Math.max(1000, Math.min(6500, Math.round(Number(value))));
@@ -50,15 +40,8 @@ Item {
         temperatureLoaded = true;
         temperature = next;
         temperatureFile.setText(String(next) + "\n");
-        if (desiredEnabled)
+        if (active)
             dispatchDesired();
-    }
-
-    function restoreEnabled(raw: string): void {
-        desiredEnabled = String(raw || "").trim() === "true";
-        active = desiredEnabled;
-        stateLoaded = true;
-        dispatchDesired();
     }
 
     function restoreTemperature(raw: string): void {
@@ -83,38 +66,16 @@ Item {
             return;
 
         const actualEnabled = value === "false";
-        if (!stateLoaded) {
-            stateLoaded = true;
-            desiredEnabled = actualEnabled;
-            active = actualEnabled;
-            stateFile.setText(actualEnabled ? "true\n" : "false\n");
-            if (actualEnabled)
-                dispatchDesired();
-            return;
-        }
-
-        if (actualEnabled !== desiredEnabled) {
-            active = desiredEnabled;
+        // With nothing saved yet, adopt whatever hyprsunset is doing.
+        if (!stateLoaded)
+            setEnabled(actualEnabled);
+        else if (actualEnabled !== active)
             dispatchDesired();
-        } else {
-            active = actualEnabled;
-            desiredEnabled = actualEnabled;
-        }
     }
 
     function refresh(): void {
         if (!statusProcess.running && !controlProcess.running)
             statusProcess.running = true;
-    }
-
-    FileView {
-        id: stateFile
-        path: Quickshell.statePath("nightlight-enabled")
-        preload: true
-        atomicWrites: true
-        printErrors: false
-        onLoaded: root.restoreEnabled(text())
-        onLoadFailed: root.refresh()
     }
 
     FileView {
@@ -139,9 +100,8 @@ Item {
     Process {
         id: controlProcess
         onExited: {
-            if (root.writingEnabled !== root.desiredEnabled
-                    || (root.desiredEnabled
-                        && root.writingTemperature !== root.temperature)) {
+            if (root.writingEnabled !== root.active
+                    || (root.active && root.writingTemperature !== root.temperature)) {
                 root.dispatchDesired();
                 return;
             }

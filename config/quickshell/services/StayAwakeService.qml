@@ -2,61 +2,34 @@ pragma Singleton
 
 // Persistent caffeine mode.
 import QtQuick
-import Quickshell
 import Quickshell.Io
 
-Item {
+PersistentToggle {
     id: root
 
-    property bool active: false
-    property bool desiredEnabled: false
+    stateFileName: "stay-awake-enabled"
+    ipcTarget: "stayawake"
+
     property bool writingEnabled: false
-    property bool stateLoaded: false
 
     function dispatchDesired(): void {
         if (controlProcess.running)
             return;
 
-        writingEnabled = desiredEnabled;
+        writingEnabled = active;
         controlProcess.command = ["systemctl", "--user",
             writingEnabled ? "start" : "stop", "stay-awake.service"];
         controlProcess.running = true;
     }
 
-    function setEnabled(value: bool): void {
-        stateLoaded = true;
-        desiredEnabled = value;
-        active = value;
-        stateFile.setText(value ? "true\n" : "false\n");
-        dispatchDesired();
-    }
-
-    function toggle(): void {
-        setEnabled(!active);
-    }
-
-    function restore(raw: string): void {
-        const value = String(raw || "").trim();
-        desiredEnabled = value === "true";
-        active = desiredEnabled;
-        stateLoaded = true;
-        dispatchDesired();
-    }
-
-    FileView {
-        id: stateFile
-        path: Quickshell.statePath("stay-awake-enabled")
-        preload: true
-        atomicWrites: true
-        printErrors: false
-        onLoaded: root.restore(text())
-        onLoadFailed: if (!statusProcess.running) statusProcess.running = true
-    }
+    onActiveChanged: if (stateLoaded) dispatchDesired()
+    onRestored: dispatchDesired()
+    onMissing: if (!statusProcess.running) statusProcess.running = true
 
     Process {
         id: controlProcess
         onExited: {
-            if (root.writingEnabled !== root.desiredEnabled) {
+            if (root.writingEnabled !== root.active) {
                 root.dispatchDesired();
                 return;
             }
@@ -72,20 +45,11 @@ Item {
                 return;
 
             const actualEnabled = exitCode === 0;
-            if (!root.stateLoaded) {
-                root.stateLoaded = true;
-                root.desiredEnabled = actualEnabled;
-                root.active = actualEnabled;
-                stateFile.setText(actualEnabled ? "true\n" : "false\n");
-                return;
-            }
-
-            if (actualEnabled !== root.desiredEnabled) {
-                root.active = root.desiredEnabled;
+            // With nothing saved yet, adopt whatever the service is doing.
+            if (!root.stateLoaded)
+                root.setEnabled(actualEnabled);
+            else if (actualEnabled !== root.active)
                 root.dispatchDesired();
-            } else {
-                root.active = actualEnabled;
-            }
         }
     }
 
@@ -101,14 +65,5 @@ Item {
         repeat: true
         onTriggered: if (!statusProcess.running && !controlProcess.running)
             statusProcess.running = true
-    }
-
-    IpcHandler {
-        target: "stayawake"
-
-        function toggle(): void { root.toggle(); }
-        function enable(): void { root.setEnabled(true); }
-        function disable(): void { root.setEnabled(false); }
-        function isEnabled(): bool { return root.active; }
     }
 }

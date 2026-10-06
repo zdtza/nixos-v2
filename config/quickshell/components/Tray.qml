@@ -35,22 +35,28 @@ Item {
     property bool windowsMenuOpen: false
 
     onOpenedChanged: {
-        if (!opened) {
-            windowsMenuOpen = false;
-            menuLoader.trayItem = null;
-            menuLoader.anchorItem = null;
-            windowsMenuLoader.anchorItem = null;
-        } else {
+        if (!opened)
+            dismissMenu();
+        else
             selectedItemIndex = Math.max(0,
                 Math.min(keyboardItemCount - 1, selectedItemIndex));
-        }
     }
 
     function dismissMenu(): void {
         windowsMenuOpen = false;
         menuLoader.trayItem = null;
         menuLoader.anchorItem = null;
-        windowsMenuLoader.anchorItem = null;
+    }
+
+    function showItemMenu(item: var, entry: Item): void {
+        windowsMenuOpen = false;
+        menuLoader.trayItem = item;
+        menuLoader.anchorItem = entry;
+    }
+
+    function showWindowsMenu(): void {
+        dismissMenu();
+        windowsMenuOpen = true;
     }
 
     function toggleFromIpc(): void {
@@ -85,32 +91,20 @@ Item {
 
         if (selectedItemIndex < items.length) {
             const item = items[selectedItemIndex];
-            const entry = trayRepeater.itemAt(selectedItemIndex);
-            windowsMenuOpen = false;
-            windowsMenuLoader.anchorItem = null;
-            if (item.hasMenu) {
-                menuLoader.trayItem = item;
-                menuLoader.anchorItem = entry;
-            } else {
+            if (item.hasMenu)
+                showItemMenu(item, trayRepeater.itemAt(selectedItemIndex));
+            else
                 dismissMenu();
-            }
             return;
         }
-
-        menuLoader.trayItem = null;
-        menuLoader.anchorItem = null;
-        windowsMenuOpen = true;
-        windowsMenuLoader.anchorItem = windowsEntry;
+        showWindowsMenu();
     }
 
     function activateSelection(): void {
         if (selectedItemIndex < items.length) {
             const item = items[selectedItemIndex];
-            const entry = trayRepeater.itemAt(selectedItemIndex);
             if (item.hasMenu) {
-                windowsMenuOpen = false;
-                menuLoader.trayItem = item;
-                menuLoader.anchorItem = entry;
+                showItemMenu(item, trayRepeater.itemAt(selectedItemIndex));
                 PanelService.open(root);
             } else if (!item.onlyMenu) {
                 item.activate();
@@ -119,8 +113,7 @@ Item {
             return;
         }
         if (WindowsService.running) {
-            windowsMenuOpen = true;
-            windowsMenuLoader.anchorItem = windowsEntry;
+            showWindowsMenu();
             PanelService.open(root);
         }
     }
@@ -241,21 +234,11 @@ Item {
                         implicitWidth: 28
                         implicitHeight: PanelService.barItemHeight
 
-                        Rectangle {
-                            anchors.bottom: parent.bottom
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            width: 16
-                            height: 2
-                            radius: PanelService.rounding
+                        HoverUnderline {
                             // menuLoader.trayItem still points at the last item clicked, so the Windows menu has to be excluded here or that item lights up alongside it.
-                            visible: opacity > 0
-                            opacity: itemMouse.containsMouse
+                            shown: itemMouse.containsMouse
                                 || (root.opened && root.selectedItemIndex === entry.index)
                                 || (root.opened && !root.windowsMenuOpen && menuLoader.trayItem === entry.modelData)
-                                ? 1 : 0
-                            color: Theme.base05
-
-                            Behavior on opacity { NumberAnimation { duration: 120 } }
                         }
 
                         Image {
@@ -287,9 +270,7 @@ Item {
                                         return;
                                     }
 
-                                    root.windowsMenuOpen = false;
-                                    menuLoader.trayItem = entry.modelData;
-                                    menuLoader.anchorItem = entry;
+                                    root.showItemMenu(entry.modelData, entry);
                                     PanelService.open(root);
                                     return;
                                 }
@@ -312,20 +293,10 @@ Item {
                     implicitWidth: visible ? 28 : 0
                     implicitHeight: PanelService.barItemHeight
 
-                    Rectangle {
-                        anchors.bottom: parent.bottom
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: 16
-                        height: 2
-                        radius: PanelService.rounding
-                        visible: opacity > 0
-                        opacity: windowsMouse.containsMouse
+                    HoverUnderline {
+                        shown: windowsMouse.containsMouse
                             || (root.opened && root.selectedItemIndex === root.items.length)
                             || (root.opened && root.windowsMenuOpen)
-                            ? 1 : 0
-                        color: Theme.base05
-
-                        Behavior on opacity { NumberAnimation { duration: 120 } }
                     }
 
                     Image {
@@ -355,8 +326,7 @@ Item {
                                 return;
                             }
 
-                            root.windowsMenuOpen = true;
-                            windowsMenuLoader.anchorItem = windowsEntry;
+                            root.showWindowsMenu();
                             PanelService.open(root);
                         }
                     }
@@ -440,13 +410,11 @@ Item {
     Loader {
         id: windowsMenuLoader
 
-        property Item anchorItem: null
-
         active: root.opened && root.windowsMenuOpen
 
         sourceComponent: TrayMenu {
             entries: root.windowsMenuEntries
-            anchorItem: windowsMenuLoader.anchorItem
+            anchorItem: windowsEntry
             anchorWindow: root.QsWindow.window
             menuTitle: "Windows"
             menuStatus: WindowsService.running ? "Running" : "Stopped"

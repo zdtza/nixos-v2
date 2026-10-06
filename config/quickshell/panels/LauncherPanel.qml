@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 // Application launcher drawer, opened from the 4-square bar button or Super+Space.
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import "../components"
 import "../services"
 import ".."
@@ -162,27 +161,19 @@ Item {
         onClicked: PanelService.toggle(root)
     }
 
-    HyprlandFocusGrab {
-        active: root.opened && !PanelService.refocusing
-        windows: [panel, root.QsWindow.window]
-        onCleared: if (!PanelService.refocusing) PanelService.close(root)
-    }
 
     Drawer {
         id: panel
 
         anchorItem: root
-        anchorWindow: root.QsWindow.window
-        open: root.opened
         centeredHorizontally: true
         centeredVertically: true
-        onCloseRequested: PanelService.close(root)
         contentMargins: 0
         contentSpacing: 0
         implicitWidth: 420
         // Search plus exactly nine application rows (64px rows, 4px spacing).
         implicitHeight: Math.min(16 + searchBox.height + 12 + 608 + 16,
-            (root.QsWindow.window?.screen?.height ?? 800)
+            (panel.screen?.height ?? 800)
             - PanelService.panelBarInset - PanelService.panelGap * 2)
 
         Item {

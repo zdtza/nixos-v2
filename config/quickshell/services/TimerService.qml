@@ -9,9 +9,12 @@ Item {
     id: root
 
     property var timers: []
-    property bool running: false
+    readonly property bool running: timers.length > 0
     property double nowMs: Date.now()
-    property int remainingSeconds: 0
+    // Seconds left on whichever timer finishes first.
+    readonly property int remainingSeconds: running
+        ? Math.max(0, Math.ceil((Math.min(...timers.map(timer => timer.deadlineMs)) - nowMs) / 1000))
+        : 0
     property int lastDurationSeconds: 0
     property int nextTimerSequence: 0
 
@@ -83,12 +86,9 @@ done
         const timer = {
             id: String(startedAt) + "-" + String(nextTimerSequence++),
             deadlineMs: startedAt + duration * 1000,
-            durationSeconds: duration,
-            remainingSeconds: duration
+            durationSeconds: duration
         };
         timers = timers.concat([timer]);
-        running = true;
-        updateNearestRemaining();
         saveTimers();
         return true;
     }
@@ -99,8 +99,6 @@ done
             return;
 
         timers = remaining;
-        running = timers.length > 0;
-        updateNearestRemaining();
         saveTimers();
     }
 
@@ -109,48 +107,19 @@ done
             return;
 
         timers = [];
-        running = false;
-        remainingSeconds = 0;
         saveTimers();
-    }
-
-    function updateNearestRemaining(): void {
-        if (timers.length === 0) {
-            remainingSeconds = 0;
-            return;
-        }
-
-        let nearest = timers[0].remainingSeconds;
-        for (let index = 1; index < timers.length; ++index)
-            nearest = Math.min(nearest, timers[index].remainingSeconds);
-        remainingSeconds = nearest;
     }
 
     function tick(): void {
         if (timers.length === 0)
             return;
 
-        const now = Date.now();
-        const expired = [];
-        let nearest = 5999;
-        nowMs = now;
-
-        for (const timer of timers) {
-            const remaining = Math.max(0, Math.ceil((timer.deadlineMs - now) / 1000));
-            if (remaining === 0)
-                expired.push(timer.id);
-            else
-                nearest = Math.min(nearest, remaining);
-        }
+        nowMs = Date.now();
+        const expired = timers.filter(timer => timer.deadlineMs <= nowMs).map(timer => timer.id);
 
         // Keep model identity stable between expirations.
-        if (expired.length > 0)
-            timers = timers.filter(timer => expired.indexOf(timer.id) === -1);
-
-        running = timers.length > 0;
-        remainingSeconds = running ? nearest : 0;
-
         if (expired.length > 0) {
+            timers = timers.filter(timer => expired.indexOf(timer.id) === -1);
             saveTimers();
             for (let index = 0; index < expired.length; ++index)
                 Quickshell.execDetached(["sh", "-c", root.alertCommand]);
@@ -189,13 +158,11 @@ done
                 id: String(timer.id || ("restored-" + String(deadline))),
                 deadlineMs: deadline,
                 durationSeconds: Number.isFinite(duration) && duration > 0
-                    ? duration : Math.max(1, lastDurationSeconds),
-                remainingSeconds: Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
+                    ? duration : Math.max(1, lastDurationSeconds)
             });
         }
 
         timers = restored;
-        running = timers.length > 0;
         tick();
     }
 

@@ -290,6 +290,8 @@ Item {
         subtitle: root.deviceStatus(modelData)
         trailingIcon: BluetoothService.isConnected(modelData) ? "󰂱" : (modelData.paired ? "󰌾" : "")
         selected: root.selectedDevice === modelData
+        // Connected devices have their own section, so a filled selection can't be mistaken for one.
+        selectionFill: true
         onHoverSelected: root.selectedDevice = modelData
         onActivated: root.selectedDevice = modelData
     }

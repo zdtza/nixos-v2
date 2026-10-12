@@ -19,11 +19,9 @@ Item {
     property int nextTimerSequence: 0
 
     // Completion alert, kept here as plain POSIX sh rather than a packaged wrapper so this config runs unmodified off NixOS.
+    // $1 is the finished timer's duration in seconds, which Restart reuses.
     readonly property string alertCommand: `
-notify-send --app-name="Quickshell Timer" --urgency=critical \\
-    --icon=alarm-symbolic --expire-time=10000 \\
-    "Timer complete" "Countdown has elapsed." 2>/dev/null
-
+play_sound() {
 # Search standard sound-theme directories.
 dirs=$XDG_DATA_DIRS
 [ -n "$dirs" ] || dirs=/usr/local/share:/usr/share
@@ -46,6 +44,18 @@ for player in pw-play paplay mpv ffplay aplay; do
         *)      exec "$player" "$sound" ;;
     esac
 done
+}
+play_sound &
+
+action=$(notify-send --app-name="Quickshell Timer" --urgency=critical \\
+    --icon=alarm-symbolic --expire-time=10000 \\
+    --action=restart=Restart --action=snooze="Snooze 5 min" \\
+    "Timer complete" "Countdown has elapsed." 2>/dev/null)
+
+case $action in
+    restart) qs ipc call timer start "$1" ;;
+    snooze)  qs ipc call timer start 300 ;;
+esac
 `
 
     function formatDuration(seconds: int): string {
@@ -115,14 +125,15 @@ done
             return;
 
         nowMs = Date.now();
-        const expired = timers.filter(timer => timer.deadlineMs <= nowMs).map(timer => timer.id);
+        const expired = timers.filter(timer => timer.deadlineMs <= nowMs);
 
         // Keep model identity stable between expirations.
         if (expired.length > 0) {
-            timers = timers.filter(timer => expired.indexOf(timer.id) === -1);
+            timers = timers.filter(timer => expired.indexOf(timer) === -1);
             saveTimers();
-            for (let index = 0; index < expired.length; ++index)
-                Quickshell.execDetached(["sh", "-c", root.alertCommand]);
+            for (const timer of expired)
+                Quickshell.execDetached(["sh", "-c", root.alertCommand, "sh",
+                    String(timer.durationSeconds ?? root.lastDurationSeconds)]);
         }
     }
 

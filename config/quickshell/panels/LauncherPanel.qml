@@ -243,7 +243,7 @@ Item {
 
                         width: ListView.view.width
                         height: 64
-                        color: row.current ? Utils.alpha(Theme.base05, 0.11) : "transparent"
+                        color: row.current ? Theme.selectionFill : "transparent"
 
                         readonly property bool rowLaunching: root.itemLoading(row.modelData)
 

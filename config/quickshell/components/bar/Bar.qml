@@ -111,9 +111,19 @@ PanelWindow {
     }
 
     Workspaces {
+        id: workspaces
         screen: bar.screen
         anchors {
             left: launcher.right
+            verticalCenter: parent.verticalCenter
+        }
+    }
+
+    MinimisedBadge {
+        screen: bar.screen
+        anchors {
+            left: workspaces.right
+            leftMargin: PanelService.barSpacing
             verticalCenter: parent.verticalCenter
         }
     }

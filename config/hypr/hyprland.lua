@@ -33,7 +33,7 @@ hl.config({
 	layout = { single_window_aspect_ratio = { 16, 9 } },
 
 	dwindle = {
-		preserve_split = false,
+		preserve_split = true,
 	},
 	misc = {
 		disable_hyprland_logo = true,
@@ -159,16 +159,16 @@ local configured_monitors = {
 		mode = "1920x1080@60",
 		position = "0x0",
 		scale = 1,
-		workspaces = { 7, 8, 9 },
+		workspaces = { 4, 5, 6, 7, 8, 9, 10 },
 		-- Used instead when this is the only connected output.
 		laptop_only_workspaces = { 1, 2, 3 },
 	},
 	{
-		output = "HDMI-A-1",
-		mode = "3440x1440@59.96Hz",
+		output = "DP-2",
+		mode = "3440x1440@180.08Hz",
 		position = "1920x0",
 		scale = 1,
-		workspaces = { 1, 2, 3, 4, 5, 6},
+		workspaces = { 1, 2, 3 },
 	},
 }
 
@@ -413,6 +413,91 @@ local function swap_workspace_with(target)
 	end
 end
 
+-- Minimised windows wait on a hidden special workspace for their monitor and
+-- come back most recent first. Special workspaces stay on the monitor that
+-- created them, so a shared one would make windows from the other monitor slide
+-- across screens instead of fading. Restoring prefers the focused monitor's
+-- windows. The stack resets on config reload, so restoring falls back to any
+-- window still parked.
+local MINIMISED_PREFIX = "special:minimised-"
+local minimised_stack = {}
+
+local function minimised_workspace(monitor)
+	return MINIMISED_PREFIX .. monitor.name
+end
+
+local function is_minimised(window)
+	local name = window and window.workspace and window.workspace.name
+	return name ~= nil and name:sub(1, #MINIMISED_PREFIX) == MINIMISED_PREFIX
+end
+
+local function minimise_window()
+	local window = hl.get_active_window()
+	if not window or is_minimised(window) then
+		return
+	end
+
+	table.insert(minimised_stack, window.address)
+	hl.dispatch(hl.dsp.window.move({
+		workspace = minimised_workspace(window.monitor),
+		follow = false,
+		window = "address:" .. window.address,
+	}))
+end
+
+-- Pops the most recent stacked window parked on workspace, or on any minimised
+-- workspace when workspace is nil, dropping entries no longer minimised.
+local function take_minimised(workspace)
+	for i = #minimised_stack, 1, -1 do
+		local window = hl.get_window("address:" .. minimised_stack[i])
+		if not is_minimised(window) then
+			table.remove(minimised_stack, i)
+		elseif not workspace or window.workspace.name == workspace then
+			table.remove(minimised_stack, i)
+			return window
+		end
+	end
+end
+
+local function next_minimised_window(monitor)
+	local workspace = minimised_workspace(monitor)
+	local window = take_minimised(workspace)
+	if window then
+		return window
+	end
+
+	local parked = hl.get_windows({ workspace = workspace })
+	if #parked > 0 then
+		return parked[#parked]
+	end
+
+	window = take_minimised()
+	if window then
+		return window
+	end
+
+	local anywhere = {}
+	for _, candidate in ipairs(hl.get_windows()) do
+		if is_minimised(candidate) then
+			table.insert(anywhere, candidate)
+		end
+	end
+	return anywhere[#anywhere]
+end
+
+local function unminimise_window()
+	local current = hl.get_active_workspace()
+	local window = current and next_minimised_window(current.monitor)
+	if not window or not current then
+		return
+	end
+
+	hl.dispatch(hl.dsp.window.move({
+		workspace = current.special and current.name or current.id,
+		window = "address:" .. window.address,
+	}))
+end
+
 local function open_floating_terminal()
 	hl.dispatch(hl.dsp.exec_cmd("launch-terminal-cwd --class floating-terminal"))
 end
@@ -469,10 +554,13 @@ end, { locked = true })
 bind("SUPER + S", "Toggle the terminal workspace", hl.dsp.workspace.toggle_special("terminal"))
 bind("SUPER + CTRL + SHIFT + S", "Move focused window to terminal workspace", hl.dsp.window.move({ workspace = "special:terminal" }))
 bind("SUPER + E", "Open Yazi file manager", hl.dsp.exec_cmd("launch-terminal-cwd yazi"))
+bind("SUPER + SHIFT + E", "Open Nautilus file manager", hl.dsp.exec_cmd("nautilus"))
 bind("SUPER + Return", "Open terminal in current directory", open_terminal)
 bind("SUPER + CTRL + Return", "Open a floating terminal", open_floating_terminal)
 bind("SUPER + W", "Close the focused window", hl.dsp.window.close())
-bind("SUPER + J", "Toggle the next split direction", hl.dsp.layout("togglesplit"))
+bind("SUPER + Q", "Minimise the focused window", minimise_window)
+bind("SUPER + SHIFT + Q", "Restore the most recently minimised window", unminimise_window)
+bind("SUPER + J","Toggle the next split direction", hl.dsp.layout("togglesplit"))
 bind("SUPER + T", "Toggle a centered floating window", toggle_centered_floating(1300, 800))
 bind("SUPER + SHIFT + T", "Toggle a centered 1080p floating window", toggle_centered_floating(1920, 1080))
 bind("SUPER + F", "Toggle fullscreen for focused window", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))

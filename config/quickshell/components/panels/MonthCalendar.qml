@@ -83,7 +83,7 @@ Item {
                         color: monthMouse.pressed
                             ? Utils.alpha(Theme.base05, 0.2)
                             : monthMouse.containsMouse
-                                ? Utils.alpha(Theme.base05, 0.12)
+                                ? Theme.selectionFill
                                 : "transparent"
 
                         ShellText {
@@ -153,13 +153,13 @@ Item {
                         height: 30
                         radius: PanelService.rounding
                         color: dayHover.hovered
-                            ? Utils.alpha(Theme.base05, 0.12)
+                            ? Theme.selectionFill
                             : dayCell.currentDay
                                 ? Utils.alpha(Theme.base05, 0.18) : "transparent"
                         border.width: dayCell.currentDay || dayHover.hovered ? 1 : 0
                         border.color: dayCell.currentDay
                             ? Utils.alpha(Theme.base05, 0.8)
-                            : Utils.alpha(Theme.base05, 0.3)
+                            : Theme.selectionBorder
 
                         ShellText {
                             anchors.centerIn: parent

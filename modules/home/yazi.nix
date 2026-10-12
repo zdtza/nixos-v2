@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 
 let
   colors = config.lib.stylix.colors.withHashtag;
@@ -15,6 +15,7 @@ in
     enable = true;
     settings = {
       mgr = {
+        show_hidden = true;
         ratio = [
           2
           4
@@ -42,6 +43,79 @@ in
         ];
       };
     };
+
+    # Esc still cancels find, visual mode, filter, selection, and search first, and only goes up a folder when there is nothing to cancel.
+    keymap.mgr.prepend_keymap = [
+      {
+        on = "<Esc>";
+        run = "plugin escape-or-leave";
+        desc = "Cancel, or go back to the parent directory";
+      }
+    ];
+    plugins.escape-or-leave = pkgs.writeTextDir "main.lua" ''
+      --- @sync entry
+      return {
+        entry = function()
+          local tab = cx.active
+          local busy = tab.finder
+            or not tab.mode.is_normal
+            or #tab.selected > 0
+            or tab.current.files.filter
+            or tab.current.cwd.spec.is_search
+          ya.emit(busy and "escape" or "leave", {})
+        end,
+      }
+    '';
+
+    # yazi has no double-click; left-click only reveals. Override Entity:click so a second left-click on the same entry within 0.4s enters directories and opens files.
+    initLua = ''
+      local last = { url = nil, time = 0 }
+
+      function Entity:click(event, up)
+        if up or event.is_middle then
+          return
+        end
+        ya.emit("reveal", { self._file.url })
+        if event.is_right then
+          ya.emit("open", {})
+          return
+        end
+
+        local url, now = tostring(self._file.url), ya.time()
+        if last.url == url and now - last.time < 0.4 then
+          ya.emit(self._file.cha.is_dir and "enter" or "open", {})
+          last.url = nil
+        else
+          last.url, last.time = url, now
+        end
+      end
+
+      -- The header's cwd path is plain text. Clicking a segment cds into that directory, mapping the clicked column back through the "~" home prefix and the left-truncation ellipsis the header renders with.
+      function Header:click(event, up)
+        local cwd = self._current.cwd
+        if up or not event.is_left or cwd.spec.is_search then
+          return
+        end
+
+        local max = self._area.w - self:children_redraw(self.RIGHT):width()
+        local path = ya.readable_path(tostring(cwd))
+        local shown = ui.truncate(path, { max = max, rtl = true })
+        local index = event.x - self._area.x + utf8.len(path) - utf8.len(shown)
+        if index < 0 or index >= utf8.len(path) then
+          return
+        end
+
+        local slash = path:find("/", utf8.offset(path, index + 1), true)
+        if not slash then
+          return
+        end
+        local target = slash == 1 and "/" or path:sub(1, slash - 1)
+        if target:sub(1, 1) == "~" then
+          target = os.getenv("HOME") .. target:sub(2)
+        end
+        ya.emit("cd", { target })
+      end
+    '';
   };
 
   # custom yazi theme.

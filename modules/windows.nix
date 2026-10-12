@@ -141,8 +141,9 @@ in
         marker = "${config.xdg.stateHome}/windows-vm/installed";
 
         helpers = ''
+          # Waits for one of the --action buttons and prints the chosen id.
           notify() {
-            notify-send --app-name=Windows --icon=windows --expire-time=2500 "$@" || true
+            notify-send --app-name=Windows --icon=windows --expire-time=8000 "$@" || true
           }
           running() {
             systemctl is-active --quiet ${unit}
@@ -174,14 +175,21 @@ in
             runtimeInputs = baseInputs ++ extraInputs;
           };
 
-        launch = mkApp "windows-launch" [ pkgs.freerdp ] ''
+        launch = mkApp "windows-launch" [
+          pkgs.freerdp
+          pkgs.xdg-utils
+        ] ''
           ${helpers}
           running || systemctl start ${unit}
 
           deadline=$((SECONDS + 180))
           until rdp_ready; do
             if (( SECONDS >= deadline )); then
-              notify 'Windows is not responding' 'Watch it at ${webUrl}'
+              case $(notify --action=watch='Open in browser' --action=retry=Retry \
+                'Windows is not responding' 'Watch it at ${webUrl}') in
+                watch) xdg-open ${webUrl} ;;
+                retry) exec "$0" ;;
+              esac
               exit 1
             fi
             sleep 2
@@ -215,21 +223,33 @@ in
           exec windows-launch
         '';
 
-        install = mkApp "windows-install" [ ] ''
+        install = mkApp "windows-install" [
+          launch
+          pkgs.xdg-utils
+        ] ''
           ${helpers}
           if [[ -f ${marker} ]]; then
-            notify 'Windows' 'Already installed, erase it first to reinstall.'
+            case $(notify --action=launch=Launch \
+              'Windows' 'Already installed, erase it first to reinstall.') in
+              launch) exec windows-launch ;;
+            esac
             exit 0
           fi
           running || systemctl start ${unit}
-          notify 'Installing Windows' 'Watch the progress at ${webUrl}'
+          case $(notify --action=watch='Watch progress' \
+            'Installing Windows' 'Watch the progress at ${webUrl}') in
+            watch) xdg-open ${webUrl} ;;
+          esac
         '';
 
-        stop = mkApp "windows-stop" [ ] ''
+        stop = mkApp "windows-stop" [ pkgs.xdg-utils ] ''
           ${helpers}
           running || exit 0
           if ! rdp_ready && [[ ! -f ${marker} ]]; then
-            notify 'Windows Setup is still running' 'Refusing to stop: it would restart the install.'
+            case $(notify --action=watch='Watch progress' \
+              'Windows Setup is still running' 'Refusing to stop: it would restart the install.') in
+              watch) xdg-open ${webUrl} ;;
+            esac
             exit 1
           fi
           systemctl stop ${unit}
@@ -238,7 +258,11 @@ in
         remove = mkApp "windows-remove" [ ] ''
           ${helpers}
           if [[ ! -t 0 ]]; then
-            notify 'Run windows-remove in a terminal' 'It confirms before deleting the disk image.'
+            case $(notify --action=terminal='Open terminal' \
+              'Run windows-remove in a terminal' 'It confirms before deleting the disk image.') in
+              # --hold keeps the confirmation result readable.
+              terminal) exec kitty --hold windows-remove ;;
+            esac
             exit 1
           fi
           read -r -p 'Erase Windows? This permanently deletes the disk image. [y/N] ' reply

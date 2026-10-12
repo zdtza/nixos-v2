@@ -396,6 +396,8 @@ Item {
                                 : NetworkService.securityLabel(modelData.security)
                             trailingIcon: NetworkService.securityRequiresPassword(modelData.security) ? "󰌾" : ""
                             selected: root.selectedSsid === String(modelData.ssid)
+                            // The connected network has its own section, so a filled selection can't be mistaken for it.
+                            selectionFill: true
                             onHoverSelected: root.selectedSsid = String(modelData.ssid)
                             onActivated: {
                                 root.selectedSsid = String(modelData.ssid);
@@ -497,10 +499,9 @@ Item {
                                     width: 72
                                     height: 32
                                     radius: PanelService.rounding
-                                    color: connectMouse.containsMouse ? Utils.alpha(Theme.base05, 0.18) : Utils.alpha(Theme.base05, 0.08)
-
+                                    color: connectMouse.containsMouse ? Theme.selectionFill : "transparent"
                                     border.width: 1
-                                    border.color: Utils.alpha(Theme.base05, 0.4)
+                                    border.color: Theme.selectionBorder
                                     ShellText {
                                         anchors.centerIn: parent
                                         text: "Connect"

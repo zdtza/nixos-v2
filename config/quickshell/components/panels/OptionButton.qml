@@ -19,9 +19,9 @@ Rectangle {
     // Navigation only moves the outline; the applied option owns the fill.
     color: mouseArea.pressed
         ? Utils.alpha(Theme.base05, 0.22)
-        : root.active ? Utils.alpha(Theme.base05, 0.12) : "transparent"
+        : root.active ? Theme.selectionFill : "transparent"
     border.width: root.keyboardFocused ? 1 : 0
-    border.color: Utils.alpha(Theme.base05, 0.35)
+    border.color: Theme.selectionBorder
 
     MouseArea {
         id: mouseArea

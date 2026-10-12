@@ -337,7 +337,7 @@ PopupWindow {
                         }
                         radius: 0
                         color: menu.selectedEntryIndex === row.index
-                            && row.interactive ? Utils.alpha(Theme.base05, 0.10) : "transparent"
+                            && row.interactive ? Theme.selectionFill : "transparent"
 
 
                         ShellText {

@@ -15,7 +15,7 @@ let
       --early-exit all
   '';
 
-  # Capture a region, copy it, and offer annotation.
+  # Capture a region, copy it, and offer to edit or open it.
   screenshot = pkgs.writeShellScriptBin "screenshot" ''
     set -euo pipefail
     export PATH=${
@@ -26,6 +26,7 @@ let
         pkgs.wl-clipboard
         pkgs.libnotify
         pkgs.coreutils
+        pkgs.xdg-utils
         sattyEdit
       ]
     }:$PATH
@@ -60,11 +61,15 @@ let
 
     wl-copy --type image/png <"$file"
 
-    action=$(notify-send --app-name=Screenshot --action=default=Edit -t 4000 \
+    # Clicking the notification edits; Edit and Open also show as buttons.
+    action=$(notify-send --app-name=Screenshot -t 8000 \
+      --action=default=Edit --action=edit=Edit --action=open=Open \
       "Screenshot saved" "$(basename "$file")")
 
-    [ "$action" = default ] || exit 0
-    satty-edit "$file"
+    case "$action" in
+      default | edit) satty-edit "$file" ;;
+      open) xdg-open "$file" ;;
+    esac
   '';
 in
 {

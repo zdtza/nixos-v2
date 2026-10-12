@@ -280,8 +280,16 @@ Scope {
             if (card.webApp?.icon)
                 return Quickshell.iconPath(card.webApp.icon, true);
             // notify-send style icons arrive pre-resolved as `image` (image://icon/...).
-            if (String(notification.image || "") !== "")
-                return notification.image;
+            // Theme icons get re-checked so a missing one falls back to the bell instead
+            // of Qt's magenta checkerboard.
+            const image = String(notification.image || "");
+            if (image.startsWith("image://icon/")) {
+                const resolved = Quickshell.iconPath(image.slice("image://icon/".length), true);
+                if (resolved !== "")
+                    return resolved;
+            } else if (image !== "") {
+                return image;
+            }
             let name = String(notification.appIcon || "");
             if (name === "" && notification.desktopEntry !== "")
                 name = String(DesktopEntries.byId(notification.desktopEntry)?.icon ?? "");
@@ -467,8 +475,9 @@ Scope {
                         width: actionLabel.implicitWidth + 20
                         height: 26
                         radius: PanelService.rounding
-                        color: actionMouse.containsMouse
-                            ? Utils.alpha(Theme.base05, 0.14) : Utils.alpha(Theme.base05, 0.07)
+                        color: actionMouse.containsMouse ? Theme.selectionFill : "transparent"
+                        border.width: 1
+                        border.color: Theme.selectionBorder
 
                         ShellText {
                             id: actionLabel

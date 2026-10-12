@@ -17,8 +17,11 @@ Item {
     readonly property string monitorName: String(monitor?.name ?? screen?.name ?? "")
     readonly property int activeWorkspaceId: Number(monitor?.activeWorkspace?.id ?? 0)
 
-    // Show four slots by default, extending through the furthest active or
-    // occupied workspace so there are no gaps before its icon.
+    // Show three slots by default, or fewer when the monitor's workspace rules
+    // assign fewer, extending through the furthest active or occupied
+    // workspace so there are no gaps before its icon.
+    readonly property int defaultWorkspaceCount: 3
+    readonly property var assignedWorkspaceIds: MonitorService.assignedWorkspaces[monitorName] ?? []
     readonly property var monitorWorkspaces: Hyprland.workspaces.values
         .filter(workspace => workspace.id > 0
             && String(workspace.monitor?.name ?? "") === root.monitorName)
@@ -26,7 +29,10 @@ Item {
     readonly property int firstWorkspaceId: monitorWorkspaces.length > 0
         ? monitorWorkspaces[0].id : 1
     readonly property int lastVisibleWorkspaceId: {
-        let workspaceId = firstWorkspaceId + 3;
+        const count = assignedWorkspaceIds.length > 0
+            ? Math.min(defaultWorkspaceCount, assignedWorkspaceIds.length)
+            : defaultWorkspaceCount;
+        let workspaceId = firstWorkspaceId + count - 1;
         if (activeWorkspaceId >= firstWorkspaceId)
             workspaceId = Math.max(workspaceId, activeWorkspaceId);
         for (const workspace of monitorWorkspaces) {
@@ -164,7 +170,20 @@ Item {
         function onRawEvent(event: var): void {
             if (event.name === "changeworkspaceid")
                 renumberRefresh.restart();
+            else if (["workspacev2", "focusedmon", "focusedmonv2", "moveworkspacev2"]
+                    .includes(event.name))
+                activeWorkspaceRefresh.restart();
         }
+    }
+
+    // Quickshell assigns workspacev2 to whichever monitor it thinks is focused,
+    // but Hyprland can send it before focusedmon when focus crosses monitors,
+    // leaving another monitor's active workspace stale. Refetch the monitors,
+    // which resets each one's active workspace from Hyprland's own state.
+    Timer {
+        id: activeWorkspaceRefresh
+        interval: 50
+        onTriggered: Hyprland.refreshMonitors()
     }
 
     Timer {

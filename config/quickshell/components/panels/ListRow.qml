@@ -16,10 +16,12 @@ Rectangle {
     property real titleSize: 12
     property int titleWeight: Font.Normal
     property real titleLeftMargin: 10
-    // Keyboard/hover selection: outline, fill and visible actions.
+    // Keyboard/hover selection: outline and visible actions.
     property bool selected: false
-    // Applied choice (e.g. the default audio device): fill only.
+    // Applied choice (e.g. the default audio device): fill.
     property bool current: false
+    // Also fill the selection, for lists that never mark a current row.
+    property bool selectionFill: false
     property bool clickable: true
     // Hides the row's own content and highlight so an overlay can take over the row in place.
     property bool contentHidden: false
@@ -35,11 +37,12 @@ Rectangle {
     width: parent ? parent.width : 0
     height: 48
     radius: PanelService.rounding
+    // Matches OptionButton: selection outlines, the applied choice fills.
     color: mouseArea.pressed && !contentHidden ? Utils.alpha(Theme.base05, 0.22)
-        : highlighted ? Utils.alpha(Theme.base05, 0.10)
-        : current ? Utils.alpha(Theme.base05, 0.08) : "transparent"
+        : current || (selectionFill && highlighted) ? Theme.selectionFill
+        : "transparent"
     border.width: highlighted ? 1 : 0
-    border.color: Utils.alpha(Theme.base05, 0.25)
+    border.color: Theme.selectionBorder
 
     HoverHandler {
         onHoveredChanged: if (hovered && PanelService.hoverSelectReady && !root.contentHidden)

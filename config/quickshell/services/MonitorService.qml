@@ -1,6 +1,7 @@
 pragma Singleton
 
-// Shared backlight state, monitor scaling, and external brightness controls.
+// Shared backlight state, monitor scaling, workspace assignments, and external
+// brightness controls.
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -18,6 +19,10 @@ Item {
     property bool available: false
     property int brightnessPercent: 0
     property int writingBrightness: 0
+
+    // Numeric workspace ids each output's workspace rules assign to it, keyed by
+    // monitor name.
+    property var assignedWorkspaces: ({})
 
     property real lastStepMs: 0
     property int fastSteps: 0
@@ -52,6 +57,30 @@ Item {
         if (writeDebounce.running || writeProcess.running)
             return;
         brightnessPercent = clampBrightness(parsed);
+    }
+
+    function parseWorkspaceRules(raw: string): void {
+        let rules = [];
+        try {
+            rules = JSON.parse(raw);
+        } catch (error) {
+            return;
+        }
+        const result = {};
+        for (const rule of rules) {
+            const id = Number(rule.workspaceString);
+            const monitor = String(rule.monitor ?? "");
+            if (rule.enabled === false || !Number.isInteger(id) || id <= 0 || monitor === "")
+                continue;
+            (result[monitor] = result[monitor] ?? []).push(id);
+        }
+        for (const ids of Object.values(result))
+            ids.sort((a, b) => a - b);
+        assignedWorkspaces = result;
+    }
+
+    function refreshWorkspaceRules(): void {
+        if (!workspaceRulesProcess.running) workspaceRulesProcess.running = true;
     }
 
     function refresh(): void {
@@ -89,6 +118,31 @@ Item {
         stdout: StdioCollector {
             waitForEnd: true
             onStreamFinished: root.parseBrightness(text)
+        }
+    }
+
+    Process {
+        id: workspaceRulesProcess
+        command: ["hyprctl", "workspacerules", "-j"]
+        stdout: StdioCollector {
+            waitForEnd: true
+            onStreamFinished: root.parseWorkspaceRules(text)
+        }
+    }
+
+    // The Hyprland config reassigns workspaces shortly after outputs change.
+    Timer {
+        id: workspaceRulesRefresh
+        interval: 500
+        onTriggered: root.refreshWorkspaceRules()
+    }
+
+    Connections {
+        target: Hyprland
+
+        function onRawEvent(event: var): void {
+            if (["monitoradded", "monitorremoved", "configreloaded"].includes(event.name))
+                workspaceRulesRefresh.restart();
         }
     }
 
@@ -133,7 +187,10 @@ Item {
         onTriggered: Hyprland.refreshMonitors()
     }
 
-    Component.onCompleted: refresh()
+    Component.onCompleted: {
+        refresh();
+        refreshWorkspaceRules();
+    }
 
     IpcHandler {
         target: "monitor"

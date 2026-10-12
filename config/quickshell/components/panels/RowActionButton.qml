@@ -16,9 +16,9 @@ Rectangle {
     implicitHeight: 28
     radius: PanelService.rounding
     opacity: enabled ? 1 : 0.5
-    color: mouseArea.containsMouse ? Utils.alpha(Theme.base05, 0.12) : "transparent"
+    color: mouseArea.containsMouse ? Theme.selectionFill : "transparent"
     border.width: 1
-    border.color: Utils.alpha(Theme.base05, 0.3)
+    border.color: Theme.selectionBorder
 
     ShellText {
         anchors.centerIn: parent

@@ -9,7 +9,6 @@ Item {
     id: root
 
     readonly property bool opened: PanelService.activePanel === root
-    readonly property bool timerOpened: PanelService.activePanel === timerControl
     readonly property bool requiresKeyboardFocus: true
     readonly property alias timerPanel: timerControl
 
@@ -28,7 +27,7 @@ Item {
         anchors.right: label.right
         height: 2
         radius: PanelService.rounding
-        opacity: root.opened || root.timerOpened || mouseArea.containsMouse ? 1 : 0
+        opacity: root.opened || mouseArea.containsMouse ? 1 : 0
         color: Theme.base05
 
         Behavior on opacity { NumberAnimation { duration: 120 } }

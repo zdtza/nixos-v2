@@ -21,6 +21,11 @@ Item {
     readonly property color textSecondary: Qt.rgba(base05.r, base05.g, base05.b, 0.65)
     readonly property color textMuted: Qt.rgba(base05.r, base05.g, base05.b, 0.4)
 
+    // Every hovered, selected, active or current item shares this fill, and
+    // every selection or button outline this border.
+    readonly property color selectionFill: Qt.rgba(base05.r, base05.g, base05.b, 0.06)
+    readonly property color selectionBorder: Qt.rgba(base05.r, base05.g, base05.b, 0.35)
+
     // per-theme accent slot (themes/*/accent)
     property color accent: "#7aa2f7"
     property url wallpaper: ""

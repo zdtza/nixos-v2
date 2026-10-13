@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 
-// Password feedback shared by the lock screen (LockVisual) and Polkit (AuthPrompt): one dot per character
+// The lock screen's password feedback (LockVisual): one dot per character
 // that pops in, a glow that builds while checking, red dots with a shake on failure, and a full glow on
 // success. No text, ever.
 Item {

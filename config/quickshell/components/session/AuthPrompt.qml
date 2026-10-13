@@ -1,11 +1,11 @@
 import QtQuick
+import QtQuick.Effects
 import "../primitives"
 import "../../services"
 import "../.."
 
-// Polkit's authentication prompt: the desktop dimmed with base01 and a bordered field showing the lock
-// screen's password dots, with a centred caret while it is empty. Non-secret prompts (responseVisible) echo
-// the typed text instead of dots.
+// Polkit's authentication prompt: the desktop dimmed behind a fixed-size bordered field. A wrong
+// password turns the characters red with the lock screen's glow and shakes the field, then clears it.
 Item {
     id: root
 
@@ -14,23 +14,14 @@ Item {
     property alias text: passwordInput.text
     readonly property alias input: passwordInput
 
-    // Set by fail() for the red-dot hold; the field is already cleared underneath.
+    // Set by fail() for the red hold; the field clears when it ends.
     property bool failing: false
-    // Dot count at submit, so the red dots match what was typed whenever Polkit clears the field.
-    property int submittedDots: 0
-
-    // Submitted and waiting on PAM shows as checking; Polkit closes the prompt on success.
-    readonly property string phase: failing ? "fail"
-        : (!inputEnabled && text.length > 0 ? "checking"
-            : (text.length > 0 ? "typing" : "idle"))
 
     signal accepted()
 
-    // Wrong password: red dots and the shake, then back to an empty field.
     function fail(): void {
         failing = true;
-        passwordInput.text = "";
-        dots.fail();
+        shake.restart();
         failClear.restart();
     }
 
@@ -43,6 +34,7 @@ Item {
         interval: lockMotion.failClear
         onTriggered: {
             root.failing = false;
+            passwordInput.text = "";
             passwordInput.forceActiveFocus();
         }
     }
@@ -50,20 +42,26 @@ Item {
     // Polkit's window is transparent; this alone dims the desktop behind it.
     Rectangle {
         anchors.fill: parent
-        color: Theme.base01
-        opacity: Utils.scrimOpacity
+        color: Utils.alpha(Theme.base00, Utils.scrimOpacity)
+    }
+
+    // Clicking the scrim must not leave the user typing into nothing: every press bounces focus back to the field.
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.AllButtons
+        onPressed: passwordInput.forceActiveFocus()
     }
 
     ShellShadow {
         anchors.fill: field
+        transform: Translate { x: shakeShift.x }
     }
 
     Rectangle {
         id: field
 
         anchors.centerIn: parent
-        // Grows past the default width if the dots need it.
-        width: Math.min(Math.max(360, dots.implicitWidth + 48), parent.width - 48)
+        width: Math.min(360, parent.width - 48)
         height: 48
         radius: PanelService.rounding
         color: Utils.alpha(Theme.base01, 0.95)
@@ -71,81 +69,66 @@ Item {
         // Typing does not change the outline; only failure and checking do.
         border.color: root.failing ? Theme.base08
             : (root.inputEnabled ? Theme.base04 : Utils.alpha(Theme.base05, 0.4))
+        transform: Translate { id: shakeShift }
 
         Behavior on border.color { ColorAnimation { duration: 120 } }
 
-        PasswordDots {
-            id: dots
-            anchors.centerIn: parent
-            visible: !root.responseVisible
-            timing: lockMotion
-            dotColor: Theme.base05
-            failColor: Theme.base08
-            successColor: Theme.base07
-            phase: root.phase
-            dotCount: root.failing ? root.submittedDots : root.text.length
-        }
+        TextInput {
+            id: passwordInput
+            anchors.fill: parent
+            anchors.leftMargin: 16
+            anchors.rightMargin: 16
+            horizontalAlignment: TextInput.AlignHCenter
+            verticalAlignment: TextInput.AlignVCenter
+            readOnly: !root.inputEnabled || root.failing
+            echoMode: root.responseVisible ? TextInput.Normal : TextInput.Password
+            passwordCharacter: "●"
+            // The caret stays visible so the prompt clearly reads as ready for keyboard input.
+            cursorVisible: !root.failing
+            color: root.failing ? Theme.base08 : Theme.textPrimary
+            selectionColor: Theme.base02
+            selectedTextColor: Theme.textPrimary
+            font.family: Theme.monospace
+            font.pixelSize: Utils.scaledFont(22)
+            font.letterSpacing: 2
+            Accessible.name: "Password"
+            Accessible.passwordEdit: !root.responseVisible
+            onAccepted: root.accepted()
+            // Anything that steals focus while the prompt is up gives it back.
+            onActiveFocusChanged: if (!activeFocus && enabled)
+                Qt.callLater(() => passwordInput.forceActiveFocus())
+            Keys.onPressed: event => {
+                if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
+                    if (!readOnly)
+                        passwordInput.text = "";
+                    event.accepted = true;
+                }
+            }
 
-        ShellText {
-            anchors.centerIn: parent
-            visible: root.responseVisible
-            text: passwordInput.text
-            size: 22
-        }
-
-        // Centred blinking caret while the field is empty and ready, so it reads as waiting for input.
-        Rectangle {
-            id: caret
-
-            anchors.centerIn: parent
-            width: 2
-            height: 20
-            color: Theme.base05
-            visible: root.phase === "idle" && root.inputEnabled
-
-            SequentialAnimation on opacity {
-                running: caret.visible
-                loops: Animation.Infinite
-                onRunningChanged: if (!running) caret.opacity = 1
-                PropertyAction { value: 1 }
-                PauseAnimation { duration: 530 }
-                PropertyAction { value: 0 }
-                PauseAnimation { duration: 530 }
+            // The lock screen's failure glow, on the characters.
+            layer.enabled: root.failing
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                // MultiEffect takes glow strength from shadowOpacity; shadowColor's alpha is not applied.
+                shadowColor: Theme.base08
+                shadowOpacity: 0.7
+                shadowBlur: 1
+                blurMax: 12
+                shadowHorizontalOffset: 0
+                shadowVerticalOffset: 0
             }
         }
     }
 
-    // Invisible but focused; fills the screen so any click lands on it.
-    TextInput {
-        id: passwordInput
-        anchors.fill: parent
-        opacity: 0
-        echoMode: TextInput.Password
-        cursorVisible: false
-        readOnly: !root.inputEnabled || root.failing
-        Accessible.name: "Password"
-        Accessible.role: Accessible.EditableText
-        Accessible.passwordEdit: !root.responseVisible
-        onAccepted: {
-            root.submittedDots = text.length;
-            root.accepted();
-        }
-        // Anything that steals focus while the prompt is up gives it back.
-        onActiveFocusChanged: if (!activeFocus && enabled)
-            Qt.callLater(() => passwordInput.forceActiveFocus())
-        Keys.onPressed: event => {
-            if (event.key === Qt.Key_C && event.modifiers === Qt.ControlModifier) {
-                if (!readOnly)
-                    passwordInput.text = "";
-                event.accepted = true;
-            }
-        }
-    }
-
-    // Hide the pointer, as the lock screen does; no buttons accepted, so clicks still reach the field.
-    MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.NoButton
-        cursorShape: Qt.BlankCursor
+    // The lock screen's shake (PasswordDots.qml), on the whole field.
+    SequentialAnimation {
+        id: shake
+        NumberAnimation { target: shakeShift; property: "x"; to: -28; duration: 34; easing.type: Easing.OutQuad }
+        NumberAnimation { target: shakeShift; property: "x"; to: 28; duration: 52; easing.type: Easing.InOutQuad }
+        NumberAnimation { target: shakeShift; property: "x"; to: -22; duration: 49; easing.type: Easing.InOutQuad }
+        NumberAnimation { target: shakeShift; property: "x"; to: 16; duration: 45; easing.type: Easing.InOutQuad }
+        NumberAnimation { target: shakeShift; property: "x"; to: -10; duration: 41; easing.type: Easing.InOutQuad }
+        NumberAnimation { target: shakeShift; property: "x"; to: 4; duration: 38; easing.type: Easing.InOutQuad }
+        NumberAnimation { target: shakeShift; property: "x"; to: 0; duration: 34; easing.type: Easing.OutQuad }
     }
 }

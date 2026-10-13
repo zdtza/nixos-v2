@@ -74,13 +74,14 @@ Scope {
             target: agent.flow
 
             function onIsResponseRequiredChanged(): void {
-                if (agent.flow?.isResponseRequired) {
+                // A failed attempt keeps its red characters until the prompt clears them itself.
+                if (agent.flow?.isResponseRequired && !prompt.failing) {
                     prompt.text = "";
                     prompt.input.forceActiveFocus();
                 }
             }
 
-            // Red dots and a shake; the prompt clears and refocuses itself afterwards.
+            // Red glowing characters and a shake; the prompt clears and refocuses itself afterwards.
             function onAuthenticationFailed(): void {
                 prompt.fail();
             }

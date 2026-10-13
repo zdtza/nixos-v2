@@ -267,8 +267,15 @@ Scope {
 
         readonly property bool critical: notification.urgency === NotificationUrgency.Critical
         readonly property double arrivedAt: Date.now()
+        // Buttons that add nothing to a card: Chromium-based senders (Slack, Chrome, Electron apps) attach
+        // "settings" to every notification, which only opens the browser's notification settings, and
+        // "dismiss"/"close" duplicate the card's own dismiss. Labels are checked too, since some senders
+        // generate the identifiers.
+        readonly property var hiddenActions: ["default", "settings", "dismiss", "close"]
         readonly property var extraActions: Array.from(notification.actions ?? [])
-            .filter(action => action.identifier !== "default" && action.text !== "")
+            .filter(action => action.text !== ""
+                && !hiddenActions.includes(String(action.identifier).toLowerCase())
+                && !hiddenActions.includes(String(action.text).trim().toLowerCase()))
         // Fraction of the timeout still left; drives the countdown bar.
         property real remaining: 1
 
@@ -374,10 +381,11 @@ Scope {
 
         MouseArea {
             anchors.fill: parent
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
             cursorShape: Qt.PointingHandCursor
+            // Left activates; middle or right dismisses.
             onClicked: mouse => {
-                if (mouse.button === Qt.RightButton)
+                if (mouse.button === Qt.RightButton || mouse.button === Qt.MiddleButton)
                     card.close(false);
                 else
                     card.activate();
@@ -539,7 +547,7 @@ Scope {
         // Countdown to auto-dismiss over a faint full-width track; pauses while hovered.
         Rectangle {
             anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-            height: 3
+            height: 2
             visible: card.timeoutMs > 0
             color: Utils.alpha(Theme.base05, 0.08)
 

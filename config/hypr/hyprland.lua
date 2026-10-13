@@ -2,6 +2,41 @@
 -- general
 -- =============================================================================
 
+local GAPS_IN, GAPS_OUT = 3, 6
+
+-- Same drop shadow as the Quickshell surfaces (Theme.shadow*). Windows only
+-- cast it while gaps are on; flush tiles have nowhere to show it.
+local function window_shadow(enabled)
+	return {
+		enabled = enabled,
+		range = 24,
+		render_power = 50,
+		color = 0x26000000,
+		color_inactive = 0x1a000000,
+		offset = { 0, 4 },
+	}
+end
+
+-- Auto-login starts Hyprland unlocked for the moment before Quickshell's lock screen appears. Until this
+-- session has been unlocked once, desktop keybinds are not registered and the cursor is hidden: Quickshell
+-- writes this marker on the first unlock and reloads the config (LockScreen.qml). Fails closed: if
+-- Quickshell never starts, no shortcut can launch anything. `locked` binds (lid handling) always register.
+local function session_unlocked()
+	local marker = string.format(
+		"%s/quickshell-unlocked-%s",
+		os.getenv("XDG_RUNTIME_DIR") or "",
+		os.getenv("HYPRLAND_INSTANCE_SIGNATURE") or ""
+	)
+	local file = io.open(marker, "r")
+	if not file then
+		return false
+	end
+	file:close()
+	return true
+end
+
+local SESSION_UNLOCKED = session_unlocked()
+
 hl.config({
 	input = {
 		sensitivity = 0.4,
@@ -15,10 +50,10 @@ hl.config({
 		},
 	},
 	binds = { scroll_event_delay = 0 },
-	cursor = { no_hardware_cursors = true },
+	cursor = { no_hardware_cursors = true, invisible = not SESSION_UNLOCKED },
 	general = {
-		gaps_in = 3,
-		gaps_out = 6,
+		gaps_in = GAPS_IN,
+		gaps_out = GAPS_OUT,
 		border_size = 0,
 		layout = "dwindle",
 	},
@@ -27,7 +62,7 @@ hl.config({
 		active_opacity = 0.99,
 		inactive_opacity = 0.96,
 		blur = { enabled = true, xray = false, special = true, passes = 2, size = 3 },
-		shadow = { enabled = false },
+		shadow = window_shadow(true),
 	},
 	animations = { enabled = true, workspace_wraparound = true },
 	layout = { single_window_aspect_ratio = { 16, 9 } },
@@ -38,6 +73,10 @@ hl.config({
 	misc = {
 		disable_hyprland_logo = true,
 		disable_splash_rendering = true,
+		-- black under everything until the lock screen fades in at login (LockScreen.qml).
+		background_color = 0xff000000,
+		-- a restarted Quickshell must be able to take back a lock its crashed predecessor held.
+		allow_session_lock_restore = true,
 		focus_on_activate = true,
 	},
 })
@@ -83,6 +122,10 @@ local quickshell_layers = {
 	"quickshell:image-picker",
 	"quickshell:center-panel",
 	"quickshell:panel-drawer",
+	"quickshell:notifications",
+	-- must appear instantly: it stands in for the lock's last frame while the desktop fades in.
+	"quickshell:unlock-reveal",
+	"quickshell:lock-conceal",
 }
 
 for _, namespace in ipairs(quickshell_layers) do
@@ -282,15 +325,15 @@ hl.on("monitor.removed", apply_workspace_layout_soon)
 -- =============================================================================
 
 local gaps_enabled = true
-local DEFAULT_GAPS_IN, DEFAULT_GAPS_OUT = 4, 8
 
 local function toggle_window_gaps()
 	gaps_enabled = not gaps_enabled
 	hl.config({
 		general = {
-			gaps_in = gaps_enabled and DEFAULT_GAPS_IN or 0,
-			gaps_out = gaps_enabled and DEFAULT_GAPS_OUT or 0,
+			gaps_in = gaps_enabled and GAPS_IN or 0,
+			gaps_out = gaps_enabled and GAPS_OUT or 0,
 		},
+		decoration = { shadow = window_shadow(gaps_enabled) },
 	})
 end
 
@@ -506,6 +549,9 @@ local function bind(keys, description, dispatcher, options)
 	assert(description and description ~= "", "Keybind description is required for " .. keys)
 	options = options or {}
 	options.desc = description
+	if not SESSION_UNLOCKED and not options.locked then
+		return
+	end
 	return hl.bind(keys, dispatcher, options)
 end
 
@@ -519,7 +565,7 @@ hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 -- keysbinds - system
 -- =============================================================================
 
-bind("SUPER + L", "Lock the current session", hl.dsp.exec_cmd("qs ipc call lock activate"))
+bind("SUPER + L", "Lock the current session", hl.dsp.exec_cmd("qs ipc call lock animate"))
 local function enable_laptop_display()
 	hl.monitor({
 		output = "eDP-1",
@@ -555,6 +601,7 @@ bind("SUPER + S", "Toggle the terminal workspace", hl.dsp.workspace.toggle_speci
 bind("SUPER + CTRL + SHIFT + S", "Move focused window to terminal workspace", hl.dsp.window.move({ workspace = "special:terminal" }))
 bind("SUPER + E", "Open Yazi file manager", hl.dsp.exec_cmd("launch-terminal-cwd yazi"))
 bind("SUPER + SHIFT + E", "Open Nautilus file manager", hl.dsp.exec_cmd("nautilus"))
+bind("SUPER + SHIFT + C", "Open VS Code in the focused terminal's directory", hl.dsp.exec_cmd("sh -c 'code \"$(terminal-cwd)\"'"))
 bind("SUPER + Return", "Open terminal in current directory", open_terminal)
 bind("SUPER + CTRL + Return", "Open a floating terminal", open_floating_terminal)
 bind("SUPER + W", "Close the focused window", hl.dsp.window.close())

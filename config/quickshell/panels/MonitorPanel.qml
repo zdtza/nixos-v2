@@ -72,7 +72,7 @@ Item {
         id: panel
         anchorItem: root
         contentSpacing: 12
-        implicitWidth: 460
+        panelWidth: 460
 
         Hero {
             width: parent.width

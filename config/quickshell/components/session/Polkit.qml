@@ -59,8 +59,6 @@ Scope {
         AuthPrompt {
             id: prompt
             anchors.fill: parent
-            showWallpaper: false
-            error: (agent.flow?.failed || agent.flow?.supplementaryIsError) ?? false
             inputEnabled: agent.flow?.isResponseRequired ?? false
             responseVisible: agent.flow?.responseVisible ?? false
             onAccepted: root.submit()
@@ -82,9 +80,9 @@ Scope {
                 }
             }
 
+            // Red dots and a shake; the prompt clears and refocuses itself afterwards.
             function onAuthenticationFailed(): void {
-                prompt.text = "";
-                prompt.input.forceActiveFocus();
+                prompt.fail();
             }
         }
     }

@@ -113,7 +113,7 @@ Item {
         id: panel
         anchorItem: root
         // Wider card gives each equal-width profile button real horizontal breathing room around its icon and longest label (Power-saver).
-        implicitWidth: 420
+        panelWidth: 420
 
         Hero {
             id: batteryHero

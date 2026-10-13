@@ -108,8 +108,10 @@ Scope {
         visible: (root.shown || VoiceDictationService.recording)
             && Quickshell.screens.length > 0
         color: "transparent"
-        implicitWidth: 240
-        implicitHeight: 52
+        // Shadow room around the card, cut to the gap at the screen's bottom edge.
+        readonly property real shadowBottom: PanelService.panelGap + PanelService.gapBottomOffset
+        implicitWidth: 240 + Theme.shadowExtent * 2
+        implicitHeight: 52 + Theme.shadowExtent + shadowBottom
         exclusionMode: ExclusionMode.Ignore
 
         WlrLayershell.namespace: "quickshell:osd"
@@ -119,10 +121,23 @@ Scope {
         // it is also at the bottom and currently affects panel geometry.
         anchors.bottom: true
         margins.bottom: PanelService.panelGap + PanelService.gapBottomOffset
-            + (PanelService.barAtTop ? 0 : PanelService.panelBarInset)
+            + (PanelService.barAtTop ? 0 : PanelService.panelBarInset) - shadowBottom
+
+        mask: Region { item: card }
+
+        ShellShadow {
+            anchors.fill: card
+        }
 
         Rectangle {
-            anchors.fill: parent
+            id: card
+            anchors {
+                fill: parent
+                leftMargin: Theme.shadowExtent
+                rightMargin: Theme.shadowExtent
+                topMargin: Theme.shadowExtent
+                bottomMargin: window.shadowBottom
+            }
             color: Theme.base01
             radius: 0
 

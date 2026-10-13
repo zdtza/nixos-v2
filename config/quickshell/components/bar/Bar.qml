@@ -58,18 +58,6 @@ PanelWindow {
     margins.top: PanelService.barAtTop && !PanelService.barVisible ? -1 : 0
     margins.bottom: !PanelService.barAtTop && !PanelService.barVisible ? -1 : 0
 
-    Rectangle {
-        anchors {
-            left: parent.left
-            right: parent.right
-        }
-        y: PanelService.barAtTop ? parent.height - height : 0
-        height: PanelService.chromeBorderWidth
-        color: PanelService.chromeBorderColor
-        visible: PanelService.barVisible
-        z: 1
-    }
-
     // Popup focus grabs include bar so controls remain directly clickable.
     MouseArea {
         anchors.fill: parent

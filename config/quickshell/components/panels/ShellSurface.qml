@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import "../primitives"
 import "../../services"
 
 // Shared chrome for floating panels opened from the bar.
@@ -18,6 +19,15 @@ PanelWindow {
     property real contentSpacing: 14
     default property alias panelChildren: contentColumn.data
     readonly property alias panelContent: contentColumn
+    // Size of the visible card; the window adds the shadow room around it.
+    property real panelWidth: 0
+    property real panelHeight: contentColumn.implicitHeight + contentTopMargin + contentBottomMargin
+    // Transparent room for the drop shadow on each edge. Concrete surfaces trim
+    // the edges that meet the bar or the screen edge.
+    property real shadowLeft: Theme.shadowExtent
+    property real shadowRight: Theme.shadowExtent
+    property real shadowTop: Theme.shadowExtent
+    property real shadowBottom: Theme.shadowExtent
     // Tallest a scrolling panel may grow on its screen.
     readonly property real maximumHeight: Math.max(320, (screen?.height ?? 800) - 55)
 
@@ -28,7 +38,8 @@ PanelWindow {
     visible: !!anchorWindow
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
-    implicitHeight: contentColumn.implicitHeight + contentTopMargin + contentBottomMargin
+    implicitWidth: panelWidth + shadowLeft + shadowRight
+    implicitHeight: panelHeight + shadowTop + shadowBottom
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: root.open
@@ -36,8 +47,11 @@ PanelWindow {
 
     // Concrete surfaces (Drawer) define their anchors and margins.
 
+    // Only the card takes input; clicks on the shadow fall through.
     mask: Region {
-        width: surfaceClip.height > 0 ? root.width : 0
+        x: root.shadowLeft
+        y: root.shadowTop
+        width: surfaceClip.height > 0 ? root.panelWidth : 0
         height: surfaceClip.height
     }
 
@@ -76,38 +90,51 @@ PanelWindow {
     }
 
     Item {
-        id: surfaceClip
-        anchors {
-            top: PanelService.barAtTop ? parent.top : undefined
-            bottom: PanelService.barAtTop ? undefined : parent.bottom
-            left: parent.left
-            right: parent.right
+        id: panelFrame
+        x: root.shadowLeft
+        y: root.shadowTop
+        width: root.panelWidth
+        height: root.panelHeight
+
+        ShellShadow {
+            anchors.fill: surfaceClip
+            visible: surfaceClip.height > 0
         }
-        height: root.open ? root.height : 0
-        clip: true
 
-        Rectangle {
-            anchors.fill: parent
-            enabled: root.open
-            color: Theme.base01
-            radius: 0
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: root.backgroundClicked()
+        Item {
+            id: surfaceClip
+            anchors {
+                top: PanelService.barAtTop ? parent.top : undefined
+                bottom: PanelService.barAtTop ? undefined : parent.bottom
+                left: parent.left
+                right: parent.right
             }
+            height: root.open ? panelFrame.height : 0
+            clip: true
 
-            Column {
-                id: contentColumn
-                anchors {
-                    fill: parent
-                    leftMargin: root.contentHorizontalMargins
-                    rightMargin: root.contentHorizontalMargins
-                    topMargin: root.contentTopMargin
-                    bottomMargin: root.contentBottomMargin
+            Rectangle {
+                anchors.fill: parent
+                enabled: root.open
+                color: Theme.base01
+                radius: 0
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.backgroundClicked()
                 }
-                opacity: root.open ? 1 : 0
-                spacing: root.contentSpacing
+
+                Column {
+                    id: contentColumn
+                    anchors {
+                        fill: parent
+                        leftMargin: root.contentHorizontalMargins
+                        rightMargin: root.contentHorizontalMargins
+                        topMargin: root.contentTopMargin
+                        bottomMargin: root.contentBottomMargin
+                    }
+                    opacity: root.open ? 1 : 0
+                    spacing: root.contentSpacing
+                }
             }
         }
     }

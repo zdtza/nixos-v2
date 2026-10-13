@@ -157,8 +157,8 @@ Item {
         readonly property real timerViewportHeight: Math.min(272,
             Math.max(52, maximumHeight - panelChromeHeight), desiredTimerHeight)
 
-        implicitWidth: 420
-        implicitHeight: Math.min(maximumHeight,
+        panelWidth: 420
+        panelHeight: Math.min(maximumHeight,
             panelChromeHeight + timerViewportHeight)
 
         Hero {

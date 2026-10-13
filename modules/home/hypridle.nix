@@ -21,6 +21,13 @@ let
     ${pkgs.systemd}/bin/systemctl --user --no-block restart hypridle.service
   '';
 
+  # Caffeine mode (the stay-awake user service) only vetoes suspend; the
+  # display still powers off on its own timeout.
+  suspendCommand = pkgs.writeShellScript "hypridle-suspend" ''
+    ${pkgs.systemd}/bin/systemctl --user is-active --quiet stay-awake.service && exit 0
+    exec ${pkgs.systemd}/bin/systemctl suspend-then-hibernate
+  '';
+
   hypridleConf = ''
     general {
         before_sleep_cmd = ${pkgs.quickshell}/bin/qs ipc call lock activate
@@ -35,7 +42,7 @@ let
 
     listener {
         timeout = 1800
-        on-timeout = ${pkgs.systemd}/bin/systemctl suspend-then-hibernate
+        on-timeout = ${suspendCommand}
     }
   '';
 in

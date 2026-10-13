@@ -288,8 +288,8 @@ Item {
         readonly property real networkViewportHeight: Math.min(420,
             Math.max(80, maximumHeight - panelChromeHeight), availableSectionHeight + root.networkEdgeInset)
 
-        implicitWidth: 460
-        implicitHeight: Math.min(maximumHeight, panelChromeHeight + networkViewportHeight)
+        panelWidth: 460
+        panelHeight: Math.min(maximumHeight, panelChromeHeight + networkViewportHeight)
 
         Hero {
             id: networkHero

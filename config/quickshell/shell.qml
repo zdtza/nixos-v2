@@ -11,17 +11,20 @@ import "services"
 ShellRoot {
     id: root
 
-    // Manual session lock exposed through the `lock` IPC target.
-    LockScreen {}
+    // Session lock and login screen, exposed through the `lock` IPC target.
+    LockScreen {
+        id: lockScreen
+    }
 
+    // Held back until the login lock (if any) is up, so nothing shows before it.
     Variants {
-        model: Quickshell.screens
+        model: lockScreen.desktopReady ? Quickshell.screens : []
 
         Background {}
     }
 
     Variants {
-        model: Quickshell.screens
+        model: lockScreen.desktopReady ? Quickshell.screens : []
 
         Bar {}
     }

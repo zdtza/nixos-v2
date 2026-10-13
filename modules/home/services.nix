@@ -63,15 +63,16 @@ in
       exec = "/run/current-system/sw/bin/1password --silent";
     };
 
-    # Caffeine blocks idle timeout actions only; lid handling is unconditional. Quickshell starts and stops it.
+    # Caffeine marker: hypridle skips its idle suspend while this is active (modules/home/hypridle.nix).
+    # Display power-off and lid handling are unaffected. Quickshell starts and stops it.
     stay-awake = {
       Unit = {
-        Description = "Inhibit idle timeout actions while caffeine mode is enabled";
+        Description = "Skip idle suspend while caffeine mode is enabled";
         PartOf = [ target ];
         After = [ target ];
       };
       Service = {
-        ExecStart = "${pkgs.systemd}/bin/systemd-inhibit --what=idle --mode=block --who=Quickshell --why=Stay-awake ${pkgs.coreutils}/bin/sleep infinity";
+        ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
         KillMode = "control-group";
       };
     };

@@ -90,16 +90,30 @@ Scope {
         visible: !DoNotDisturbService.active
             && server.trackedNotifications.values.length > 0
         color: "transparent"
-        implicitWidth: 450
-        implicitHeight: Math.max(1, window.panelHeight)
+        readonly property real cardWidth: drawerInset > 0 && PanelService.drawerWidth > 0
+            ? PanelService.drawerWidth : 450
+        // Shadow room around the stack: it fills the gap to the bar (or open
+        // drawer) and the right screen edge, and grows freely left and down.
+        readonly property real shadowTop: PanelService.barAtTop ? PanelService.panelGap : Theme.shadowExtent
+        readonly property real shadowBottom: PanelService.barAtTop ? Theme.shadowExtent : PanelService.panelGap
+        readonly property real shadowLeft: Theme.shadowExtent
+        readonly property real shadowRight: PanelService.panelGap + PanelService.gapRightOffset
+        implicitWidth: cardWidth + shadowLeft + shadowRight
+        implicitHeight: window.panelHeight > 0
+            ? window.panelHeight + shadowTop + shadowBottom : 1
         exclusionMode: ExclusionMode.Ignore
 
         // Round up to the surface's integer pixel size so its lower edge is not
         // placed just outside the window and clipped.
         readonly property int panelHeight: notificationColumn.implicitHeight > 0
             ? Math.ceil(notificationColumn.implicitHeight) : 0
-        // Bounding box for the whole row, not just the panel rect.
-        mask: Region { width: window.panelHeight > 0 ? window.width : 0; height: window.height }
+        // The cards' bounding box; clicks on the shadow fall through.
+        mask: Region {
+            x: window.shadowLeft
+            y: window.shadowTop
+            width: window.panelHeight > 0 ? window.cardWidth : 0
+            height: window.panelHeight
+        }
 
         WlrLayershell.namespace: "quickshell:notifications"
         WlrLayershell.layer: WlrLayer.Overlay
@@ -111,20 +125,31 @@ Scope {
         }
 
         // Float beside the bar and clear of the right screen edge.
+        // Stack beneath an open drawer in the same corner, at its width, rather than over it.
+        readonly property real drawerInset: PanelService.drawerScreenName === (screen?.name ?? "")
+            ? PanelService.drawerInset : 0
         margins.top: PanelService.barAtTop
-            ? PanelService.panelBarInset + PanelService.panelGap : 0
+            ? PanelService.panelBarInset + PanelService.panelGap + drawerInset - shadowTop : 0
         margins.bottom: PanelService.barAtTop
-            ? 0 : PanelService.panelBarInset + PanelService.panelGap
-        margins.right: PanelService.panelGap + PanelService.gapRightOffset
+            ? 0 : PanelService.panelBarInset + PanelService.panelGap + drawerInset - shadowBottom
+        margins.right: PanelService.panelGap + PanelService.gapRightOffset - shadowRight
+
+        // Every card's shadow lives in this one layer beneath the whole stack,
+        // so no card's shadow falls across its neighbour.
+        Item {
+            id: shadowLayer
+            x: notificationColumn.x
+            y: notificationColumn.y
+            width: notificationColumn.width
+            height: notificationColumn.height
+        }
 
         // Each notification is its own card; the window itself stays transparent.
         Column {
             id: notificationColumn
-            anchors {
-                top: parent.top
-                left: parent.left
-                right: parent.right
-            }
+            x: window.shadowLeft
+            y: window.shadowTop
+            width: window.cardWidth
             spacing: 6
 
             Repeater {
@@ -133,6 +158,7 @@ Scope {
                 NotificationCard {
                     required property Notification modelData
                     notification: modelData
+                    shadowLayer: shadowLayer
                 }
             }
         }
@@ -143,6 +169,7 @@ Scope {
         id: card
 
         required property Notification notification
+        required property Item shadowLayer
 
         property bool closing: false
         readonly property int timeoutMs: {
@@ -330,6 +357,14 @@ Scope {
             id: cardHover
         }
 
+        ShellShadow {
+            parent: card.shadowLayer
+            x: card.x
+            y: card.y
+            width: card.width
+            height: card.height
+        }
+
         Rectangle {
             anchors.fill: parent
             color: cardHover.hovered ? Qt.tint(Theme.base01, Utils.alpha(Theme.base05, 0.04)) : Theme.base01
@@ -501,13 +536,18 @@ Scope {
             }
         }
 
-        // Countdown to auto-dismiss; pauses while hovered.
+        // Countdown to auto-dismiss over a faint full-width track; pauses while hovered.
         Rectangle {
-            anchors { left: parent.left; bottom: parent.bottom }
-            height: 2
-            width: parent.width * card.remaining
+            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+            height: 3
             visible: card.timeoutMs > 0
-            color: card.critical ? Theme.base08 : Utils.alpha(Theme.base05, 0.35)
+            color: Utils.alpha(Theme.base05, 0.08)
+
+            Rectangle {
+                anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+                width: parent.width * card.remaining
+                color: card.critical ? Theme.base08 : Utils.alpha(Theme.base05, 0.75)
+            }
         }
     }
 }

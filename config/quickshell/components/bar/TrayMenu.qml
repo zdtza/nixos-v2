@@ -38,6 +38,17 @@ PopupWindow {
     // Submenus open below their parent row instead of below the bar item.
     property bool submenu: false
 
+    // Transparent room around the card for its drop shadow. A top-level menu
+    // only fills the gap on its bar side, so the shadow stops at the bar.
+    readonly property real shadowLeft: Theme.shadowExtent
+    readonly property real shadowRight: Theme.shadowExtent
+    readonly property real shadowTop: !submenu && PanelService.barAtTop
+        ? PanelService.panelGap : Theme.shadowExtent
+    readonly property real shadowBottom: !submenu && !PanelService.barAtTop
+        ? PanelService.panelGap : Theme.shadowExtent
+    readonly property real cardHeight: column.implicitHeight
+        + menu.panelTopPadding + menu.panelPadding
+
     // Stable menu entry whose submenu is currently open, null for none.
     property var submenuEntry: null
 
@@ -155,15 +166,18 @@ PopupWindow {
             : (PanelService.barAtTop ? Edges.Top | Edges.Left : Edges.Bottom | Edges.Left)
         gravity: menu.submenu ? Edges.Bottom | Edges.Right
             : (PanelService.barAtTop ? Edges.Bottom | Edges.Right : Edges.Top | Edges.Right)
-        // Vertical sliding honors compositor outer gaps.
-        adjustment: !menu.submenu && !PanelService.barAffectsPanels
-            ? PopupAdjustment.SlideX : PopupAdjustment.Slide
+        // Vertical sliding honors compositor outer gaps. Top-level menus are
+        // clamped horizontally in onAnchoring instead, since sliding would push
+        // the card in from the screen edge to fit its shadow.
+        adjustment: menu.submenu ? PopupAdjustment.Slide
+            : (PanelService.barAffectsPanels ? PopupAdjustment.SlideY : PopupAdjustment.None)
         // Anchor rect is a 1x1 point in the anchor item's local coordinates, used only as the pivot the popup grows from.
-        rect.x: menu.submenu ? -2 : 0
-        rect.y: menu.submenu ? -10
+        // It places the window, so it is offset by the shadow room around the card.
+        rect.x: menu.submenu ? -2 - menu.shadowLeft : 0
+        rect.y: menu.submenu ? -10 - menu.shadowTop
             : (PanelService.barAtTop
-                ? PanelService.panelBarInset + PanelService.panelGap
-                : PanelService.popupParentOffset - PanelService.panelGap)
+                ? PanelService.panelBarInset + PanelService.panelGap - menu.shadowTop
+                : PanelService.popupParentOffset - PanelService.panelGap + menu.shadowBottom)
         rect.width: 1
         // Top-level menus grow away from a point just beyond the configured bar edge.
         rect.height: menu.submenu ? 1 : 0
@@ -175,19 +189,18 @@ PopupWindow {
 
             let point = menu.anchorWindow.contentItem.mapFromItem(
                 menu.anchorItem,
-                menu.anchorItem.width / 2 - menu.implicitWidth / 2,
+                menu.anchorItem.width / 2 - menu.menuWidth / 2,
                 0
             );
             point.x = Math.max(PanelService.panelGap + PanelService.gapLeftOffset,
-                Math.min(point.x, menu.anchorWindow.width - menu.implicitWidth
+                Math.min(point.x, menu.anchorWindow.width - menu.menuWidth
                     - PanelService.panelGap - PanelService.gapRightOffset));
-            menu.anchor.rect.x = Math.round(point.x);
+            menu.anchor.rect.x = Math.round(point.x - menu.shadowLeft);
         }
     }
 
-    implicitWidth: menu.menuWidth
-    implicitHeight: Math.max(1, column.implicitHeight
-        + menu.panelTopPadding + menu.panelPadding)
+    implicitWidth: menu.menuWidth + menu.shadowLeft + menu.shadowRight
+    implicitHeight: menu.cardHeight + menu.shadowTop + menu.shadowBottom
     visible: contentReady
     color: "transparent"
 
@@ -228,14 +241,20 @@ PopupWindow {
         }
     }
 
+    // Only the card takes input; clicks on the shadow fall through.
+    mask: Region { item: revealClip }
+
+    ShellShadow {
+        anchors.fill: revealClip
+        visible: revealClip.height > 0
+    }
+
     Item {
         id: revealClip
-        anchors {
-            top: parent.top
-            left: parent.left
-            right: parent.right
-        }
-        height: menu.contentReady ? menu.height : 0
+        x: menu.shadowLeft
+        y: menu.shadowTop
+        width: menu.menuWidth
+        height: menu.contentReady ? menu.cardHeight : 0
         clip: true
 
         Rectangle {

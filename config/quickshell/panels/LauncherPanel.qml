@@ -152,15 +152,15 @@ Item {
         centeredVertically: true
         contentMargins: 0
         contentSpacing: 0
-        implicitWidth: 420
+        panelWidth: 420
         // Search plus exactly nine application rows (64px rows, 4px spacing).
-        implicitHeight: Math.min(16 + searchBox.height + 12 + 608 + 16,
+        panelHeight: Math.min(16 + searchBox.height + 12 + 608 + 16,
             (panel.screen?.height ?? 800)
             - PanelService.panelBarInset - PanelService.panelGap * 2)
 
         Item {
             width: parent.width
-            height: panel.implicitHeight
+            height: panel.panelHeight
 
             // --- search ---
             Item {

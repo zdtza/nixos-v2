@@ -179,8 +179,8 @@ Item {
         readonly property real deviceViewportHeight: Math.min(420,
             Math.max(80, maximumHeight - panelChromeHeight), desiredDeviceHeight)
 
-        implicitWidth: 460
-        implicitHeight: Math.min(maximumHeight, panelChromeHeight + deviceViewportHeight)
+        panelWidth: 460
+        panelHeight: Math.min(maximumHeight, panelChromeHeight + deviceViewportHeight)
 
         Hero {
             id: bluetoothHero

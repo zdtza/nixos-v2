@@ -52,7 +52,7 @@ Item {
         id: panel
 
         anchorItem: root
-        implicitWidth: 420
+        panelWidth: 420
 
         Hero {
             width: parent.width

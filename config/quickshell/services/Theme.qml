@@ -14,6 +14,8 @@ Item {
     property color base03: "#414868"
     property color base04: "#565f89"
     property color base05: "#a9b1d6"
+    property color base06: "#b4bee6"
+    property color base07: "#c0caf5"
     property color base08: "#f7768e"
 
     // Text hierarchy always derives from the foreground instead of theme gray slots.
@@ -24,11 +26,24 @@ Item {
     // Every hovered, selected, active or current item shares this fill, and
     // every selection or button outline this border.
     readonly property color selectionFill: Qt.rgba(base05.r, base05.g, base05.b, 0.06)
-    readonly property color selectionBorder: Qt.rgba(base05.r, base05.g, base05.b, 0.35)
+    readonly property color selectionBorder: Qt.rgba(base05.r, base05.g, base05.b, 0.25)
+
+    // Drop shadow cast by every floating shell surface (never the bar). Each
+    // surface reserves shadowExtent of transparent room around its card for it.
+    readonly property color shadowColor: Qt.rgba(0, 0, 0, 0.2)
+    readonly property real shadowBlur: 20
+    readonly property real shadowOffsetY: 4
+    readonly property real shadowExtent: shadowBlur + shadowOffsetY
 
     // per-theme accent slot (themes/*/accent)
     property color accent: "#7aa2f7"
     property url wallpaper: ""
+    // The desktop shows the wallpaper slightly zoomed in, so the lock screen (at 1) can zoom out without
+    // uncovering the screen edges (Background.qml, LockVisual.qml).
+    readonly property real wallpaperZoom: 1.04
+    // The desktop wallpaper's live scale: wallpaperZoom at rest, driven by LockScreen during lock transitions
+    // so it zooms in step with the lock copy fading over it and the two images never drift apart.
+    property real wallpaperScale: wallpaperZoom
     property string monospace: "monospace"
     property int fontSize: 13
 
@@ -39,6 +54,9 @@ Item {
         base03 = data.base03;
         base04 = data.base04;
         base05 = data.base05;
+        // Absent from theme files generated before the lock screen needed them.
+        base06 = data.base06 ?? base06;
+        base07 = data.base07 ?? base07;
         base08 = data.base08;
         accent = data.accent;
         wallpaper = "file://" + data.wallpaper;

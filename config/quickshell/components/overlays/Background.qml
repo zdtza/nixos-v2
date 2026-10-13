@@ -38,6 +38,7 @@ PanelWindow {
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
         cache: true
+        scale: Theme.wallpaperScale
         z: root.topIsA ? 1 : 0
         opacity: root.topIsA ? 1 : 0
         Behavior on opacity {
@@ -56,6 +57,7 @@ PanelWindow {
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
         cache: true
+        scale: Theme.wallpaperScale
         z: root.topIsA ? 0 : 1
         opacity: root.topIsA ? 0 : 1
         Behavior on opacity {

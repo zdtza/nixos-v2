@@ -77,8 +77,8 @@ Drawer {
         Math.max(zoneRowHeight, maximumHeight - fixedCalendarHeight))
 
     closeOnEscape: !addingZone
-    implicitWidth: 420
-    implicitHeight: Math.min(maximumHeight,
+    panelWidth: 420
+    panelHeight: Math.min(maximumHeight,
         fixedCalendarHeight + zoneViewportHeight)
 
     function displayName(zone: string): string {

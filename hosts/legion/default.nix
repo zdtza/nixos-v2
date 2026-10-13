@@ -113,12 +113,6 @@ in
 
     # Also sets up 32-bit graphics and controller udev rules.
     steam.enable = true;
-
-    # Install Solaar, grant access to Logitech hidraw devices, and start it in the tray.
-    solaar = {
-      enable = true;
-      userService.enable = true;
-    };
   };
 
   security = {

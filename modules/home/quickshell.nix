@@ -15,6 +15,8 @@ let
         base03
         base04
         base05
+        base06
+        base07
         base08
         ;
       # themes/*/accent, same slot hyprland's active border and yazi's folder icons use (modules/home/hyprland.nix, modules/home/yazi.nix)

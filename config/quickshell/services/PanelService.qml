@@ -61,10 +61,14 @@ Item {
     property real gapBottomOffset: 0
     property real gapLeftOffset: 0
     property real gapRightOffset: 0
+    // Height (plus gap), width and screen of the open top-right drawer, so
+    // notifications stack beneath it at its width instead of over it.
+    property real drawerInset: 0
+    property real drawerWidth: 0
+    property string drawerScreenName: ""
     // Shared speed for animated bar controls.
     property int slideDuration: 150
-    // Shared subtle border used by the bar and every shell panel.
-    readonly property real chromeBorderWidth: 1
+    // Shared subtle divider colour used inside shell menus.
     readonly property color chromeBorderColor: Utils.alpha(Theme.base05, 0.15)
     // Internal controls use a small, stable radius independent of Hyprland.
     readonly property real rounding: 2

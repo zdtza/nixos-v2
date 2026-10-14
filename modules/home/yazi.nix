@@ -51,7 +51,30 @@ in
         run = "plugin escape-or-leave";
         desc = "Cancel, or go back to the parent directory";
       }
+      {
+        on = "Z";
+        run = "plugin zoxide-reveal";
+        desc = "Reveal a directory via zoxide";
+      }
     ];
+    # Built-in zoxide plugin cds into the pick; reuse its fzf picker but reveal instead, landing in the parent with the pick hovered.
+    plugins.zoxide-reveal = pkgs.writeTextDir "main.lua" ''
+      local cwd = ya.sync(function() return tostring(cx.active.current.cwd) end)
+
+      return {
+        entry = function()
+          local zoxide = require("zoxide")
+          local permit = ui.hide()
+          local target, err = zoxide.run_with(cwd())
+          permit:drop()
+          if not target then
+            ya.notify { title = "Zoxide", content = tostring(err), timeout = 5, level = "error" }
+          elseif target ~= "" then
+            ya.emit(target == "/" and "cd" or "reveal", { target, raw = true })
+          end
+        end,
+      }
+    '';
     plugins.escape-or-leave = pkgs.writeTextDir "main.lua" ''
       --- @sync entry
       return {

@@ -126,6 +126,7 @@ in
   environment.systemPackages = with pkgs; [
     nautilus # file manager
     firefox # web browser
+    qbittorrent # torrent client
     eza # better ls
     brightnessctl # adjust screen brightness
     vscode # code editor

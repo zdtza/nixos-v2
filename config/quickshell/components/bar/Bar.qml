@@ -240,6 +240,7 @@ PanelWindow {
             QuickToggles {
                 nightLightPanel: nightLight
                 timerPanel: timer
+                screenName: bar.screen?.name ?? ""
                 // After the clock, the toggles grow away from it towards the end.
                 mirrored: bar.neighbours("quickToggles").before === "clock"
             }

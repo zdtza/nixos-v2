@@ -16,6 +16,9 @@ Item {
     property var launches: ({})
     readonly property bool launching: Object.keys(launches).length > 0
     readonly property int launchTimeout: 60000
+    // Desktop entries in this category start no window (e.g. the screen
+    // recorder), so there is nothing to wait for or show as launching.
+    readonly property string windowlessCategory: "X-Windowless"
     // Hyprland tags each launch's window with `qslaunch-<serial>`, identifying it
     // even when its class looks nothing like the desktop entry.
     property int launchSerial: 0
@@ -203,8 +206,10 @@ Item {
     function launch(entry: DesktopEntry): void {
         if (!entry)
             return;
-        const tag = `qslaunch-${++root.launchSerial}`;
-        root.beginLaunchTracking(entry, tag, root.launchWorkspace());
+        const tracked = !entry.categories.includes(root.windowlessCategory);
+        const tag = tracked ? `qslaunch-${++root.launchSerial}` : "";
+        if (tracked)
+            root.beginLaunchTracking(entry, tag, root.launchWorkspace());
         root.launchDetached(entry.runInTerminal
             ? [...root.terminal, "--class", entry.id, "--", ...entry.command]
             : entry.command, entry.workingDirectory, tag);

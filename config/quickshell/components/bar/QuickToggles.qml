@@ -1,8 +1,7 @@
 // Quick toggles: active ones stay visible as indicators, inactive ones slide
 // out while the toggles' own area is hovered.
 import QtQuick
-import Quickshell.Services.Pipewire
-import "../primitives"
+import Quickshell
 import "../../services"
 
 Item {
@@ -10,17 +9,11 @@ Item {
 
     property var timerPanel: null
     property var nightLightPanel: null
+    // This bar's monitor, which shows the recording indicator while captured.
+    property string screenName: ""
     // Placed after the clock, so the row grows away from it towards the end.
     property bool mirrored: false
     property bool expanded: false
-
-    // XDPH creates one of these PipeWire sources per active portal capture.
-    readonly property var recordingNodes: Pipewire.nodes
-        ? Pipewire.nodes.values.filter(node => node && node.ready
-            && (node.name.startsWith("xdph-streaming-")
-                || String(node.properties["media.name"] || "")
-                    .startsWith("xdph-streaming-"))) : []
-    readonly property bool recordingActive: recordingNodes.length > 0
 
     // Never narrower than one icon cell, so there is always a strip to hover even with every toggle off.
     implicitWidth: Math.max(PanelService.barIconWidth, toggles.implicitWidth)
@@ -102,16 +95,17 @@ Item {
             }
         }
 
+        // Recording or screen sharing of this monitor, from any app. Clicking
+        // stops a screen-record recording; other apps' shares end in the app.
         QuickToggleSlot {
             gapBefore: !root.mirrored
-            shown: root.recordingActive
+            shown: ScreencastService.recordedMonitors.includes(root.screenName)
 
-            ShellText {
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: -1
-                text: ""
-                color: Theme.textPrimary
-                size: 14
+            QuickToggleButton {
+                icon: "\ueba7"
+                active: true
+                activeColor: Theme.base08
+                onClicked: Quickshell.execDetached(["screen-record", "--stop"])
             }
         }
     }

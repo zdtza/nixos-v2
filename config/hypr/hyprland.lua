@@ -135,6 +135,7 @@ for _, namespace in ipairs(quickshell_layers) do
 	})
 end
 
+
 -- =============================================================================
 -- window rules
 -- =============================================================================
@@ -165,6 +166,20 @@ hl.window_rule({
 	name = "suppress-maximize-events",
 	match = { class = ".*" },
 	suppress_event = "maximize",
+})
+
+-- Webcam overlay for screen recordings (modules/home/screen-record.nix): floats
+-- above everything in the bottom-right corner, ready to be dragged into place.
+hl.window_rule({
+	name = "screen-record-webcam",
+	match = { class = "^screen-record-webcam$" },
+	float = true,
+	pin = true,
+	no_initial_focus = true,
+	border_size = 0,
+	no_shadow = true,
+	-- Same distance from the bottom-right edges as tiled windows (gaps_out).
+	move = { "monitor_w-window_w-" .. GAPS_OUT, "monitor_h-window_h-" .. GAPS_OUT },
 })
 
 -- Hide Teams' screen-sharing indicator without stealing focus.

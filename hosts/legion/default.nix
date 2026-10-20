@@ -186,6 +186,7 @@ in
     bruno # api management tool
     postman # api managment tool
     dotnet-sdk_10 # .NET 10 SDK
+    vlc # video player
   ];
 
   networking = {

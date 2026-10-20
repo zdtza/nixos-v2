@@ -16,6 +16,7 @@
     ./hypridle.nix
     ./screen-share.nix
     ./screenshot.nix
+    ./screen-record.nix
     ./voxtype.nix
     ./nvim.nix
     ./go.nix

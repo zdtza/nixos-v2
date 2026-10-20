@@ -58,7 +58,6 @@ Item {
     }
 
     ClockPanel {
-        id: panel
         anchorItem: root
     }
 }

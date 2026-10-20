@@ -26,7 +26,6 @@ Shape {
         capStyle: ShapePath.RoundCap
 
         PathAngleArc {
-            id: arc
             centerX: root.size / 2
             centerY: root.size / 2
             radiusX: root.size / 2 - 1

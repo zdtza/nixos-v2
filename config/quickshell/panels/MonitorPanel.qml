@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 // Brightness, focused-monitor scale, and monitor overview.
 import QtQuick
-import Quickshell
 import "../components/panels"
 import "../components/primitives"
 import "../services"
@@ -69,7 +68,6 @@ Item {
 
 
     Drawer {
-        id: panel
         anchorItem: root
         contentSpacing: 12
         panelWidth: 460

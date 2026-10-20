@@ -6,7 +6,6 @@ import Quickshell
 import "../components/panels"
 import "../components/primitives"
 import "../services"
-import ".."
 
 Item {
     id: root
@@ -172,7 +171,6 @@ Item {
                 }
                 height: 44
                 Item {
-                    id: input
                     anchors {
                         left: parent.left
                         right: parent.right

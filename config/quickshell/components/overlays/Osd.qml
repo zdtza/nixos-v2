@@ -18,7 +18,6 @@ Scope {
     property real value: 0
     property int percent: 0
     property color fillColor: Theme.base05
-    property bool dictationMeterReady: false
     // Media keys swap the level bar for clickable transport controls.
     property bool mediaShown: false
 
@@ -30,21 +29,16 @@ Scope {
         : icon
     // Live microphone peak.
     readonly property real displayValue: dictationView
-        ? (dictationMeterReady ? Utils.peakLevel(inputPeak.peak) : 0) : value
+        ? Utils.peakLevel(inputPeak.peak) : value
     readonly property color displayFill: dictationView
         ? (AudioService.inputMuted ? Theme.base04 : Theme.base05) : fillColor
 
-    // Start monitoring immediately, but briefly hide its startup transient so opening the capture stream does not flash the meter at 100%.
+    // The built-in mic's wake-up DC offset is avoided by keeping it from
+    // suspending (hosts/legion/default.nix), so the raw peak is shown as-is.
     PwNodePeakMonitor {
         id: inputPeak
         node: AudioService.input
         enabled: VoiceDictationService.recording && !!node && !AudioService.inputMuted
-    }
-
-    Timer {
-        interval: 100
-        running: VoiceDictationService.recording && !root.dictationMeterReady
-        onTriggered: root.dictationMeterReady = VoiceDictationService.recording
     }
 
     // percentValue is `real`, not `int`
@@ -101,7 +95,6 @@ Scope {
 
         // Same rule as show(): pin the readout to whichever monitor was focused when recording started, and never cache the screen object.
         function onRecordingChanged(): void {
-            root.dictationMeterReady = false;
             if (VoiceDictationService.recording && Quickshell.screens.length > 0)
                 root.targetScreenName = String(Hyprland.focusedMonitor?.name ?? "");
         }
@@ -110,7 +103,7 @@ Scope {
     Connections {
         target: MediaService
 
-        function onMediaIpcInvoked(action: string): void {
+        function onMediaIpcInvoked(): void {
             root.showMedia();
         }
     }
@@ -132,7 +125,7 @@ Scope {
             && Quickshell.screens.length > 0
         color: "transparent"
         // Shadow room around the card, cut to the gap at the screen's bottom edge.
-        readonly property real shadowBottom: PanelService.panelGap + PanelService.gapBottomOffset
+        readonly property real shadowBottom: PanelService.panelGap
         // Wider for media so track titles have room.
         implicitWidth: (root.mediaView ? 320 : 240) + Theme.shadowExtent * 2
         implicitHeight: 52 + Theme.shadowExtent + shadowBottom
@@ -144,7 +137,7 @@ Scope {
         // The OSD always lives at the bottom. Only make room for the bar when
         // it is also at the bottom and currently affects panel geometry.
         anchors.bottom: true
-        margins.bottom: PanelService.panelGap + PanelService.gapBottomOffset
+        margins.bottom: PanelService.panelGap
             + (PanelService.barAtTop ? 0 : PanelService.panelBarInset) - shadowBottom
 
         mask: Region { item: card }
@@ -238,7 +231,6 @@ Scope {
             }
 
             Row {
-                id: mediaRow
                 visible: root.mediaView
                 anchors {
                     fill: parent

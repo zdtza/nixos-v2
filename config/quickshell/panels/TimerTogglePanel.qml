@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 // Multiple countdown controls and duration-entry panel.
 import QtQuick
-import Quickshell
 import "../components/panels"
 import "../components/primitives"
 import "../services"

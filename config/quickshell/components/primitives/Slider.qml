@@ -19,7 +19,6 @@ Item {
     }
 
     Rectangle {
-        id: track
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter

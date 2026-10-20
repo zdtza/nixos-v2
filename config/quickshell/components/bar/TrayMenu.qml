@@ -6,7 +6,6 @@ import Quickshell
 import "../panels"
 import "../primitives"
 import "../../services"
-import "../.."
 
 PopupWindow {
     id: menu
@@ -28,7 +27,6 @@ PopupWindow {
 
     readonly property bool staticEntries: !handle
     property bool contentReady: staticEntries
-    property var selectedEntry: null
     property int selectedEntryIndex: -1
     readonly property var menuEntries: staticEntries ? (entries ?? []) : opener.children.values
     readonly property var keyboardEntryIndices: menuEntries
@@ -63,7 +61,6 @@ PopupWindow {
 
     function selectEntry(index: int): void {
         selectedEntryIndex = index;
-        selectedEntry = index >= 0 ? menuEntries[index] : null;
     }
 
     function moveSelection(offset: int): void {
@@ -192,9 +189,9 @@ PopupWindow {
                 menu.anchorItem.width / 2 - menu.menuWidth / 2,
                 0
             );
-            point.x = Math.max(PanelService.panelGap + PanelService.gapLeftOffset,
+            point.x = Math.max(PanelService.panelGap,
                 Math.min(point.x, menu.anchorWindow.width - menu.menuWidth
-                    - PanelService.panelGap - PanelService.gapRightOffset));
+                    - PanelService.panelGap));
             menu.anchor.rect.x = Math.round(point.x - menu.shadowLeft);
         }
     }
@@ -399,8 +396,6 @@ PopupWindow {
                         }
 
                         MouseArea {
-                            id: mouseArea
-
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: row.interactive ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -429,8 +424,6 @@ PopupWindow {
 
                     // --- submenu --- Loaded by URL rather than as an inline component: QML refuses to instantiate a type inside its own definition.
                     Loader {
-                        id: submenuLoader
-
                         property var loadedSubmenu: null
 
                         active: menu.submenuEntry === row.entry

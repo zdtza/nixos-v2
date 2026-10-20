@@ -44,10 +44,6 @@ Item {
     // false starts already at rest (for the unlock copy that replaces a live lock) instead of animating in.
     property bool animateIn: true
 
-    function withAlpha(c: color, a: real): color {
-        return Qt.rgba(c.r, c.g, c.b, a);
-    }
-
     // Restarted explicitly so repeated fails replay even though no property changes.
     function fail(): void {
         indicator.fail();
@@ -79,7 +75,6 @@ Item {
     }
 
     Image {
-        id: wallpaperImage
         anchors.fill: parent
         source: root.wallpaper
         fillMode: Image.PreserveAspectCrop
@@ -101,8 +96,6 @@ Item {
 
     // Centre column: clock, 48 px gap, indicator row.
     Column {
-        id: content
-
         anchors.centerIn: parent
         spacing: 48
         opacity: 1 - root.contentOut

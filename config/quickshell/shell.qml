@@ -9,8 +9,6 @@ import "components/session"
 import "services"
 
 ShellRoot {
-    id: root
-
     // Session lock and login screen, exposed through the `lock` IPC target.
     LockScreen {
         id: lockScreen

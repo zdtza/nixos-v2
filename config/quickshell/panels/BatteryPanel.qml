@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 // Omarchy-style power panel backed by UPower and TLP's power-profile API.
 import QtQuick
-import Quickshell
 import "../components/bar"
 import "../components/panels"
 import "../components/primitives"
@@ -125,7 +124,6 @@ Item {
             trailingMargin: 10
 
             ShellText {
-                id: heroPercent
                 text: root.percent + "%"
                 size: 30
                 font.bold: true

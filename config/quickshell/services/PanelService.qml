@@ -65,10 +65,6 @@ Item {
     // Hyprland's outer gap, also used to inset floating shell panels.
     property real barGap: 9
     readonly property real panelGap: barGap
-    // Manual per-edge nudges layered on top of barGap, for whatever few pixels compositor rounding/borders leave popups and notifications off by.
-    property real gapBottomOffset: 0
-    property real gapLeftOffset: 0
-    property real gapRightOffset: 0
     // Height (plus gap), width and screen of the open top-right drawer, so
     // notifications stack beneath it at its width instead of over it.
     property real drawerInset: 0

@@ -1,6 +1,5 @@
 // Hyprsunset toggle and persistent color-temperature panel.
 import QtQuick
-import Quickshell
 import "../components/panels"
 import "../components/primitives"
 import "../services"
@@ -49,8 +48,6 @@ Item {
 
 
     Drawer {
-        id: panel
-
         anchorItem: root
         barItems: ["quickToggles"]
         fallbackAlignment: "center"

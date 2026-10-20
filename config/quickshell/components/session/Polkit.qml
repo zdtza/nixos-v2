@@ -36,8 +36,6 @@ Scope {
     }
 
     PanelWindow {
-        id: window
-
         screen: Utils.screenForMonitor(root.openedMonitorName)
         visible: agent.isActive
         color: "transparent"

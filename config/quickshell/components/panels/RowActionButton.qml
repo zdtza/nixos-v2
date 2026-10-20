@@ -1,7 +1,6 @@
 import QtQuick
 import "../primitives"
 import "../../services"
-import "../.."
 
 // Small square icon button embedded in a list row (disconnect, forget, cancel, ...).
 Rectangle {

@@ -36,8 +36,7 @@ ShellSurface {
     // aligned to. The shadow fills that gap but stops at the bar and at the
     // screen edge, and only grows away from the bar as far as the screen allows.
     readonly property real cardBarInset: PanelService.panelBarInset + PanelService.panelGap
-    readonly property real cardLeftInset: PanelService.panelGap + PanelService.gapLeftOffset
-    readonly property real cardRightInset: PanelService.panelGap + PanelService.gapRightOffset
+    readonly property real cardEdgeInset: PanelService.panelGap
     readonly property real farEdgeRoom: Math.max(0,
         (screen?.height ?? 800) - cardBarInset - panelHeight)
 
@@ -45,16 +44,16 @@ ShellSurface {
         : PanelService.barAtTop ? PanelService.panelGap : Math.min(Theme.shadowExtent, farEdgeRoom)
     shadowBottom: centeredVertically ? Theme.shadowExtent
         : PanelService.barAtTop ? Math.min(Theme.shadowExtent, farEdgeRoom) : PanelService.panelGap
-    shadowLeft: alignedStart ? cardLeftInset : Theme.shadowExtent
-    shadowRight: alignedEnd ? cardRightInset : Theme.shadowExtent
+    shadowLeft: alignedStart ? cardEdgeInset : Theme.shadowExtent
+    shadowRight: alignedEnd ? cardEdgeInset : Theme.shadowExtent
 
     margins.top: !centeredVertically && PanelService.barAtTop
         ? cardBarInset - shadowTop : 0
     margins.bottom: !centeredVertically && !PanelService.barAtTop
         ? cardBarInset - shadowBottom : 0
 
-    margins.left: alignedStart ? cardLeftInset - shadowLeft : 0
-    margins.right: alignedEnd ? cardRightInset - shadowRight : 0
+    margins.left: alignedStart ? cardEdgeInset - shadowLeft : 0
+    margins.right: alignedEnd ? cardEdgeInset - shadowRight : 0
 
     WlrLayershell.namespace: "quickshell:panel-drawer"
 

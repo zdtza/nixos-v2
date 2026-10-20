@@ -181,8 +181,6 @@ Item {
         }
 
         Button {
-            id: chevron
-
             panel: root
             showPanelIndicator: false
             text: ""
@@ -196,8 +194,6 @@ Item {
 
         // Clipped viewport keeps the icon row pinned behind the hotspot.
         Item {
-            id: viewport
-
             anchors.verticalCenter: parent.verticalCenter
             clip: true
 

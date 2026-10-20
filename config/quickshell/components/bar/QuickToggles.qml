@@ -12,7 +12,6 @@ Item {
     property var nightLightPanel: null
     // Placed after the clock, so the row grows away from it towards the end.
     property bool mirrored: false
-    readonly property bool hovered: hover.hovered
     property bool expanded: false
 
     // XDPH creates one of these PipeWire sources per active portal capture.
@@ -27,13 +26,15 @@ Item {
     implicitWidth: Math.max(PanelService.barIconWidth, toggles.implicitWidth)
     implicitHeight: PanelService.barItemHeight
 
-    // A short grace period so crossing the gap between hotspot and toggles does not snap them shut.
-    onHoveredChanged: {
-        if (hovered) {
-            collapseTimer.stop();
-            expanded = true;
-        } else {
-            collapseTimer.restart();
+    // Collapses after a short grace period, so brushing past the edge does not snap them shut.
+    HoverHandler {
+        onHoveredChanged: {
+            if (hovered) {
+                collapseTimer.stop();
+                root.expanded = true;
+            } else {
+                collapseTimer.restart();
+            }
         }
     }
 
@@ -41,10 +42,6 @@ Item {
         id: collapseTimer
         interval: 250
         onTriggered: root.expanded = false
-    }
-
-    HoverHandler {
-        id: hover
     }
 
     // Anchored to the clock side, with the clock-most slots kept nearest it.

@@ -361,7 +361,6 @@ Scope {
         id: sessionLock
 
         WlSessionLockSurface {
-            id: lockSurface
             color: Theme.base01
 
             onVisibleChanged: if (visible)

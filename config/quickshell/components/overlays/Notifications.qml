@@ -97,7 +97,7 @@ Scope {
         readonly property real shadowTop: PanelService.barAtTop ? PanelService.panelGap : Theme.shadowExtent
         readonly property real shadowBottom: PanelService.barAtTop ? Theme.shadowExtent : PanelService.panelGap
         readonly property real shadowLeft: Theme.shadowExtent
-        readonly property real shadowRight: PanelService.panelGap + PanelService.gapRightOffset
+        readonly property real shadowRight: PanelService.panelGap
         implicitWidth: cardWidth + shadowLeft + shadowRight
         implicitHeight: window.panelHeight > 0
             ? window.panelHeight + shadowTop + shadowBottom : 1
@@ -132,7 +132,7 @@ Scope {
             ? PanelService.panelBarInset + PanelService.panelGap + drawerInset - shadowTop : 0
         margins.bottom: PanelService.barAtTop
             ? 0 : PanelService.panelBarInset + PanelService.panelGap + drawerInset - shadowBottom
-        margins.right: PanelService.panelGap + PanelService.gapRightOffset - shadowRight
+        margins.right: PanelService.panelGap - shadowRight
 
         // Every card's shadow lives in this one layer beneath the whole stack,
         // so no card's shadow falls across its neighbour.
@@ -419,7 +419,6 @@ Scope {
                 }
 
                 ShellText {
-                    id: fallbackIcon
                     anchors.centerIn: appIcon
                     visible: !appIcon.visible
                     text: "󰂚"
@@ -454,7 +453,6 @@ Scope {
                 }
 
                 ShellText {
-                    id: closeButton
                     anchors { right: parent.right; verticalCenter: parent.verticalCenter }
                     text: "󰅖"
                     color: closeMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary

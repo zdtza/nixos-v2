@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 // PipeWire audio panel: default-device selection, volume controls, and mic peak.
 import QtQuick
-import Quickshell
 import Quickshell.Services.Pipewire
 import "../components/bar"
 import "../components/panels"
@@ -164,7 +163,6 @@ Item {
 
             ShellText {
                 width: parent.width
-                height: AudioService.outputs.length === 0 ? implicitHeight : 0
                 visible: AudioService.outputs.length === 0
                 text: "No audio outputs"
                 color: Theme.textSecondary
@@ -251,7 +249,6 @@ Item {
 
             ShellText {
                 width: parent.width
-                height: AudioService.inputs.length === 0 ? implicitHeight : 0
                 visible: AudioService.inputs.length === 0
                 text: "No audio inputs"
                 color: Theme.textSecondary

@@ -18,7 +18,7 @@ Item {
     readonly property string title: player ? (player.trackTitle || player.identity || "Unknown track") : ""
     readonly property string artist: player ? (player.trackArtist || "") : ""
 
-    signal mediaIpcInvoked(string action)
+    signal mediaIpcInvoked()
 
     function control(action: string): void {
         const target = player;
@@ -37,7 +37,7 @@ Item {
 
     function controlFromIpc(action: string): void {
         control(action);
-        mediaIpcInvoked(action);
+        mediaIpcInvoked();
     }
 
     IpcHandler {

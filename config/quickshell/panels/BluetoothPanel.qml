@@ -2,13 +2,11 @@ pragma ComponentBehavior: Bound
 
 // BlueZ device panel matching Network panel interaction and styling.
 import QtQuick
-import Quickshell
 import Quickshell.Bluetooth
 import "../components/bar"
 import "../components/panels"
 import "../components/primitives"
 import "../services"
-import ".."
 
 Item {
     id: root

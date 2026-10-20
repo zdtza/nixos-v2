@@ -269,7 +269,6 @@ done
     }
 
     ScrollArea {
-        id: zoneList
         width: parent.width
         height: root.zoneViewportHeight
         contentHeight: zoneColumn.implicitHeight

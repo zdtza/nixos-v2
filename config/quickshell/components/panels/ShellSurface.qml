@@ -18,7 +18,6 @@ PanelWindow {
     property real contentBottomMargin: contentMargins
     property real contentSpacing: 14
     default property alias panelChildren: contentColumn.data
-    readonly property alias panelContent: contentColumn
     // Size of the visible card; the window adds the shadow room around it.
     property real panelWidth: 0
     property real panelHeight: contentColumn.implicitHeight + contentTopMargin + contentBottomMargin

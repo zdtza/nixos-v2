@@ -18,6 +18,7 @@
     ./screenshot.nix
     ./voxtype.nix
     ./nvim.nix
+    ./go.nix
     ./ssh.nix
     ./web-apps.nix
     ./fzf.nix

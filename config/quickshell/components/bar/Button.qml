@@ -18,7 +18,7 @@ Item {
     signal clicked(var mouse)
     signal wheeled(var wheel)
 
-    implicitWidth: 22
+    implicitWidth: PanelService.barIconWidth
     implicitHeight: PanelService.barItemHeight
     clip: true
 

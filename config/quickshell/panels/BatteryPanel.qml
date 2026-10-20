@@ -112,6 +112,7 @@ Item {
     Drawer {
         id: panel
         anchorItem: root
+        barItems: ["battery"]
         // Wider card gives each equal-width profile button real horizontal breathing room around its icon and longest label (Power-saver).
         panelWidth: 420
 

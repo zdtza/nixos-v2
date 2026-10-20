@@ -11,6 +11,7 @@ let
     "partner-local.pmis.servicesseta.org.za"
     "learner-local.pmis.servicesseta.org.za"
     "local.scrubbill.net"
+    "api.local.scrubbill.net"
   ];
 
 in
@@ -23,11 +24,18 @@ in
     ../../modules/core.nix
     ../../modules/laptop.nix
     ../../modules/windows.nix
+    ../../modules/sql-server.nix
+    ../../modules/jellyfin.nix
   ];
 
   gpu = "nvidia";
 
   windows.user = user;
+
+  sqlServer.user = user;
+  sqlServer.autoStart = true;
+
+  jellyfin.user = user;
 
   wayland-desktop = {
     # Quickshell locks the session immediately after autologin.
@@ -164,6 +172,7 @@ in
     papers # document viewer / editor
     beekeeper-studio # data-base management tool
     bruno # api management tool
+    postman # api managment tool
     dotnet-sdk_10 # .NET 10 SDK
   ];
 

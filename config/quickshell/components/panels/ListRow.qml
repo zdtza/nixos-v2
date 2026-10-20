@@ -13,6 +13,8 @@ Rectangle {
     property string subtitle: ""
     property string trailingIcon: ""
     property real iconSize: 16
+    // Fixed icon slot so glyphs of different widths keep titles aligned; 0 uses the glyph's own width.
+    property real iconWidth: 0
     property real titleSize: 12
     property int titleWeight: Font.Normal
     property real titleLeftMargin: 10
@@ -58,6 +60,8 @@ Rectangle {
             anchors.left: parent.left
             anchors.leftMargin: 10
             anchors.verticalCenter: parent.verticalCenter
+            width: root.iconWidth > 0 ? root.iconWidth : implicitWidth
+            horizontalAlignment: Text.AlignHCenter
             text: root.icon
             size: root.iconSize
         }

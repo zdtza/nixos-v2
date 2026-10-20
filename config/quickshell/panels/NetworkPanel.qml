@@ -269,6 +269,7 @@ Item {
     Drawer {
         id: panel
         anchorItem: root
+        barItems: ["network"]
         closeOnEscape: root.passwordSsid === ""
         contentBottomMargin: 12
         // Connected networks and the "AVAILABLE" header are pinned, so they count toward chrome height rather than the scrollable viewport.

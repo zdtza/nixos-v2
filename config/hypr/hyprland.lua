@@ -688,13 +688,18 @@ bind("SUPER + C", "Copy the selection to the clipboard", universal_clipboard_sho
 bind("SUPER + V", "Paste content from the clipboard", universal_clipboard_shortcut("CTRL", "V", "SHIFT", "Insert"))
 
 -- =============================================================================
--- keybinds - audio and brightness
+-- keybinds - audio, media and brightness
 -- =============================================================================
 
 bind("XF86AudioRaiseVolume", "Increase the output volume", hl.dsp.exec_cmd("qs ipc call audio outputUp"), { locked = true, repeating = true })
 bind("XF86AudioLowerVolume", "Decrease the output volume", hl.dsp.exec_cmd("qs ipc call audio outputDown"), { locked = true, repeating = true })
 bind("XF86AudioMute", "Toggle output audio mute", hl.dsp.exec_cmd("qs ipc call audio toggleOutputMute"), { locked = true, repeating = true })
 bind("XF86AudioMicMute", "Toggle microphone mute", hl.dsp.exec_cmd("qs ipc call audio toggleInputMute"), { locked = true, repeating = true })
+bind("XF86AudioPlay", "Play or pause media", hl.dsp.exec_cmd("qs ipc call media playPause"), { locked = true })
+bind("XF86AudioPause", "Play or pause media", hl.dsp.exec_cmd("qs ipc call media playPause"), { locked = true })
+bind("XF86AudioNext", "Skip to the next track", hl.dsp.exec_cmd("qs ipc call media next"), { locked = true })
+bind("XF86AudioPrev", "Go back to the previous track", hl.dsp.exec_cmd("qs ipc call media previous"), { locked = true })
+bind("XF86AudioStop", "Stop media playback", hl.dsp.exec_cmd("qs ipc call media stop"), { locked = true })
 bind("XF86MonBrightnessUp", "Increase display brightness", hl.dsp.exec_cmd("qs ipc call monitor brightnessUp"), { locked = true })
 bind("XF86MonBrightnessDown", "Decrease display brightness", hl.dsp.exec_cmd("qs ipc call monitor brightnessDown"), { locked = true })
 

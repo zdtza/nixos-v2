@@ -11,12 +11,7 @@ import "../../services"
 Item {
     id: root
 
-    property var nightLightPanel: null
-    property var timerPanel: null
     readonly property var items: SystemTray.items.values
-    readonly property bool hasInactiveQuickToggles: !StayAwakeService.active
-        || !DoNotDisturbService.active || !NightLightService.active
-        || !TimerService.running
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     property bool pinned: false
@@ -164,7 +159,6 @@ Item {
     }
 
     visible: items.length > 0 || WindowsService.running
-        || hasInactiveQuickToggles
     implicitWidth: row.implicitWidth
     implicitHeight: PanelService.barItemHeight
 
@@ -177,7 +171,7 @@ Item {
 
         anchors.verticalCenter: parent.verticalCenter
         layoutDirection: Qt.LeftToRight
-        spacing: root.expanded ? 2 : 0
+        spacing: root.expanded ? PanelService.barSpacing : 0
 
         Behavior on spacing {
             NumberAnimation {
@@ -222,7 +216,7 @@ Item {
                 id: icons
 
                 anchors.right: parent.right
-                spacing: 2
+                spacing: PanelService.barSpacing
 
                 Repeater {
                     id: trayRepeater
@@ -234,7 +228,7 @@ Item {
                         required property SystemTrayItem modelData
                         required property int index
 
-                        implicitWidth: 28
+                        implicitWidth: 16 + PanelService.barItemPadding * 2
                         implicitHeight: PanelService.barItemHeight
 
                         HoverUnderline {
@@ -293,7 +287,7 @@ Item {
                     id: windowsEntry
 
                     visible: WindowsService.running
-                    implicitWidth: visible ? 28 : 0
+                    implicitWidth: visible ? 16 + PanelService.barItemPadding * 2 : 0
                     implicitHeight: PanelService.barItemHeight
 
                     HoverUnderline {
@@ -331,61 +325,6 @@ Item {
 
                             root.showWindowsMenu();
                             PanelService.open(root);
-                        }
-                    }
-                }
-
-                // Inactive quick toggles follow the regular tray entries.
-                QuickToggleSlot {
-                    shown: !StayAwakeService.active
-
-                    QuickToggleButton {
-                        icon: "󰅶"
-                        inactiveColor: Theme.textMuted
-                        onClicked: {
-                            root.pinned = false;
-                            StayAwakeService.toggle();
-                        }
-                    }
-                }
-
-                QuickToggleSlot {
-                    shown: !DoNotDisturbService.active
-
-                    QuickToggleButton {
-                        icon: "󰂛"
-                        inactiveColor: Theme.textMuted
-                        onClicked: {
-                            root.pinned = false;
-                            DoNotDisturbService.toggle();
-                        }
-                    }
-                }
-
-                QuickToggleSlot {
-                    shown: !NightLightService.active
-
-                    QuickToggleButton {
-                        icon: ""
-                        iconSize: 12
-                        inactiveColor: Theme.textMuted
-                        onClicked: {
-                            root.pinned = false;
-                            PanelService.toggle(root.nightLightPanel);
-                        }
-                    }
-                }
-
-                // A running timer shows its countdown badge instead.
-                QuickToggleSlot {
-                    shown: !TimerService.running
-
-                    QuickToggleButton {
-                        icon: "󱎫"
-                        inactiveColor: Theme.textMuted
-                        onClicked: {
-                            root.pinned = false;
-                            PanelService.toggle(root.timerPanel);
                         }
                     }
                 }

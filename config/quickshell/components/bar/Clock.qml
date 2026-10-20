@@ -10,9 +10,10 @@ Item {
 
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
-    readonly property alias timerPanel: timerControl
+    // Hosted by the bar so keybinds reach it whether or not the clock is shown.
+    property var timerPanel: null
 
-    implicitWidth: label.implicitWidth + 16
+    implicitWidth: label.implicitWidth + PanelService.barItemPadding * 2
     implicitHeight: PanelService.barItemHeight
 
     SystemClock {
@@ -50,15 +51,10 @@ Item {
         cursorShape: Qt.PointingHandCursor
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton)
-                PanelService.toggle(timerControl);
+                PanelService.toggle(root.timerPanel);
             else
                 PanelService.toggle(root);
         }
-    }
-
-
-    TimerTogglePanel {
-        id: timerControl
     }
 
     ClockPanel {

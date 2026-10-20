@@ -12,7 +12,8 @@ import ".."
 Drawer {
     id: root
 
-    centeredHorizontally: true
+    barItems: ["clock"]
+    fallbackAlignment: "center"
 
     property bool addingZone: false
     property string addError: ""

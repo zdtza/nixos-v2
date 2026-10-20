@@ -112,7 +112,7 @@ Item {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             horizontalAlignment: Text.AlignHCenter
-            text: Qt.formatDateTime(root.date, "hh") + "\n" + Qt.formatDateTime(root.date, "mm")
+            text: Qt.formatDateTime(root.date, "hh:mm")
             color: root.clockColor
             font.family: root.fontFamily
             font.pixelSize: root.clockSize

@@ -161,6 +161,7 @@ Item {
     Drawer {
         id: panel
         anchorItem: root
+        barItems: ["bluetooth"]
         readonly property real panelChromeHeight: contentTopMargin
             + contentBottomMargin + bluetoothHero.implicitHeight
             + bluetoothSeparator.height + contentSpacing * 2

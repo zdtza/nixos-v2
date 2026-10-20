@@ -148,7 +148,7 @@ Item {
         id: panel
 
         anchorItem: root
-        centeredHorizontally: true
+        fixedAlignment: "center"
         centeredVertically: true
         contentMargins: 0
         contentSpacing: 0

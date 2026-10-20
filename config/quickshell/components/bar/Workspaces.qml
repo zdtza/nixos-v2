@@ -170,7 +170,7 @@ Item {
         id: workspaceRow
 
         anchors.centerIn: parent
-        spacing: 2
+        spacing: PanelService.barSpacing
 
         Repeater {
             model: root.workspaces
@@ -192,7 +192,7 @@ Item {
                 // Keep workspace slots the same width whether empty or
                 // occupied so opening/closing a window cannot shift them.
                 // Full bar height, so the active underline sits on the bar's bottom edge.
-                width: 26
+                width: appIcon.width + PanelService.barItemPadding * 2
                 height: PanelService.barItemHeight
                 clip: true
 

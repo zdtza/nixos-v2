@@ -136,6 +136,8 @@ Item {
         id: panel
 
         anchorItem: root
+        barItems: ["quickToggles", "clock", "timer"]
+        fallbackAlignment: "center"
         onOpenChanged: {
             if (!open)
                 return;

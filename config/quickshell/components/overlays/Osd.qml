@@ -1,4 +1,4 @@
-// Bottom-center volume and brightness feedback, plus the persistent voice dictation readout.
+// Bottom-center volume, brightness and media feedback, plus the persistent voice dictation readout.
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
@@ -19,11 +19,15 @@ Scope {
     property int percent: 0
     property color fillColor: Theme.base05
     property bool dictationMeterReady: false
+    // Media keys swap the level bar for clickable transport controls.
+    property bool mediaShown: false
 
     // Dictation has no timer: it shows for as long as voxtype is recording.
     readonly property bool dictationView: VoiceDictationService.recording && !shown
+    readonly property bool mediaView: shown && mediaShown
     readonly property string displayIcon: dictationView
-        ? (AudioService.inputMuted ? "󰍭" : "󰍬") : icon
+        ? (AudioService.inputMuted ? "󰍭" : "󰍬")
+        : icon
     // Live microphone peak.
     readonly property real displayValue: dictationView
         ? (dictationMeterReady ? Utils.peakLevel(inputPeak.peak) : 0) : value
@@ -52,8 +56,19 @@ Scope {
         value = Math.max(0, Math.min(1, Number(progress)));
         percent = Math.round(percentValue);
         fillColor = fill;
+        mediaShown = false;
         shown = true;
         hideTimer.restart();
+    }
+
+    function showMedia(): void {
+        if (Quickshell.screens.length === 0)
+            return;
+        targetScreenName = String(Hyprland.focusedMonitor?.name ?? "");
+        mediaShown = true;
+        shown = true;
+        if (!cardHover.hovered)
+            hideTimer.restart();
     }
 
     Timer {
@@ -93,6 +108,14 @@ Scope {
     }
 
     Connections {
+        target: MediaService
+
+        function onMediaIpcInvoked(action: string): void {
+            root.showMedia();
+        }
+    }
+
+    Connections {
         target: MonitorService
 
         function onBrightnessIpcInvoked(): void {
@@ -110,7 +133,8 @@ Scope {
         color: "transparent"
         // Shadow room around the card, cut to the gap at the screen's bottom edge.
         readonly property real shadowBottom: PanelService.panelGap + PanelService.gapBottomOffset
-        implicitWidth: 240 + Theme.shadowExtent * 2
+        // Wider for media so track titles have room.
+        implicitWidth: (root.mediaView ? 320 : 240) + Theme.shadowExtent * 2
         implicitHeight: 52 + Theme.shadowExtent + shadowBottom
         exclusionMode: ExclusionMode.Ignore
 
@@ -141,7 +165,19 @@ Scope {
             color: Theme.base01
             radius: 0
 
+            // Stays up while the pointer is over it so the media controls can be used.
+            HoverHandler {
+                id: cardHover
+                onHoveredChanged: {
+                    if (hovered)
+                        hideTimer.stop();
+                    else if (root.shown)
+                        hideTimer.restart();
+                }
+            }
+
             Row {
+                visible: !root.mediaView
                 anchors {
                     fill: parent
                     margins: 14
@@ -200,6 +236,94 @@ Scope {
                     color: Utils.alpha(Theme.base05, 0.6)
                 }
             }
+
+            Row {
+                id: mediaRow
+                visible: root.mediaView
+                anchors {
+                    fill: parent
+                    margins: 8
+                    leftMargin: 8
+                    rightMargin: 14
+                }
+                spacing: 4
+
+                MediaButton {
+                    icon: "󰒮"
+                    available: !!MediaService.player && MediaService.player.canGoPrevious
+                    onClicked: MediaService.control("previous")
+                }
+
+                MediaButton {
+                    icon: MediaService.playing ? "󰏤" : "󰐊"
+                    iconSize: 20
+                    available: !!MediaService.player && MediaService.player.canTogglePlaying
+                    onClicked: MediaService.control("playPause")
+                }
+
+                MediaButton {
+                    icon: "󰒭"
+                    available: !!MediaService.player && MediaService.player.canGoNext
+                    onClicked: MediaService.control("next")
+                }
+
+                Column {
+                    width: parent.width - x
+                    anchors.verticalCenter: parent.verticalCenter
+                    leftPadding: 8
+                    spacing: 1
+
+                    ShellText {
+                        width: parent.width - parent.leftPadding
+                        text: MediaService.player ? MediaService.title : "No media playing"
+                        elide: Text.ElideRight
+                        size: 12
+                        color: MediaService.player ? Theme.base05 : Utils.alpha(Theme.base05, 0.6)
+                    }
+
+                    ShellText {
+                        width: parent.width - parent.leftPadding
+                        visible: text !== ""
+                        text: MediaService.artist
+                        elide: Text.ElideRight
+                        size: 11
+                        color: Utils.alpha(Theme.base05, 0.6)
+                    }
+                }
+            }
+        }
+    }
+
+    component MediaButton: Rectangle {
+        id: button
+
+        property string icon: ""
+        property real iconSize: 16
+        property bool available: true
+
+        signal clicked()
+
+        width: 36
+        height: 36
+        radius: PanelService.rounding
+        opacity: available ? 1 : 0.4
+        color: buttonMouse.pressed ? Utils.alpha(Theme.base05, 0.16)
+            : buttonMouse.containsMouse ? Utils.alpha(Theme.base05, 0.08)
+            : "transparent"
+
+        ShellText {
+            anchors.centerIn: parent
+            text: button.icon
+            size: button.iconSize
+        }
+
+        MouseArea {
+            id: buttonMouse
+            anchors.fill: parent
+            enabled: button.available
+            hoverEnabled: true
+            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: button.clicked()
         }
     }
 }

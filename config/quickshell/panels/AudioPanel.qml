@@ -18,7 +18,9 @@ Item {
     readonly property bool requiresKeyboardFocus: true
     readonly property int outputPercent: Math.round(AudioService.outputVolume * 100)
     readonly property int inputPercent: Math.round(AudioService.inputVolume * 100)
-    readonly property var keyboardDevices: AudioService.outputs.concat(AudioService.inputs)
+    // Keyboard order: outputs, the channel-swap row, then inputs.
+    readonly property int swapRowIndex: AudioService.outputs.length
+    readonly property int keyboardRowCount: swapRowIndex + 1 + AudioService.inputs.length
     property int selectedDeviceIndex: 0
 
     visible: available
@@ -26,24 +28,21 @@ Item {
     implicitHeight: indicator.implicitHeight
 
     function moveDeviceSelection(offset: int): void {
-        if (keyboardDevices.length === 0)
-            return;
         selectedDeviceIndex = Math.max(0,
-            Math.min(keyboardDevices.length - 1, selectedDeviceIndex + offset));
+            Math.min(keyboardRowCount - 1, selectedDeviceIndex + offset));
     }
 
     function activateSelectedDevice(): void {
-        const device = keyboardDevices[selectedDeviceIndex];
-        if (!device)
-            return;
-        if (selectedDeviceIndex < AudioService.outputs.length)
-            AudioService.selectOutput(device);
+        if (selectedDeviceIndex < swapRowIndex)
+            AudioService.selectOutput(AudioService.outputs[selectedDeviceIndex]);
+        else if (selectedDeviceIndex === swapRowIndex)
+            AudioService.setSwapChannels(!AudioService.swapChannels);
         else
-            AudioService.selectInput(device);
+            AudioService.selectInput(AudioService.inputs[selectedDeviceIndex - swapRowIndex - 1]);
     }
 
     function adjustSelectedVolume(offset: real): void {
-        if (selectedDeviceIndex < AudioService.outputs.length)
+        if (selectedDeviceIndex <= swapRowIndex)
             AudioService.adjustOutputVolume(offset * AudioService.outputStep);
         else
             AudioService.adjustInputVolume(offset * AudioService.inputStep);
@@ -66,9 +65,7 @@ Item {
             return "EASY LISTENING";
         if (AudioService.outputVolume < 0.8)
             return "LOUD AND CLEAR";
-        if (AudioService.outputVolume <= 1)
-            return "TURNED UP";
-        return "OVERDRIVE";
+        return "TURNED UP";
     }
 
     onOpenedChanged: if (opened)
@@ -132,6 +129,7 @@ Item {
     Drawer {
         id: panel
         anchorItem: root
+        barItems: ["audio"]
         contentSpacing: 12
         panelWidth: 420
 
@@ -180,6 +178,30 @@ Item {
                     icon: "󰓃"
                     current: AudioService.output === modelData
                     onActivated: AudioService.selectOutput(modelData)
+                }
+            }
+
+            ListRow {
+                height: 36
+                iconSize: 14
+                iconWidth: 16
+                icon: "󰓡"
+                title: "Swap left and right"
+                clickable: AudioService.outputs.length > 0
+                selected: root.selectedDeviceIndex === root.swapRowIndex
+                onHoverSelected: root.selectedDeviceIndex = root.swapRowIndex
+                onActivated: {
+                    root.selectedDeviceIndex = root.swapRowIndex;
+                    AudioService.setSwapChannels(!AudioService.swapChannels);
+                }
+
+                overlay: ToggleSwitch {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    available: AudioService.outputs.length > 0
+                    checked: AudioService.swapChannels
+                    onToggled: AudioService.setSwapChannels(!AudioService.swapChannels)
                 }
             }
         }
@@ -241,7 +263,7 @@ Item {
 
                 DeviceRow {
                     icon: "󰍬"
-                    deviceIndex: AudioService.outputs.length + index
+                    deviceIndex: root.swapRowIndex + 1 + index
                     current: AudioService.input === modelData
                     onActivated: AudioService.selectInput(modelData)
                 }
@@ -252,11 +274,12 @@ Item {
     component DeviceRow: ListRow {
         required property var modelData
         required property int index
-        // Position in keyboardDevices: outputs first, then inputs.
+        // Keyboard position: outputs, the swap row, then inputs.
         property int deviceIndex: index
 
         height: 36
         iconSize: 14
+        iconWidth: 16
         title: root.nodeLabel(modelData)
         selected: deviceIndex === root.selectedDeviceIndex
         onHoverSelected: root.selectedDeviceIndex = deviceIndex

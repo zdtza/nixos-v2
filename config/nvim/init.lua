@@ -62,7 +62,7 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 -- lsp: enable any server whose binary is on $PATH (install servers via nix/system)
-vim.lsp.enable({ "lua_ls", "nil_ls", "pyright", "ts_ls", "bashls" })
+vim.lsp.enable({ "lua_ls", "nil_ls", "pyright", "ts_ls", "bashls", "gopls" })
 vim.diagnostic.config({ virtual_text = true })
 
 vim.api.nvim_create_autocmd("LspAttach", {

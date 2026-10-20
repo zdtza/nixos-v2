@@ -52,11 +52,13 @@ Item {
         id: panel
 
         anchorItem: root
+        barItems: ["quickToggles"]
+        fallbackAlignment: "center"
         panelWidth: 420
 
         Hero {
             width: parent.width
-            icon: ""
+            icon: "󰖔"
             title: "Night Light"
             status: root.temperatureStatus()
             ToggleSwitch {

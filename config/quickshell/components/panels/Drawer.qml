@@ -4,12 +4,21 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import "../../services"
 
-// Floating drawer used by right-side system panels. Opens while its anchorItem
-// is PanelService's active panel; Escape or a click outside closes it.
+// Floating drawer used by bar panels. Opens while its anchorItem is
+// PanelService's active panel; Escape or a click outside closes it.
 ShellSurface {
     id: root
 
-    property bool centeredHorizontally: false
+    // Bar items (see BarConfig) this panel belongs to; the first one shown
+    // decides whether it opens at the start, centre or end of the screen.
+    property var barItems: []
+    property string fallbackAlignment: "end"
+    // Set to pin the drawer regardless of the bar layout.
+    property string fixedAlignment: ""
+    readonly property string alignment: fixedAlignment !== "" ? fixedAlignment
+        : BarConfig.alignmentFor(barItems, fallbackAlignment)
+    readonly property bool alignedStart: alignment === "start"
+    readonly property bool alignedEnd: alignment === "end"
     property bool centeredVertically: false
 
     anchorWindow: anchorItem.QsWindow.window
@@ -19,13 +28,15 @@ ShellSurface {
     anchors {
         top: !centeredVertically && PanelService.barAtTop
         bottom: !centeredVertically && !PanelService.barAtTop
-        right: !centeredHorizontally
+        left: alignedStart
+        right: alignedEnd
     }
 
-    // The card sits panelGap clear of the bar and the right screen edge. The
-    // shadow fills that gap but stops at the bar and at the screen edge, and
-    // only grows away from the bar as far as the screen allows.
+    // The card sits panelGap clear of the bar and of the screen edge it is
+    // aligned to. The shadow fills that gap but stops at the bar and at the
+    // screen edge, and only grows away from the bar as far as the screen allows.
     readonly property real cardBarInset: PanelService.panelBarInset + PanelService.panelGap
+    readonly property real cardLeftInset: PanelService.panelGap + PanelService.gapLeftOffset
     readonly property real cardRightInset: PanelService.panelGap + PanelService.gapRightOffset
     readonly property real farEdgeRoom: Math.max(0,
         (screen?.height ?? 800) - cardBarInset - panelHeight)
@@ -34,19 +45,22 @@ ShellSurface {
         : PanelService.barAtTop ? PanelService.panelGap : Math.min(Theme.shadowExtent, farEdgeRoom)
     shadowBottom: centeredVertically ? Theme.shadowExtent
         : PanelService.barAtTop ? Math.min(Theme.shadowExtent, farEdgeRoom) : PanelService.panelGap
-    shadowRight: centeredHorizontally ? Theme.shadowExtent : cardRightInset
+    shadowLeft: alignedStart ? cardLeftInset : Theme.shadowExtent
+    shadowRight: alignedEnd ? cardRightInset : Theme.shadowExtent
 
     margins.top: !centeredVertically && PanelService.barAtTop
         ? cardBarInset - shadowTop : 0
     margins.bottom: !centeredVertically && !PanelService.barAtTop
         ? cardBarInset - shadowBottom : 0
 
-    margins.right: centeredHorizontally ? 0 : cardRightInset - shadowRight
+    margins.left: alignedStart ? cardLeftInset - shadowLeft : 0
+    margins.right: alignedEnd ? cardRightInset - shadowRight : 0
 
     WlrLayershell.namespace: "quickshell:panel-drawer"
 
+    // Notifications stack in the end corner, beneath an end-aligned drawer.
     readonly property bool sharesNotificationCorner: open
-        && !centeredHorizontally && !centeredVertically
+        && alignedEnd && !centeredVertically
 
     Binding {
         target: PanelService

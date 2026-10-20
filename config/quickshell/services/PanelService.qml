@@ -31,17 +31,21 @@ Item {
     property int handoffGeneration: 0
     property var registeredPanels: ({})
 
-    // Change this one line to "top" or "bottom" to place the bar and its panels.
-    property string barPosition: "top"
+    // Set in BarConfig.qml.
+    readonly property string barPosition: BarConfig.position
     readonly property bool barAtTop: barPosition === "top"
 
     // Whether the status bar is currently shown (toggled via `qs ipc call bar toggle/hide/show`).
     property bool barVisible: true
+    // Screen whose hidden bar is flown out under the pointer, "" when none.
+    property string barPeekScreen: ""
+    readonly property bool barPeeking: !barVisible && barPeekScreen !== ""
+    onBarVisibleChanged: barPeekScreen = ""
     readonly property bool focusedAppFullscreen: !!Hyprland.activeToplevel
         && !!Hyprland.focusedWorkspace?.hasFullscreen
 
     // Fullscreen clients cover the bar, so overlays use hidden-bar geometry.
-    readonly property bool barAffectsPanels: barVisible && !focusedAppFullscreen
+    readonly property bool barAffectsPanels: (barVisible || barPeeking) && !focusedAppFullscreen
     readonly property real panelBarInset: barAffectsPanels ? barHeight : 0
     // A visible-but-covered bar remains the popup's parent at the screen edge.
     readonly property real popupParentOffset: barVisible && focusedAppFullscreen
@@ -52,8 +56,12 @@ Item {
     // Every bar control spans the full bar height, so hover/active underlines
     // anchored to a control's bottom sit exactly on the bar's bottom edge.
     readonly property real barItemHeight: barHeight
-    // Single source for the gap between every bar button/toggle and the clock, so the bar's groups all read as evenly spaced.
+    // Every bar item is its content plus barItemPadding on each side, with
+    // barSpacing between items, so any two neighbours sit the same distance apart.
     property real barSpacing: 4
+    property real barItemPadding: 4
+    // Width of an icon cell (buttons, quick toggles): a 14px glyph plus padding.
+    readonly property real barIconWidth: 14 + barItemPadding * 2
     // Hyprland's outer gap, also used to inset floating shell panels.
     property real barGap: 9
     readonly property real panelGap: barGap

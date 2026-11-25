@@ -12,6 +12,11 @@ let
     "learner-local.pmis.servicesseta.org.za"
     "local.scrubbill.net"
     "api.local.scrubbill.net"
+    "api.anthropic.com"
+    "claude.ai"
+    "claude.com"
+    "platform.claude.com"
+    "statsig.anthropic.com"
   ];
 
 in

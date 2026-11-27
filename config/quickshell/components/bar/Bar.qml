@@ -231,11 +231,6 @@ PanelWindow {
         }
 
         DelegateChoice {
-            roleValue: "minimised"
-            MinimisedBadge { screen: bar.screen }
-        }
-
-        DelegateChoice {
             roleValue: "quickToggles"
             QuickToggles {
                 nightLightPanel: nightLight
@@ -257,6 +252,7 @@ PanelWindow {
             roleValue: "tray"
             Tray {
                 id: trayItem
+                screen: bar.screen
                 PanelRegistration { name: "tray"; panel: trayItem }
             }
         }

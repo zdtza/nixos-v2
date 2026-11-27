@@ -7,16 +7,28 @@ import Quickshell.Hyprland
 import Quickshell.Services.SystemTray
 import "../panels"
 import "../../services"
+import "../.."
 
 Item {
     id: root
 
+    property var screen: null
     readonly property var items: SystemTray.items.values
+    // Matches the per-monitor workspace minimise_window parks windows on
+    // (config/hypr/hyprland.lua).
+    readonly property string minimisedWorkspace: "special:minimised-"
+        + String(Hyprland.monitorFor(screen)?.name ?? screen?.name ?? "")
+    // Match on each toplevel's own workspace, which stays current when a
+    // workspace's toplevels list goes stale.
+    readonly property var minimised: Hyprland.toplevels.values
+        .filter(toplevel => toplevel.workspace?.name === root.minimisedWorkspace)
+    // Keyboard order: tray items, then minimised windows, then Windows.
+    readonly property int windowsIndex: items.length + minimised.length
     readonly property bool opened: PanelService.activePanel === root
     readonly property bool requiresKeyboardFocus: true
     property bool pinned: false
     property int selectedItemIndex: 0
-    readonly property int keyboardItemCount: items.length + (WindowsService.running ? 1 : 0)
+    readonly property int keyboardItemCount: windowsIndex + (WindowsService.running ? 1 : 0)
     readonly property bool expanded: root.pinned || hover.hovered || root.opened
 
     // Normalizes Windows' plain action list to the same shape as a real DBus menu's entries, so TrayMenu can render either.
@@ -57,6 +69,19 @@ Item {
         windowsMenuOpen = true;
     }
 
+    // Moves a minimised window onto this monitor's active workspace, which also focuses it.
+    function restore(toplevel: var): void {
+        const workspaceId = Number(Hyprland.monitorFor(screen)?.activeWorkspace?.id ?? 0);
+        const raw = String(toplevel?.address ?? "");
+        if (workspaceId === 0 || raw === "")
+            return;
+        const address = raw.startsWith("0x") ? raw : "0x" + raw;
+        PanelService.close(root);
+        Hyprland.dispatch(Hyprland.usingLua
+            ? `hl.dsp.window.move({ workspace = ${workspaceId}, window = "address:${address}" })`
+            : `movetoworkspace ${workspaceId},address:${address}`);
+    }
+
     function toggleFromIpc(): void {
         const closing = PanelService.activePanel === root
             || PanelService.pendingPanel === root;
@@ -95,6 +120,10 @@ Item {
                 dismissMenu();
             return;
         }
+        if (selectedItemIndex < windowsIndex) {
+            dismissMenu();
+            return;
+        }
         showWindowsMenu();
     }
 
@@ -108,6 +137,10 @@ Item {
                 item.activate();
                 PanelService.close(root);
             }
+            return;
+        }
+        if (selectedItemIndex < windowsIndex) {
+            restore(minimised[selectedItemIndex - items.length]);
             return;
         }
         if (WindowsService.running) {
@@ -158,7 +191,7 @@ Item {
         return "Active";
     }
 
-    visible: items.length > 0 || WindowsService.running
+    visible: items.length > 0 || minimised.length > 0 || WindowsService.running
     implicitWidth: row.implicitWidth
     implicitHeight: PanelService.barItemHeight
 
@@ -278,6 +311,51 @@ Item {
                     }
                 }
 
+                // Minimised windows on this monitor; clicking one restores it.
+                Repeater {
+                    model: root.minimised
+
+                    Item {
+                        id: minimisedEntry
+
+                        required property var modelData
+                        required property int index
+                        readonly property var desktopEntry: Utils.desktopEntry(modelData)
+                        readonly property string iconName: desktopEntry?.icon
+                            || String(modelData.wayland?.appId ?? modelData.lastIpcObject?.class ?? "")
+
+                        implicitWidth: 16 + PanelService.barItemPadding * 2
+                        implicitHeight: PanelService.barItemHeight
+
+                        HoverUnderline {
+                            shown: minimisedMouse.containsMouse
+                                || (root.opened && root.selectedItemIndex === root.items.length + minimisedEntry.index)
+                        }
+
+                        Image {
+                            anchors.centerIn: parent
+                            width: 16
+                            height: 16
+                            source: Quickshell.iconPath(minimisedEntry.iconName, "application-x-executable")
+                            sourceSize.width: 32
+                            sourceSize.height: 32
+                            asynchronous: true
+                            smooth: true
+                        }
+
+                        MouseArea {
+                            id: minimisedMouse
+
+                            anchors.fill: parent
+                            enabled: root.expanded
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onClicked: root.restore(minimisedEntry.modelData)
+                        }
+                    }
+                }
+
                 // Synthetic Windows entry, shown only while the container is up so it behaves like a background app that comes and goes.
                 Item {
                     id: windowsEntry
@@ -288,7 +366,7 @@ Item {
 
                     HoverUnderline {
                         shown: windowsMouse.containsMouse
-                            || (root.opened && root.selectedItemIndex === root.items.length)
+                            || (root.opened && root.selectedItemIndex === root.windowsIndex)
                             || (root.opened && root.windowsMenuOpen)
                     }
 
@@ -313,7 +391,7 @@ Item {
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
 
                         onClicked: {
-                            root.selectedItemIndex = root.items.length;
+                            root.selectedItemIndex = root.windowsIndex;
                             if (root.opened && root.windowsMenuOpen) {
                                 PanelService.close(root);
                                 return;

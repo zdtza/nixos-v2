@@ -10,10 +10,9 @@ pragma Singleton
 //
 // Items:
 //   workspaces    workspace switcher and taskbar
-//   minimised     minimised-window count
 //   quickToggles  caffeine, do-not-disturb and night light toggles
 //   clock         clock (click: clock and calendar panel)
-//   tray          system tray
+//   tray          system tray and minimised windows
 //   bluetooth, audio, battery, network
 import QtQuick
 
@@ -21,7 +20,7 @@ QtObject {
     // "top" or "bottom".
     property string position: "top"
 
-    property var start: ["workspaces", "minimised"]
+    property var start: ["workspaces"]
     property var center: ["quickToggles", "clock"]
     property var end: ["tray", "bluetooth", "audio", "battery", "network"]
 
